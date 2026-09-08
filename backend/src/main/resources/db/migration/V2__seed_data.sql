@@ -295,10 +295,6 @@ BEGIN
             INSERT INTO user_tbl (id, auth_uid, full_name, phone_number, password_hash, global_role)
             VALUES (curr_tenant_id, CONCAT('tenant_', unit_num, '@livic.com'), CONCAT('Tenant ', unit_num), CONCAT('9988000', unit_num), password_hash, 'USER');
             
-            -- User Preferences for Tenant
-            INSERT INTO user_preference_tbl (id, user_id, active_mode, onboarding_done)
-            VALUES (UUID(), curr_tenant_id, 'RENTAL', TRUE);
-
             -- Create Active Lease (Rent: 1000, Security: 2000, Move-in: 2026-05-01)
             SET curr_lease_id = UUID();
             INSERT INTO lease_tbl (id, unit_id, user_id, monthly_rent_amount, security_deposit, move_in_date, status, split_strategy)

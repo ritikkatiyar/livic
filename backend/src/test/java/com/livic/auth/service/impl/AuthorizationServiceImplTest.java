@@ -8,6 +8,7 @@ import com.livic.common.domain.UserRole;
 import com.livic.common.enums.AccessType;
 import com.livic.common.enums.ResourceType;
 import com.livic.finance.dto.ChargeConfigResponse;
+import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.facade.InventoryFacade;
 import com.livic.property.dto.UnitSummaryDTO;
@@ -182,10 +183,10 @@ class AuthorizationServiceImplTest {
         UUID leaseBId = UUID.randomUUID();
         UUID tenantBUserId = UUID.randomUUID();
 
-        com.livic.finance.dto.LeaseSummaryDTO leaseA = new com.livic.finance.dto.LeaseSummaryDTO(
+        LeaseSummaryDTO leaseA = new LeaseSummaryDTO(
                 leaseAId, UUID.randomUUID(), "101", 1, propertyId, "Property A", userId, "ACTIVE", null, null, null
         );
-        com.livic.finance.dto.LeaseSummaryDTO leaseB = new com.livic.finance.dto.LeaseSummaryDTO(
+        LeaseSummaryDTO leaseB = new LeaseSummaryDTO(
                 leaseBId, UUID.randomUUID(), "102", 1, propertyId, "Property A", tenantBUserId, "ACTIVE", null, null, null
         );
 

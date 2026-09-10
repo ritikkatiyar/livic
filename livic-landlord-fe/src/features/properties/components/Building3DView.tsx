@@ -1,9 +1,38 @@
-import { useAppTheme } from '@/src/theme/ThemeContext';
+import { useAppTheme, AppTheme } from '@/src/theme/ThemeContext';
 import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Text, Animated, PanResponder, Platform } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { getAllFloorsLayout, UnitResponse } from '@/src/features/properties/api/unit.api';
 import { logger } from '@/src/utils/logger';
+
+// Design System & Motion Constants
+const SKELETON_PULSE_DURATION = 900;
+const SKELETON_PLATE_WIDTH = 120;
+const SKELETON_PLATE_HEIGHT = 72;
+const DEFAULT_MAX_CONTAINER_HEIGHT = 260;
+const DEFAULT_CONTAINER_WIDTH = 280;
+const ISO_PROJECTION_COS_45 = Math.SQRT1_2;
+const ISO_WIDTH_SCALE_FACTOR = 0.78;
+const MAX_CELL_SIZE = 76;
+const MIN_CELL_SIZE = 12;
+const MIN_CELL_SIZE_FOR_LABEL = 34;
+const HOVER_ELEVATION_OFFSET = -14;
+const SPRING_FRICTION = 6;
+const SPRING_TENSION = 50;
+const PAN_MOVE_THRESHOLD = 3;
+const TAP_DISTANCE_THRESHOLD = 6;
+const ROTATION_SENSITIVITY = 0.5;
+const MIN_PITCH_ANGLE = 20;
+const MAX_PITCH_ANGLE = 80;
+const STACK_BASE_OFFSET_Y = 10;
+const DIMENSION_CHANGE_THRESHOLD = 5;
+const PLATE_HEIGHT_SCALE_FACTOR = 0.88;
+const MIN_PLATE_HEIGHT_CONSTRAINT = 50;
+const ISO_PROJECTED_HEIGHT_FACTOR = 0.36;
+const ISO_VISUAL_PROJECTION_FACTOR = 0.4;
+const LEGEND_Z_INDEX = 20;
+const SHADOW_OPACITY_DARK = 0.35;
+const SHADOW_OPACITY_LIGHT = 0.08;
 
 interface Building3DViewProps {
   propertyId: string;
@@ -13,15 +42,15 @@ interface Building3DViewProps {
   maxContainerHeight?: number;
 }
 
-function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) {
+function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: AppTheme }) {
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
   const styles = React.useMemo(() => createStyles3DSkeleton(theme), [theme]);
 
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 0.85, duration: 900, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 0.4, duration: 900, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.85, duration: SKELETON_PULSE_DURATION, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.4, duration: SKELETON_PULSE_DURATION, useNativeDriver: true }),
       ])
     );
     anim.start();
@@ -37,7 +66,7 @@ function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) 
             styles.plate,
             {
               transform: [
-                { translateY: -idx * 24 + 14 },
+                { translateY: -idx * theme.Spacing.lg + theme.Spacing.md },
                 { rotateX: '60deg' },
                 { rotateZ: '-45deg' },
               ],
@@ -55,7 +84,7 @@ function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) 
   );
 }
 
-const createStyles3DSkeleton = (theme: any) => StyleSheet.create({
+const createStyles3DSkeleton = (theme: AppTheme) => StyleSheet.create({
   wrapper: {
     width: '100%',
     height: '100%',
@@ -65,10 +94,10 @@ const createStyles3DSkeleton = (theme: any) => StyleSheet.create({
   },
   plate: {
     position: 'absolute',
-    width: 120,
-    height: 72,
+    width: SKELETON_PLATE_WIDTH,
+    height: SKELETON_PLATE_HEIGHT,
     borderRadius: theme.Rounded.sm,
-    borderWidth: 1.5,
+    borderWidth: theme.Borders.card,
     borderColor: theme.Colors.primary,
     backgroundColor: theme.Colors.surfaceContainerLow,
     padding: theme.Spacing.xs,
@@ -85,7 +114,13 @@ const createStyles3DSkeleton = (theme: any) => StyleSheet.create({
   },
 });
 
-export default function Building3DView({ propertyId, token, onFloorClick, resetRotationTrigger, maxContainerHeight = 260 }: Building3DViewProps) {
+export default function Building3DView({
+  propertyId,
+  token,
+  onFloorClick,
+  resetRotationTrigger,
+  maxContainerHeight = DEFAULT_MAX_CONTAINER_HEIGHT,
+}: Building3DViewProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
@@ -98,14 +133,14 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
 
   const containerRef = useRef<View>(null);
   const [containerDimensions, setContainerDimensions] = useState<{ width: number; height: number }>({
-    width: 280,
+    width: DEFAULT_CONTAINER_WIDTH,
     height: maxContainerHeight,
   });
 
   const handleLayout = (event: any) => {
     const { width, height } = event.nativeEvent.layout;
     if (width > 0 && height > 0) {
-      if (Math.abs(containerDimensions.width - width) > 5 || Math.abs(containerDimensions.height - height) > 5) {
+      if (Math.abs(containerDimensions.width - width) > DIMENSION_CHANGE_THRESHOLD || Math.abs(containerDimensions.height - height) > DIMENSION_CHANGE_THRESHOLD) {
         setContainerDimensions({ width, height });
       }
     }
@@ -197,23 +232,23 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
   const stackHeightOffset = (floorNumbers.length > 0 ? floorNumbers.length - 1 : 0) * dynamicFloorHeight;
 
   // Max width in 45-degree isometric projection: (gridW + gridH) * dynamicCellSize * 0.7071
-  const rawIsoWidth = (gridW + gridH) * 0.7071;
-  const maxCellSizeWidth = Math.floor((availableWidth * 0.78) / (rawIsoWidth || 1));
+  const rawIsoWidth = (gridW + gridH) * ISO_PROJECTION_COS_45;
+  const maxCellSizeWidth = Math.floor((availableWidth * ISO_WIDTH_SCALE_FACTOR) / (rawIsoWidth || 1));
 
-  // Max height in 60-degree tilt: single plate projected height = (gridW + gridH) * dynamicCellSize * 0.36
-  const remainingHeightForPlate = Math.max(availableHeight * 0.88 - stackHeightOffset, 50);
-  const maxCellSizeHeight = Math.floor(remainingHeightForPlate / (((gridW + gridH) * 0.36) || 1));
+  // Max height in 60-degree tilt: single plate projected height = (gridW + gridH) * dynamicCellSize * ISO_PROJECTED_HEIGHT_FACTOR
+  const remainingHeightForPlate = Math.max(availableHeight * PLATE_HEIGHT_SCALE_FACTOR - stackHeightOffset, MIN_PLATE_HEIGHT_CONSTRAINT);
+  const maxCellSizeHeight = Math.floor(remainingHeightForPlate / (((gridW + gridH) * ISO_PROJECTED_HEIGHT_FACTOR) || 1));
 
   let dynamicCellSize = Math.min(maxCellSizeWidth, maxCellSizeHeight);
 
-  // Generous clamp: allows small floor layouts (e.g. 2x1, 2x2, 3x2) to scale up beautifully up to 80px per unit
-  if (dynamicCellSize > 76) dynamicCellSize = 76;
-  if (dynamicCellSize < 12) dynamicCellSize = 12;
+  // Generous clamp: allows small floor layouts (e.g. 2x1, 2x2, 3x2) to scale up beautifully
+  if (dynamicCellSize > MAX_CELL_SIZE) dynamicCellSize = MAX_CELL_SIZE;
+  if (dynamicCellSize < MIN_CELL_SIZE) dynamicCellSize = MIN_CELL_SIZE;
 
   const buildingWidth = gridW * dynamicCellSize;
   const buildingHeight = gridH * dynamicCellSize;
 
-  const visualIsoHeight = (gridW + gridH) * dynamicCellSize * 0.4;
+  const visualIsoHeight = (gridW + gridH) * dynamicCellSize * ISO_VISUAL_PROJECTION_FACTOR;
   const containerHeight = visualIsoHeight + stackHeightOffset;
 
   const stateRef = useRef({
@@ -243,12 +278,12 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
   useEffect(() => {
     const animations = Object.keys(floorElevations).map((fKey) => {
       const fNum = Number(fKey);
-      const toValue = fNum === hoveredFloor ? -14 : 0;
+      const toValue = fNum === hoveredFloor ? HOVER_ELEVATION_OFFSET : 0;
       return Animated.spring(floorElevations[fNum], {
         toValue,
         useNativeDriver: false,
-        friction: 6,
-        tension: 50,
+        friction: SPRING_FRICTION,
+        tension: SPRING_TENSION,
       });
     });
     Animated.parallel(animations).start();
@@ -258,18 +293,18 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3,
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3,
+      onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dx) > PAN_MOVE_THRESHOLD || Math.abs(gestureState.dy) > PAN_MOVE_THRESHOLD,
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => Math.abs(gestureState.dx) > PAN_MOVE_THRESHOLD || Math.abs(gestureState.dy) > PAN_MOVE_THRESHOLD,
       onPanResponderGrant: () => {
         isDragging.current = true;
         rotateZ.stopAnimation();
         rotateX.stopAnimation();
       },
       onPanResponderMove: (evt, gestureState) => {
-        const newRotZ = lastRotation.current - gestureState.dx * 0.5;
-        let newRotX = lastRotationX.current - gestureState.dy * 0.5;
-        if (newRotX < 20) newRotX = 20;
-        if (newRotX > 80) newRotX = 80;
+        const newRotZ = lastRotation.current - gestureState.dx * ROTATION_SENSITIVITY;
+        let newRotX = lastRotationX.current - gestureState.dy * ROTATION_SENSITIVITY;
+        if (newRotX < MIN_PITCH_ANGLE) newRotX = MIN_PITCH_ANGLE;
+        if (newRotX > MAX_PITCH_ANGLE) newRotX = MAX_PITCH_ANGLE;
 
         rotateZ.setValue(newRotZ);
         rotateX.setValue(newRotX);
@@ -278,14 +313,14 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
         isDragging.current = false;
         setHoveredFloor(null);
 
-        lastRotation.current -= gestureState.dx * 0.5;
-        let newRotX = lastRotationX.current - gestureState.dy * 0.5;
-        if (newRotX < 20) newRotX = 20;
-        if (newRotX > 80) newRotX = 80;
+        lastRotation.current -= gestureState.dx * ROTATION_SENSITIVITY;
+        let newRotX = lastRotationX.current - gestureState.dy * ROTATION_SENSITIVITY;
+        if (newRotX < MIN_PITCH_ANGLE) newRotX = MIN_PITCH_ANGLE;
+        if (newRotX > MAX_PITCH_ANGLE) newRotX = MAX_PITCH_ANGLE;
         lastRotationX.current = newRotX;
 
         // Tap handling for floor click
-        if (Math.abs(gestureState.dx) < 6 && Math.abs(gestureState.dy) < 6) {
+        if (Math.abs(gestureState.dx) < TAP_DISTANCE_THRESHOLD && Math.abs(gestureState.dy) < TAP_DISTANCE_THRESHOLD) {
           const state = stateRef.current;
           if (state.onFloorClick && state.floorNumbers.length > 0) {
             const targetFloor = hoveredFloor ?? state.floorNumbers[0];
@@ -342,7 +377,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
   return (
     <View 
       onLayout={handleLayout}
-      style={{ position: 'relative', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}
+      style={styles.outerWrapper}
       {...(webMouseProps as any)}
     >
       {loading ? (
@@ -374,7 +409,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
             style={[
               styles.container, 
               { 
-                width: buildingWidth + 40,
+                width: buildingWidth + theme.Spacing.xl + theme.Spacing.sm,
                 height: containerHeight
               }
             ]}
@@ -382,7 +417,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
           >
             {floorNumbers.map((floorNum) => {
               const elevationAnim = floorElevations[floorNum] || new Animated.Value(0);
-              const baseTranslateY = -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset / 2 + 10;
+              const baseTranslateY = -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset / 2 + STACK_BASE_OFFSET_Y;
               const isHovered = floorNum === hoveredFloor;
               const b = floorBounds[floorNum] || { minX: 0, minY: 0, spanX: gridW, spanY: gridH };
               const offsetX = Math.floor((gridW - b.spanX) / 2) * dynamicCellSize;
@@ -471,14 +506,14 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
                                 height, 
                                 backgroundColor: unitBackgroundColor, 
                                 borderColor: unitBorderColor, 
-                                borderWidth: 1.5,
+                                borderWidth: theme.Borders.unit,
                                 borderRadius: theme.Rounded.xs,
                                 alignItems: 'center',
                                 justifyContent: 'center',
                               }
                             ]}
                           >
-                            {dynamicCellSize >= 34 && (
+                            {dynamicCellSize >= MIN_CELL_SIZE_FOR_LABEL && (
                               <Text
                                 numberOfLines={1}
                                 style={{
@@ -507,7 +542,15 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
   );
 }
 
-const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
+const createStyles = (theme: AppTheme, isDark: boolean) => StyleSheet.create({
+  outerWrapper: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'visible',
+  },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -520,17 +563,17 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     }) as any,
   },
   loadingContainer: {
-    width: 200,
-    height: 200,
+    width: theme.Spacing.xxl * 4,
+    height: theme.Spacing.xxl * 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyContainer: {
-    width: 200,
-    height: 200,
+    width: theme.Spacing.xxl * 4,
+    height: theme.Spacing.xxl * 4,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: theme.Borders.card,
     borderColor: theme.Colors.glassStroke,
     borderRadius: theme.Rounded.sm,
     borderStyle: 'dashed',
@@ -552,13 +595,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   unitBlock: {
     position: 'absolute',
-    borderWidth: 0.5,
+    borderWidth: theme.Borders.unit,
     borderRadius: theme.Rounded.xs,
   },
   slabExtrusion: {
     backgroundColor: theme.Colors.primaryContainer,
     borderColor: theme.Colors.glassStroke,
-    borderWidth: 1,
+    borderWidth: theme.Borders.card,
     borderRadius: theme.Rounded.xs,
   },
   legendContainer: {
@@ -570,16 +613,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: theme.Spacing.sm,
     backgroundColor: theme.Colors.glassFill,
     borderColor: theme.Colors.glassStroke,
-    borderWidth: 1,
+    borderWidth: theme.Borders.card,
     borderRadius: theme.Rounded.default,
     paddingHorizontal: theme.Spacing.sm,
     paddingVertical: theme.Spacing.xs,
-    zIndex: 20,
+    zIndex: LEGEND_Z_INDEX,
+    ...theme.Shadows.low,
     shadowColor: theme.Surface.shadowColor,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0.35 : 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOpacity: isDark ? SHADOW_OPACITY_DARK : SHADOW_OPACITY_LIGHT,
   },
   legendItem: {
     flexDirection: 'row',

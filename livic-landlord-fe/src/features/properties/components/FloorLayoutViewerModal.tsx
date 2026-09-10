@@ -13,6 +13,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Skeleton } from '@/src/components/common/feedback/Skeleton';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
@@ -28,6 +29,22 @@ import { useFloorLayoutViewer, UnitBlock } from '../hooks/useFloorLayoutViewer';
 import { TenantDetailsSidebar } from './TenantDetailsSidebar';
 import { createStyles } from './FloorLayoutViewerModal.styles';
 import { FloorLayoutGridCanvas } from './FloorLayoutGridCanvas';
+
+// Motion and Layout Constants
+const ZOOM_STEP_IN = 1.25;
+const ZOOM_STEP_OUT = 0.8;
+const MIN_ZOOM = 0.4;
+const MAX_ZOOM = 2.5;
+const DEFAULT_ZOOM = 1.0;
+const RESET_TRANSLATE = 0;
+const ZOOM_INTENSITY = 0.05;
+const DURATION_ZOOM = 200;
+const DURATION_RESET = 250;
+const DURATION_PERSPECTIVE = 350;
+const SKELETON_DESKTOP_WIDTH = 220;
+const SKELETON_DESKTOP_HEIGHT = 140;
+const SKELETON_MOBILE_WIDTH = 200;
+const SKELETON_MOBILE_HEIGHT = 120;
 
 interface FloorLayoutViewerModalProps {
   visible: boolean;
@@ -129,12 +146,12 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
     };
   }, [blocks, isDesktop]);
 
-  const scale = useSharedValue(1.0);
-  const savedScale = useSharedValue(1.0);
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const savedTranslateX = useSharedValue(0);
-  const savedTranslateY = useSharedValue(0);
+  const scale = useSharedValue(DEFAULT_ZOOM);
+  const savedScale = useSharedValue(DEFAULT_ZOOM);
+  const translateX = useSharedValue(RESET_TRANSLATE);
+  const translateY = useSharedValue(RESET_TRANSLATE);
+  const savedTranslateX = useSharedValue(RESET_TRANSLATE);
+  const savedTranslateY = useSharedValue(RESET_TRANSLATE);
 
   const desktopGridWrapperRef = useRef<any>(null);
   const sheetScrollRef = useRef<RNScrollView | null>(null);
@@ -143,7 +160,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
   const pinchGesture = Gesture.Pinch()
     .onUpdate((e) => {
       const newScale = savedScale.value * e.scale;
-      scale.value = Math.min(Math.max(newScale, 0.4), 2.5);
+      scale.value = Math.min(Math.max(newScale, MIN_ZOOM), MAX_ZOOM);
     })
     .onEnd(() => {
       savedScale.value = scale.value;
@@ -165,38 +182,37 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
     transform: [
       { translateX: translateX.value },
       { translateY: translateY.value },
-      { rotateX: withTiming(is3DMode ? '60deg' : '0deg', { duration: 350 }) },
-      { rotateZ: withTiming(is3DMode ? '-45deg' : '0deg', { duration: 350 }) },
+      { rotateX: withTiming(is3DMode ? '60deg' : '0deg', { duration: DURATION_PERSPECTIVE }) },
+      { rotateZ: withTiming(is3DMode ? '-45deg' : '0deg', { duration: DURATION_PERSPECTIVE }) },
       { scale: scale.value }
     ],
   }));
 
   const handleZoomIn = () => {
-    scale.value = withTiming(Math.min(scale.value * 1.25, 2.5), { duration: 200 });
-    savedScale.value = Math.min(savedScale.value * 1.25, 2.5);
+    scale.value = withTiming(Math.min(scale.value * ZOOM_STEP_IN, MAX_ZOOM), { duration: DURATION_ZOOM });
+    savedScale.value = Math.min(savedScale.value * ZOOM_STEP_IN, MAX_ZOOM);
   };
   const handleZoomOut = () => {
-    scale.value = withTiming(Math.max(scale.value * 0.8, 0.4), { duration: 200 });
-    savedScale.value = Math.max(savedScale.value * 0.8, 0.4);
+    scale.value = withTiming(Math.max(scale.value * ZOOM_STEP_OUT, MIN_ZOOM), { duration: DURATION_ZOOM });
+    savedScale.value = Math.max(savedScale.value * ZOOM_STEP_OUT, MIN_ZOOM);
   };
   const handleResetCamera = () => {
-    scale.value = withTiming(1.0, { duration: 250 });
-    savedScale.value = 1.0;
-    translateX.value = withTiming(0, { duration: 250 });
-    translateY.value = withTiming(0, { duration: 250 });
-    savedTranslateX.value = 0;
-    savedTranslateY.value = 0;
+    scale.value = withTiming(DEFAULT_ZOOM, { duration: DURATION_RESET });
+    savedScale.value = DEFAULT_ZOOM;
+    translateX.value = withTiming(RESET_TRANSLATE, { duration: DURATION_RESET });
+    translateY.value = withTiming(RESET_TRANSLATE, { duration: DURATION_RESET });
+    savedTranslateX.value = RESET_TRANSLATE;
+    savedTranslateY.value = RESET_TRANSLATE;
   };
 
   useEffect(() => {
     if (Platform.OS !== 'web' || !visible) return;
     const handleWheelEvent = (e: WheelEvent) => {
       e.preventDefault();
-      const zoomIntensity = 0.05;
       const delta = -e.deltaY;
-      const factor = delta > 0 ? (1 + zoomIntensity) : (1 - zoomIntensity);
+      const factor = delta > 0 ? (1 + ZOOM_INTENSITY) : (1 - ZOOM_INTENSITY);
       const newScale = scale.value * factor;
-      scale.value = Math.min(Math.max(newScale, 0.4), 2.5);
+      scale.value = Math.min(Math.max(newScale, MIN_ZOOM), MAX_ZOOM);
       savedScale.value = scale.value;
     };
 
@@ -248,7 +264,6 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
       setSelectedUnitId={setSelectedUnitId}
       resetTenantAssignmentForm={resetTenantAssignmentForm}
       getBlockColorStyles={getBlockColorStyles}
-      styles={styles}
       theme={theme}
       originX={originX}
       originY={originY}
@@ -312,7 +327,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
     return (
       <View style={styles.directoryContainer}>
         {/* Floor Overview Card */}
-        <View style={styles.directoryHeroCard}>
+        <BlurView intensity={theme.BlurIntensity.modalOverlay} tint="light" style={styles.directoryHeroCard}>
           <View style={styles.directoryHeroHeader}>
             <View>
               <Text style={styles.directoryKicker}>FLOOR INTELLIGENCE</Text>
@@ -341,7 +356,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
               <Text style={styles.directoryMetricValue}>₹{totalRent.toLocaleString()}</Text>
             </View>
           </View>
-        </View>
+        </BlurView>
 
         {/* Unit Directory Roster */}
         <View style={styles.unitListWrapper}>
@@ -381,7 +396,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
 
                   <View style={styles.unitInspectAction}>
                     <Text style={styles.unitInspectText}>Inspect</Text>
-                    <MaterialIcons name="chevron-right" size={16} color={theme.Colors.primary} />
+                    <MaterialIcons name="chevron-right" size={theme.IconSizes.md} color={theme.Colors.primary} />
                   </View>
                 </TouchableOpacity>
               );
@@ -395,10 +410,10 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
   if (isDesktop) {
     return (
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-        <BlurView intensity={35} tint="dark" style={styles.modalOverlay}>
+        <BlurView intensity={theme.BlurIntensity.medium} tint="light" style={styles.modalOverlay}>
           <View style={[styles.modalContent, styles.modalContentDesktop]}>
             <LinearGradient
-              colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
+              colors={theme.Colors.backgroundGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.desktopShell}
@@ -449,7 +464,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                       activeOpacity={0.85}
                     >
                       <Text style={styles.backButtonTextDesktop}>Close View</Text>
-                      <MaterialIcons name="close" size={18} color={theme.Colors.onSurface} />
+                      <MaterialIcons name="close" size={theme.IconSizes.md} color={theme.Colors.onSurface} />
                     </TouchableOpacity>
                   </View>
 
@@ -461,7 +476,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                         <View ref={desktopGridWrapperRef} style={styles.desktopGridWrapper}>
                           {loading ? (
                             <View style={styles.loadingContainer}>
-                              <ActivityIndicator size="large" color={theme.Colors.primary} />
+                              <Skeleton width={SKELETON_DESKTOP_WIDTH} height={SKELETON_DESKTOP_HEIGHT} borderRadius={theme.Rounded.lg} />
                               <Text style={styles.loadingText}>Loading Floor {activeFloor}...</Text>
                             </View>
                           ) : (
@@ -491,7 +506,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                                 >
                                   <MaterialIcons
                                     name={is3DMode ? 'view-in-ar' : 'architecture'}
-                                    size={16}
+                                    size={theme.IconSizes.md}
                                     color={!is3DMode ? theme.Colors.onPrimary : theme.Colors.onSurface}
                                   />
                                   <Text style={[styles.toolbarButtonText, !is3DMode && styles.toolbarButtonTextActive]}>
@@ -502,15 +517,15 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                                 <View style={styles.toolbarDivider} />
 
                                 <TouchableOpacity style={styles.toolbarButton} onPress={handleZoomIn} activeOpacity={0.8}>
-                                  <MaterialIcons name="zoom-in" size={18} color={theme.Colors.onSurface} />
+                                  <MaterialIcons name="zoom-in" size={theme.IconSizes.md} color={theme.Colors.onSurface} />
                                 </TouchableOpacity>
 
                                 <TouchableOpacity style={styles.toolbarButton} onPress={handleZoomOut} activeOpacity={0.8}>
-                                  <MaterialIcons name="zoom-out" size={18} color={theme.Colors.onSurface} />
+                                  <MaterialIcons name="zoom-out" size={theme.IconSizes.md} color={theme.Colors.onSurface} />
                                 </TouchableOpacity>
 
                                 <TouchableOpacity style={styles.toolbarButton} onPress={handleResetCamera} activeOpacity={0.8}>
-                                  <MaterialIcons name="restart-alt" size={18} color={theme.Colors.onSurface} />
+                                  <MaterialIcons name="restart-alt" size={theme.IconSizes.md} color={theme.Colors.onSurface} />
                                 </TouchableOpacity>
                               </View>
 
@@ -553,7 +568,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
   // Mobile Version
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <BlurView intensity={40} tint="dark" style={styles.modalOverlay}>
+      <BlurView intensity={theme.BlurIntensity.modalOverlay} tint="light" style={styles.modalOverlay}>
         <TouchableOpacity
           activeOpacity={1}
           style={StyleSheet.absoluteFillObject}
@@ -561,7 +576,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
         />
         <View style={styles.modalContent}>
           <LinearGradient
-            colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
+            colors={theme.Colors.backgroundGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{ flex: 1 }}
@@ -583,7 +598,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                     activeOpacity={0.7}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <MaterialIcons name="close" size={20} color={theme.Colors.onSurface} />
+                    <MaterialIcons name="close" size={theme.IconSizes.md} color={theme.Colors.onSurface} />
                   </TouchableOpacity>
                 </View>
 
@@ -616,7 +631,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                     <View style={styles.canvasContainer}>
                       {loading ? (
                         <View style={styles.loadingContainer}>
-                          <ActivityIndicator size="large" color={theme.Colors.primary} />
+                          <Skeleton width={SKELETON_MOBILE_WIDTH} height={SKELETON_MOBILE_HEIGHT} borderRadius={theme.Rounded.default} />
                           <Text style={styles.loadingText}>Loading...</Text>
                         </View>
                       ) : (

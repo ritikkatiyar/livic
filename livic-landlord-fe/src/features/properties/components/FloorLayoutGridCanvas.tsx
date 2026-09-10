@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { UnitBlock } from '../hooks/useFloorLayoutViewer';
-import { useAppTheme } from '@/src/theme/ThemeContext';
+import { AppTheme, useAppTheme } from '@/src/theme/ThemeContext';
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK' },
@@ -18,8 +18,7 @@ interface FloorLayoutGridCanvasProps {
   setSelectedUnitId: (id: string | null) => void;
   resetTenantAssignmentForm: () => void;
   getBlockColorStyles: (block: UnitBlock) => { backgroundColor: string; borderColor: string; textColor: string };
-  styles: any;
-  theme?: any;
+  theme?: AppTheme;
   originX?: number;
   originY?: number;
   cols?: number;
@@ -34,7 +33,6 @@ export function FloorLayoutGridCanvas({
   setSelectedUnitId,
   resetTenantAssignmentForm,
   getBlockColorStyles,
-  styles: _externalStyles,
   theme: propTheme,
   originX = 0,
   originY = 0,
@@ -211,7 +209,7 @@ export function FloorLayoutGridCanvas({
   return <>{gridCells}</>;
 }
 
-const createLocalStyles = (theme: any, isDark: boolean) => StyleSheet.create({
+const createLocalStyles = (theme: AppTheme, isDark: boolean) => StyleSheet.create({
   unitContainer: {
     position: 'absolute',
   },

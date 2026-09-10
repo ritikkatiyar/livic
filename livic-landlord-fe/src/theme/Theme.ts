@@ -359,6 +359,53 @@ export const Timing = {
 
 export const AnimationDuration = Timing.normal;
 
+export const Borders = {
+  unit: 0.5,
+  thin: 1,
+  card: 1,
+  default: 1,
+  thick: 2,
+};
+
+export const BlurIntensity = {
+  light: 20,
+  medium: 35,
+  modalOverlay: 40,
+  heavy: 60,
+};
+
+export const IconSizes = {
+  xs: 14,
+  sm: 16,
+  md: 20,
+  lg: 24,
+  xl: 32,
+};
+
+export const Shadows = {
+  glassCard: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 30,
+    elevation: 3,
+  },
+  floatingToolbar: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 30,
+    elevation: 3,
+  },
+  low: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+};
+
 export type ColorTokens = typeof LightColors;
 export type SurfaceTokens = typeof LightSurface;
 
@@ -371,6 +418,10 @@ export function getTheme(isDark: boolean) {
     Spacing,
     Rounded,
     Timing,
+    Borders,
+    BlurIntensity,
+    IconSizes,
+    Shadows,
   };
 }
 
@@ -382,6 +433,10 @@ export const Theme = {
   Spacing,
   Rounded,
   Timing,
+  Borders,
+  BlurIntensity,
+  IconSizes,
+  Shadows,
 };
 
 export const Breakpoints = {

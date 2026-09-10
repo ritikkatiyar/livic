@@ -8,6 +8,7 @@ import com.livic.common.domain.UserRole;
 import com.livic.common.enums.AccessType;
 import com.livic.common.enums.ResourceType;
 import com.livic.finance.dto.ChargeConfigResponse;
+import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.facade.InventoryFacade;
 import com.livic.property.dto.UnitSummaryDTO;
@@ -137,5 +138,88 @@ class AuthorizationServiceImplTest {
         when(financeFacade.getChargeConfigById(chargeConfigId)).thenReturn(charge);
 
         assertThat(authorizationService.hasPermission(ResourceType.CHARGE_CONFIG, chargeConfigId, "PROPERTY_EDIT")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multi-Tenant Isolation: Owner of Property A is strictly denied access to Property B")
+    void multiTenantIsolationOwnerCannotAccessOtherProperty() {
+        authenticateUser(userId, UserRole.USER);
+        UUID propertyBId = UUID.randomUUID();
+
+        // User only has membership in propertyId, NOT propertyBId
+        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyBId, AccessType.FULL_ACCESS))
+                .thenReturn(false);
+        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyBId))
+                .thenReturn(Set.of());
+
+        assertThat(authorizationService.hasFullAccess(propertyBId)).isFalse();
+        assertThat(authorizationService.hasPermission(propertyBId, "PROPERTY_VIEW")).isFalse();
+        assertThat(authorizationService.hasPermission(propertyBId, "PROPERTY_EDIT")).isFalse();
+        assertThat(authorizationService.hasPermission(propertyBId, "MANAGE_STAFF")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Custom Access RBAC: Staff with view-only permissions is denied administrative permissions")
+    void customAccessDeniedForUngrantedStaffAndFinancePermissions() {
+        authenticateUser(userId, UserRole.USER);
+
+        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+                .thenReturn(false);
+        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
+                .thenReturn(Set.of("PROPERTY_VIEW"));
+
+        assertThat(authorizationService.hasPermission(propertyId, "PROPERTY_VIEW")).isTrue();
+        assertThat(authorizationService.hasPermission(propertyId, "PROPERTY_EDIT")).isFalse();
+        assertThat(authorizationService.hasPermission(propertyId, "MANAGE_STAFF")).isFalse();
+        assertThat(authorizationService.hasPermission(propertyId, "LEASE_CREATE")).isFalse();
+        assertThat(authorizationService.hasPermission(propertyId, "EXPENSE_CREATE")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cross-Tenant IDOR Protection: Tenant A can view own lease but is denied access to Tenant B lease")
+    void crossTenantIdorLeaseViewOwnProtection() {
+        authenticateUser(userId, UserRole.USER);
+        UUID leaseAId = UUID.randomUUID();
+        UUID leaseBId = UUID.randomUUID();
+        UUID tenantBUserId = UUID.randomUUID();
+
+        LeaseSummaryDTO leaseA = new LeaseSummaryDTO(
+                leaseAId, UUID.randomUUID(), "101", 1, propertyId, "Property A", userId, "ACTIVE", null, null, null
+        );
+        LeaseSummaryDTO leaseB = new LeaseSummaryDTO(
+                leaseBId, UUID.randomUUID(), "102", 1, propertyId, "Property A", tenantBUserId, "ACTIVE", null, null, null
+        );
+
+        when(financeFacade.getLeaseById(leaseAId)).thenReturn(Optional.of(leaseA));
+        when(financeFacade.getLeaseById(leaseBId)).thenReturn(Optional.of(leaseB));
+
+        // Tenant A accessing own lease -> Granted
+        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseAId, "LEASE_VIEW_OWN")).isTrue();
+
+        // Tenant A accessing Tenant B lease -> Denied
+        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+                .thenReturn(false);
+        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
+                .thenReturn(Set.of());
+
+        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseBId, "LEASE_VIEW_OWN")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseBId, "LEASE_VIEW")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cross-Tenant Rent Cycle: User without property membership cannot access rent cycle")
+    void rentCycleCrossTenantAccessBlocked() {
+        authenticateUser(userId, UserRole.USER);
+        UUID rentCycleId = UUID.randomUUID();
+        UUID foreignPropertyId = UUID.randomUUID();
+
+        when(financeFacade.getPropertyIdByRentCycleId(rentCycleId)).thenReturn(Optional.of(foreignPropertyId));
+        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, foreignPropertyId, AccessType.FULL_ACCESS))
+                .thenReturn(false);
+        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, foreignPropertyId))
+                .thenReturn(Set.of());
+
+        assertThat(authorizationService.hasPermission(ResourceType.RENT_CYCLE, rentCycleId, "PROPERTY_VIEW")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.RENT_CYCLE, rentCycleId, "PROPERTY_EDIT")).isFalse();
     }
 }

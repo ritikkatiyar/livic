@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { UnitBlock } from '../hooks/useFloorLayoutViewer';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK' },
@@ -18,7 +19,7 @@ interface FloorLayoutGridCanvasProps {
   resetTenantAssignmentForm: () => void;
   getBlockColorStyles: (block: UnitBlock) => { backgroundColor: string; borderColor: string; textColor: string };
   styles: any;
-  theme: any;
+  theme?: any;
   originX?: number;
   originY?: number;
   cols?: number;
@@ -33,8 +34,8 @@ export function FloorLayoutGridCanvas({
   setSelectedUnitId,
   resetTenantAssignmentForm,
   getBlockColorStyles,
-  styles: externalStyles,
-  theme,
+  styles: _externalStyles,
+  theme: propTheme,
   originX = 0,
   originY = 0,
   cols = 4,
@@ -42,6 +43,10 @@ export function FloorLayoutGridCanvas({
   cellSize = 96,
   is3DMode = true,
 }: FloorLayoutGridCanvasProps) {
+  const { theme: appTheme, isDark } = useAppTheme();
+  const theme = propTheme || appTheme;
+  const localStyles = React.useMemo(() => createLocalStyles(theme, isDark), [theme, isDark]);
+
   const gridCells: React.ReactNode[] = [];
   const occupiedGridMap: { [key: string]: boolean } = {};
 
@@ -82,12 +87,11 @@ export function FloorLayoutGridCanvas({
                 top: cellTop,
                 width: cellWidth,
                 height: cellHeight,
-                borderColor: theme.Colors.outlineVariant || 'rgba(0, 104, 117, 0.12)',
               },
             ]}
             pointerEvents="none"
           >
-            <View style={[localStyles.crosshair, { backgroundColor: theme.Colors.outlineVariant || 'rgba(0, 104, 117, 0.15)' }]} />
+            <View style={localStyles.crosshair} />
           </View>
         );
         continue;
@@ -104,24 +108,26 @@ export function FloorLayoutGridCanvas({
       gridCells.push(
         <View
           key={`unit-${block.id}`}
-          style={{
-            position: 'absolute',
-            left: cellLeft,
-            top: cellTop,
-            width: cellWidth,
-            height: cellHeight,
-            zIndex: isSelected ? 50 : 15,
-          }}
+          style={[
+            localStyles.unitContainer,
+            {
+              left: cellLeft,
+              top: cellTop,
+              width: cellWidth,
+              height: cellHeight,
+              zIndex: isSelected ? 50 : 15,
+            },
+          ]}
         >
           {/* 3D Wall Drop-Shadow & Slab Extrusion in 3D Mode */}
           {is3DMode && (
             <View
               style={[
                 localStyles.extrusionShadow,
+                isSelected && localStyles.extrusionShadowSelected,
                 {
                   width: cellWidth,
                   height: cellHeight,
-                  backgroundColor: isSelected ? 'rgba(0, 229, 255, 0.3)' : 'rgba(0, 50, 70, 0.25)',
                 },
               ]}
             />
@@ -136,16 +142,10 @@ export function FloorLayoutGridCanvas({
             style={[
               localStyles.roomCard,
               {
-                width: '100%',
-                height: '100%',
                 backgroundColor: colorStyles.backgroundColor,
-                borderColor: isSelected ? '#00e5ff' : colorStyles.borderColor,
-                borderWidth: isSelected ? 2.5 : 1.5,
-                shadowColor: isSelected ? '#00e5ff' : '#000000',
-                shadowOpacity: isSelected ? 0.45 : 0.18,
-                shadowRadius: isSelected ? 10 : 5,
-                elevation: isSelected ? 8 : 3,
+                borderColor: colorStyles.borderColor,
               },
+              isSelected && localStyles.roomCardSelected,
             ]}
           >
             {/* Header: Unit Number & Type */}
@@ -162,8 +162,8 @@ export function FloorLayoutGridCanvas({
             <View style={localStyles.tenantRow}>
               <MaterialIcons
                 name={isVacant ? 'meeting-room' : 'person'}
-                size={14}
-                color="rgba(255, 255, 255, 0.9)"
+                size={theme.Spacing.md}
+                color={theme.Colors.onSurface}
               />
               <Text numberOfLines={1} style={localStyles.tenantNameText}>
                 {isVacant ? 'Vacant' : primaryTenant || 'Occupied'}
@@ -177,8 +177,8 @@ export function FloorLayoutGridCanvas({
                   <Text style={localStyles.rentText}>₹{Number(block.rent).toLocaleString()}</Text>
                 </View>
               ) : (
-                <View style={[localStyles.rentChip, { opacity: 0.7 }]}>
-                  <Text style={localStyles.rentText}>No Rent Set</Text>
+                <View style={[localStyles.rentChip, localStyles.rentChipMuted]}>
+                  <Text style={localStyles.rentText}>No Rent</Text>
                 </View>
               )}
 
@@ -186,7 +186,8 @@ export function FloorLayoutGridCanvas({
                 <View
                   style={[
                     localStyles.statusDot,
-                    { backgroundColor: isVacant ? '#4ade80' : isSelected ? '#00e5ff' : '#ffffff' },
+                    isVacant && localStyles.statusDotVacant,
+                    isSelected && localStyles.statusDotSelected,
                   ]}
                 />
                 <Text style={localStyles.statusText}>
@@ -198,7 +199,7 @@ export function FloorLayoutGridCanvas({
             {/* Selected Corner Checkmark */}
             {isSelected && (
               <View style={localStyles.selectedBadge}>
-                <MaterialIcons name="check" size={12} color="#000000" />
+                <MaterialIcons name="check" size={theme.Typography.bodySmall.fontSize} color={theme.Colors.onPrimary} />
               </View>
             )}
           </TouchableOpacity>
@@ -210,125 +211,160 @@ export function FloorLayoutGridCanvas({
   return <>{gridCells}</>;
 }
 
-const localStyles = StyleSheet.create({
+const createLocalStyles = (theme: any, isDark: boolean) => StyleSheet.create({
+  unitContainer: {
+    position: 'absolute',
+  },
   emptyBlueprintCell: {
     position: 'absolute',
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: theme.Rounded.sm,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderColor: theme.Colors.outlineVariant,
     alignItems: 'center',
     justifyContent: 'center',
   },
   crosshair: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: theme.Spacing.sm,
+    height: theme.Spacing.sm,
+    borderRadius: theme.Rounded.xs,
+    backgroundColor: theme.Colors.outlineVariant,
     opacity: 0.6,
   },
   extrusionShadow: {
     position: 'absolute',
-    top: 5,
-    left: 4,
-    borderRadius: 12,
+    top: theme.Spacing.xs,
+    left: theme.Spacing.xs,
+    borderRadius: theme.Rounded.md,
+    backgroundColor: theme.Colors.surfaceContainerHighest,
+  },
+  extrusionShadowSelected: {
+    backgroundColor: theme.Colors.primaryContainer,
   },
   roomCard: {
-    borderRadius: 12,
-    padding: 8,
+    width: '100%',
+    height: '100%',
+    borderRadius: theme.Rounded.md,
+    padding: theme.Spacing.sm,
     justifyContent: 'space-between',
     position: 'relative',
     overflow: 'hidden',
+    borderWidth: 1.5,
+    shadowColor: theme.Surface.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0.35 : 0.12,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  roomCardSelected: {
+    borderColor: theme.Colors.surfaceTint,
+    borderWidth: 2,
+    shadowColor: theme.Colors.surfaceTint,
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    elevation: 6,
   },
   roomHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 4,
+    gap: theme.Spacing.xs,
   },
   unitBadge: {
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    backgroundColor: theme.Colors.glassFill,
+    paddingHorizontal: theme.Spacing.sm,
+    paddingVertical: theme.Spacing.xs,
+    borderRadius: theme.Rounded.xs,
   },
   unitNumberText: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#ffffff',
+    fontSize: theme.Typography.titleSmall.fontSize,
+    fontWeight: theme.Typography.buttonText.fontWeight,
+    color: theme.Colors.onSurface,
     letterSpacing: -0.3,
   },
   unitTypeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: theme.Typography.labelSmall.fontWeight,
+    color: theme.Colors.onSurfaceVariant,
     flexShrink: 1,
     textAlign: 'right',
   },
   tenantRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.18)',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginVertical: 2,
+    gap: theme.Spacing.xs,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    paddingHorizontal: theme.Spacing.sm,
+    paddingVertical: theme.Spacing.xs,
+    borderRadius: theme.Rounded.xs,
+    marginVertical: theme.Spacing.xs,
   },
   tenantNameText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: theme.Typography.buttonText.fontWeight,
+    color: theme.Colors.onSurface,
     flexShrink: 1,
   },
   roomFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 4,
+    gap: theme.Spacing.xs,
   },
   rentChip: {
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
+    backgroundColor: theme.Colors.surfaceContainerHigh,
+    paddingHorizontal: theme.Spacing.sm,
+    paddingVertical: theme.Spacing.xs,
+    borderRadius: theme.Rounded.xs,
+  },
+  rentChipMuted: {
+    opacity: 0.7,
   },
   rentText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#ffffff',
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: theme.Typography.buttonText.fontWeight,
+    color: theme.Colors.onSurface,
   },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
+    gap: theme.Spacing.xs,
+    backgroundColor: theme.Colors.glassFill,
+    paddingHorizontal: theme.Spacing.sm,
+    paddingVertical: theme.Spacing.xs,
+    borderRadius: theme.Rounded.xs,
   },
   statusDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+    width: theme.Spacing.sm,
+    height: theme.Spacing.sm,
+    borderRadius: theme.Rounded.xs,
+    backgroundColor: theme.Colors.onSurfaceVariant,
+  },
+  statusDotVacant: {
+    backgroundColor: theme.Colors.primary,
+  },
+  statusDotSelected: {
+    backgroundColor: theme.Colors.surfaceTint,
   },
   statusText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#ffffff',
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: theme.Typography.buttonText.fontWeight,
+    color: theme.Colors.onSurface,
   },
   selectedBadge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#00e5ff',
+    top: theme.Spacing.xs,
+    right: theme.Spacing.xs,
+    width: theme.Spacing.md,
+    height: theme.Spacing.md,
+    borderRadius: theme.Rounded.sm,
+    backgroundColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#00e5ff',
+    shadowColor: theme.Surface.shadowColor,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.6,
+    shadowOpacity: 0.4,
     shadowRadius: 3,
     elevation: 4,
   },

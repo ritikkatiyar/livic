@@ -15,6 +15,7 @@ interface Building3DViewProps {
 
 function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) {
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
+  const styles = React.useMemo(() => createStyles3DSkeleton(theme), [theme]);
 
   useEffect(() => {
     const anim = Animated.loop(
@@ -27,19 +28,14 @@ function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) 
     return () => anim.stop();
   }, [pulseAnim]);
 
-  const tileBorderColor = isDark ? 'rgba(0, 229, 255, 0.4)' : 'rgba(0, 104, 117, 0.3)';
-  const tileBgColor = isDark ? 'rgba(0, 229, 255, 0.12)' : 'rgba(0, 104, 117, 0.08)';
-
   return (
-    <Animated.View style={[styles3DSkeleton.wrapper, { opacity: pulseAnim }]}>
+    <Animated.View style={[styles.wrapper, { opacity: pulseAnim }]}>
       {[0, 1, 2].map((idx) => (
         <View
           key={idx}
           style={[
-            styles3DSkeleton.plate,
+            styles.plate,
             {
-              borderColor: tileBorderColor,
-              backgroundColor: tileBgColor,
               transform: [
                 { translateY: -idx * 24 + 14 },
                 { rotateX: '60deg' },
@@ -48,10 +44,10 @@ function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) 
             },
           ]}
         >
-          <View style={styles3DSkeleton.gridRow}>
-            <View style={[styles3DSkeleton.cell, { flex: 1, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.3)' : 'rgba(0, 104, 117, 0.2)' }]} />
-            <View style={[styles3DSkeleton.cell, { flex: 1.2, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.2)' : 'rgba(0, 104, 117, 0.15)' }]} />
-            <View style={[styles3DSkeleton.cell, { flex: 0.8, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.35)' : 'rgba(0, 104, 117, 0.25)' }]} />
+          <View style={styles.gridRow}>
+            <View style={[styles.cell, { flex: 1, backgroundColor: theme.Colors.primaryContainer }]} />
+            <View style={[styles.cell, { flex: 1.2, backgroundColor: theme.Colors.surfaceContainerHigh }]} />
+            <View style={[styles.cell, { flex: 0.8, backgroundColor: theme.Colors.primaryContainer }]} />
           </View>
         </View>
       ))}
@@ -59,7 +55,7 @@ function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) 
   );
 }
 
-const styles3DSkeleton = StyleSheet.create({
+const createStyles3DSkeleton = (theme: any) => StyleSheet.create({
   wrapper: {
     width: '100%',
     height: '100%',
@@ -70,19 +66,21 @@ const styles3DSkeleton = StyleSheet.create({
   plate: {
     position: 'absolute',
     width: 120,
-    height: 75,
-    borderRadius: 8,
+    height: 72,
+    borderRadius: theme.Rounded.sm,
     borderWidth: 1.5,
-    padding: 5,
+    borderColor: theme.Colors.primary,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    padding: theme.Spacing.xs,
     backfaceVisibility: 'hidden',
   },
   gridRow: {
     flexDirection: 'row',
-    gap: 4,
+    gap: theme.Spacing.xs,
     flex: 1,
   },
   cell: {
-    borderRadius: 3,
+    borderRadius: theme.Rounded.xs,
     height: '100%',
   },
 });
@@ -416,7 +414,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
                           transform: [{ rotateX: tilt }, { rotateZ: spin }],
                           top: (idx + 1) * 1.5,
                           opacity: 0.9 - idx * 0.15,
-                          backgroundColor: isHovered ? (isDark ? 'rgba(0, 229, 255, 0.4)' : 'rgba(0, 104, 117, 0.35)') : (isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.15)'),
+                          backgroundColor: isHovered ? theme.Colors.primaryContainer : theme.Colors.surfaceContainerHigh,
                           borderColor: isHovered ? theme.Colors.primary : theme.Colors.glassStroke,
                         }
                       ]}
@@ -474,7 +472,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
                                 backgroundColor: unitBackgroundColor, 
                                 borderColor: unitBorderColor, 
                                 borderWidth: 1.5,
-                                borderRadius: Math.min(4, Math.max(1, dynamicCellSize * 0.08)),
+                                borderRadius: theme.Rounded.xs,
                                 alignItems: 'center',
                                 justifyContent: 'center',
                               }
@@ -484,9 +482,9 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
                               <Text
                                 numberOfLines={1}
                                 style={{
-                                  fontSize: Math.max(9, Math.min(13, dynamicCellSize * 0.22)),
-                                  fontWeight: '800',
-                                  color: isDark ? '#FFFFFF' : theme.Colors.onSurface,
+                                  fontSize: theme.Typography.labelSmall.fontSize,
+                                  fontWeight: theme.Typography.labelCaps.fontWeight,
+                                  color: theme.Colors.onPrimary,
                                   opacity: 0.95,
                                   transform: [{ rotateZ: '-135deg' }],
                                 }}
@@ -533,8 +531,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 8,
+    borderColor: theme.Colors.glassStroke,
+    borderRadius: theme.Rounded.sm,
     borderStyle: 'dashed',
   },
   emptyText: {
@@ -555,29 +553,29 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   unitBlock: {
     position: 'absolute',
     borderWidth: 0.5,
-    borderRadius: 1,
+    borderRadius: theme.Rounded.xs,
   },
   slabExtrusion: {
-    backgroundColor: 'rgba(0, 60, 70, 0.4)',
-    borderColor: 'rgba(0, 229, 255, 0.15)',
+    backgroundColor: theme.Colors.primaryContainer,
+    borderColor: theme.Colors.glassStroke,
     borderWidth: 1,
-    borderRadius: 2,
+    borderRadius: theme.Rounded.xs,
   },
   legendContainer: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: theme.Spacing.sm,
+    right: theme.Spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.92)',
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.outlineVariant,
+    gap: theme.Spacing.sm,
+    backgroundColor: theme.Colors.glassFill,
+    borderColor: theme.Colors.glassStroke,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    borderRadius: theme.Rounded.default,
+    paddingHorizontal: theme.Spacing.sm,
+    paddingVertical: theme.Spacing.xs,
     zIndex: 20,
-    shadowColor: 'black',
+    shadowColor: theme.Surface.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: isDark ? 0.35 : 0.08,
     shadowRadius: 6,
@@ -586,16 +584,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: theme.Spacing.xs,
   },
   legendDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: theme.Spacing.sm,
+    height: theme.Spacing.sm,
+    borderRadius: theme.Rounded.xs,
   },
   legendText: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: theme.Typography.labelCaps.fontWeight,
     color: theme.Colors.onSurface,
   },
 });

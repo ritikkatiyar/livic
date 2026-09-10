@@ -219,22 +219,22 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
       return {
         backgroundColor: theme.Colors.primary,
         borderColor: theme.Colors.primary,
-        textColor: '#ffffff',
-        accentColor: '#c8e6c9'
+        textColor: theme.Colors.onPrimary,
+        accentColor: theme.Colors.primaryContainer,
       };
     } else if (activeCount < capacity) {
       return {
         backgroundColor: theme.Colors.tertiary,
         borderColor: theme.Colors.tertiary,
-        textColor: '#ffffff',
-        accentColor: '#fff3e0'
+        textColor: theme.Colors.onTertiary,
+        accentColor: theme.Colors.tertiaryContainer,
       };
     } else {
       return {
         backgroundColor: theme.Colors.error,
         borderColor: theme.Colors.error,
-        textColor: '#ffffff',
-        accentColor: '#ffcdd2'
+        textColor: theme.Colors.onError,
+        accentColor: theme.Colors.errorContainer,
       };
     }
   };
@@ -318,23 +318,8 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
               <Text style={styles.directoryKicker}>FLOOR INTELLIGENCE</Text>
               <Text style={styles.directoryTitle}>Floor {activeFloor} Overview</Text>
             </View>
-            <View
-              style={{
-                backgroundColor: occupancyRate === 100 ? 'rgba(46, 125, 50, 0.15)' : 'rgba(0, 104, 117, 0.12)',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 100,
-                borderWidth: 1,
-                borderColor: occupancyRate === 100 ? 'rgba(46, 125, 50, 0.3)' : 'rgba(0, 104, 117, 0.25)',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: '800',
-                  color: occupancyRate === 100 ? '#2e7d32' : theme.Colors.primary,
-                }}
-              >
+            <View style={[styles.occupancyBadge, occupancyRate === 100 && styles.occupancyBadgeFull]}>
+              <Text style={[styles.occupancyBadgeText, occupancyRate === 100 && styles.occupancyBadgeTextFull]}>
                 {occupancyRate === 100 ? 'Fully Leased' : `${occupancyRate}% Occupied`}
               </Text>
             </View>
@@ -423,17 +408,10 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                   {/* Header: Title + Floor Switcher Tabs + Close Button */}
                   <View style={styles.desktopHeaderRow}>
                     <View style={styles.largeTitleContainer}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <View style={styles.titleWithBadgeRow}>
                         <Text style={styles.titleLineDesktop}>Floor {activeFloor} Layout & Tenants</Text>
-                        <View
-                          style={{
-                            backgroundColor: theme.Colors.primaryContainer,
-                            paddingHorizontal: 8,
-                            paddingVertical: 3,
-                            borderRadius: 8,
-                          }}
-                        >
-                          <Text style={{ fontSize: 11, fontWeight: '800', color: theme.Colors.primary }}>
+                        <View style={styles.unitCountBadge}>
+                          <Text style={styles.unitCountBadgeText}>
                             {blocks.length} Units
                           </Text>
                         </View>
@@ -514,7 +492,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                                   <MaterialIcons
                                     name={is3DMode ? 'view-in-ar' : 'architecture'}
                                     size={16}
-                                    color={!is3DMode ? '#ffffff' : theme.Colors.onSurface}
+                                    color={!is3DMode ? theme.Colors.onPrimary : theme.Colors.onSurface}
                                   />
                                   <Text style={[styles.toolbarButtonText, !is3DMode && styles.toolbarButtonTextActive]}>
                                     {is3DMode ? '3D Iso' : '2D Plan'}
@@ -544,11 +522,6 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                                     {
                                       width: cols * cellSize,
                                       height: rows * cellSize,
-                                      borderRadius: 16,
-                                      backgroundColor: isDark ? 'rgba(0, 229, 255, 0.04)' : 'rgba(0, 104, 117, 0.03)',
-                                      borderColor: isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 104, 117, 0.2)',
-                                      borderWidth: 1.5,
-                                      position: 'relative',
                                     },
                                   ]}
                                 >
@@ -654,10 +627,6 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                               {
                                 width: cols * cellSize,
                                 height: rows * cellSize,
-                                borderRadius: 12,
-                                backgroundColor: isDark ? 'rgba(0, 229, 255, 0.04)' : 'rgba(0, 104, 117, 0.03)',
-                                borderColor: isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 104, 117, 0.2)',
-                                borderWidth: 1.5,
                               },
                             ]}
                           >

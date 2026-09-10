@@ -158,8 +158,8 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
   const numFloors = floorNumbers.length > 0 ? floorNumbers.length : 1;
 
   // 2. Compute bounds per floor so units on every floor align in a clean, vertical stack
-  let maxSpanX = 2;
-  let maxSpanY = 2;
+  let maxSpanX = 1;
+  let maxSpanY = 1;
   const floorBounds: Record<number, { minX: number; minY: number; spanX: number; spanY: number }> = {};
 
   floorNumbers.forEach(f => {
@@ -178,8 +178,8 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
     if (spanY > maxSpanY) maxSpanY = spanY;
   });
 
-  const gridW = Math.max(maxSpanX, 2);
-  const gridH = Math.max(maxSpanY, 2);
+  const gridW = Math.max(maxSpanX, 1);
+  const gridH = Math.max(maxSpanY, 1);
 
   floorNumbers.forEach(floorNum => {
     if (!floorElevations[floorNum]) {
@@ -187,29 +187,35 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
     }
   });
 
-  const availableWidth = containerDimensions ? containerDimensions.width - 24 : 260;
+  const availableWidth = containerDimensions ? containerDimensions.width : 280;
   const availableHeight = containerDimensions ? containerDimensions.height : maxContainerHeight;
 
-  const rawIsoWidth = (gridW + gridH) * 0.707;
-  let dynamicCellSize = Math.floor(availableWidth / (rawIsoWidth || 1));
-
-  // Tight, cohesive floor spacing (1.35x - 1.5x) so multi-story buildings look like one unified architectural model
-  const floorSpacingFactor = numFloors > 6 ? 1.2 : numFloors >= 4 ? 1.38 : 1.6;
-  const heightDivisor = (gridW + gridH) * 0.5 + (numFloors - 1) * floorSpacingFactor;
-  const maxCellSizeHeight = Math.floor((availableHeight * 0.72) / (heightDivisor || 1));
-
-  dynamicCellSize = Math.min(dynamicCellSize, maxCellSizeHeight);
-
-  if (dynamicCellSize > 32) dynamicCellSize = 32;
-  if (dynamicCellSize < 13) dynamicCellSize = 13;
-
-  const dynamicFloorHeight = Math.round(dynamicCellSize * floorSpacingFactor);
-  const buildingWidth = gridW * dynamicCellSize;
-  const buildingHeight = gridH * dynamicCellSize;
+  // Floor vertical spacing (independent of horizontal cell size to prevent tiny crushed floors on multi-story buildings)
+  const dynamicFloorHeight = Math.max(
+    18,
+    Math.min(28, Math.floor((availableHeight * 0.46) / Math.max(numFloors - 1, 1)))
+  );
   const minFloor = floorNumbers.length > 0 ? floorNumbers[0] : 1;
   const stackHeightOffset = (floorNumbers.length > 0 ? floorNumbers.length - 1 : 0) * dynamicFloorHeight;
 
-  const visualIsoHeight = (gridW + gridH) * dynamicCellSize * 0.5;
+  // Max width in 45-degree isometric projection: (gridW + gridH) * dynamicCellSize * 0.7071
+  const rawIsoWidth = (gridW + gridH) * 0.7071;
+  const maxCellSizeWidth = Math.floor((availableWidth * 0.78) / (rawIsoWidth || 1));
+
+  // Max height in 60-degree tilt: single plate projected height = (gridW + gridH) * dynamicCellSize * 0.36
+  const remainingHeightForPlate = Math.max(availableHeight * 0.88 - stackHeightOffset, 50);
+  const maxCellSizeHeight = Math.floor(remainingHeightForPlate / (((gridW + gridH) * 0.36) || 1));
+
+  let dynamicCellSize = Math.min(maxCellSizeWidth, maxCellSizeHeight);
+
+  // Generous clamp: allows small floor layouts (e.g. 2x1, 2x2, 3x2) to scale up beautifully up to 80px per unit
+  if (dynamicCellSize > 76) dynamicCellSize = 76;
+  if (dynamicCellSize < 12) dynamicCellSize = 12;
+
+  const buildingWidth = gridW * dynamicCellSize;
+  const buildingHeight = gridH * dynamicCellSize;
+
+  const visualIsoHeight = (gridW + gridH) * dynamicCellSize * 0.4;
   const containerHeight = visualIsoHeight + stackHeightOffset;
 
   const stateRef = useRef({
@@ -460,9 +466,35 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
                             key={unit.id}
                             style={[
                               styles.unitBlock,
-                              { left, top, width, height, backgroundColor: unitBackgroundColor, borderColor: unitBorderColor, borderWidth: 1.5 }
+                              { 
+                                left, 
+                                top, 
+                                width, 
+                                height, 
+                                backgroundColor: unitBackgroundColor, 
+                                borderColor: unitBorderColor, 
+                                borderWidth: 1.5,
+                                borderRadius: Math.min(4, Math.max(1, dynamicCellSize * 0.08)),
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }
                             ]}
-                          />
+                          >
+                            {dynamicCellSize >= 34 && (
+                              <Text
+                                numberOfLines={1}
+                                style={{
+                                  fontSize: Math.max(9, Math.min(13, dynamicCellSize * 0.22)),
+                                  fontWeight: '800',
+                                  color: isDark ? '#FFFFFF' : theme.Colors.onSurface,
+                                  opacity: 0.95,
+                                  transform: [{ rotateZ: '-135deg' }],
+                                }}
+                              >
+                                {unit.unitNumber}
+                              </Text>
+                            )}
+                          </View>
                         );
                       })}
                     </View>

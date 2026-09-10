@@ -1506,6 +1506,630 @@ User/Event       AIController     AgentRuntime    ExecutionEngine   PolicyEnforc
 
 ---
 
+# PART IV: Tool System & Backend Integration
+
+## 39. What Exactly is an `AiTool`?
+
+In the Livic architecture, an **`AiTool` is an Executable Capability Adapter (Option A + D)**.
+
+It is **not** a Spring AI wrapper, nor is it a business domain service.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                                AiTool                                  │
+│                   (Executable Capability Adapter)                      │
+│                                                                        │
+│  Translates a validated, authorized AI tool invocation into a strongly-│
+│  typed call against the Livic Core Backend client.                     │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Livic Core Backend API                          │
+│               (Sole Source of Truth for Business Rules)                │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### What `AiTool` Knows vs. What It Must NOT Know
+
+| What `AiTool` Knows | What `AiTool` Must NOT Know |
+|---|---|
+| Its own static `ToolDefinition` (name, schema, capabilities). | LLM provider details, model names, or prompt templates. |
+| Its strongly-typed Java Input DTO (e.g., `CreateIssueInput`). | Spring AI annotations or framework internals (`@Tool`, `ChatClient`). |
+| How to invoke the backend client (`BackendAdminClient`). | Conversation history or previous step outputs. |
+| How to project raw backend responses into a lean `ToolResult`. | Session state, HTTP session tokens, or raw thread-locals. |
+| The authenticated context passed via `ToolExecutionContext`. | Direct database access, JPA repositories, or entity tables. |
+
+---
+
+## 40. ToolDefinition: Metadata Specification
+
+`ToolDefinition` is an immutable specification record used across five subsystems:
+1. **LLM Tool Calling**: Formats OpenAPI/JSON Schema function specifications.
+2. **Authorization**: Evaluates role scopes and tenant entitlement.
+3. **Observability**: Tags metrics, audit logs, and OpenTelemetry spans.
+4. **Model Context Protocol (MCP)**: Exposes tool manifests over JSON-RPC.
+5. **Testing**: Drives automated contract testing and mocks.
+
+```java
+public record ToolDefinition(
+    String name,                           // e.g., "issue_create_ticket"
+    String description,                    // Natural language guidance for LLM
+    Class<?> inputType,                    // DTO class for reflection-based JSON schema
+    ToolCapability capability,             // READ, WRITE, DESTRUCTIVE, EXTERNAL_SIDE_EFFECT
+    ToolRiskLevel riskLevel,               // LOW, MEDIUM, HIGH, CRITICAL
+    Set<String> requiredPermissions,       // e.g., Set.of("ISSUE_CREATE")
+    boolean isIdempotent,                  // Can this tool be safely retried on network failure?
+    Duration timeout,                      // Default execution timeout (e.g., 5s)
+    boolean requiresHumanApproval,         // Mandates execution pause for human confirmation
+    String version                         // e.g., "1.0.0"
+) {}
+```
+
+* **Why omit output schema from runtime?** The LLM does not consume output schemas during prompt compilation; it only needs an input schema. Output schemas are managed via testing/documentation to minimize token overhead.
+
+---
+
+## 41. ToolRegistry: Discovery, Scoping & Governance
+
+```
+                    Spring ApplicationContext
+                               │
+                               │ scans on startup
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                        ToolRegistry                         │
+│ - In-memory catalog of all registered `AiTool` beans        │
+│ - Indexed by tool name and capability                       │
+│ - Dynamic kill-switch toggle per tenant or globally         │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+        filters available tools per agent invocation
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Filtered Tool Slice                      │
+│ 1. AgentDefinition.allowedToolNames()                       │
+│ 2. Tenant Subscription Feature Entitlements                │
+│ 3. User JWT Role & Permission Matrix                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Lifecycle Rules:
+1. **Bean Discovery**: `AiTool` implementations are standard Spring beans (`@Component`). On bootstrap, `ToolRegistry` discovers all `AiTool` beans via dependency injection (`List<AiTool>`).
+2. **Per-Agent Scoping**: No agent has access to all tools. `AgentDefinition.allowedToolNames()` explicitly declares the subset of tools the agent archetype is allowed to consider (e.g., `MaintenanceAgent` only receives `issue_*` and `property_get` tools).
+3. **Dynamic Enable/Disable**: Tools can be toggled off at runtime via Spring Cloud Config / Redis feature flags (e.g., disable `send_notification` during an SMS gateway outage).
+4. **Versioning**: Multiple versions (e.g., `issue_create_ticket:v1` and `issue_create_ticket:v2`) can coexist in the registry under unique names.
+
+---
+
+## 42. Tool Categories & Risk Levels
+
+We decouple **Operational Capability Type** (what the tool does mechanically) from **Risk Level** (the potential business or financial impact).
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Operational Capability                          │
+├───────────────────────┬────────────────────────────────────────────────┤
+│ READ                  │ Side-effect free; safe to retry and cache.     │
+│ WRITE                 │ Creates/updates internal entities.             │
+│ DESTRUCTIVE           │ Deletes or deactivates critical business data. │
+│ EXTERNAL_SIDE_EFFECT  │ Emits emails, SMS, webhooks, or payments.      │
+└───────────────────────┴────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────┐
+│                               Risk Level                               │
+├───────────────────────┬────────────────────────────────────────────────┤
+│ LOW                   │ Fetching public property address, FAQs.        │
+│ MEDIUM                │ Creating maintenance ticket, updating a bio.   │
+│ HIGH                  │ Creating leases, dispatching building notices. │
+│ CRITICAL              │ Deleting properties, triggering bulk payments. │
+└───────────────────────┴────────────────────────────────────────────────┘
+```
+
+### The Crucial Distinction:
+* **Capability Type** determines **infrastructure mechanics** (whether it requires idempotency keys, whether it can be retried automatically, whether it can be cached).
+* **Risk Level** determines **security and governance** (whether it mandates multi-factor authentication, human-in-the-loop approval, or manager-only access).
+
+---
+
+## 43. Tool Input Validation Pipeline
+
+The LLM is treated as an **untrusted remote client**. Any argument generated by the model must pass a rigorous multi-stage validation pipeline before executing business logic.
+
+```
+                      LLM Emits JSON Arguments
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Stage 1: Syntax & Structural Validation                         │
+│ - Handled by: SpringAiToolAdapter / Jackson                     │
+│ - Verifies valid JSON syntax and deserialization into Java DTO. │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Stage 2: Declarative Constraints (Jakarta Validation)           │
+│ - Handled by: `Validator.validate(dto)`                         │
+│ - Checks `@NotNull`, `@Size`, `@Pattern`, `@Min`, `@Max`.       │
+│ - Failure immediately returns `ToolResult.failure(...)` to LLM. │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Stage 3: Authorization & Tenant Boundary Check                  │
+│ - Handled by: `PolicyEnforcer`                                  │
+│ - Verifies caller role possesses tool's `requiredPermissions`.  │
+│ - Ensures `tenantId` is stamped from verified `AgentContext`.   │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ Stage 4: Business Invariant Validation                          │
+│ - Handled by: Livic Core Backend API                            │
+│ - Validates that referenced UUIDs belong to the verified tenant,│
+│   property units exist, leases are active, etc.                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+> **Zero-Trust Rule**: The LLM is **never** permitted to supply a `tenantId`. Even if the model generates a `propertyId`, the backend validates that the property belongs to the caller’s verified `tenantId`.
+
+---
+
+## 44. Multi-Tenant Isolation Architecture
+
+```
+User (Mobile / Web) ──[Authenticated Bearer JWT]──► AI Controller
+                                                          │
+                                         Extracts verified tenantId from JWT
+                                                          │
+                                                          ▼
+                                                     AgentContext
+                                                          │
+                                                          ▼
+                                                  ToolExecutionContext
+                                                          │
+                                  Injected into BackendAdminClient headers
+                                                          │
+                                                          ▼
+                                 HTTP Header: `X-Tenant-ID: {verifiedTenantId}`
+                                 HTTP Header: `Authorization: Bearer {jwt}`
+                                                          │
+                                                          ▼
+                                                  Livic Core Backend
+                                        (Validates SQL / Tenant Schema Filter)
+```
+
+1. **Origin of `tenantId`**: Extracted strictly from the authenticated Spring Security `UserDetailsImpl` / JWT claims at the HTTP gateway.
+2. **Never an LLM Parameter**: `tenantId` is omitted from all `ToolDefinition` input schemas. The model cannot hallucinate or tamper with tenancy.
+3. **Backend Enforcement**: The core backend verifies that the caller's JWT has membership in the requested `propertyId` via its own `@PreAuthorize("@authorizationService.hasPermission(...)")`.
+
+---
+
+## 45. The Authorization Pipeline: `AiAuthorization`
+
+When an LLM requests an action (e.g., `property_delete(propertyId=123)`), authorization occurs in a defense-in-depth hierarchy:
+
+```
+Tool Invocation Requested
+  │
+  ├─► 1. Check Tool Capability Toggle: Is the tool globally or tenant-enabled?
+  │
+  ├─► 2. Check Agent Scope: Is this tool in `AgentDefinition.allowedToolNames()`?
+  │
+  ├─► 3. Check User RBAC: Does the user’s JWT role have the required permission (e.g., `PROPERTY_EDIT`)?
+  │
+  ├─► 4. Check Approval Gate: Does `ToolDefinition.requiresHumanApproval()` mandate a human pause?
+  │
+  ├─► 5. Check Resource Ownership: Backend validates `propertyId=123` belongs to caller's tenant.
+  │
+  └─► Execution Dispatched
+```
+
+---
+
+## 46. Tool → Backend Communication: Gateway Abstraction
+
+### Evaluated Alternatives:
+* **Option A: Tools directly call backend REST endpoints via WebClient**: Spreads HTTP plumbing, deserialization, and token relay logic into every tool. (Anti-pattern).
+* **Option B: Tools call a single monolithic `BackendAdminClient`**: Leads to an unmaintainable god-class as endpoints expand.
+* **Option C: Modular Domain Backend Clients (RECOMMENDED)**:
+  * Tools inject domain-specific clients backed by an underlying transport gateway:
+    * `BackendPropertyClient`
+    * `BackendIssueClient`
+    * `BackendBillingClient`
+    * `BackendNotificationClient`
+
+```
+┌────────────────────────────────────────────────────────┐
+│                        AiTool                          │
+│               (e.g., CreateIssueTool)                  │
+└───────────────────────────┬────────────────────────────┘
+                            │ typed method call
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│                 BackendIssueClient                     │
+│            (Domain-specific REST Client)               │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│             BackendTransportGateway                    │
+│ - Injects Bearer JWT & X-Tenant-ID headers             │
+│ - Attaches Idempotency-Key headers                     │
+│ - Standardizes error mapping (404 -> NotFound, etc.)   │
+└───────────────────────────┬────────────────────────────┘
+                            │ HTTP REST
+                            ▼
+               Livic Core Backend Services
+```
+
+---
+
+## 47. Business Logic Boundary
+
+> **Architectural Rule:** The AI service orchestrates capabilities; the backend enforces business invariants.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                           AI SERVICE / TOOL                            │
+├────────────────────────────────────────────────────────────────────────┤
+│ • Validates input format (non-empty strings, valid UUID syntax).       │
+│ • Validates user role matches tool requirements.                       │
+│ • Serializes arguments into backend REST request.                      │
+│ • Sanitizes backend output for LLM context.                            │
+└────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼ HTTP
+┌────────────────────────────────────────────────────────────────────────┐
+│                          LIVIC CORE BACKEND                            │
+├────────────────────────────────────────────────────────────────────────┤
+│ • Enforces property existence and tenant ownership.                    │
+│ • Verifies user tenancy status (resident active in unit).              │
+│ • Enforces business duplicate rules (ticket already open for pipe?).   │
+│ • Manages database transactions and ACID commits.                      │
+│ • Publishes domain events (e.g., IssueCreatedEvent -> WebSocket/SMS).  │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 48. ToolResult: Design & Context Sanitization
+
+The LLM must **never** receive raw backend database DTOs. A backend endpoint may return 100 internal columns (audit flags, password hashes, foreign keys, internal status enums). Passing this raw payload pollutes context windows and creates security risks.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       Raw Backend DTO                       │
+│ 100+ fields: { id, version, tenant_id, raw_sql_state... }   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                  Tool projects & sanitizes
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                         ToolResult                          │
+│                                                             │
+│ 1. data: Lean JSON map containing ONLY fields needed        │
+│    for reasoning (e.g., { ticketId, status, unitNumber }).  │
+│ 2. summaryText: Natural language synopsis for LLM:          │
+│    "Maintenance ticket #1042 created for Unit 204."        │
+│ 3. status: SUCCESS / FAILURE / REQUIRES_APPROVAL            │
+│ 4. isRetryable: boolean                                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 49. Tool Output Size: Avoiding LLM Database Querying
+
+> **Anti-Pattern:** Returning 50,000 residents to the LLM and instructing it to "filter who hasn't paid rent."
+
+### Architectural Guardrails:
+1. **Server-Side Aggregation & Filtering**: Tools must expose specialized backend query endpoints (e.g., `analytics_get_defaulters` instead of `resident_get_all`).
+2. **Hard Pagination Limits**: All list tools enforce a default of 20 items, with a hard maximum of 50 items per turn.
+3. **Structured Truncation Summaries**: If a result exceeds limits, the tool returns:
+   ```json
+   {
+     "totalCount": 142,
+     "displayedCount": 20,
+     "hasMore": true,
+     "items": [ ... ],
+     "summary": "142 total overdue residents found. Showing top 20 by highest debt."
+   }
+   ```
+
+---
+
+## 50. Tool Composition: The Orchestration Rule
+
+> **Can Tools Call Other Tools?**
+> **STRICT ARCHITECTURAL RULE: NO.** Tools must never invoke other tools directly.
+
+```
+[FORBIDDEN]  Tool A ──► Tool B ──► Tool C
+             (Creates hidden coupling, untraceable side-effects, and breaks authorization)
+
+[CORRECT]    AgentRuntime / ExecutionEngine
+                    ├──► Step 1: Execute Tool A
+                    ├──► Step 2: Observe Result
+                    ├──► Step 3: Execute Tool B
+                    └──► Step 4: Execute Tool C
+```
+
+* **Rationale**: If Tool A calls Tool B internally, `AgentRuntime` loses step-level observability, `PolicyEnforcer` cannot evaluate permissions for Tool B, idempotency breaks, and the LLM cannot reason over intermediate steps.
+
+---
+
+## 51. Tool Versioning Strategy
+
+Tools evolve alongside backend APIs. We enforce explicit contract versioning:
+
+1. **Additive Changes**: Adding optional parameters to a tool DTO does not change the tool version.
+2. **Breaking Changes**: Changing argument types or removing fields requires a new tool name or explicit version tag (e.g., `issue_create_v2`).
+3. **Backward Compatibility for Audits**: Replaying historic executions from `ai_tool_execution_record_tbl` always uses the version recorded at the time of execution.
+
+---
+
+## 52. Multi-Layer Idempotency Architecture
+
+```
+                    ┌───────────────────────────────┐
+                    │      Layer 1: AI Runtime      │
+                    │ Checks ToolExecutionRecord for│
+                    │ key before calling tool.      │
+                    └───────────────┬───────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │  Layer 2: Transport Gateway   │
+                    │ Injects HTTP header:          │
+                    │ `Idempotency-Key: {key}`      │
+                    └───────────────┬───────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │   Layer 3: Backend Database   │
+                    │ Redis / MySQL unique lock on  │
+                    │ Idempotency-Key guarantees no │
+                    │ duplicate entity or message.  │
+                    └───────────────────────────────┘
+```
+
+* **Idempotency Key Derivation**:
+  `IdempotencyKey = SHA256(executionId + ":" + stepNumber + ":" + toolName + ":" + hash(inputPayload))`
+
+---
+
+## 53. Deterministic Retry Classification
+
+The LLM is **forbidden** from deciding whether an error is retryable. Retry policies are hardcoded into infrastructure adapters:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                       Error Retry Classification                       │
+├────────────────────────────┬─────────────┬─────────────────────────────┤
+│ Error Type                 │ Retryable?  │ Action Taken                │
+├────────────────────────────┼─────────────┼─────────────────────────────┤
+│ Validation / Constraint    │ NO          │ Return failure to LLM       │
+│ Unauthorized / Forbidden   │ NO          │ Forcibly halt step          │
+│ Not Found (404)            │ NO          │ Feed observation to LLM     │
+│ Business Rule Violation    │ NO          │ Feed message to LLM         │
+│ HTTP 429 (Rate Limit)      │ YES         │ Backoff according to header │
+│ HTTP 500 (Internal Error)  │ YES (1 max) │ Retry only if idempotent    │
+│ HTTP 504 / Network Timeout │ YES (1 max) │ Check status via key first  │
+└────────────────────────────┴─────────────┴─────────────────────────────┘
+```
+
+---
+
+## 54. Human Approval Binding
+
+Approval is **cryptographically and statefully bound** to the exact proposed parameters.
+
+```
+1. LLM proposes tool call:
+   Tool: "property_delete"
+   Payload: { "propertyId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d" }
+
+2. PolicyEnforcer checks `ToolDefinition.requiresHumanApproval()` -> TRUE.
+
+3. Engine computes action digest:
+   ActionHash = SHA256(toolName + canonicalJson(payload))
+
+4. ApprovalRequest created in DB:
+   {
+     "approvalId": "appr-101",
+     "executionId": "exec-501",
+     "actionHash": "e3b0c44298fc1c149afbf4c8996fb924...",
+     "status": "PENDING"
+   }
+
+5. When Landlord approves:
+   POST /api/v1/ai/executions/exec-501/approve?approvalId=appr-101
+
+6. Engine verifies:
+   Current ActionHash == ApprovalRequest.actionHash
+   If parameters were tampered with or modified by prompt injection, execution is REJECTED.
+```
+
+---
+
+## 55. Model Context Protocol (MCP) Future Compatibility
+
+Our pure domain `AiTool` and `ToolDefinition` abstractions make MCP support seamless without refactoring business tools:
+
+```
+                     ┌────────────────────────────────────────┐
+                     │            Domain `AiTool`             │
+                     │  - execute(ToolExecutionContext, input)│
+                     │  - getDefinition()                     │
+                     └───────┬────────────────────────┬───────┘
+                             │                        │
+               ┌─────────────┴────────┐      ┌────────┴─────────────┐
+               ▼                      ▼      ▼                      ▼
+      SpringAiToolAdapter       McpToolAdapter           CLI / Testing
+      (Internal Agent Loop)     (Exposes JSON-RPC        (Direct Unit Tests)
+                                 over SSE/stdio)
+```
+
+* **What MCP Handles**: JSON-RPC serialization, schema discovery (`tools/list`), execution dispatch (`tools/call`).
+* **What MCP Must NOT Handle**: Business validation, database querying, or tenant authorization (which remain strictly inside `AiTool` and the core backend).
+
+---
+
+## 56. Security Threat Modeling & Mitigations
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Security Threat Matrix                          │
+├──────────────────────────┬─────────────────────────────────────────────┤
+│ Threat Vector            │ Architectural Defense                       │
+├──────────────────────────┼─────────────────────────────────────────────┤
+│ 1. Prompt Injection      │ Tools ignore instructions embedded in data. │
+│                          │ Parameter schemas reject free-form commands.│
+├──────────────────────────┼─────────────────────────────────────────────┤
+│ 2. Tool Abuse / Spam     │ Rate-limiting per user/tenant. Cumulative   │
+│                          │ execution budgets (max 8 steps/turn).       │
+├──────────────────────────┼─────────────────────────────────────────────┤
+│ 3. Data Exfiltration     │ Tools project lean DTOs; never return full  │
+│                          │ DB tables or internal audit fields.         │
+├──────────────────────────┼─────────────────────────────────────────────┤
+│ 4. Cross-Tenant Access   │ `tenantId` is forced via verified context   │
+│                          │ and validated at SQL level by backend.      │
+├──────────────────────────┼─────────────────────────────────────────────┤
+│ 5. Privilege Escalation  │ Backend `@PreAuthorize` verifies user role  │
+│                          │ against resource ownership on every call.   │
+├──────────────────────────┼─────────────────────────────────────────────┤
+│ 6. Tool Output Injection │ Tool results are escaped and tagged as data │
+│                          │ observations, never executed as directives. │
+└──────────────────────────┴─────────────────────────────────────────────┘
+```
+
+---
+
+## 57. Observability & Audit Tracing
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Tool Observability Split                        │
+├────────────────────────────────────┬───────────────────────────────────┤
+│    Persistent Audit (Compliance)   │   Operational Metrics (Metrics)   │
+├────────────────────────────────────┼───────────────────────────────────┤
+│ Table: `ai_tool_execution_record`  │ Prometheus / Micrometer / OTel    │
+│ - executionId                      │ - Timer: tool_execution_time_ms   │
+│ - stepNumber                       │ - Counter: tool_calls_total       │
+│ - toolName & version               │ - Counter: tool_errors_total      │
+│ - tenantId & userId                │ - Counter: tool_retries_total     │
+│ - inputPayload (PII-masked)        │ - Gauge: active_tool_calls        │
+│ - outputPayload (sanitized)        │ - Trace Span: `AiTool:{name}`     │
+│ - status, durationMs, errorCode    │                                   │
+└────────────────────────────────────┴───────────────────────────────────┘
+```
+
+* **PII Masking**: Credit card numbers, passwords, and sensitive government IDs are masked by the transport gateway before persisting to `ai_tool_execution_record_tbl`.
+
+---
+
+## 58. Initial Livic Tool Set (Mapped to Existing Backend)
+
+Based on inspecting the actual Livic backend modules (`issue`, `property`, `analytics`, `announcement`, `finance`), here is the verified initial tool set:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                                Initial Livic Tool Catalog                               │
+├──────────────────────────┬───────┬──────────┬──────────┬────────────────────────────────┤
+│ Tool Name                │ Type  │ Risk     │ Approval │ Backend Endpoint Mapped        │
+├──────────────────────────┼───────┼──────────┼──────────┼────────────────────────────────┤
+│ property_list_my         │ READ  │ LOW      │ No       │ GET /api/v1/properties         │
+│ property_get_by_id       │ READ  │ LOW      │ No       │ GET /api/v1/properties/{id}    │
+│ issue_list               │ READ  │ LOW      │ No       │ GET /api/v1/issues             │
+│ issue_get_by_id          │ READ  │ LOW      │ No       │ GET /api/v1/issues/{id}        │
+│ analytics_get_summary    │ READ  │ LOW      │ No       │ GET /api/v1/analytics/summary  │
+│ analytics_get_defaulters │ READ  │ MEDIUM   │ No       │ GET /api/v1/analytics/defaulter│
+│ announcement_list        │ READ  │ LOW      │ No       │ GET /api/v1/announcement/...   │
+│ issue_create             │ WRITE │ MEDIUM   │ No       │ POST /api/v1/issues            │
+│ issue_add_comment        │ WRITE │ LOW      │ No       │ POST /api/v1/issues/{id}/comm..│
+│ announcement_create      │ WRITE │ MEDIUM   │ Yes      │ POST /api/v1/announcement/...  │
+│ issue_escalate           │ WRITE │ MEDIUM   │ No       │ POST /api/v1/issues/{id}/escal.│
+│ property_create          │ WRITE │ HIGH     │ Yes      │ POST /api/v1/properties        │
+│ property_delete          │ DESTR │ CRITICAL │ Yes      │ DELETE /api/v1/properties/{id} │
+│ billing_send_reminders   │ EXT   │ HIGH     │ Yes      │ POST /api/v1/notifications/rem.│
+└──────────────────────────┴───────┴──────────┴──────────┴────────────────────────────────┘
+```
+
+---
+
+## 59. Complete End-to-End Workflow Traces
+
+### Example 1: Pure Read Query
+**User:** *"Show me all maintenance issues for my property."*
+* **LLM Tool Call:** `issue_list(page=0, size=20)`.
+* **Validation:** Syntactic check on pagination params (valid).
+* **Authorization:** Role has `ISSUE_VIEW` (granted).
+* **Approval:** `ToolCapability.READ` -> No approval required.
+* **Execution:** `BackendIssueClient` invokes `GET /api/v1/issues`.
+* **Result:** 3 open tickets returned -> Sanitized to ticket title, status, unit -> LLM summarizes for user.
+
+### Example 2: Write Query (Autonomous Invariant Execution)
+**User:** *"Create a maintenance request for the leaking pipe in apartment 204."*
+* **LLM Tool Call:** `issue_create(unitId="u-204", title="Leaking pipe", category="PLUMBING")`.
+* **Validation:** Jakarta validation passes (`@NotBlank title`).
+* **Authorization:** Role has `ISSUE_CREATE` (granted).
+* **Approval:** `ToolCapability.WRITE`, Risk = `MEDIUM` -> Configured for auto-execution without human confirmation.
+* **Execution:** `BackendIssueClient` invokes `POST /api/v1/issues`.
+* **Backend:** Verifies unit exists in caller's property, creates ticket, publishes event.
+* **Result:** Returns `ticketId: "iss-99"`, LLM confirms: *"Ticket #iss-99 has been logged for Apartment 204."*
+
+### Example 3: Side-Effect / Multi-Step Query (Approval Gate Required)
+**User:** *"Send a reminder to every resident who has an overdue payment."*
+* **Cycle 1 (Read):** LLM calls `analytics_get_defaulters()`.
+  * Returns 2 delinquent accounts: Flat 101 ($150) and Flat 204 ($300).
+* **Cycle 2 (Formulate Action):** LLM calls `billing_send_reminders(delinquentIds=["u-101", "u-204"])`.
+  * Capability = `EXTERNAL_SIDE_EFFECT`, Risk = `HIGH`, `requiresHumanApproval = true`.
+* **Approval Intercept:**
+  * `PolicyEnforcer` halts execution before calling the tool.
+  * Creates `ApprovalRequest` record with exact payload hash.
+  * Execution status transitions to `WAITING_FOR_APPROVAL`.
+* **Landlord Action:** Landlord reviews and confirms in mobile app.
+* **Resumption:**
+  * Engine resumes execution with `isApprovalGranted = true` and `Idempotency-Key: exec-501-step-2`.
+  * Dispatches to backend notification queue.
+  * Execution completes.
+
+---
+
+## 60. Complete Tool Execution Sequence Diagram
+
+```
+User/AgentRuntime      ToolRegistry     PolicyEnforcer     SpringAiAdapter       AiTool       BackendClient     Core Backend
+        │                   │                 │                   │                 │               │                │
+        ├─ getTools(agent) ─►                 │                   │                 │               │                │
+        │◄─ Allowed Tools ──┤                 │                   │                 │               │                │
+        │                                     │                   │                 │               │                │
+        ├─ Invoke Tool Call ──────────────────┼───────────────────►                 │               │                │
+        │                                     ├─ Validate DTO ────┤                 │               │                │
+        │                                     ├─ Authorize RBAC ──┤                 │               │                │
+        │                                     │                   │                 │               │                │
+        │                                     ├─ [Needs Approval?]│                 │               │                │
+        │                                     │   YES ──► Halt    │                 │               │                │
+        │                                     │                   │                 │               │                │
+        │                                     │   NO / Approved   │                 │               │                │
+        │                                     │   Assemble Ctx ───►                 │               │                │
+        │                                                         ├─ execute(ctx) ──►               │                │
+        │                                                         │                 ├─ call(args) ──►                │
+        │                                                         │                 │               ├── HTTP REST ───►
+        │                                                         │                 │               │   (X-Tenant-ID)│
+        │                                                         │                 │               │◄── 200 OK ─────┤
+        │                                                         │                 │◄─ Backend DTO ┤                │
+        │                                                         │                 │                                │
+        │                                                         │                 ├─ Sanitize to ToolResult        │
+        │                                                         │◄─ ToolResult ───┤                                │
+        │◄─ Observation ──────────────────────────────────────────┤                                                  │
+```
+
+---
+
 ## ARCHITECTURE DECISIONS TO LOCK
 
 ### Core Domain & Spring AI Boundary Decisions
@@ -1526,5 +2150,16 @@ User/Event       AIController     AgentRuntime    ExecutionEngine   PolicyEnforc
 13. **Mandatory Approval for Side Effects**: Tools classified as `DESTRUCTIVE` or `EXTERNAL_SIDE_EFFECT` automatically suspend execution into `WAITING_FOR_APPROVAL`.
 14. **No LLM Job Scheduling**: Set operations must use bulk backend APIs. The LLM is forbidden from acting as a sequential loop scheduler for mass entities.
 15. **Unified Job Model Evolution**: Evolve the existing `AIJobTbl` and `AIJobEventListener` into the new `AgentExecution` and `ExecutionQueueConsumer` model.
+
+### Tool System & Backend Integration Decisions
+16. **`AiTool` is an Executable Capability Adapter**: Contains zero LLM or Spring AI imports; delegates business invariants to core backend services.
+17. **Strict Context Injection for Tenancy**: `tenantId` is never an LLM tool parameter; injected strictly from verified security context.
+18. **No Tool-to-Tool Invocation**: Tools never call other tools. All composition is driven sequentially by `AgentRuntime`.
+19. **Context Sanitization by Default**: Tools project lean DTOs and concise summaries; raw 100-field backend entities are never returned to LLMs.
+20. **Payload-Bound Human Approval**: Approvals are cryptographically hashed to the exact proposed parameters to prevent tampering or prompt injection drift.
+21. **Domain-Scoped Backend Clients**: Tools inject focused clients (`BackendPropertyClient`, `BackendIssueClient`) rather than a single monolithic client.
+22. **Infrastructure-Driven Retries**: Only network and 500/504 errors on idempotent tools can be retried; business and validation errors are never retried automatically.
+23. **Dual-Use Tool Contracts**: `AiTool` and `ToolDefinition` must be designed to plug seamlessly into both internal Spring AI adapters and external MCP adapters without modification.
+
 
 

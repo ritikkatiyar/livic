@@ -90,7 +90,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
           <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.darkLeaseCard}>
             <View style={styles.leaseHeaderRow}>
               <Text style={styles.leaseTitle}>Lease Agreement Details</Text>
-              <MaterialIcons name="gavel" size={24} color={theme.Colors.primaryContainer} />
+              <MaterialIcons name="gavel" size={24} color={theme.Colors.primary} />
             </View>
             
             <View style={styles.leaseGrid}>
@@ -225,25 +225,27 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   statValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
 
   darkLeaseCard: {
-    backgroundColor: isDark ? '#141E2A' : '#2b3133',
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)',
     borderRadius: 24,
     padding: 24,
-    shadowColor: 'black',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)',
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
+    shadowOpacity: isDark ? 0.2 : 0.06,
     shadowRadius: 24,
     elevation: 6,
     overflow: 'hidden'
   },
   leaseHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  leaseTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800' },
+  leaseTitle: { color: theme.Colors.onBackground, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800' },
   leaseGrid: { gap: 16, marginBottom: 20 },
   leaseRow: { flexDirection: 'row', alignItems: 'center' },
-  leaseLabel: { color: isDark ? '#94A3B8' : theme.Colors.outlineVariant, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', marginBottom: 2 },
-  leaseValue: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
+  leaseLabel: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', marginBottom: 2 },
+  leaseValue: { color: theme.Colors.onSurface, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
   leaseBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
   leaseBtnText: { color: '#ffffff', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
-  leaseSignedText: { color: isDark ? '#94A3B8' : theme.Colors.outlineVariant, fontSize: theme.Typography.bodySmall.fontSize, textAlign: 'center', marginTop: 12 },
+  leaseSignedText: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodySmall.fontSize, textAlign: 'center', marginTop: 12 },
 
   sectionHeader: { marginTop: 4 },
   sectionTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },

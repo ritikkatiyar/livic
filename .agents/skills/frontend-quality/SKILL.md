@@ -19,7 +19,7 @@ This file previously claimed a 9.3/10 score with all 7 phases COMPLETE. That cla
 
 Verified findings that contradict the old claims:
 - Phase 4 ("Split Oversized Screens") was marked COMPLETE but 11+ screens remain over 900 lines, several over 1,800 (see Phase 4 below for the current list).
-- Phase 5 ("API And Server State Layer") was marked COMPLETE but no server-state/cache library (e.g. TanStack Query) is present in `package.json` — screens still hand-roll `useState`/`useEffect`/fetch per screen, including duplicate independent fetches of the same shared data (e.g. the properties list is fetched independently by 13+ screens with no shared cache).
+- Phase 5 ("API And Server State Layer"): `@tanstack/react-query` is installed and integrated in `livic-resident-fe` (with shared cache hooks in `src/hooks/useResidentData.ts`), while remaining legacy screens are progressively migrating away from local `useState`/`useEffect`/fetch.
 - The "Mixed JS And TS" section below listed `.js` screens that no longer exist — confirmed via `find app src -name "*.js"` returning nothing. Section removed.
 - Widespread hardcoded styling: 600+ hardcoded hex color literals and 800+ hardcoded numeric `fontSize` values exist outside `src/theme/Theme.ts`, despite `ui-consistency.md` prohibiting this. This causes real dark-mode contrast bugs (hardcoded colors don't adapt when the user switches theme mode) and cross-screen inconsistency.
 - No error boundary exists anywhere in the app — an uncaught render error white-screens the whole app.
@@ -208,11 +208,11 @@ Acceptance:
 - [ ] Complex screens are composed from focused components and hooks.
 - [ ] Behavior is verified unchanged after each split (manual check + any existing tests).
 
-### Phase 5 - API And Server State Layer [NOT STARTED]
+### Phase 5 - API And Server State Layer [IN PROGRESS]
 
 Goal: raise score toward **8.5+**.
 
-Verified current state: no server-state/cache library is installed (`@tanstack/react-query` absent from `package.json`). Screens hand-roll `useState`/`useEffect`/fetch individually, causing real duplicate-fetch bugs — e.g. the properties list is independently fetched by 13+ screens with no shared cache, so a mutation in one screen (e.g. toggling a property active) does not reliably reflect in another until manual refresh.
+Verified current state: `@tanstack/react-query` is installed and active in `livic-resident-fe` (`src/hooks/useResidentData.ts`). Screens are migrating to shared query hooks to eliminate duplicate independent fetches.
 
 Tasks:
 

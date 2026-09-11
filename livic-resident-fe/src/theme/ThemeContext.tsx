@@ -11,13 +11,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-export interface AppTheme {
-  Colors: ColorTokens;
-  Surface: SurfaceTokens;
-  Typography: typeof Typography;
-  Spacing: typeof Spacing;
-  Rounded: typeof Rounded;
-}
+export type AppTheme = ReturnType<typeof getTheme>;
 
 export interface ThemeContextValue {
   mode: ThemeMode;

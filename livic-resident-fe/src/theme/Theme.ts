@@ -55,6 +55,7 @@ export const LightColors = {
   backgroundGradient: ["#d4f5f9", "#e8f8fb", "#e2e0fb"] as [string, string, ...string[]],
   scrollbarThumb: "rgba(0, 104, 117, 0.20)",
   scrollbarThumbHover: "rgba(0, 104, 117, 0.40)",
+  modalOverlayBackground: "rgba(15, 23, 42, 0.30)",
 };
 
 export const DarkColors = {
@@ -112,6 +113,7 @@ export const DarkColors = {
   backgroundGradient: ["#090D12", "#0F1720", "#141E2A"] as [string, string, ...string[]],
   scrollbarThumb: "rgba(0, 229, 255, 0.20)",
   scrollbarThumbHover: "rgba(0, 229, 255, 0.40)",
+  modalOverlayBackground: "rgba(15, 23, 42, 0.50)",
 };
 
 export const Colors = LightColors;
@@ -362,6 +364,26 @@ export const AnimationDuration = Timing.normal;
 export type ColorTokens = typeof LightColors;
 export type SurfaceTokens = typeof LightSurface;
 
+export const Breakpoints = {
+  mobile: 0,
+  tablet: 600,
+  desktop: 900,
+  modalMaxWidth: 520,
+};
+
+export const Dimensions = {
+  modalScrollMaxHeight: 320,
+};
+
+export const IconSizes = {
+  xs: 14,
+  sm: 20,
+  md: 22,
+  lg: 24,
+  xl: 30,
+  xxl: 32,
+};
+
 export function getTheme(isDark: boolean) {
   return {
     Colors: isDark ? DarkColors : LightColors,
@@ -371,6 +393,9 @@ export function getTheme(isDark: boolean) {
     Spacing,
     Rounded,
     Timing,
+    Breakpoints,
+    Dimensions,
+    IconSizes,
   };
 }
 
@@ -382,10 +407,9 @@ export const Theme = {
   Spacing,
   Rounded,
   Timing,
+  Breakpoints,
+  Dimensions,
+  IconSizes,
 };
 
-export const Breakpoints = {
-  mobile: 0,
-  tablet: 600,
-  desktop: 900,
-};
+

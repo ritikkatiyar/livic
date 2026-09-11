@@ -19,6 +19,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { isDesktop } = useResponsive();
+  // Consumes shared @tanstack/react-query server-state query cache per Rule 6.C & Phase 5
   const { data: lease } = useActiveLease(token);
   const { data: property } = usePropertyDetails(lease?.propertyId, token);
   const [showLeaseModal, setShowLeaseModal] = useState(false);
@@ -38,7 +39,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
           <BlurView intensity={40} tint="light" style={styles.glassCard}>
             <View style={styles.mainCardHeaderRow}>
               <View style={styles.iconBox}>
-                <MaterialIcons name="apartment" size={30} color={theme.Colors.primary} />
+                <MaterialIcons name="apartment" size={theme.IconSizes.xl} color={theme.Colors.primary} />
               </View>
               <View style={styles.mainCardHeaderRowContent}>
                 <Text style={styles.propertyName}>{lease?.propertyName || 'Assigned Residence'}</Text>
@@ -68,12 +69,12 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
           <BlurView intensity={40} tint="light" style={styles.glassCard}>
             <View style={styles.leaseHeaderRow}>
               <Text style={styles.leaseTitle}>Lease Agreement Details</Text>
-              <MaterialIcons name="gavel" size={24} color={theme.Colors.primary} />
+              <MaterialIcons name="gavel" size={theme.IconSizes.lg} color={theme.Colors.primary} />
             </View>
             
             <View style={styles.leaseGrid}>
               <View style={styles.leaseRow}>
-                <MaterialIcons name="calendar-today" size={22} color={theme.Colors.primaryFixedDim} />
+                <MaterialIcons name="calendar-today" size={theme.IconSizes.md} color={theme.Colors.primaryFixedDim} />
                 <View style={styles.leaseRowContent}>
                   <Text style={styles.leaseLabel}>Move-In Date</Text>
                   <Text style={styles.leaseValue}>{lease?.moveInDate || 'On File'}</Text>
@@ -81,7 +82,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
               </View>
               
               <View style={styles.leaseRow}>
-                <MaterialIcons name="event-busy" size={22} color={theme.Colors.primaryFixedDim} />
+                <MaterialIcons name="event-busy" size={theme.IconSizes.md} color={theme.Colors.primaryFixedDim} />
                 <View style={styles.leaseRowContent}>
                   <Text style={styles.leaseLabel}>Move-Out Date</Text>
                   <Text style={styles.leaseValue}>{lease?.moveOutDate || 'On File'}</Text>
@@ -89,7 +90,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
               </View>
 
               <View style={styles.leaseRow}>
-                <MaterialIcons name="verified-user" size={22} color={theme.Colors.primaryFixedDim} />
+                <MaterialIcons name="verified-user" size={theme.IconSizes.md} color={theme.Colors.primaryFixedDim} />
                 <View style={styles.leaseRowContent}>
                   <Text style={styles.leaseLabel}>Escrow Protection</Text>
                   <Text style={styles.leaseValue}>Verified & Locked</Text>
@@ -107,7 +108,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
                 end={{ x: 1, y: 0 }}
                 style={styles.leaseBtn}
               >
-                <MaterialIcons name="description" size={20} color={theme.Colors.onPrimary} />
+                <MaterialIcons name="description" size={theme.IconSizes.sm} color={theme.Colors.onPrimary} />
                 <Text style={styles.leaseBtnText}>View Digital Lease Contract</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -126,7 +127,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
               return (
                 <BlurView key={idx} intensity={40} tint="light" style={styles.amenityCard}>
                   <View style={styles.amenityIconBox}>
-                    <MaterialIcons name={meta.icon} size={24} color={theme.Colors.primary} />
+                    <MaterialIcons name={meta.icon} size={theme.IconSizes.lg} color={theme.Colors.primary} />
                   </View>
                   <Text style={styles.amenityTitle}>{amenityName}</Text>
                   <Text style={styles.amenitySub}>{meta.sub}</Text>
@@ -140,16 +141,11 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
         {showLeaseModal && (
           <Modal transparent visible={true} animationType="slide" onRequestClose={() => setShowLeaseModal(false)}>
             <BlurView intensity={40} tint="dark" style={styles.modalOverlay}>
-              <LinearGradient
-                colors={theme.Colors.backgroundGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.modalContent}
-              >
+              <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Digital Lease Contract</Text>
                   <TouchableOpacity onPress={() => setShowLeaseModal(false)}>
-                    <MaterialIcons name="close" size={24} color={theme.Colors.onBackground} />
+                    <MaterialIcons name="close" size={theme.IconSizes.lg} color={theme.Colors.onBackground} />
                   </TouchableOpacity>
                 </View>
                 <ScrollView style={styles.modalScrollView}>
@@ -178,7 +174,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
                     <Text style={styles.modalCloseBtnText}>Close Agreement Viewer</Text>
                   </LinearGradient>
                 </TouchableOpacity>
-              </LinearGradient>
+              </View>
             </BlurView>
           </Modal>
         )}
@@ -266,6 +262,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: theme.Rounded.xl,
     overflow: 'hidden',
     padding: theme.Spacing.containerPadding,
+    backgroundColor: theme.Colors.glassFill,
     shadowColor: theme.Surface.shadowColor,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,

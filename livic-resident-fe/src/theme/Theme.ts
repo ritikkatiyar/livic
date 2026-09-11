@@ -375,6 +375,15 @@ export const Dimensions = {
   modalScrollMaxHeight: 320,
 };
 
+export const IconSizes = {
+  xs: 14,
+  sm: 20,
+  md: 22,
+  lg: 24,
+  xl: 30,
+  xxl: 32,
+};
+
 export function getTheme(isDark: boolean) {
   return {
     Colors: isDark ? DarkColors : LightColors,
@@ -386,6 +395,7 @@ export function getTheme(isDark: boolean) {
     Timing,
     Breakpoints,
     Dimensions,
+    IconSizes,
   };
 }
 
@@ -399,5 +409,7 @@ export const Theme = {
   Timing,
   Breakpoints,
   Dimensions,
+  IconSizes,
 };
+
 

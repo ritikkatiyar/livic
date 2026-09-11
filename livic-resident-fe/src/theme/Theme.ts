@@ -364,6 +364,17 @@ export const AnimationDuration = Timing.normal;
 export type ColorTokens = typeof LightColors;
 export type SurfaceTokens = typeof LightSurface;
 
+export const Breakpoints = {
+  mobile: 0,
+  tablet: 600,
+  desktop: 900,
+  modalMaxWidth: 520,
+};
+
+export const Dimensions = {
+  modalScrollMaxHeight: 320,
+};
+
 export function getTheme(isDark: boolean) {
   return {
     Colors: isDark ? DarkColors : LightColors,
@@ -373,6 +384,8 @@ export function getTheme(isDark: boolean) {
     Spacing,
     Rounded,
     Timing,
+    Breakpoints,
+    Dimensions,
   };
 }
 
@@ -384,10 +397,7 @@ export const Theme = {
   Spacing,
   Rounded,
   Timing,
+  Breakpoints,
+  Dimensions,
 };
 
-export const Breakpoints = {
-  mobile: 0,
-  tablet: 600,
-  desktop: 900,
-};

@@ -30,7 +30,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
   return (
     <PageShell
       scrollable={true}
-      header={isDesktop ? <DesktopNavBar title="My Unit & Property Lease" /> : null}
+      header={isDesktop ? <DesktopNavBar title="My Unit & Property Lease" activeTab="Property" /> : null}
       edges={isDesktop ? ['top'] : []}
       contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
     >
@@ -140,47 +140,45 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
         {showLeaseModal && (
           <Modal transparent visible={true} animationType="slide" onRequestClose={() => setShowLeaseModal(false)}>
             <BlurView intensity={40} tint="light" style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <LinearGradient
-                  colors={theme.Colors.backgroundGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.modalGradient}
-                >
-                  <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Digital Lease Contract</Text>
-                    <TouchableOpacity onPress={() => setShowLeaseModal(false)}>
-                      <MaterialIcons name="close" size={24} color={theme.Colors.onBackground} />
-                    </TouchableOpacity>
-                  </View>
-                  <ScrollView style={styles.modalScrollView}>
-                    <Text style={styles.modalContractTitle}>RESIDENTIAL TENANCY LEASE AGREEMENT</Text>
-                    <Text style={styles.modalContractText}>
-                      This Residential Lease Agreement (&quot;Agreement&quot;) is executed between Property Owner and Tenant for Unit {lease?.unitId?.substring(0, 8) || '101'}.
-                      {"\n\n"}
-                      1. RENT & FEES: The monthly rent of ₹{lease?.monthlyRentAmount?.toLocaleString() || '10,000'} is due on or before the 5th of each calendar month.
-                      {"\n\n"}
-                      2. SECURITY DEPOSIT: The security deposit of ₹{lease?.securityDeposit?.toLocaleString() || '30,000'} is held securely and refundable upon lease expiration subject to unit inspection.
-                      {"\n\n"}
-                      3. MAINTENANCE: Tenant agrees to report all maintenance or structural defects promptly via the Tenant Portal.
-                    </Text>
-                  </ScrollView>
-                  <TouchableOpacity
-                    style={styles.modalCloseBtnWrapper}
-                    onPress={() => setShowLeaseModal(false)}
-                    activeOpacity={0.85}
-                  >
-                    <LinearGradient
-                      colors={[theme.Colors.accentGradientStart, theme.Colors.accentGradientEnd]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.modalCloseBtn}
-                    >
-                      <Text style={styles.modalCloseBtnText}>Close Agreement Viewer</Text>
-                    </LinearGradient>
+              <LinearGradient
+                colors={theme.Colors.backgroundGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.modalContent}
+              >
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Digital Lease Contract</Text>
+                  <TouchableOpacity onPress={() => setShowLeaseModal(false)}>
+                    <MaterialIcons name="close" size={24} color={theme.Colors.onBackground} />
                   </TouchableOpacity>
-                </LinearGradient>
-              </View>
+                </View>
+                <ScrollView style={styles.modalScrollView}>
+                  <Text style={styles.modalContractTitle}>RESIDENTIAL TENANCY LEASE AGREEMENT</Text>
+                  <Text style={styles.modalContractText}>
+                    This Residential Lease Agreement (&quot;Agreement&quot;) is executed between Property Owner and Tenant for Unit {lease?.unitId?.substring(0, 8) || '101'}.
+                    {"\n\n"}
+                    1. RENT & FEES: The monthly rent of ₹{lease?.monthlyRentAmount?.toLocaleString() || '10,000'} is due on or before the 5th of each calendar month.
+                    {"\n\n"}
+                    2. SECURITY DEPOSIT: The security deposit of ₹{lease?.securityDeposit?.toLocaleString() || '30,000'} is held securely and refundable upon lease expiration subject to unit inspection.
+                    {"\n\n"}
+                    3. MAINTENANCE: Tenant agrees to report all maintenance or structural defects promptly via the Tenant Portal.
+                  </Text>
+                </ScrollView>
+                <TouchableOpacity
+                  style={styles.modalCloseBtnWrapper}
+                  onPress={() => setShowLeaseModal(false)}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={[theme.Colors.accentGradientStart, theme.Colors.accentGradientEnd]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.modalCloseBtn}
+                  >
+                    <Text style={styles.modalCloseBtnText}>Close Agreement Viewer</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </LinearGradient>
             </BlurView>
           </Modal>
         )}
@@ -201,10 +199,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.Colors.glassStroke,
     shadowColor: theme.Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: isDark ? 0.2 : 0.06,
-    shadowRadius: 20,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 30,
+    elevation: 3,
     overflow: 'hidden'
   },
   mainCardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.md, marginBottom: theme.Spacing.lg },
@@ -231,9 +229,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.glassStroke,
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: isDark ? 0.2 : 0.06,
-    shadowRadius: 24,
-    elevation: 6,
+    shadowOpacity: 0.05,
+    shadowRadius: 30,
+    elevation: 3,
     overflow: 'hidden'
   },
   leaseHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.lg },
@@ -241,9 +239,21 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   leaseGrid: { gap: theme.Spacing.md, marginBottom: theme.Spacing.lg },
   leaseRow: { flexDirection: 'row', alignItems: 'center' },
   leaseRowContent: { marginLeft: theme.Spacing.md },
-  leaseLabel: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', marginBottom: theme.Spacing.sm },
+  leaseLabel: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '400', marginBottom: theme.Spacing.sm },
   leaseValue: { color: theme.Colors.onSurface, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
-  leaseBtn: { paddingVertical: theme.Spacing.md, borderRadius: theme.Rounded.lg, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: theme.Spacing.sm },
+  leaseBtn: {
+    paddingVertical: theme.Spacing.md,
+    borderRadius: theme.Rounded.full,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: theme.Spacing.sm,
+    shadowColor: theme.Colors.primary,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
   leaseBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
   leaseSignedText: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodySmall.fontSize, textAlign: 'center', marginTop: theme.Spacing.md },
 
@@ -254,7 +264,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.Spacing.md },
   amenityCard: { width: '47.8%', backgroundColor: theme.Colors.glassFill, borderRadius: theme.Rounded.xl, padding: theme.Spacing.md, borderWidth: 1, borderColor: theme.Colors.glassStroke, overflow: 'hidden' },
   amenityIconBox: { width: 48, height: 48, borderRadius: theme.Rounded.md, backgroundColor: theme.Colors.primaryContainer, alignItems: 'center', justifyContent: 'center', marginBottom: theme.Spacing.md },
-  amenityTitle: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  amenityTitle: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onBackground },
   amenitySub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm },
 
   modalOverlay: {
@@ -266,9 +276,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   modalContent: {
     width: '100%',
-    maxWidth: 520,
+    maxWidth: theme.Breakpoints.modalMaxWidth,
     borderRadius: theme.Rounded.xl,
     overflow: 'hidden',
+    padding: theme.Spacing.containerPadding,
     shadowColor: theme.Surface.shadowColor,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
@@ -277,16 +288,27 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.Colors.glassStroke,
   },
-  modalGradient: {
-    padding: theme.Spacing.containerPadding,
-  },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.md },
   modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
-  modalScrollView: { maxHeight: 320 },
-  modalContractTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: theme.Colors.primary, marginBottom: theme.Spacing.md },
-  modalContractText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 22 },
-  modalCloseBtnWrapper: { marginTop: theme.Spacing.lg, borderRadius: theme.Rounded.lg, overflow: 'hidden' },
-  modalCloseBtn: { paddingVertical: theme.Spacing.md, borderRadius: theme.Rounded.lg, alignItems: 'center', justifyContent: 'center' },
+  modalScrollView: { maxHeight: theme.Dimensions.modalScrollMaxHeight },
+  modalContractTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700', color: theme.Colors.primary, marginBottom: theme.Spacing.md },
+  modalContractText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: theme.Typography.bodyLarge.lineHeight },
+  modalCloseBtnWrapper: {
+    marginTop: theme.Spacing.lg,
+    borderRadius: theme.Rounded.full,
+    shadowColor: theme.Colors.primary,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  modalCloseBtn: {
+    paddingVertical: theme.Spacing.md,
+    borderRadius: theme.Rounded.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   modalCloseBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
 });
 

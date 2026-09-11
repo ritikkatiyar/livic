@@ -139,7 +139,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
         {/* Digital Lease Contract Modal */}
         {showLeaseModal && (
           <Modal transparent visible={true} animationType="slide" onRequestClose={() => setShowLeaseModal(false)}>
-            <BlurView intensity={40} tint="light" style={styles.modalOverlay}>
+            <BlurView intensity={40} tint="dark" style={styles.modalOverlay}>
               <LinearGradient
                 colors={theme.Colors.backgroundGradient}
                 start={{ x: 0, y: 0 }}
@@ -269,7 +269,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: theme.Colors.modalOverlayBackground,
     justifyContent: 'center',
     alignItems: 'center',
     padding: theme.Spacing.containerPadding

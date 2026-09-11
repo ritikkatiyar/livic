@@ -55,6 +55,7 @@ export const LightColors = {
   backgroundGradient: ["#d4f5f9", "#e8f8fb", "#e2e0fb"] as [string, string, ...string[]],
   scrollbarThumb: "rgba(0, 104, 117, 0.20)",
   scrollbarThumbHover: "rgba(0, 104, 117, 0.40)",
+  modalOverlayBackground: "rgba(15, 23, 42, 0.30)",
 };
 
 export const DarkColors = {
@@ -112,6 +113,7 @@ export const DarkColors = {
   backgroundGradient: ["#090D12", "#0F1720", "#141E2A"] as [string, string, ...string[]],
   scrollbarThumb: "rgba(0, 229, 255, 0.20)",
   scrollbarThumbHover: "rgba(0, 229, 255, 0.40)",
+  modalOverlayBackground: "rgba(15, 23, 42, 0.50)",
 };
 
 export const Colors = LightColors;

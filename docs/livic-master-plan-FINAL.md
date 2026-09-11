@@ -6,7 +6,20 @@ Every item below was checked against the live codebase just now, not assumed fro
 
 ---
 
-## ✅ CONFIRMED DONE — do not redo these
+## APPROVED PRODUCT + DESIGN DIRECTION
+
+The redesigned Landlord and Resident experiences have now been reviewed and approved in Figma. The Figma design is the visual/interaction reference for implementation; this document is the engineering plan that makes that design real.
+
+**Approved Figma:** Livic — Dynamic Modules & Permissions
+https://www.figma.com/design/jtGazIZGBEROPOLGK0Sgyb
+
+The approved visual direction follows the Livic Visual Identity System: flat solid surfaces, warm neutral background, restrained teal accent, hairline borders, sentence-case typography, no glassmorphism, no decorative gradients, and responsive behavior across mobile/tablet/desktop.
+
+The approved UX also establishes the new product access model: navigation and feature visibility are driven by effective module/feature access returned by the backend, while the backend remains the final authorization authority.
+
+---
+
+## CONFIRMED DONE / DO NOT RE-LITIGATE
 
 - `GlassCard` dark-mode fix (`theme.Colors.glassFill`)
 - Login screen dark-mode literals — 0 remaining
@@ -16,78 +29,693 @@ Every item below was checked against the live codebase just now, not assumed fro
 - `frontend-engineering/SKILL.md` guardrails — landed on `main`
 - Portfolio's fake stat cards (`'LIVE'`/`'READY'`/`'00'`) — replaced with real data
 - Typography `PascalCase`/`camelCase` mixing in `SidebarNavigation` — resolved to one convention
-- ~~Web mobile-nav flash on F5/hard-refresh~~ — **DOWNGRADED, see 🔴 open table below.** The `window.innerWidth` guard only helps post-hydration; it does not fix the actual production bug.
-- **Global property-selection architecture** — a real `PropertySelectionContext` now exists, wired at `_layout.tsx`. `DesktopNavBar` renders the one selector; `reports.tsx`, `RentRollScreen`, `CommandCenterScreen`, `AnalyticsDashboardScreen`, and inventory/leases hooks all consume it via `useGlobalPropertySelection`. This is a cleaner fix than the original plan called for (one selector driving shared state, vs. one component re-rendered per screen) — no further visual-consistency work needed here, see the new gap below instead.
-- Backend: `LazyInitializationException` on `BillingWorksheetRepository` fixed (`JOIN FETCH`), some Java import-style cleanup done per PR #44.
+- Global property-selection architecture — `PropertySelectionContext` is wired at `_layout.tsx`; desktop screens consume the shared selection state
+- Backend `LazyInitializationException` on `BillingWorksheetRepository` — fixed (`JOIN FETCH`)
+- **Approved full Landlord + Resident UI redesign in Figma** — implementation reference is the approved Figma file above
 
 ---
 
-## 🆕 NEW FINDING — mobile has no property selector at all
+## 🔴 PRE-EXISTING OPEN ITEMS — EXECUTE, DON'T RE-DESIGN
 
-`MobileHeader.tsx` has zero integration with `PropertySelectionContext` — no UI anywhere on mobile to actually set `selectedPropertyId`. Since `reports.tsx` and other screens now depend entirely on this context (their own selector UI was removed, not just hidden), **mobile users currently have no way to scope these screens to a specific property** — they likely always see `selectedPropertyId` as `null`/`undefined`, silently showing an unscoped/"all properties" state with no way to change it.
-
-```
-Add a mobile-appropriate property selector to MobileHeader.tsx (or a 
-dedicated mobile-only component), wired to the same PropertySelectionContext 
-via useGlobalPropertySelection — a compact trigger (property name + chevron) 
-opening a searchable list/sheet, consistent with the mobile design language 
-elsewhere. This is not optional polish — screens are currently broken 
-without it on mobile, not just inconsistent.
-```
-
-**This is now the highest-priority open item** — higher than the items below, since it's a functional gap on the primary platform, not a consistency issue.
-
----
-
-## 🔴 STILL OPEN — verified unchanged since last check, needs actual execution
-
-| Item | Status |
+| Item | Required action |
 |---|---|
-| **Mobile-nav wrong-device flash on Vercel (web) — regressed from "done" to open, root cause found** | Confirmed live on production (`tenant-app-smoky.vercel.app`) via screenshot: desktop-width browser shows the mobile floating nav, page stuck mid-hydration. Root cause: `output: "static"` pre-renders HTML at Vercel build time, where there is no `window` object — the `window.innerWidth >= 900` guard (PR #45) necessarily evaluates false during static generation, baking the mobile nav into the static HTML every device receives on first paint, before any JS runs to correct it. The guard only fixes the *post-hydration* case; it cannot fix the *pre-hydration* static HTML, which is what the screenshot shows. **Real fix**: replace the JS-computed check with a CSS-media-query-based approach for web (e.g. a `BottomNavigation.web.tsx` variant applying `display` via `@media (min-width: 900px)`, which the browser applies during initial paint/layout with zero JS dependency) — see chat for the full spec. Also worth checking why the page content itself was stuck on a spinner in the same screenshot — may be a separate hanging-fetch issue, not purely nav-visibility. |
-| **Triple-sidebar bug** (`EditPropertyScreen.tsx` + `CreatePropertyScreen.tsx` hand-roll their own second sidebar) | Confirmed still present in both files. Flagged as top priority twice now, still untouched. |
-| `rgba()`/`hsla()` color-literal sweep | 210 instances remain (flat, no progress since last check) |
-| `fontWeight` standalone-literal sweep | 740 instances remain (flat/slightly worse) |
-| `PageShell` adoption | Stalled at 23 screens — no new adopters since last check |
-| Screen decomposition (<500 lines) | Stalled — same oversized files as before: `TenantDetailsCard` (728), `IssueDetailModal` (673), `AnalyticsDashboardScreen` (629, grew since first flagged), `TenantDetailsSidebar` (611), `FloatingAIAssistant` (594), `FloorLayoutViewerModal` (544), `settings.sections.tsx` (513), `AddItemModal`/`BillingScreen` (492 each) |
-| Pagination rollout | Partial — `PaginatedContainer`/`Pagination` genuinely used in ~4 screens (`escalations`, `RentRollInvoiceList`, `OwnerLeasesScreen`, `AnalyticsDashboardScreen`), not yet on properties list, tenant/lease lists broadly, ledger, inventory, announcements |
-| Shared package extraction (`packages/ui`) | Not started — `Theme.ts`, `GlassCard`, etc. still duplicated files between the two apps |
-| SQL migration guardrails file | Never landed on `main` |
+| **Mobile-nav wrong-device flash on Vercel** | Replace JS-computed device visibility with CSS media-query behavior for web. Verify first paint on desktop and mobile. Investigate the simultaneous stuck-spinner symptom. |
+| **Mobile property selector** | Add a compact property trigger/sheet to `MobileHeader.tsx`, backed by the existing `PropertySelectionContext`. |
+| **Triple-sidebar bug** | Remove the hand-rolled secondary sidebar from `EditPropertyScreen.tsx` and `CreatePropertyScreen.tsx`; use the canonical shell. |
+| `rgba()` / `hsla()` color literals | Complete token migration. |
+| Standalone `fontWeight` literals | Complete typography-token migration. |
+| `PageShell` adoption | Continue adoption until all applicable screens use the canonical shell. |
+| Screen decomposition | Continue reducing oversized screen/components below the established threshold. |
+| Pagination | Finish rollout on remaining list-bearing screens. |
+| Shared package extraction | Extract stable primitives into `packages/ui` only after the current UI cleanup stabilizes. |
+| SQL migration guardrails | Add and enforce migration guardrails. |
 
 ---
 
-## Execution order from here
+# PART 13 — APPROVED DYNAMIC MODULE + FEATURE ACCESS ARCHITECTURE
 
-1. **Mobile-nav pre-hydration flash (CSS media-query fix)** — this is now the top item. It's live in production, confirmed via screenshot, and the previous fix attempt (PR #45) only addressed half the problem. Also investigate the stuck-spinner/hanging-content symptom seen in the same screenshot before assuming it's purely the nav issue.
-2. **Mobile property selector (new finding)** — functional gap, fix next.
-3. **Triple-sidebar bug** — a real, visible bug (not consistency polish), and it's been deferred through two full merges now despite being flagged as priority both times.
-4. **`rgba()` + `fontWeight` sweeps** — do these together, same file-by-file pattern proven to work on the earlier hex sweep. These are the two remaining causes of "screens still feel inconsistent" that haven't been touched at all.
-5. **Resume `PageShell` adoption + screen decomposition** — these were making real progress (6→23) before stalling; pick back up rather than starting a new approach.
-6. **Finish pagination rollout** to the remaining list-bearing screens.
-7. **Shared package extraction** — do this once the above stabilizes, since it'll touch every file being worked on above; doing it mid-sweep would create merge conflicts with itself.
+This is the major product architecture change associated with the approved design. It replaces the assumption that the sidebar is a fixed list of screens.
 
----
+## 13.1 — Core principles
 
-## PART 12 — Scalability & Infrastructure (new, beyond UI consistency)
-
-These matter for "highly scalable" specifically — not fixing a visible bug, but preventing the *next* 6 months of growth from recreating the same problems this whole plan has been cleaning up.
-
-### 12.1 — Shared types package (`@livic/types`)
-Frontend TypeScript interfaces matching backend DTOs are currently hand-written per feature, with no enforced link back to the actual backend contract. This is a drift risk that gets worse, not better, as the API surface grows. Generate from the backend's OpenAPI spec if one exists; otherwise centralize hand-maintained types into one shared package consumed by both apps, so a backend field rename has one place to update on the frontend, not N places found only when something breaks.
-
-### 12.2 — Import-boundary enforcement between features
-Nothing currently stops `src/features/finance` from reaching directly into `src/features/properties`' internals instead of a clean public surface. Add an ESLint rule restricting cross-feature imports to each feature's own `index.ts` export surface — mirrors the backend's already-enforced facade pattern (ArchUnit blocking cross-module repository injection). Without this, feature boundaries erode silently as more screens get added.
-
-### 12.3 — Error tracking (Sentry or equivalent)
-There's a dev-gated `logger` but nothing capturing real user-facing crashes/errors once this is live. For a product handling rent/billing data, silently-failing screens in production are the worst class of bug to discover late — add this before real users are on the app, not after the first incident.
-
-### 12.4 — Living component catalog
-Once shared primitives move into `packages/ui` (Part 0), add a Storybook instance (or a simple in-app dev/catalog screen if Storybook is overkill for team size) documenting `GlassCard`, `PageShell`, the property selector, `Pagination`, etc. Text guardrail files catch violations after the fact; a visual catalog is what stops the next screen from reinventing something that already exists — which is the root cause nearly everything in this whole plan has been cleaning up.
-
-### 12.5 — CI test-gating, not just PR review
-Confirm `npm run quality` (lint/typecheck/test/build) actually blocks merge on failure in CI, not just runs informationally alongside the review agent. The review agent catches style/guardrail violations; it doesn't replace an actual red-build gate.
+1. `property_tbl` remains a physical property entity only.
+2. Management context/type must not be stored as unrelated columns on `property_tbl`.
+3. Modules are capabilities available to a property/product context.
+4. Features live inside modules.
+5. Permissions are the atomic authorization units.
+6. Membership remains the user-to-property access relationship.
+7. **Do not reintroduce `membership_role_tbl`.** The current `main` model uses membership `title` plus `AccessType` (`FULL_ACCESS` / `CUSTOM_ACCESS`) and explicit `membership_permission_tbl` rows.
+8. Ownership and authorization are separate concepts.
+9. Frontend visibility is derived from effective access; it is not the security boundary.
+10. Backend authorization remains mandatory for every protected API operation.
+11. Do not create arbitrary UNIT → PROPERTY permission inheritance. Scope inheritance only when a permission explicitly requires it.
+12. Rental is the first management capability to be implemented fully; Society and Residential must not block the Rental rollout.
 
 ---
 
-## What NOT to re-litigate
+## 13.2 — Current backend access model to preserve
 
-Everything in the "✅ CONFIRMED DONE" section is genuinely done — verified against code just now, not commit-message trust. Don't re-scope or re-request fixes for those. Focus effort on the 🆕 finding and the 🔴 open table — that's the actual remaining surface area.
+The current `main` branch already has the correct foundation:
+
+```text
+membership_tbl
+ ├── user_id
+ ├── property_id
+ ├── title
+ ├── access_type       FULL_ACCESS | CUSTOM_ACCESS
+ ├── is_active
+ └── assigned_by
+
+membership_permission_tbl
+ └── membership → permission
+
+permission_tbl
+ ├── code
+ └── description
+```
+
+`MembershipServiceImpl` already supports creating/updating custom access and persists explicit permission codes for `CUSTOM_ACCESS`. `FULL_ACCESS` remains the unrestricted property-level access mode.
+
+**Architecture decision:** extend this model rather than introducing a role table.
+
+---
+
+## 13.3 — Module catalog
+
+Introduce a global module catalog rather than storing arbitrary module names on property records.
+
+```text
+module_tbl
+ ├── id
+ ├── code
+ ├── name
+ ├── description
+ ├── icon
+ ├── route
+ ├── display_order
+ └── is_active
+```
+
+The existing `property_module_tbl` should evolve from `module_name` to a foreign-key reference:
+
+```text
+property_module_tbl
+ ├── property_id
+ ├── module_id
+ └── is_active
+```
+
+The migration must preserve existing property-module assignments while replacing string identity with stable module identity.
+
+Initial module vocabulary should be derived from the approved product inventory, not invented ad hoc by individual screens. Candidate top-level modules include:
+
+- PROPERTY_MANAGEMENT
+- RENTAL
+- FINANCE
+- INVENTORY
+- COMMUNICATION
+- REPORTING_ANALYTICS
+- AI
+- ACCESS
+
+The final seed list must be reconciled with the existing backend controllers and frontend routes before migration is finalized.
+
+---
+
+## 13.4 — Feature hierarchy
+
+Modules are too coarse to represent the approved custom-access UX. Permissions therefore need feature context.
+
+Target conceptual hierarchy:
+
+```text
+Module
+  └── Feature
+       └── Permission
+```
+
+Example:
+
+```text
+RENTAL
+ ├── LEASES
+ │    ├── LEASE_VIEW
+ │    ├── LEASE_CREATE
+ │    ├── LEASE_UPDATE
+ │    └── LEASE_DELETE
+ │
+ ├── RENT
+ │    ├── RENT_VIEW
+ │    ├── RENT_GENERATE
+ │    └── RENT_PAYMENT_VIEW
+ │
+ └── TENANTS
+      ├── TENANT_VIEW
+      └── TENANT_MANAGE
+```
+
+Whether `feature_tbl` is required or feature metadata can be represented directly on `permission_tbl` must be decided during the backend schema inspection. Do not create a redundant table if the existing permission model can represent the same hierarchy cleanly.
+
+---
+
+## 13.5 — Management type/context
+
+Management type is a product context, not a physical property attribute.
+
+Target model:
+
+```text
+management_type_tbl
+ ├── id
+ ├── code
+ ├── name
+ └── is_active
+
+management_type_module_tbl
+ ├── management_type_id
+ ├── module_id
+ └── enabled_by_default
+```
+
+Conceptually:
+
+```text
+MANAGEMENT TYPE
+       ↓
+DEFAULT MODULE MATRIX
+       ↓
+PROPERTY MODULE OVERRIDES
+       ↓
+MEMBERSHIP ACCESS
+       ↓
+FEATURE PERMISSIONS
+       ↓
+FRONTEND
+```
+
+Examples:
+
+```text
+RENTAL
+  → Rental + Property + Finance + Inventory + Communication + Reporting + AI
+
+SOCIETY
+  → Society-specific modules + shared operational modules
+
+RESIDENTIAL
+  → Residential-specific modules + shared operational modules
+```
+
+The exact matrices must be finalized from the product requirements before seeding. Do not encode assumptions into `property_tbl`.
+
+---
+
+## 13.6 — Effective access API
+
+Create one canonical endpoint for the frontend:
+
+```http
+GET /api/properties/{propertyId}/access
+```
+
+Target response shape:
+
+```json
+{
+  "propertyId": "...",
+  "accessType": "CUSTOM_ACCESS",
+  "modules": [
+    {
+      "code": "RENTAL",
+      "name": "Rental",
+      "enabled": true,
+      "features": [
+        {
+          "code": "LEASES",
+          "visible": true,
+          "permissions": [
+            "LEASE_VIEW",
+            "LEASE_CREATE",
+            "LEASE_UPDATE"
+          ]
+        },
+        {
+          "code": "RENT",
+          "visible": true,
+          "permissions": [
+            "RENT_VIEW"
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+The service calculating this response is the single place where module enablement, membership access, `FULL_ACCESS`, and custom permission rows are combined.
+
+The frontend must not reproduce this database logic.
+
+---
+
+## 13.7 — Visibility rules
+
+A module is visible when:
+
+- it is enabled for the property/context, and
+- the current membership has at least one applicable permission, unless the module explicitly has a view-level permission that defines visibility.
+
+A feature is visible when the user has its view/read permission or an explicitly defined equivalent.
+
+An action is available when the corresponding action permission exists.
+
+Example:
+
+```text
+Aarav
+  LEASE_VIEW       ✓
+  LEASE_CREATE     ✓
+  LEASE_UPDATE     ✓
+  LEASE_DELETE     ✗
+```
+
+Result:
+
+```text
+Leases → visible
+Create Lease → visible
+Edit Lease → visible
+Delete Lease → hidden/disabled according to the approved interaction pattern
+```
+
+Do not infer permissions merely because a user can see a parent module.
+
+---
+
+# PART 14 — FRONTEND ACCESS ARCHITECTURE
+
+## 14.1 — Access loading
+
+Landlord and Resident frontends should consume effective access through a dedicated access client/hook layer:
+
+```text
+GET /properties/{propertyId}/access
+              ↓
+        Access API client
+              ↓
+          useAccess()
+              ↓
+       effective access state
+```
+
+The access state must be scoped to the currently selected property where property context applies.
+
+---
+
+## 14.2 — Navigation becomes data-driven
+
+The current landlord sidebar is hardcoded. Replace its visibility logic with a stable frontend navigation registry plus backend-derived access.
+
+```text
+Navigation registry
+       +
+Effective access
+       ↓
+Visible navigation
+       ↓
+Sidebar / mobile navigation
+```
+
+The frontend may continue to own:
+
+- route paths
+- component references
+- labels
+- icon references
+- ordering metadata
+
+The backend owns whether a module/feature is actually available to the current user/property.
+
+This prevents the frontend from becoming coupled to membership/permission tables.
+
+---
+
+## 14.3 — Feature-level UI authorization
+
+Introduce a single frontend permission primitive:
+
+```tsx
+<Can permission="LEASE_CREATE">
+  <CreateLeaseButton />
+</Can>
+```
+
+or:
+
+```tsx
+if (can("LEASE_CREATE")) {
+  // render action
+}
+```
+
+The helper must operate from the already-loaded effective access state rather than making a network request for every button.
+
+---
+
+## 14.4 — Backend remains authority
+
+Hiding a button is UX, not authorization.
+
+Every protected controller/service operation must continue to enforce authorization server-side.
+
+```text
+Frontend permission check
+        ↓
+       UX
+
+Backend permission check
+        ↓
+     SECURITY
+```
+
+A malicious client must not gain access by manually invoking an API whose button was hidden in the UI.
+
+---
+
+# PART 15 — APPROVED LANDLORD DESIGN INVENTORY
+
+The approved Figma design establishes the new visual and information architecture for the complete Landlord application.
+
+### Auth + onboarding
+
+- Mode selection
+- Login
+- Signup
+- Onboarding
+
+### Portfolio + property management
+
+- Command Center / Portfolio
+- Analytics
+- Property creation
+- Property editing
+- Floor list overview
+- Floor editor
+- Unit detail
+
+### Rental
+
+- Lease list
+- Lease detail/actions
+- Rent roll
+- Tenant-facing property/tenant operational views
+
+### Finance
+
+- Billing
+- Billing worksheet
+- Expenses
+- Expense configuration
+- Meter readings
+- Financial ledger
+
+### Inventory
+
+- Inventory list
+- Inventory item/detail states
+- Tenant inventory
+
+### Communication
+
+- Announcements
+- Escalations/issues
+
+### Reporting
+
+- Reports
+- Report empty/loading/error states
+
+### AI
+
+- AI Desk / Assistant
+- Prompt/chat states
+- Usage/credit states where applicable
+
+### Team + access
+
+- Membership/team list
+- Member access editor
+- Module enablement
+- Feature permission editor
+- Effective navigation preview
+
+### Settings
+
+- Settings menu
+- Settings screens
+
+Every screen should use the canonical shell, property context, responsive rules, tokenized visual system, and feature-level access behavior defined above.
+
+---
+
+# PART 16 — APPROVED RESIDENT DESIGN INVENTORY
+
+Resident is intentionally simpler than Landlord. The Resident navigation must expose only resident-relevant capabilities.
+
+### Auth
+
+- Login
+- Signup
+- Mode selection where applicable
+
+### Home
+
+- Tenant Home
+- Property context
+
+### Payments
+
+- Rent/payment overview
+- Payment history
+- Payment action states
+
+### Maintenance
+
+- Maintenance list
+- Create/request maintenance
+- Maintenance detail/status
+
+### Inventory
+
+- Resident inventory
+- Tenant inventory/detail states
+
+### Communication
+
+- Announcements/notices
+- Read/unread states
+
+### AI
+
+- Resident AI Assistant where enabled
+
+### Profile/settings
+
+- Resident settings/profile
+
+Resident navigation must never expose landlord-only modules merely because the same user identity can participate in a property membership elsewhere.
+
+---
+
+# PART 17 — DESIGN SYSTEM IMPLEMENTATION RULES
+
+The approved Figma visual language is now the implementation target.
+
+## Surfaces
+
+- Flat surfaces only
+- No glassmorphism
+- Hairline borders
+- Minimal/no default shadows
+- Warm neutral page background
+- White/light surface containers
+
+## Color
+
+Light direction:
+
+```text
+Primary   #0E4F52
+Background #F7F6F3
+Text      #12181B
+Muted     #5B6668
+Outline   #DEDCD5
+```
+
+Dark mode must use theme tokens rather than hardcoded literals.
+
+## Typography
+
+- Inter
+- Sentence case
+- No blanket all-caps UI
+- No decorative letter-spacing hacks
+- Typography tokens centralized in `Theme.ts`
+
+## Actions
+
+- Primary actions use solid primary color
+- No decorative gradients
+- Desktop primary actions belong in the page-header action row where applicable
+- Secondary/outline actions use transparent surfaces with outline borders
+
+## Data-dense screens
+
+- Tables remain tables; do not convert every row into a card
+- Left-align text
+- Right-align numeric values
+- Hairline dividers
+- Real hover/focus states
+
+## Responsive tiers
+
+```text
+<768px       Mobile
+768–1024px   Tablet
+>=1024px     Desktop
+```
+
+Mobile uses a compact navigation model and single-column layouts where appropriate. Tablet uses collapsible navigation and two-column layouts where content allows. Desktop uses persistent sidebar navigation and wider data layouts.
+
+---
+
+# PART 18 — IMPLEMENTATION ORDER AFTER DESIGN APPROVAL
+
+The design approval changes the order of work: **do not redesign screens during implementation.** The Figma file is now the visual reference.
+
+### Phase 1 — Backend access foundation
+
+1. Inspect current permission seed data and permission usage on `main`.
+2. Inspect current `PropertyModuleTbl` repository/service/controller and existing migrations.
+3. Define stable module catalog.
+4. Migrate `property_module_tbl` from string module identity to module identity.
+5. Define feature/permission metadata without reintroducing roles.
+6. Define management types and management-type/module defaults without modifying `property_tbl`.
+7. Implement effective-access service.
+8. Add `GET /api/properties/{propertyId}/access`.
+9. Add backend authorization checks to protected operations where missing.
+
+### Phase 2 — Frontend access foundation
+
+1. Add access API client.
+2. Add `useAccess()` state/query.
+3. Connect property selection to access state.
+4. Replace hardcoded sidebar visibility with navigation registry + access filtering.
+5. Add `<Can>` / `can()` permission primitive.
+6. Apply feature-level permission checks to action controls.
+7. Add loading/empty/error access states.
+
+### Phase 3 — Landlord implementation
+
+Migrate the approved Figma screens feature-by-feature, beginning with Rental:
+
+```text
+Property context
+    ↓
+Rental
+    ├── Leases
+    ├── Tenants
+    ├── Rent
+    └── Rental dashboard/overview
+```
+
+Then Finance, Inventory, Communication, Reporting, AI, and Access.
+
+### Phase 4 — Resident implementation
+
+Implement the approved Resident screens using the same visual tokens and access principles but with a resident-specific information architecture.
+
+### Phase 5 — Existing engineering cleanup
+
+Continue the pre-existing quality backlog:
+
+- CSS media-query mobile-nav fix
+- Mobile property selector
+- Triple-sidebar removal
+- `rgba()` / `hsla()` sweep
+- `fontWeight` sweep
+- PageShell adoption
+- screen decomposition
+- pagination
+- shared UI package extraction
+- SQL migration guardrails
+
+### Phase 6 — Verification
+
+Every implemented screen must be checked for:
+
+- Figma visual fidelity
+- mobile/tablet/desktop behavior
+- access visibility
+- backend authorization
+- loading/error/empty states
+- accessibility
+- design-token compliance
+- route correctness
+- property scoping
+
+---
+
+# PART 19 — SCALABILITY & INFRASTRUCTURE
+
+These remain part of the master plan:
+
+### 19.1 — Shared types package (`@livic/types`)
+
+Frontend TypeScript interfaces matching backend DTOs are currently hand-written per feature. Generate from OpenAPI if available; otherwise centralize shared contracts so backend field changes have one controlled frontend update point.
+
+### 19.2 — Import-boundary enforcement
+
+Restrict cross-feature imports to each feature's public `index.ts` surface. Feature internals must not become accidental dependencies of other features.
+
+### 19.3 — Error tracking
+
+Add Sentry or equivalent before real production adoption so user-facing crashes and failed requests are observable.
+
+### 19.4 — Living component catalog
+
+Once stable primitives are extracted, add Storybook or an equivalent in-app component catalog for PageShell, property selector, navigation, permissions UI, tables, forms, status components, and other shared primitives.
+
+### 19.5 — CI test-gating
+
+Ensure quality/lint/typecheck/test/build failures actually block merges. PR review automation is not a replacement for CI gates.
+
+---
+
+# ARCHITECTURAL NON-NEGOTIABLES
+
+The following decisions are locked unless a new product requirement explicitly changes them:
+
+1. **No `membership_role_tbl`.**
+2. **No management-type columns on `property_tbl`.**
+3. **No arbitrary permission inheritance from UNIT to PROPERTY.**
+4. **Membership and ownership are not the same conceptual concern.**
+5. **Rental is implemented first.**
+6. **Frontend visibility comes from effective access.**
+7. **Backend authorization remains authoritative.**
+8. **Figma is the approved visual reference; implementation should not invent parallel UI patterns.**
+9. **Landlord and Resident remain independently implemented frontends, while following the same visual identity system.**
+10. **The existing property-selection architecture remains the canonical property-context mechanism.**
+11. **Breaking changes are acceptable while the product remains pre-production, but migrations must preserve existing data.**
+
+---
+
+## FINAL STATUS
+
+**Design:** APPROVED
+
+**Architecture direction:** APPROVED
+
+**Implementation state:** NOT YET IMPLEMENTED
+
+**Next engineering task:** inspect and finalize the current backend module/permission schema and migrations on `main`, then implement the access foundation before migrating screens to the approved Figma design.

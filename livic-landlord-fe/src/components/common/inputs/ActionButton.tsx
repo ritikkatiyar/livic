@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, ActivityIndicator, View, ViewStyle, TextStyle, StyleProp } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
@@ -106,19 +105,13 @@ export function ActionButton({
         activeOpacity={0.85}
         style={[
           styles.button,
+          styles.primary,
           styles.primaryShadow,
           isInteractionDisabled && { opacity: 0.55 },
           sanitizedStyle,
         ]}
       >
-        <LinearGradient
-          colors={['#00d4ff', '#0072ff']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradient}
-        >
-          {renderContent()}
-        </LinearGradient>
+        {renderContent()}
       </TouchableOpacity>
     );
   }
@@ -159,52 +152,43 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md' | 'lg', ful
   return StyleSheet.create({
     button: {
       height,
-      borderRadius: 100,
+      borderRadius: theme.Rounded.full,
       overflow: 'hidden',
       justifyContent: 'center',
       alignItems: 'center',
+      paddingHorizontal,
       width: fullWidth ? '100%' : undefined,
     },
-    gradient: {
-      width: '100%',
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal,
+    primary: {
+      backgroundColor: theme.Colors.primary,
     },
     primaryShadow: {
-      shadowColor: '#0072ff',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 10,
-      elevation: 4,
+      shadowColor: theme.Colors.outline,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.15,
+      shadowRadius: 3,
+      elevation: 1,
     },
     primaryDisabled: {
       backgroundColor: theme.Colors.outlineVariant,
-      paddingHorizontal,
     },
     secondary: {
-      backgroundColor: 'rgba(0, 229, 255, 0.12)',
-      paddingHorizontal,
+      backgroundColor: theme.Colors.surfaceContainerLow,
     },
     outline: {
-      backgroundColor: theme.Colors.glassFill,
-      borderWidth: 1.5,
-      borderColor: theme.Colors.primary,
-      paddingHorizontal,
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: theme.Colors.outline,
     },
     danger: {
       backgroundColor: theme.Colors.error,
-      paddingHorizontal,
     },
     ghost: {
       backgroundColor: 'transparent',
-      paddingHorizontal,
     },
     disabled: {
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(107, 122, 125, 0.12)',
-      paddingHorizontal,
-      opacity: 0.6,
+      backgroundColor: theme.Colors.outlineVariant,
+      opacity: 0.5,
     },
     contentRow: {
       flexDirection: 'row',

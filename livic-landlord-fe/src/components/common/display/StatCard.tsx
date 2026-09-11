@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { GlassCard } from './GlassCard';
 import { SkeletonRow } from '../feedback/Skeleton';
 
@@ -35,7 +36,8 @@ export function StatCard({
   valueStyle,
 }: StatCardProps) {
   const { theme, isDark } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const { isMobile } = useResponsive();
+  const styles = React.useMemo(() => createStyles(theme, isDark, isMobile), [theme, isDark, isMobile]);
 
   const activeIconColor = iconColor || theme.Colors.primary;
   const activeIconBg = iconBg || theme.Colors.primaryContainer;
@@ -83,7 +85,12 @@ export function StatCard({
           <SkeletonRow style={{ width: 70, height: 24 }} />
         </View>
       ) : (
-        <Text style={[styles.value, { color: activeValueColor }, valueStyle]} numberOfLines={1}>
+        <Text
+          style={[styles.value, { color: activeValueColor }, valueStyle]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+        >
           {value}
         </Text>
       )}
@@ -105,11 +112,11 @@ export function StatCard({
   );
 }
 
-const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean, isMobile: boolean) => StyleSheet.create({
   card: {
     flex: 1,
-    minWidth: 150,
-    borderRadius: 20,
+    minWidth: isMobile ? '46%' : 150,
+    borderRadius: theme.Rounded.lg,
     padding: theme.Spacing.md,
   },
   header: {
@@ -120,23 +127,21 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   label: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '500',
     color: theme.Colors.onSurfaceVariant,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
     flex: 1,
     marginRight: theme.Spacing.xs,
   },
   iconContainer: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: theme.Rounded.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   value: {
     fontSize: theme.Typography.headlineMedium.fontSize,
-    fontWeight: '900',
+    fontWeight: '800',
     color: theme.Colors.onSurface,
     letterSpacing: -0.5,
     marginVertical: theme.Spacing.xs,
@@ -156,12 +161,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   trendText: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   helperText: {
     fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: theme.Spacing.xs,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 });

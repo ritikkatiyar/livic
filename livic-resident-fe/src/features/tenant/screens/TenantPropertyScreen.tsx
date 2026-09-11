@@ -65,7 +65,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
           </BlurView>
 
           {/* Lease Contract Card */}
-          <BlurView intensity={40} tint="light" style={styles.darkLeaseCard}>
+          <BlurView intensity={40} tint="light" style={styles.glassCard}>
             <View style={styles.leaseHeaderRow}>
               <Text style={styles.leaseTitle}>Lease Agreement Details</Text>
               <MaterialIcons name="gavel" size={24} color={theme.Colors.primary} />
@@ -207,7 +207,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   mainCardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.md, marginBottom: theme.Spacing.lg },
   mainCardHeaderRowContent: { flex: 1 },
-  iconBox: { width: 48, height: 48, borderRadius: theme.Rounded.lg, backgroundColor: theme.Colors.primaryContainer, alignItems: 'center', justifyContent: 'center' },
+  iconBox: { width: theme.Spacing.xxl, height: theme.Spacing.xxl, borderRadius: theme.Rounded.lg, backgroundColor: theme.Colors.primaryContainer, alignItems: 'center', justifyContent: 'center' },
   propertyName: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
   unitInfo: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm },
   statusBadge: { backgroundColor: theme.Colors.primaryContainer, paddingHorizontal: theme.Spacing.md, paddingVertical: theme.Spacing.sm, borderRadius: theme.Rounded.md },
@@ -221,19 +221,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   statValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
   statValueHighlight: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.primary },
 
-  darkLeaseCard: {
-    backgroundColor: theme.Colors.glassFill,
-    borderRadius: theme.Rounded.xl,
-    padding: theme.Spacing.containerPadding,
-    borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
-    shadowColor: theme.Colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 30,
-    elevation: 3,
-    overflow: 'hidden'
-  },
   leaseHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.lg },
   leaseTitle: { color: theme.Colors.onBackground, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800' },
   leaseGrid: { gap: theme.Spacing.md, marginBottom: theme.Spacing.lg },
@@ -263,7 +250,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   
   amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.Spacing.md },
   amenityCard: { width: '47.8%', backgroundColor: theme.Colors.glassFill, borderRadius: theme.Rounded.xl, padding: theme.Spacing.md, borderWidth: 1, borderColor: theme.Colors.glassStroke, overflow: 'hidden' },
-  amenityIconBox: { width: 48, height: 48, borderRadius: theme.Rounded.md, backgroundColor: theme.Colors.primaryContainer, alignItems: 'center', justifyContent: 'center', marginBottom: theme.Spacing.md },
+  amenityIconBox: { width: theme.Spacing.xxl, height: theme.Spacing.xxl, borderRadius: theme.Rounded.md, backgroundColor: theme.Colors.primaryContainer, alignItems: 'center', justifyContent: 'center', marginBottom: theme.Spacing.md },
   amenityTitle: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onBackground },
   amenitySub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm },
 

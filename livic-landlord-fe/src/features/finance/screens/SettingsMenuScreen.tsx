@@ -7,11 +7,8 @@ import {
   Animated,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
@@ -26,7 +23,6 @@ export default function SettingsMenuScreen() {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const router = useRouter();
@@ -144,21 +140,19 @@ export default function SettingsMenuScreen() {
               }}
               style={[styles.listItem, properties.length === 0 && { opacity: 0.6 }]}
             >
-              <BlurView intensity={55} tint={isDark ? 'dark' : 'light'} style={styles.menuCard}>
+              <View style={styles.menuCard}>
                 {/* Left accent stripe */}
-                <LinearGradient
-                  colors={item.gradientColors}
-                  style={styles.cardStripe}
+                <View
+                  style={[styles.cardStripe, { backgroundColor: item.gradientColors[0] || theme.Colors.primary }]}
                 />
                 <View style={styles.cardContent}>
                   {/* Step badge */}
                   <View style={styles.stepBadgeWrapper}>
-                    <LinearGradient
-                      colors={item.gradientColors}
-                      style={styles.stepBadge}
+                    <View
+                      style={[styles.stepBadge, { backgroundColor: item.gradientColors[0] || theme.Colors.primary }]}
                     >
                       <Text style={styles.stepNumber}>{item.step}</Text>
-                    </LinearGradient>
+                    </View>
                     {/* Icon below badge */}
                     <View style={[styles.iconWrapper, { backgroundColor: item.bg }]}>
                       <MaterialIcons name={item.icon as any} size={22} color={item.accentColor} />
@@ -180,22 +174,22 @@ export default function SettingsMenuScreen() {
                 {/* Connector dot to next step */}
                 {index < menuItems.length - 1 && (
                   <View style={styles.connectorDot}>
-                    <MaterialIcons name="arrow-downward" size={12} color="rgba(0,104,117,0.35)" />
+                    <MaterialIcons name="arrow-downward" size={12} color={theme.Colors.outline} />
                   </View>
                 )}
-              </BlurView>
+              </View>
             </TouchableOpacity>
           </Animated.View>
         ))}
       </View>
 
       {/* Bottom note */}
-      <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.tipCard}>
+      <View style={styles.tipCard}>
         <MaterialIcons name="lightbulb-outline" size={16} color={theme.Colors.primary} />
         <Text style={styles.tipText}>
           Follow steps 1 → 4 for a complete billing cycle each month.
         </Text>
-      </BlurView>
+      </View>
     </Animated.View>
   );
 
@@ -203,8 +197,8 @@ export default function SettingsMenuScreen() {
     <PageShell scrollable edges={isDesktop ? ['top'] : []}>
       {isDesktop && (
         <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 }}>
-            FINANCIAL MANAGEMENT
+          <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: theme.Colors.primary, letterSpacing: 0.2, marginBottom: 4 }}>
+            Financial Management
           </Text>
           <Text style={[{ ...theme.Typography.headlineLg, color: theme.Colors.onBackground }]}>
             Finance & Billing

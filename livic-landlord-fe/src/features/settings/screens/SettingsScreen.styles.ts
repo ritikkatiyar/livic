@@ -35,11 +35,6 @@ export const createStyles = (theme: any, isDark: boolean) =>
     actionPillBtn: {
       borderRadius: 100,
       overflow: 'hidden',
-      shadowColor: theme.Colors.secondary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 3,
     },
     actionPillGradient: {
       flexDirection: 'row',
@@ -47,11 +42,13 @@ export const createStyles = (theme: any, isDark: boolean) =>
       gap: 6,
       paddingHorizontal: 20,
       paddingVertical: 12,
+      backgroundColor: theme.Colors.primary,
+      borderRadius: 100,
     },
     actionPillText: {
       color: theme.Colors.surfaceContainerLowest,
       fontSize: theme.Typography.bodySmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       letterSpacing: 0.8,
     },
     hubGrid: {
@@ -98,11 +95,11 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     hubBadgeText: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
     },
     hubCardTitle: {
       fontSize: theme.Typography.bodyLarge.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
       marginBottom: 4,
     },
@@ -156,7 +153,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     roleName: {
       fontSize: theme.Typography.bodyLarge.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
       flexShrink: 1,
     },
@@ -183,7 +180,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     customRolePillText: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
     },
     systemRolePill: {
@@ -198,7 +195,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     systemRolePillText: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.onSurfaceVariant,
     },
     roleCardBottom: {
@@ -223,13 +220,16 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     permCountText: {
       fontSize: theme.Typography.bodySmall.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.primary,
     },
     configureBtn: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 10,
+      minHeight: 44,
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: 22,
+      justifyContent: 'center',
+      alignItems: 'center',
       backgroundColor: theme.Colors.surfaceContainerLowest,
       borderWidth: 1,
       borderColor: theme.Colors.outlineVariant,
@@ -239,7 +239,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     configureBtnText: {
       fontSize: theme.Typography.bodySmall.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.primary,
     },
     configureBtnTextDisabled: {
@@ -271,7 +271,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     inviteCode: {
       fontSize: theme.Typography.bodyLarge.fontSize,
-      fontWeight: '900',
+      fontWeight: '600',
       color: theme.Colors.primary,
       letterSpacing: 1.5,
     },
@@ -292,30 +292,32 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     inviteMetaLabel: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurfaceVariant,
       marginBottom: 4,
       letterSpacing: 0.8,
     },
     inviteMetaVal: {
       fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     copyKeyBtn: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
+      minHeight: 44,
       gap: 8,
-      paddingVertical: 12,
-      borderRadius: 12,
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: 22,
       backgroundColor: theme.Colors.surfaceContainerLowest,
       borderWidth: 1,
       borderColor: 'rgba(0, 104, 117, 0.3)',
     },
     copyKeyBtnText: {
       fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.primary,
     },
     prefGrid: {
@@ -333,7 +335,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     prefCardTitle: {
       fontSize: theme.Typography.bodyLarge.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     prefItem: {
@@ -346,7 +348,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     prefItemName: {
       fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     prefItemDesc: {
@@ -364,12 +366,12 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     prefBadgeText: {
       fontSize: theme.Typography.bodySmall.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.primary,
     },
     modalOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(15, 23, 42, 0.45)',
+      backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
       justifyContent: 'center',
       alignItems: 'center',
       padding: 20,
@@ -379,13 +381,10 @@ export const createStyles = (theme: any, isDark: boolean) =>
       maxWidth: 640,
       maxHeight: '85%',
       backgroundColor: theme.Colors.surfaceContainerLowest,
-      borderRadius: 24,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.Colors.outline,
       overflow: 'hidden',
-      shadowColor: 'black',
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.2,
-      shadowRadius: 24,
-      elevation: 10,
     },
     modalHeader: {
       flexDirection: 'row',
@@ -394,11 +393,11 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingHorizontal: 24,
       paddingVertical: 18,
       borderBottomWidth: 1,
-      borderBottomColor: '#e2e8f0',
+      borderBottomColor: theme.Colors.outline,
     },
     modalTitle: {
       fontSize: theme.Typography.bodyLg?.fontSize || 18,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     modalSub: {
@@ -407,8 +406,11 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginTop: 2,
     },
     closeIconBtn: {
-      padding: 6,
-      borderRadius: 10,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      justifyContent: 'center',
+      alignItems: 'center',
       backgroundColor: theme.Colors.surfaceContainer,
     },
     modalBody: {
@@ -419,9 +421,9 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     categoryHeading: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurfaceVariant,
-      letterSpacing: 1.1,
+      letterSpacing: 0.2,
       marginBottom: 10,
     },
     permCheckRow: {
@@ -441,7 +443,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     permCheckName: {
       fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     permCheckNameDisabled: {
@@ -454,7 +456,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     inputLabel: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       letterSpacing: 1.1,
       color: theme.Colors.onSurfaceVariant,
       marginBottom: 6,
@@ -477,9 +479,12 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginBottom: 16,
     },
     roleSelectChip: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 10,
+      minHeight: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 22,
       borderWidth: 1,
       borderColor: theme.Colors.outlineVariant,
       backgroundColor: theme.Colors.surfaceContainerLow,
@@ -490,7 +495,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     roleSelectChipText: {
       fontSize: theme.Typography.bodySmall.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.onSurfaceVariant,
     },
     roleSelectChipTextActive: {
@@ -499,21 +504,25 @@ export const createStyles = (theme: any, isDark: boolean) =>
     modalFooter: {
       padding: 20,
       borderTopWidth: 1,
-      borderTopColor: '#e2e8f0',
+      borderTopColor: theme.Colors.outline,
     },
     modalPrimaryBtn: {
-      borderRadius: 14,
+      borderRadius: 24,
       overflow: 'hidden',
     },
     modalBtnGradient: {
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 14,
+      minHeight: 48,
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      backgroundColor: theme.Colors.primary,
+      borderRadius: 24,
     },
     modalBtnText: {
       color: theme.Colors.surfaceContainerLowest,
       fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       letterSpacing: 0.8,
     },
     centerLoading: {

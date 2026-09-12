@@ -2,7 +2,6 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 
 interface MeterReadingSummaryProps {
   totalUnits: number;
@@ -31,17 +30,21 @@ export function MeterReadingSummary({
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
-    <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.summaryCard}>
+    <View style={styles.summaryCard}>
       <Text style={styles.summaryCardTitle}>WORKSHEET SUMMARY</Text>
       
       <View style={styles.summaryMetricsGrid}>
         <View style={styles.summaryMetricItem}>
           <Text style={styles.summaryMetricLabel}>TOTAL UNITS</Text>
-          <Text style={styles.summaryMetricValue}>{totalUnits}</Text>
+          <Text style={styles.summaryMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            {totalUnits}
+          </Text>
         </View>
         <View style={styles.summaryMetricItem}>
           <Text style={styles.summaryMetricLabel}>READINGS ENTERED</Text>
-          <Text style={styles.summaryMetricValue}>{readingsEntered} / {totalUnits}</Text>
+          <Text style={styles.summaryMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            {readingsEntered} / {totalUnits}
+          </Text>
         </View>
       </View>
 
@@ -73,7 +76,7 @@ export function MeterReadingSummary({
 
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Estimated Billing</Text>
-        <Text style={[styles.summaryValue, { color: theme.Colors.primary, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800' }]}>
+        <Text style={[styles.summaryValue, { color: theme.Colors.primary, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600' }]}>
           ₹{totalEstimatedCost.toFixed(2)}
         </Text>
       </View>
@@ -86,56 +89,55 @@ export function MeterReadingSummary({
           </Text>
         </View>
       )}
-    </BlurView>
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   summaryCard: {
     padding: theme.Spacing.lg,
-    borderRadius: 20,
-    backgroundColor: theme.Colors.glassFill,
+    borderRadius: 16,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
     overflow: 'hidden',
   },
   summaryCardTitle: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
     marginBottom: 20,
-    fontFamily: 'Inter',
   },
   summaryMetricsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: theme.Spacing.md,
   },
   summaryMetricItem: {
     flex: 1,
+    minWidth: 120,
     padding: theme.Spacing.md,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
   },
   summaryMetricLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.5,
-    fontFamily: 'Inter',
   },
   summaryMetricValue: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginTop: 6,
-    fontFamily: 'Inter',
   },
   previewDivider: {
     height: 1,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: theme.Colors.outlineVariant,
     marginVertical: 18,
   },
   summaryRow: {
@@ -148,13 +150,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
-    fontFamily: 'Inter',
   },
   summaryValue: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
-    fontFamily: 'Inter',
   },
   warningAlertBox: {
     flexDirection: 'row',
@@ -170,9 +170,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   warningAlertText: {
     flex: 1,
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.tertiary,
     lineHeight: 16,
-    fontFamily: 'Inter',
   },
 });

@@ -35,18 +35,20 @@ jest.mock('@/src/hooks/useProperties', () => ({
   }),
 }));
 
+const mockLedgerItems = [
+  {
+    id: 'txn-1',
+    date: '2023-10-01T10:00:00.000Z',
+    description: 'Rent Payment - Unit 101',
+    amount: 15000,
+    transactionType: 'CREDIT',
+    referenceId: 'ref-1',
+  }
+];
+
 jest.mock('@/src/features/finance/hooks/useLedger', () => ({
   useLedger: () => ({
-    ledger: [
-      {
-        id: 'txn-1',
-        date: '2023-10-01T10:00:00.000Z',
-        description: 'Rent Payment - Unit 101',
-        amount: 15000,
-        transactionType: 'CREDIT',
-        referenceId: 'ref-1',
-      }
-    ],
+    ledger: mockLedgerItems,
     totalPages: 1,
     isLoading: false,
     refetch: jest.fn(),

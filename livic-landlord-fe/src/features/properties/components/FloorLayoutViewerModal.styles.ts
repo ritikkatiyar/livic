@@ -1,5 +1,4 @@
 import { StyleSheet } from 'react-native';
-import { SerifHeadlineFont } from '@/src/theme/Theme';
 
 const CELL_SIZE = 60;
 
@@ -52,17 +51,15 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingRight: theme.Spacing.sm,
   },
   mobileKicker: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.2,
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '600',
+    letterSpacing: 0.2,
     color: theme.Colors.primary,
-    textTransform: 'uppercase',
     marginBottom: 4,
   },
   mobileTitleText: {
-    fontFamily: SerifHeadlineFont,
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: theme.Typography.titleLarge.fontSize,
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     letterSpacing: -0.3,
     lineHeight: 26,
@@ -112,9 +109,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   titleLineDesktop: {
-    fontFamily: SerifHeadlineFont,
     fontSize: theme.Typography.headlineMd.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     letterSpacing: -0.5,
   },
@@ -131,7 +127,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   backButtonTextDesktop: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   desktopMainContent: {
@@ -187,9 +183,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: theme.Spacing.md,
   },
   titleLine: {
-    fontFamily: SerifHeadlineFont,
     fontSize: theme.Typography.headlineXl.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     lineHeight: 46,
     letterSpacing: -1,
@@ -261,7 +256,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   cellText: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.surfaceContainerLowest,
   },
   detailSheetWrapper: {
@@ -293,7 +288,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sheetUnitTitle: {
     fontSize: theme.Typography.headlineSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   sheetSubtitle: {
@@ -317,7 +312,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   inputLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 1,
   },
@@ -367,7 +362,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   tenantTagText: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.primary,
   },
   removeBtn: {
@@ -398,12 +393,10 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'transparent',
   },
   statusToggleText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
+    fontSize: theme.Typography.bodySmall.fontSize,
+    fontWeight: '600',
+    letterSpacing: 0.2,
     color: theme.Colors.onSurfaceVariant,
-    fontFamily: 'Inter',
   },
   statusActiveVacant: {
     backgroundColor: isDark ? 'rgba(0, 229, 255, 0.14)' : 'rgba(0, 104, 117, 0.10)',
@@ -411,8 +404,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   statusTextVacant: {
     color: isDark ? '#00E5FF' : '#006875',
-    fontWeight: '800',
-    fontFamily: 'Inter',
+    fontWeight: '600',
   },
   statusActiveOccupied: {
     backgroundColor: isDark ? 'rgba(255, 107, 107, 0.14)' : 'rgba(186, 26, 26, 0.10)',
@@ -420,8 +412,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   statusTextOccupied: {
     color: isDark ? '#FF6B6B' : '#ba1a1a',
-    fontWeight: '800',
-    fontFamily: 'Inter',
+    fontWeight: '600',
   },
   statusTextActive: {
     color: theme.Colors.primary,
@@ -444,7 +435,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   saveButtonText: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: '#ffffff',
     letterSpacing: 0.5,
   },
@@ -495,7 +486,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   suggestionName: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   suggestionPhone: {
@@ -514,7 +505,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   quickCreatePromptText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.primary,
-    fontWeight: '700',
+    fontWeight: '600',
     flex: 1,
   },
   searchResultContainer: {
@@ -550,7 +541,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   createTenantTitle: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
     letterSpacing: 1,
   },
@@ -703,13 +694,11 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   directoryKicker: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: theme.Typography.buttonText.fontWeight,
-    letterSpacing: theme.Typography.labelCaps.letterSpacing,
+    fontWeight: '600',
+    letterSpacing: 0.2,
     color: theme.Colors.primary,
-    textTransform: 'uppercase',
   },
   directoryTitle: {
-    fontFamily: SerifHeadlineFont,
     fontSize: theme.Typography.titleMedium.fontSize,
     fontWeight: theme.Typography.titleLarge.fontWeight,
     color: theme.Colors.onSurface,
@@ -749,10 +738,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   directoryMetricLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: theme.Typography.buttonText.fontWeight,
-    letterSpacing: theme.Typography.labelSmall.letterSpacing,
+    fontWeight: '600',
+    letterSpacing: 0.2,
     color: theme.Colors.onSurfaceVariant,
-    textTransform: 'uppercase',
   },
   directoryMetricValue: {
     fontSize: theme.Typography.bodyMedium.fontSize,
@@ -765,10 +753,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   unitListTitle: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: theme.Typography.buttonText.fontWeight,
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
-    letterSpacing: theme.Typography.labelSmall.letterSpacing,
-    textTransform: 'uppercase',
+    letterSpacing: 0.2,
     marginBottom: theme.Spacing.sm,
   },
   unitListItemCard: {

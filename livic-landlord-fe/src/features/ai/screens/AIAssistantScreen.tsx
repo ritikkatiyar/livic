@@ -2,6 +2,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,14 +13,13 @@ import {
   View,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
 
 import { getJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { PageShell } from '@/src/components/common/layout/PageShell';
-import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { Theme } from '@/src/theme/Theme';
 import { logger } from '@/src/utils/logger';
 import { createStyles } from './AIAssistantScreen.styles';
@@ -28,11 +28,21 @@ type AIAssistantScreenProps = {
   token: string;
 };
 
+export type AttachedFile = {
+  id: string;
+  name: string;
+  uri: string;
+  type: 'image' | 'file';
+  mimeType?: string;
+  size?: number;
+};
+
 type Message = {
   id: string;
   role: 'user' | 'assistant';
   text: string;
   timestamp?: string;
+  attachments?: AttachedFile[];
 };
 
 const QUICK_COMMANDS = [
@@ -50,6 +60,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
 
   const insets = useSafeAreaInsets();
   const [input, setInput] = useState('');
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -77,26 +88,87 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
+    setAttachedFiles([]);
   };
+
+  const handlePickAttachment = useCallback(async () => {
+    if (Platform.OS === 'web') {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx';
+      fileInput.multiple = true;
+      fileInput.onchange = (e: any) => {
+        const files = Array.from(e.target.files || []) as File[];
+        if (!files.length) return;
+        const newAttachments: AttachedFile[] = files.map((file) => ({
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+          name: file.name,
+          uri: URL.createObjectURL(file),
+          type: file.type.startsWith('image/') ? 'image' : 'file',
+          mimeType: file.type,
+          size: file.size,
+        }));
+        setAttachedFiles((prev) => [...prev, ...newAttachments].slice(0, 5));
+      };
+      fileInput.click();
+    } else {
+      try {
+        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!perm.granted) return;
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsMultipleSelection: true,
+          selectionLimit: 5,
+          quality: 0.8,
+        });
+        if (!result.canceled && result.assets) {
+          const newAttachments: AttachedFile[] = result.assets.map((asset) => ({
+            id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+            name: asset.fileName || 'photo.jpg',
+            uri: asset.uri,
+            type: 'image',
+            mimeType: asset.mimeType || 'image/jpeg',
+            size: asset.fileSize,
+          }));
+          setAttachedFiles((prev) => [...prev, ...newAttachments].slice(0, 5));
+        }
+      } catch (err) {
+        logger.error('Failed to pick file:', err);
+      }
+    }
+  }, []);
+
+  const handleRemoveAttachment = useCallback((id: string) => {
+    setAttachedFiles((prev) => prev.filter((item) => item.id !== id));
+  }, []);
 
   const sendMessage = useCallback(
     async (text: string) => {
       const trimmedText = text.trim();
-      if (!trimmedText || isSending) return;
+      const currentAttachments = [...attachedFiles];
+      if ((!trimmedText && currentAttachments.length === 0) || isSending) return;
+
+      const messageContent = trimmedText || (
+        currentAttachments.length > 0
+          ? `[Attached: ${currentAttachments.map((f) => f.name).join(', ')}] Please analyze the attached document.`
+          : ''
+      );
 
       const userMessage: Message = {
         id: `${Date.now()}-user`,
         role: 'user',
-        text: trimmedText,
+        text: messageContent,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        attachments: currentAttachments.length > 0 ? currentAttachments : undefined,
       };
 
       setMessages((current) => [...current, userMessage]);
       setInput('');
+      setAttachedFiles([]);
       setIsSending(true);
 
       try {
-        const response = await runAICommand({ message: trimmedText }, token);
+        const response = await runAICommand({ message: messageContent }, token);
 
         if (response.jobId && response.status === 'PENDING') {
           const jobId = response.jobId;
@@ -175,18 +247,15 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
     >
 
       {/* Main AI Workspace Card */}
-      <GlassCard style={[styles.chatWorkspace, isDesktop && styles.chatWorkspaceDesktop]}>
+      <View style={[styles.chatWorkspace, isDesktop && styles.chatWorkspaceDesktop]}>
         {/* Workspace Header */}
         <View style={styles.workspaceHeader}>
           <View style={styles.headerLeft}>
-            <LinearGradient
-              colors={['#00F2FE', '#4FACFE', '#7F00FF']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.aiOrbIcon}
+            <View
+              style={[styles.aiOrbIcon, { backgroundColor: theme.Colors.primary }]}
             >
               <MaterialIcons name="auto-awesome" size={20} color={theme.Colors.surfaceContainerLowest} />
-            </LinearGradient>
+            </View>
             <View>
               <View style={styles.titleRow}>
                 <Text style={styles.workspaceTitle}>AI Command Desk</Text>
@@ -266,14 +335,32 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                 ]}
               >
                 {message.role === 'user' ? (
-                  <LinearGradient
-                    colors={['#008394', '#005b66']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.bubble, styles.userBubble]}
+                  <View
+                    style={[styles.bubble, styles.userBubble, { backgroundColor: theme.Colors.primary }]}
                   >
+                    {message.attachments && message.attachments.length > 0 && (
+                      <View style={styles.bubbleAttachmentsRow}>
+                        {message.attachments.map((att) => (
+                          att.type === 'image' ? (
+                            <Image
+                              key={att.id}
+                              source={{ uri: att.uri }}
+                              style={styles.bubbleImageAttachment}
+                              resizeMode="cover"
+                            />
+                          ) : (
+                            <View key={att.id} style={styles.bubbleFileAttachment}>
+                              <MaterialIcons name="insert-drive-file" size={16} color={theme.Colors.surfaceContainerLowest} />
+                              <Text style={styles.bubbleFileName} numberOfLines={1}>
+                                {att.name}
+                              </Text>
+                            </View>
+                          )
+                        ))}
+                      </View>
+                    )}
                     <Text style={styles.userMessageText}>{message.text}</Text>
-                  </LinearGradient>
+                  </View>
                 ) : (
                   <View style={[styles.bubble, styles.assistantBubble]}>
                     <Text style={styles.assistantMessageText}>{message.text}</Text>
@@ -304,14 +391,50 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+          style={{ width: '100%' }}
         >
           <View style={[styles.inputDock, { paddingBottom: Math.max(insets.bottom, 14) }]}>
+            {/* Attachment Preview Chips */}
+            {attachedFiles.length > 0 && (
+              <View style={styles.attachmentsPreviewRow}>
+                {attachedFiles.map((file) => (
+                  <View key={file.id} style={styles.attachmentChip}>
+                    {file.type === 'image' ? (
+                      <Image source={{ uri: file.uri }} style={styles.attachmentThumb} resizeMode="cover" />
+                    ) : (
+                      <MaterialIcons name="insert-drive-file" size={16} color={theme.Colors.primary} />
+                    )}
+                    <Text style={styles.attachmentName} numberOfLines={1}>
+                      {file.name}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => handleRemoveAttachment(file.id)}
+                      style={styles.attachmentRemoveBtn}
+                      activeOpacity={0.7}
+                      accessibilityLabel="Remove file"
+                    >
+                      <MaterialIcons name="close" size={12} color={theme.Colors.onSurface} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
             <View style={styles.inputBox}>
+              <TouchableOpacity
+                onPress={handlePickAttachment}
+                activeOpacity={0.7}
+                style={styles.attachButton}
+                accessibilityLabel="Attach file or image"
+              >
+                <MaterialIcons name="attach-file" size={20} color={theme.Colors.onSurfaceVariant} />
+              </TouchableOpacity>
+
               <TextInput
                 style={styles.textInput}
                 value={input}
                 onChangeText={setInput}
-                placeholder="Ask AI to execute a task, create a property, or analyze worksheets..."
+                placeholder={attachedFiles.length > 0 ? "Add instructions for attached file(s)..." : "Ask AI to execute a task, create a property, or analyze worksheets..."}
                 placeholderTextColor="#7d8b8e"
                 multiline
                 maxLength={1000}
@@ -324,23 +447,20 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
               />
               <TouchableOpacity
                 onPress={() => sendMessage(input)}
-                disabled={!input.trim() || isSending}
+                disabled={(!input.trim() && attachedFiles.length === 0) || isSending}
                 activeOpacity={0.8}
                 style={styles.sendButton}
               >
-                {!input.trim() || isSending ? (
+                {(!input.trim() && attachedFiles.length === 0) || isSending ? (
                   <View style={styles.sendIconDisabled}>
                     <MaterialIcons name="arrow-upward" size={20} color={theme.Colors.onSurfaceVariant} />
                   </View>
                 ) : (
-                  <LinearGradient
-                    colors={['#00e0ff', '#0072ff']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.sendIconActive}
+                  <View
+                    style={[styles.sendIconActive, { backgroundColor: theme.Colors.primary }]}
                   >
                     <MaterialIcons name="arrow-upward" size={20} color={theme.Colors.surfaceContainerLowest} />
-                  </LinearGradient>
+                  </View>
                 )}
               </TouchableOpacity>
             </View>
@@ -350,7 +470,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
             </View>
           </View>
         </KeyboardAvoidingView>
-      </GlassCard>
+      </View>
     </PageShell>
   );
 }

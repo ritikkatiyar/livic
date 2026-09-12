@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Platform, ScrollView } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Platform, ScrollView } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useRouter } from 'expo-router';
@@ -39,7 +38,7 @@ export default function DesktopNavBar({
   title,
   searchQuery,
   onSearchChange,
-  searchPlaceholder = 'Search property or portfolio...',
+  searchPlaceholder = 'Search...',
   showSearch = true,
   showPopoverList = true,
 }: DesktopNavBarProps) {
@@ -53,14 +52,13 @@ export default function DesktopNavBar({
   const unreadCount = metrics?.escalated || 0;
 
   const [localSearch, setLocalSearch] = useState('');
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const query = searchQuery !== undefined ? searchQuery : localSearch;
   const selectedProp = properties.find(p => p.id === selectedPropertyId);
-  const displayValue = showPopoverList ? (query || (isPopoverOpen ? '' : (selectedProp?.name || ''))) : query;
 
-  const matchingProperties = (properties || []).filter(p => 
-    p.name.toLowerCase().includes((query || '').toLowerCase())
+  const filteredProperties = (properties || []).filter(p =>
+    !query || p.name.toLowerCase().includes(query.toLowerCase())
   );
 
   const handleTextChange = (text: string) => {
@@ -69,26 +67,11 @@ export default function DesktopNavBar({
     } else {
       setLocalSearch(text);
     }
-    if (showPopoverList) {
-      setIsPopoverOpen(true);
-    }
-  };
-
-  const handleSelectProperty = (propId: string, propName: string) => {
-    if (onPropertyChange) {
-      onPropertyChange(propId);
-    }
-    if (onSearchChange) {
-      onSearchChange(propName);
-    } else {
-      setLocalSearch(propName);
-    }
-    setIsPopoverOpen(false);
   };
 
   return (
-    <BlurView intensity={75} tint={isDark ? "dark" : "light"} style={styles.topbar}>
-      {/* Left Area */}
+    <View style={styles.topbar}>
+      {/* Left Area: Scope Dropdown (Context Anchor) + Optional Breadcrumb */}
       <View style={styles.topbarLeft}>
         {onBack ? (
           <TouchableOpacity onPress={onBack} style={styles.backButtonDesktop} activeOpacity={0.75}>
@@ -96,92 +79,156 @@ export default function DesktopNavBar({
             <Text style={styles.backButtonTextDesktop}>{backText}</Text>
           </TouchableOpacity>
         ) : null}
+
+        {/* Current Selected Property Badge (Read-only, NOT a dropdown) */}
+        <View style={styles.propertyScopeBadge}>
+          <MaterialIcons name="apartment" size={16} color={theme.Colors.primary} />
+          <Text style={styles.propertyScopeBadgeText} numberOfLines={1}>
+            {selectedProp ? selectedProp.name : 'All Properties'}
+          </Text>
+        </View>
       </View>
 
-      {/* Right Area: Search with Autocomplete Suggestions Popover */}
+      {/* Right Area: Search + Actions */}
       <View style={styles.topbarRight}>
-        {(showSearch || onSearchChange || onPropertyChange || properties.length > 0) && (
-          <View style={{ position: 'relative', zIndex: 1000 }}>
-            <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={styles.searchBox}>
+        {/* Local In-Page / Global Search Box with Property Selection Dropdown */}
+        {(showSearch || onSearchChange) && (
+          <View style={{ position: 'relative', zIndex: 1002 }}>
+            {/* Transparent backdrop to dismiss popover on outside click */}
+            {isSearchFocused && (
+              <TouchableOpacity
+                style={styles.popoverBackdrop}
+                activeOpacity={1}
+                onPress={() => setIsSearchFocused(false)}
+              />
+            )}
+
+            <View style={[styles.searchBox, { zIndex: 1002 }]}>
               <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
               <TextInput
                 style={styles.searchInput}
                 placeholder={searchPlaceholder}
                 placeholderTextColor={theme.Colors.onSurfaceVariant}
-                value={displayValue}
+                value={query}
                 onChangeText={handleTextChange}
-                onFocus={() => showPopoverList && setIsPopoverOpen(true)}
+                onFocus={() => setIsSearchFocused(true)}
               />
-              {displayValue ? (
+              {query ? (
                 <TouchableOpacity 
                   onPress={() => {
                     setLocalSearch('');
                     if (onSearchChange) onSearchChange('');
-                    if (onPropertyChange) onPropertyChange(null as any);
-                    setIsPopoverOpen(false);
                   }} 
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <MaterialIcons name="close" size={16} color={theme.Colors.onSurfaceVariant} />
                 </TouchableOpacity>
+              ) : properties.length > 0 && onPropertyChange ? (
+                <TouchableOpacity 
+                  onPress={() => setIsSearchFocused(prev => !prev)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <MaterialIcons 
+                    name={isSearchFocused ? "arrow-drop-up" : "arrow-drop-down"} 
+                    size={20} 
+                    color={theme.Colors.onSurfaceVariant} 
+                  />
+                </TouchableOpacity>
               ) : null}
-            </BlurView>
+            </View>
 
-            {/* Property Autocomplete Suggestions Popover */}
-            {showPopoverList && isPopoverOpen && (
-              <BlurView intensity={90} tint={isDark ? "dark" : "light"} style={styles.suggestionsPopover}>
-                <ScrollView style={{ maxHeight: 240 }} keyboardShouldPersistTaps="handled">
-                  <TouchableOpacity
-                    style={[
-                      styles.suggestionItem,
-                      !selectedPropertyId && styles.suggestionItemActive
-                    ]}
-                    onPress={() => {
-                      if (onPropertyChange) onPropertyChange(null as any);
-                      if (onSearchChange) onSearchChange('');
-                      setLocalSearch('');
-                      setIsPopoverOpen(false);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <MaterialIcons 
-                      name="storefront" 
-                      size={16} 
-                      color={!selectedPropertyId ? theme.Colors.primary : theme.Colors.onSurfaceVariant} 
-                    />
-                    <Text style={[
-                      styles.suggestionText,
-                      !selectedPropertyId && styles.suggestionTextActive
-                    ]}>
-                      All Properties
-                    </Text>
+            {/* Property search & select suggestions popover directly under the RHS search bar */}
+            {isSearchFocused && properties.length > 0 && onPropertyChange && (
+              <View style={styles.searchSuggestionsPopover}>
+                <View style={styles.popoverHeader}>
+                  <Text style={styles.popoverHeaderText}>SELECT PROPERTY</Text>
+                  <TouchableOpacity onPress={() => setIsSearchFocused(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <MaterialIcons name="close" size={14} color={theme.Colors.onSurfaceVariant} />
                   </TouchableOpacity>
+                </View>
 
-                  {matchingProperties.map(p => (
+                <ScrollView style={{ maxHeight: 220 }} keyboardShouldPersistTaps="handled">
+                  {/* Option: All Properties */}
+                  {(!query || 'all properties'.includes(query.toLowerCase())) && (
                     <TouchableOpacity
-                      key={p.id}
                       style={[
-                        styles.suggestionItem,
-                        p.id === selectedPropertyId && styles.suggestionItemActive
+                        styles.searchSuggestionItem,
+                        !selectedPropertyId && styles.searchSuggestionItemActive
                       ]}
-                      onPress={() => handleSelectProperty(p.id, p.name)}
+                      onPress={() => {
+                        onPropertyChange(null as any);
+                        setIsSearchFocused(false);
+                        setLocalSearch('');
+                        if (onSearchChange) onSearchChange('');
+                      }}
                       activeOpacity={0.7}
                     >
                       <MaterialIcons 
-                        name="business" 
+                        name="storefront" 
                         size={16} 
-                        color={p.id === selectedPropertyId ? theme.Colors.primary : theme.Colors.onSurfaceVariant} 
+                        color={!selectedPropertyId ? theme.Colors.primary : theme.Colors.onSurfaceVariant} 
                       />
-                      <Text style={[
-                        styles.suggestionText,
-                        p.id === selectedPropertyId && styles.suggestionTextActive
-                      ]}>
-                        {p.name}
+                      <Text 
+                        style={[
+                          styles.searchSuggestionText,
+                          !selectedPropertyId && styles.searchSuggestionTextActive
+                        ]}
+                        numberOfLines={1}
+                      >
+                        All Properties
                       </Text>
+                      {!selectedPropertyId && (
+                        <MaterialIcons name="check" size={16} color={theme.Colors.primary} />
+                      )}
                     </TouchableOpacity>
-                  ))}
+                  )}
+
+                  {/* Matching properties */}
+                  {filteredProperties.map(p => {
+                    const isSelected = p.id === selectedPropertyId;
+                    return (
+                      <TouchableOpacity
+                        key={p.id}
+                        style={[
+                          styles.searchSuggestionItem,
+                          isSelected && styles.searchSuggestionItemActive
+                        ]}
+                        onPress={() => {
+                          onPropertyChange(p.id);
+                          setIsSearchFocused(false);
+                          setLocalSearch('');
+                          if (onSearchChange) onSearchChange('');
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialIcons 
+                          name="business" 
+                          size={16} 
+                          color={isSelected ? theme.Colors.primary : theme.Colors.onSurfaceVariant} 
+                        />
+                        <Text 
+                          style={[
+                            styles.searchSuggestionText,
+                            isSelected && styles.searchSuggestionTextActive
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {p.name}
+                        </Text>
+                        {isSelected && (
+                          <MaterialIcons name="check" size={16} color={theme.Colors.primary} />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+
+                  {filteredProperties.length === 0 && query && !'all properties'.includes(query.toLowerCase()) && (
+                    <View style={styles.emptySuggestionItem}>
+                      <Text style={styles.emptySuggestionText}>No matching properties</Text>
+                    </View>
+                  )}
                 </ScrollView>
-              </BlurView>
+              </View>
             )}
           </View>
         )}
@@ -217,7 +264,7 @@ export default function DesktopNavBar({
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
       </View>
-    </BlurView>
+    </View>
   );
 }
 
@@ -229,8 +276,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.Spacing.xl,
     borderBottomWidth: 1,
-    borderColor: theme.Surface.border,
-    backgroundColor: theme.Colors.glassFill,
+    borderColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     zIndex: 999,
   },
   topbarLeft: {
@@ -238,27 +285,66 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  breadcrumbContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   navBarTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: theme.Colors.onSurface,
-    letterSpacing: -0.3,
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.onSurfaceVariant,
+    letterSpacing: -0.2,
+  },
+  backButtonDesktop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+  },
+  backButtonTextDesktop: {
+    fontSize: theme.Typography.labelMedium.fontSize,
+    color: theme.Colors.onBackground,
+    fontWeight: '600',
   },
   topbarRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.Spacing.md,
+    gap: 12,
+  },
+  propertyScopeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    maxWidth: 220,
+  },
+  propertyScopeBadgeText: {
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.onSurface,
+    flexShrink: 1,
   },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 260,
+    width: 280,
     height: 40,
     paddingHorizontal: 12,
     borderRadius: 20,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.outlineVariant,
     gap: theme.Spacing.xs,
     overflow: 'hidden',
   },
@@ -269,114 +355,120 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 0,
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
   },
-  suggestionsPopover: {
-    position: 'absolute',
-    top: 46,
-    left: 0,
-    right: 0,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: theme.Surface.border,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-    zIndex: 1000,
-  },
-  suggestionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.Surface.border,
-  },
-  suggestionItemActive: {
-    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.08)',
-  },
-  suggestionText: {
-    fontSize: theme.Typography.bodyMedium.fontSize,
-    color: theme.Colors.onSurface,
-    fontWeight: '600',
-  },
-  suggestionTextActive: {
-    color: theme.Colors.primary,
-    fontWeight: '800',
-  },
   themeToggleButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.outlineVariant,
   },
   notificationButton: {
     padding: 8,
     position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   badgeContainer: {
     position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: theme.Colors.error || '#ef4444',
+    top: 4,
+    right: 4,
+    backgroundColor: theme.Colors.error,
     borderRadius: 8,
     minWidth: 16,
     height: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
   },
-  badgeText: {
-    color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '800',
+  popoverBackdrop: {
+    ...(Platform.OS === 'web' ? { position: 'fixed' as any } : { position: 'absolute' as any }),
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1001,
   },
-  backButtonDesktop: {
+  searchSuggestionsPopover: {
+    position: 'absolute',
+    top: 46,
+    left: 0,
+    width: 280,
+    borderRadius: theme.Rounded.md,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+    zIndex: 1005,
+    paddingVertical: 6,
+  },
+  popoverHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.Spacing.sm,
-    paddingHorizontal: theme.Spacing.md,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: theme.Surface.card,
-    borderWidth: 1,
-    borderColor: theme.Surface.border,
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.Colors.outlineVariant,
+    marginBottom: 4,
   },
-  backButtonTextDesktop: {
-    fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
-    color: theme.Colors.onBackground,
+  popoverHeaderText: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.onSurfaceVariant,
+    letterSpacing: 0.5,
+  },
+  searchSuggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  searchSuggestionItemActive: {
+    backgroundColor: theme.Colors.surfaceContainerLow,
+  },
+  searchSuggestionText: {
+    flex: 1,
+    fontSize: theme.Typography.bodySmall.fontSize,
+    color: theme.Colors.onSurface,
+    fontWeight: '500',
+  },
+  searchSuggestionTextActive: {
+    color: theme.Colors.primary,
+    fontWeight: '600',
+  },
+  emptySuggestionItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  emptySuggestionText: {
+    fontSize: theme.Typography.bodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+  },
+  badgeText: {
+    color: theme.Colors.onError,
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '600',
   },
   avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: theme.Colors.primary,
-    alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: theme.Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 3,
+    alignItems: 'center',
+    marginLeft: 4,
   },
   avatarText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontWeight: '800',
-    fontSize: theme.Typography.bodyLarge.fontSize,
+    fontSize: theme.Typography.labelMedium.fontSize,
+    fontWeight: '600',
   },
 });

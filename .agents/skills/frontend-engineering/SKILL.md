@@ -34,6 +34,19 @@ src/features/<feature>/
 
 ---
 
+## TYPOGRAPHY & FONT GUARDRAILS (STRICT APPLE HIG)
+
+* **Single Global Typography Source**: All text styling MUST resolve through `useAppTheme().Typography.*` tokens (or global theme tokens in `Theme.ts`). Every screen in the entire application follows the global typography tokens, NOT whatever each screen or component decides.
+* **PROHIBITED: Local `fontFamily` Declarations**: Screens, components, and style files MUST NEVER define local `fontFamily` property overrides (such as `fontFamily: 'Inter'`, `fontFamily: 'Playfair Display'`, `'Roboto'`, `'Arial'`, etc.). Global font inheritance is strictly configured at the root level (`+html.tsx` on web, native system font on mobile) using Apple's San Francisco SF Pro font stack (`-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif`).
+* **PROHIBITED: Excessive Boldness (800 / 900)**: Heavy weights (`'800'`, `'900'`, `ExtraBold`, `Black`) are strictly forbidden across the entire codebase. Per Apple Human Interface Guidelines:
+  * Page titles, hero headings, stat metrics, CTA buttons: **Semibold (`'600'`)**.
+  * Badges, status pills, filter pills, overlines, field labels: **Medium (`'500'`)**.
+  * Body copy, hints, secondary text, descriptions: **Regular (`'400'` / `'normal'`)**.
+* **PROHIBITED: Serif Fonts**: Editorial/serif fonts (`Playfair Display`, `Georgia`, `Times New Roman`) are strictly banned across all screens.
+* **Automated Guardrail Enforcement**: Every PR and change must pass `npm run check:typography` and `TypographyGuardrail.test.ts`. Any file introducing hardcoded `fontFamily`, weights 800/900, or serif declarations will immediately fail CI.
+
+---
+
 ## RESPONSIVE GUARDRAILS
 
 * **Single breakpoint source**: all desktop/tablet/mobile checks MUST use the shared `useResponsive()` hook (`hooks/useResponsive.ts`).

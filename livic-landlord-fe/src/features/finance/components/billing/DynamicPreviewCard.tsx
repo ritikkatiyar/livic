@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
@@ -32,20 +30,15 @@ export function DynamicPreviewCard({
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
-    <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={[styles.card, isDesktop && { flex: 1 }]}>
+    <View style={[styles.card, isDesktop && { flex: 1 }]}>
       <View style={styles.cardHeader}>
         <MaterialCommunityIcons name="card-bulleted-settings-outline" size={20} color={theme.Colors.primary} />
         <Text style={styles.cardTitle}>Dynamic Preview</Text>
       </View>
 
       <View style={[styles.previewCard, isDesktop && { flex: 1 }]}>
-        {/* Top subtle accent gradient bar */}
-        <LinearGradient
-          colors={[theme.Colors.primary, theme.Colors.secondary]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.accentBar}
-        />
+        {/* Top subtle accent bar */}
+        <View style={styles.accentBar} />
 
         <View style={styles.previewHeaderRow}>
           <View style={{ flex: 1, marginRight: 12 }}>
@@ -89,17 +82,17 @@ export function DynamicPreviewCard({
           </View>
         </View>
       </View>
-    </BlurView>
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create({
   card: {
-    borderRadius: 24,
+    borderRadius: 16,
     padding: theme.Spacing.lg,
-    borderWidth: 1.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.Colors.glassStroke,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : theme.Colors.glassFill,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
     marginBottom: 20,
   },
@@ -111,23 +104,18 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
   },
   cardTitle: {
     fontSize: theme.Typography.titleMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   previewCard: {
-    borderRadius: 20,
+    borderRadius: 14,
     padding: 20,
     minHeight: 220,
-    backgroundColor: isDark ? 'rgba(9, 13, 18, 0.90)' : theme.Colors.surfaceContainerLow,
-    borderWidth: 1.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: isDark ? 0.35 : 0.08,
-    shadowRadius: 16,
-    elevation: 4,
   },
   accentBar: {
     position: 'absolute',
@@ -135,6 +123,7 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     left: 0,
     right: 0,
     height: 4,
+    backgroundColor: theme.Colors.primary,
   },
   previewHeaderRow: {
     flexDirection: 'row',
@@ -151,14 +140,14 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     marginBottom: 6,
   },
   previewCategory: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '600',
     color: theme.Colors.primary,
     letterSpacing: 1.2,
   },
   previewName: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   iconCircle: {

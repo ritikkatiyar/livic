@@ -13,10 +13,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
@@ -140,22 +138,20 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
     }
     if (!properties || properties.length === 0) {
       return (
-        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
+        <View style={styles.emptyStateCard}>
           <MaterialIcons name="business" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-          <Text style={[styles.emptyText, { fontWeight: '800', color: theme.Colors.onSurface, fontSize: theme.Typography.bodyLg.fontSize, marginBottom: 8 }]}>No Property Created Yet</Text>
+          <Text style={[styles.emptyText, { fontWeight: '600', color: theme.Colors.onSurface, fontSize: theme.Typography.bodyLg.fontSize, marginBottom: 8 }]}>No Property Created Yet</Text>
           <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40, marginBottom: 20 }]}>
             Billing worksheets require an active property. Create your first property to start managing worksheets.
           </Text>
           <TouchableOpacity 
-            style={{ borderRadius: 100, overflow: 'hidden' }}
+            style={{ backgroundColor: theme.Colors.primary, borderRadius: theme.Rounded.lg, paddingHorizontal: 24, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}
             onPress={() => router.push('/properties/create')}
           >
-            <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 24, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
-              <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
-            </LinearGradient>
+            <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
+            <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' }}>Create First Property</Text>
           </TouchableOpacity>
-        </BlurView>
+        </View>
       );
     }
 
@@ -171,21 +167,21 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
 
     if (charges.length === 0) {
       return (
-        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
+        <View style={styles.emptyStateCard}>
           <MaterialIcons name="receipt-long" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
           <Text style={styles.emptyText}>No active charges configured for this property.</Text>
-        </BlurView>
+        </View>
       );
     }
 
     if (entries.length === 0) {
       return (
-        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
+        <View style={styles.emptyStateCard}>
           <MaterialIcons name="domain-disabled" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
           <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40 }]}>
             No occupied units with active leases found for this property. Assign a tenant first to view billing worksheets.
           </Text>
-        </BlurView>
+        </View>
       );
     }
 
@@ -222,32 +218,25 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
               </View>
 
               <TouchableOpacity 
-                style={[styles.desktopSaveButtonWrapper, (isSaving || entries.length === 0) && { opacity: 0.5 }]} 
+                style={[styles.desktopSaveButton, (isSaving || entries.length === 0) && { opacity: 0.5 }]} 
                 onPress={handleSave}
                 disabled={isSaving || entries.length === 0}
                 activeOpacity={0.85}
               >
-                <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.desktopSaveButton}
-                >
-                  {isSaving ? (
-                    <ActivityIndicator color={theme.Colors.surfaceContainerLowest} size="small" />
-                  ) : (
-                    <>
-                      <Text style={styles.desktopSaveButtonText}>SAVE MAPPINGS</Text>
-                      <MaterialIcons name="check" size={18} color={theme.Colors.surfaceContainerLowest} />
-                    </>
-                  )}
-                </LinearGradient>
+                {isSaving ? (
+                  <ActivityIndicator color={theme.Colors.surfaceContainerLowest} size="small" />
+                ) : (
+                  <>
+                    <Text style={styles.desktopSaveButtonText}>SAVE MAPPINGS</Text>
+                    <MaterialIcons name="check" size={18} color={theme.Colors.surfaceContainerLowest} />
+                  </>
+                )}
               </TouchableOpacity>
             </View>
 
             <View style={styles.desktopFilterRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.filterLabelCaps}>CHARGE CONFIGURATION</Text>
+                <Text style={styles.filterLabelCaps}>Charge Configuration</Text>
                 <GlassDropdown 
                   options={charges.map(c => ({ label: c.chargeName, value: c.id }))}
                   value={selectedChargeId}
@@ -258,7 +247,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
               </View>
               
               <View style={{ width: 250 }}>
-                <Text style={styles.filterLabelCaps}>BILLING MONTH</Text>
+                <Text style={styles.filterLabelCaps}>Billing Month</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                   <TouchableOpacity onPress={handlePrevMonth} style={styles.monthAdjustButton}>
                     <MaterialIcons name="chevron-left" size={20} color={theme.Colors.primary} />
@@ -286,6 +275,11 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
   const renderMobileShell = () => (
     <View style={[styles.gradient, { flex: 1 }]}>
       <View style={[styles.filterSection, { paddingTop: 68 + insets.top }]}>
+        <View style={{ marginBottom: 12 }}>
+          <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onSurface, letterSpacing: -0.3 }}>
+            Billing Worksheets
+          </Text>
+        </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={[styles.mobileDropdownWrapper, { flex: 1, marginBottom: 0 }]}>
             <GlassDropdown 
@@ -297,26 +291,19 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
             />
           </View>
           <TouchableOpacity 
-            style={[styles.headerGradientTouch, (isSaving || entries.length === 0) && { opacity: 0.5 }]}
+            style={[styles.headerGradientInner, (isSaving || entries.length === 0) && { opacity: 0.5 }]}
             onPress={handleSave}
             disabled={isSaving || entries.length === 0}
             activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerGradientInner}
-            >
-              {isSaving ? (
-                <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
-              ) : (
-                <>
-                  <MaterialIcons name="check" size={15} color={theme.Colors.surfaceContainerLowest} />
-                  <Text style={styles.headerGradientText}>SAVE</Text>
-                </>
-              )}
-            </LinearGradient>
+            {isSaving ? (
+              <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
+            ) : (
+              <>
+                <MaterialIcons name="check" size={15} color={theme.Colors.surfaceContainerLowest} />
+                <Text style={styles.headerGradientText}>SAVE</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
         

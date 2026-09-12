@@ -2,7 +2,6 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { MeterReadingResponse } from '@/src/features/finance/api/meterReading.api';
 
 interface MeterReadingFloorCardProps {
@@ -45,7 +44,7 @@ export function MeterReadingFloorCard({
   const paginatedUnits = floorUnits.slice(startIndex, startIndex + unitsPerFloorPage);
 
   return (
-    <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.floorCard}>
+    <View style={styles.floorCard}>
       <TouchableOpacity 
         style={styles.floorHeader}
         onPress={toggleFloor}
@@ -158,16 +157,16 @@ export function MeterReadingFloorCard({
           )}
         </>
       )}
-    </BlurView>
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   floorCard: {
-    borderRadius: 20,
-    backgroundColor: theme.Colors.glassFill,
+    borderRadius: 16,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
     overflow: 'hidden',
     marginBottom: theme.Spacing.md,
   },
@@ -179,9 +178,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   floorHeaderText: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
-    fontFamily: 'Inter',
   },
   rowCard: {
     flexDirection: 'row',
@@ -189,8 +187,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: theme.Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 104, 117, 0.06)',
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.35)' : 'rgba(255, 255, 255, 0.15)',
+    borderBottomColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
   rowError: {
     backgroundColor: 'rgba(186, 26, 26, 0.04)',
@@ -200,23 +198,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   unitName: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
-    fontFamily: 'Inter',
   },
   tenantName: {
     fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: 2,
-    fontFamily: 'Inter',
   },
   prevReading: {
     fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: theme.Spacing.xs,
-    fontFamily: 'Inter',
   },
   prevTextInput: {
     borderWidth: 1,
@@ -237,32 +232,29 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   consumedText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
-    fontFamily: 'Inter',
   },
   costText: {
     fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: theme.Spacing.xs,
-    fontFamily: 'Inter',
   },
   rowRight: {
     flex: 1.5,
     alignItems: 'flex-end',
   },
   input: {
-    height: 40,
-    borderRadius: 10,
+    minHeight: 44,
+    borderRadius: 12,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
     borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 104, 117, 0.15)',
     paddingHorizontal: 12,
     fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
-    fontWeight: '700',
-    fontFamily: 'Inter',
+    fontWeight: '600',
     textAlign: 'right',
   },
   inputError: {
@@ -278,9 +270,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   errorText: {
     fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.error,
-    fontWeight: '700',
+    fontWeight: '600',
     marginTop: theme.Spacing.xs,
-    fontFamily: 'Inter',
   },
   paginationRow: {
     flexDirection: 'row',
@@ -294,10 +285,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   pageButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
     gap: theme.Spacing.xs,
-    paddingVertical: theme.Spacing.sm,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 22,
     backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : 'rgba(255, 255, 255, 0.6)',
     borderWidth: 1,
     borderColor: theme.Colors.glassStroke,
@@ -309,9 +302,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   pageButtonText: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.primary,
-    fontFamily: 'Inter',
   },
   pageButtonTextDisabled: {
     color: theme.Colors.onSurfaceVariant,
@@ -320,6 +312,5 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
-    fontFamily: 'Inter',
   },
 });

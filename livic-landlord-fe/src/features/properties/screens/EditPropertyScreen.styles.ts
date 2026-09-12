@@ -1,5 +1,4 @@
 import { StyleSheet } from 'react-native';
-import { SerifHeadlineFont } from '@/src/theme/Theme';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
@@ -40,14 +39,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   compactTitleText: {
     fontSize: theme.Typography.bodyLg.fontSize,
-    fontFamily: 'Inter',
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -58,21 +56,22 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingBottom: 40,
   },
   card: {
-    borderRadius: 28,
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderRadius: theme.Rounded.xl,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
     padding: theme.Spacing.lg,
     shadowColor: 'black',
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 20,
+    shadowRadius: 12,
+    elevation: 2,
   },
   sectionTitle: {
     fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1.5,
     marginBottom: 20,
   },
@@ -82,7 +81,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   label: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 1,
   },
@@ -151,7 +150,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   saveButtonText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1,
   },
   configButton: {
@@ -177,7 +176,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   configTitle: {
     fontSize: theme.Typography.bodyLg.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   configSubtitle: {
@@ -207,13 +206,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarBrandTitle: {
     fontSize: theme.Typography.displaySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     lineHeight: 40,
     color: theme.Colors.primary,
   },
   sidebarBrandSub: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 2,
     color: theme.Colors.onSurfaceVariant,
     marginTop: theme.Spacing.xs,
@@ -236,7 +235,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarLinkText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 1.6,
     color: theme.Colors.onSurface,
   },
@@ -266,7 +265,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   upgradeText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   desktopMain: {
     flex: 1,
@@ -292,7 +291,6 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   titleLineDesktop: {
     ...theme.Typography.headlineLg,
-    fontFamily: SerifHeadlineFont,
     color: theme.Colors.onSurface,
   },
   subtitleDesktop: {
@@ -302,7 +300,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '600',
   },
   desktopSaveButtonWrapper: {
-    borderRadius: 23,
+    borderRadius: theme.Rounded.md,
     overflow: 'hidden',
   },
   desktopSaveButton: {
@@ -312,12 +310,18 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.lg,
     height: 46,
     gap: theme.Spacing.sm,
+    backgroundColor: theme.Colors.primary,
+    borderRadius: theme.Rounded.md,
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   desktopSaveButtonText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
-    letterSpacing: 1,
+    fontWeight: '600',
   },
   desktopFormContainer: {
     flexDirection: 'row',
@@ -331,16 +335,16 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1.2,
   },
   desktop3DPreviewCard: {
-    borderRadius: 24,
+    borderRadius: theme.Rounded.xl,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     padding: theme.Spacing.lg,
     gap: theme.Spacing.md,
   },
   desktopPreviewLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
     letterSpacing: 1.2,
   },
@@ -374,7 +378,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   previewName: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginBottom: theme.Spacing.xs,
   },
@@ -394,7 +398,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   avatarText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontWeight: '800',
+    fontWeight: '600',
     fontSize: theme.Typography.bodyLg.fontSize,
   },
   amenitiesContainer: {
@@ -420,7 +424,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   amenityChipText: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
   amenityChipTextSelected: {

@@ -5,24 +5,19 @@ import {
   StyleSheet,
   Platform,
   Text,
-  Animated,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, usePathname } from 'expo-router';
-import { useScrollNav } from './ScrollContext';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface BottomNavigationProps {
   onMorePress: () => void;
-  onQRPress: () => void;
+  onQRPress?: () => void;
 }
 
-export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavigationProps) {
+export default function BottomNavigation({ onMorePress }: BottomNavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { navTranslateY } = useScrollNav();
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
@@ -30,13 +25,11 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
     return null;
   }
 
-  const isHomeActive = pathname === '/tenant-home';
-
-  const handleHomePress = () => {
-    if (!isHomeActive) {
-      router.push('/tenant-home' as any);
-    }
-  };
+  const navItems = [
+    { label: 'Home', icon: 'home' as const, route: '/tenant-home' },
+    { label: 'Payments', icon: 'payments' as const, route: '/tenant-payments' },
+    { label: 'Requests', icon: 'build' as const, route: '/tenant-maintenance' },
+  ];
 
   return (
     <>
@@ -44,7 +37,7 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
         <style dangerouslySetInnerHTML={{ __html: `
           .mobile-bottom-nav-container {
             position: fixed !important;
-            bottom: 20px !important;
+            bottom: 16px !important;
             left: 0 !important;
             right: 0 !important;
             z-index: 9999 !important;
@@ -63,43 +56,60 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
         style={styles.outerContainer}
         pointerEvents="box-none"
       >
-      {/* Centered Navigation Pill */}
-      <View style={styles.pillWrapper}>
         <View style={styles.pillContainer}>
-          <BlurView intensity={Platform.OS === 'ios' ? 85 : 95} tint={isDark ? "dark" : "light"} style={styles.pillBlurBackground} />
-          <View style={styles.pillContent}>
-            {/* Home Button */}
-            <TouchableOpacity style={styles.navItem} onPress={handleHomePress} activeOpacity={0.7}>
-              <View style={[styles.iconCircle, isHomeActive && { backgroundColor: `${theme.Colors.primary}18` }]}>
-                <MaterialIcons name="home" size={22} color={isHomeActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
-              </View>
-              <Text style={[styles.navText, { color: isHomeActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant }, isHomeActive && styles.navTextActive]}>Home</Text>
-            </TouchableOpacity>
-
-            {/* Protruding Centerpiece Camera Button */}
-            <TouchableOpacity style={styles.heroCameraWrapper} onPress={onQRPress} activeOpacity={0.88}>
-              <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.heroCameraButton}
+          {navItems.map((item) => {
+            const isActive = pathname === item.route;
+            return (
+              <TouchableOpacity
+                key={item.route}
+                style={styles.navItem}
+                onPress={() => {
+                  if (!isActive) router.push(item.route as any);
+                }}
+                activeOpacity={0.75}
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                accessibilityRole="button"
+                accessibilityLabel={item.label}
               >
-                <MaterialIcons name="center-focus-strong" size={28} color="#ffffff" />
-                <View style={[styles.cameraDotBadge, { backgroundColor: '#00d4ff' }]} />
-              </LinearGradient>
-            </TouchableOpacity>
+                <View style={[styles.iconCircle, isActive && { backgroundColor: `${theme.Colors.primary}18` }]}>
+                  <MaterialIcons
+                    name={item.icon}
+                    size={20}
+                    color={isActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.navText,
+                    { color: isActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant },
+                    isActive && styles.navTextActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
 
-            {/* More Button */}
-            <TouchableOpacity style={styles.navItem} onPress={onMorePress} activeOpacity={0.7}>
-              <View style={styles.iconCircle}>
-                <MaterialIcons name="widgets" size={22} color={theme.Colors.onSurfaceVariant} />
-              </View>
-              <Text style={[styles.navText, { color: theme.Colors.onSurfaceVariant }]}>More</Text>
-            </TouchableOpacity>
-          </View>
+          {/* More Sheet Trigger */}
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={onMorePress}
+            activeOpacity={0.75}
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            accessibilityRole="button"
+            accessibilityLabel="More options"
+          >
+            <View style={styles.iconCircle}>
+              <MaterialIcons name="grid-view" size={20} color={theme.Colors.onSurfaceVariant} />
+            </View>
+            <Text style={[styles.navText, { color: theme.Colors.onSurfaceVariant }]} numberOfLines={1}>
+              More
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </View>
     </>
   );
 }
@@ -107,91 +117,53 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   outerContainer: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 32 : 20,
+    bottom: Platform.OS === 'ios' ? 24 : 16,
     left: 0,
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
-  },
-  pillWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1001,
+    paddingHorizontal: 12,
   },
   pillContainer: {
-    borderRadius: 100,
-    paddingVertical: 6,
-    paddingHorizontal: 20,
-    shadowColor: theme.Colors.shadowColor || '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 20,
-    elevation: 10,
-    position: 'relative',
-  },
-  pillBlurBackground: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 100,
-    overflow: 'hidden',
-    backgroundColor: isDark ? 'rgba(19, 28, 38, 0.85)' : 'rgba(255, 255, 255, 0.88)',
-    borderWidth: 1.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.95)',
-  },
-  pillContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.Spacing.lg,
+    justifyContent: 'space-around',
+    borderRadius: 32,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    shadowColor: theme.Colors.shadowColor || '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+    maxWidth: 420,
+    width: '100%',
   },
   navItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
-    paddingHorizontal: theme.Spacing.xs,
+    flex: 1,
     paddingVertical: 2,
+    gap: 2,
+    minHeight: 44,
   },
   iconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   navText: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '600',
+    fontWeight: '500',
+    letterSpacing: 0.1,
   },
   navTextActive: {
-    fontWeight: '700',
-  },
-  heroCameraWrapper: {
-    marginTop: -24,
-    marginBottom: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1005,
-  },
-  heroCameraButton: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3.5,
-    borderColor: theme.Colors.surfaceContainerLowest || '#ffffff',
-    shadowColor: theme.Colors.shadowColor || '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
-    position: 'relative',
-  },
-  cameraDotBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 12,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    fontWeight: '600',
   },
 });

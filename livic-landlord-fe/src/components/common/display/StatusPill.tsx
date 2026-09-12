@@ -8,10 +8,10 @@ interface StatusPillProps {
 }
 
 export function StatusPill({ status, style }: StatusPillProps) {
-  const { theme, isDark } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
 
-  const normalized = status.trim().toUpperCase();
+  const normalized = (status || '').trim().toUpperCase();
 
   const getStatusStyles = () => {
     switch (normalized) {
@@ -20,9 +20,9 @@ export function StatusPill({ status, style }: StatusPillProps) {
       case 'OCCUPIED':
       case 'SUCCESS':
         return {
-          bg: 'rgba(0, 135, 90, 0.1)',
-          text: '#00875a',
-          border: 'rgba(0, 135, 90, 0.2)',
+          bg: theme.Colors.successContainer,
+          text: theme.Colors.success,
+          border: theme.Colors.success,
         };
       case 'INACTIVE':
       case 'UNPAID':
@@ -30,31 +30,35 @@ export function StatusPill({ status, style }: StatusPillProps) {
       case 'CANCELLED':
       case 'FAILED':
         return {
-          bg: 'rgba(186, 26, 26, 0.1)',
+          bg: theme.Colors.errorContainer,
           text: theme.Colors.error,
-          border: 'rgba(186, 26, 26, 0.2)',
+          border: theme.Colors.error,
         };
       case 'PENDING':
       case 'PARTIALLY_OCCUPIED':
       case 'WARNING':
         return {
-          bg: 'rgba(243, 191, 38, 0.15)',
-          text: '#765a00',
-          border: 'rgba(243, 191, 38, 0.3)',
+          bg: theme.Colors.tertiaryContainer,
+          text: theme.Colors.tertiary,
+          border: theme.Colors.tertiary,
         };
       case 'OVERDUE':
         return {
-          bg: 'rgba(235, 95, 0, 0.1)',
-          text: '#eb5f00',
-          border: 'rgba(235, 95, 0, 0.2)',
+          bg: theme.Colors.errorContainer,
+          text: theme.Colors.error,
+          border: theme.Colors.error,
         };
       default:
         return {
-          bg: 'rgba(107, 122, 125, 0.1)',
-          text: theme.Colors.outline,
-          border: 'rgba(107, 122, 125, 0.2)',
+          bg: theme.Colors.surfaceContainerLow,
+          text: theme.Colors.onSurfaceVariant,
+          border: theme.Colors.outline,
         };
     }
+  };
+
+  const formatStatus = (val: string) => {
+    return (val || '').trim().replace(/_/g, ' ').toUpperCase();
   };
 
   const { bg, text, border } = getStatusStyles();
@@ -62,13 +66,13 @@ export function StatusPill({ status, style }: StatusPillProps) {
   return (
     <View style={[styles.pill, { backgroundColor: bg, borderColor: border }, style]}>
       <Text style={[styles.text, { color: text }]}>
-        {normalized.replace('_', ' ')}
+        {formatStatus(status)}
       </Text>
     </View>
   );
 }
 
-const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   pill: {
     paddingHorizontal: 10,
     paddingVertical: theme.Spacing.xs,
@@ -80,8 +84,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   text: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '700',
-    fontFamily: 'Inter',
-    letterSpacing: 0.5,
+    fontWeight: '500',
+    fontFamily: theme.Typography.labelSmall.fontFamily,
   },
 });

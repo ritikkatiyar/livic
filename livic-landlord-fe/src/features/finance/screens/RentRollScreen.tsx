@@ -11,8 +11,6 @@ import {
   Alert
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/src/hooks/useResponsive';
@@ -250,24 +248,22 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
     if (!properties || properties.length === 0) {
       return (
         <View style={{ flex: 1, padding: theme.Spacing.lg, justifyContent: 'center', alignItems: 'center' }}>
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: theme.Spacing.xl, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%', backgroundColor: theme.Colors.glassFill, borderWidth: 1.5, borderColor: theme.Colors.glassStroke }}>
-            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: theme.Spacing.md }}>
+          <View style={{ padding: theme.Spacing.xl, borderRadius: theme.Rounded.xl, alignItems: 'center', maxWidth: 500, width: '100%', backgroundColor: theme.Colors.surfaceContainerLowest, borderWidth: 1, borderColor: theme.Colors.outline }}>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: theme.Colors.primaryContainer, justifyContent: 'center', alignItems: 'center', marginBottom: theme.Spacing.md }}>
               <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
             </View>
-            <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: theme.Spacing.sm, textAlign: 'center' }}>No Property Created Yet</Text>
+            <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onSurface, marginBottom: theme.Spacing.sm, textAlign: 'center' }}>No Property Created Yet</Text>
             <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: theme.Spacing.lg, lineHeight: 20 }}>
               Generating rent rolls and invoices requires an active property. Create your first property to start running rent cycles.
             </Text>
             <TouchableOpacity 
-              style={{ borderRadius: 100, overflow: 'hidden' }}
+              style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: theme.Spacing.lg, paddingVertical: 14, gap: theme.Spacing.sm, backgroundColor: theme.Colors.primary, borderRadius: theme.Rounded.lg }}
               onPress={() => router.push('/properties/create')}
             >
-              <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: theme.Spacing.lg, paddingVertical: 14, gap: theme.Spacing.sm }}>
-                <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
-                <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
-              </LinearGradient>
+              <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
+              <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' }}>Create First Property</Text>
             </TouchableOpacity>
-          </BlurView>
+          </View>
         </View>
       );
     }
@@ -297,16 +293,18 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
       <View style={styles.inner}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 280 }}>
-            <TouchableOpacity
-              onPress={() => router.push('/expenses')}
-              style={{ marginRight: 14, padding: 8, borderRadius: 12, backgroundColor: theme.Colors.glassFill, borderWidth: 1, borderColor: theme.Colors.glassStroke }}
-              activeOpacity={0.75}
-            >
-              <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
-            </TouchableOpacity>
+            {isDesktop && (
+              <TouchableOpacity
+                onPress={() => router.push('/expenses')}
+                style={{ marginRight: 14, padding: 8, borderRadius: 12, backgroundColor: theme.Colors.glassFill, borderWidth: 1, borderColor: theme.Colors.glassStroke }}
+                activeOpacity={0.75}
+              >
+                <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+              </TouchableOpacity>
+            )}
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: theme.Typography.headlineMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' }}>Rent Roll & Invoices</Text>
-              <Text style={{ fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, fontFamily: 'Inter' }}>Generate draft invoices, publish monthly cycles & track collection status</Text>
+              <Text style={{ fontSize: theme.Typography.headlineMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurface, }}>Rent Roll & Invoices</Text>
+              <Text style={{ fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, }}>Generate draft invoices, publish monthly cycles & track collection status</Text>
             </View>
           </View>
 
@@ -370,6 +368,17 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
                   iconName="hourglass-empty"
                   iconColor={theme.Colors.primary}
                   valueColor={theme.Colors.primary}
+                  style={styles.miniStat}
+                />
+                <StatCard
+                  label="Utility Meters"
+                  value={checklist ? `${checklist.meterReadingsEntered}/${checklist.meterReadingsExpected}` : 'Complete'}
+                  loading={isLoading}
+                  trend={checklist && checklist.meterReadingsEntered < checklist.meterReadingsExpected ? 'Readings missing' : 'All meters logged'}
+                  trendType={checklist && checklist.meterReadingsEntered < checklist.meterReadingsExpected ? 'neutral' : 'positive'}
+                  iconName="electric-bolt"
+                  iconColor={theme.Colors.secondary}
+                  valueColor={theme.Colors.secondary}
                   style={styles.miniStat}
                 />
               </View>
@@ -478,19 +487,14 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
   };
 
   const renderDesktopShell = () => (
-    <LinearGradient
-      colors={theme.Colors.backgroundGradient as [string, string, string]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
-    >
+    <View style={{ flex: 1, backgroundColor: theme.Colors.background }}>
       <View style={{ flex: 1, width: '100%' }}>
 
         <ScrollView contentContainerStyle={styles.desktopScroll} showsVerticalScrollIndicator={false}>
           {renderContent()}
         </ScrollView>
       </View>
-    </LinearGradient>
+    </View>
   );
 
   if (isDesktop) {

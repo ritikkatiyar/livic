@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -56,7 +55,7 @@ export function WorksheetFloorList({
       {sortedFloors.map(floor => {
         const isExpanded = expandedFloors[floor];
         return (
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} key={`floor-${floor}`} style={styles.floorCard}>
+          <View key={`floor-${floor}`} style={styles.floorCard}>
             <TouchableOpacity 
               style={styles.floorHeader}
               onPress={() => toggleFloor(floor)}
@@ -155,7 +154,7 @@ export function WorksheetFloorList({
                 </>
               );
             })()}
-          </BlurView>
+          </View>
         );
       })}
     </View>
@@ -164,12 +163,12 @@ export function WorksheetFloorList({
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   floorCard: {
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
     marginVertical: 10,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   floorHeader: {
     flexDirection: 'row',
@@ -178,7 +177,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.glassFill,
+    borderBottomColor: theme.Colors.outlineVariant,
   },
   floorHeaderText: {
     fontSize: theme.Typography.titleMedium.fontSize,
@@ -223,23 +222,25 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   billedBadgeText: {
     color: theme.Colors.primary,
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   meteredButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
     borderColor: 'rgba(0, 104, 117, 0.3)',
     borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    borderRadius: 22,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     gap: 6,
   },
   meteredButtonText: {
     color: theme.Colors.primary,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   inputWrapper: {
     width: '100%',
@@ -256,7 +257,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   input: {
     width: '100%',
-    height: 38,
+    minHeight: 44,
     borderRadius: 12,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
@@ -284,9 +285,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   pageButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 22,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
     borderColor: theme.Colors.glassStroke,
@@ -296,7 +299,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   pageButtonText: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.primary,
   },
   pageButtonTextDisabled: {

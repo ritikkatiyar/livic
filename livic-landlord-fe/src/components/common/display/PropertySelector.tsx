@@ -67,10 +67,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   label: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: theme.Typography.labelSmall.fontWeight,
+    fontWeight: '600',
     color: theme.Colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 0.2,
   },
   dropdownWrap: {
     minWidth: 200,

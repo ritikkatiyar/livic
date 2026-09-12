@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
@@ -34,7 +32,6 @@ export function PublishInvoicesModal({
   return (
     <Modal visible={visible} animationType="fade" transparent={true}>
       <View style={styles.modalOverlay}>
-        <BlurView intensity={40} style={StyleSheet.absoluteFillObject} />
         <View style={styles.modalPopup}>
           <View style={styles.headerRow}>
             <View style={styles.iconCircle}>
@@ -108,18 +105,13 @@ export function PublishInvoicesModal({
               onPress={onConfirm}
               disabled={isPublishing}
             >
-              <LinearGradient
-                colors={['#006875', '#004d57']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.confirmBtn}
-              >
+              <View style={styles.confirmBtn}>
                 {isPublishing ? (
-                  <ActivityIndicator color="#ffffff" size="small" />
+                  <ActivityIndicator color={theme.Colors.surfaceContainerLowest} size="small" />
                 ) : (
                   <Text style={styles.confirmBtnText}>Publish & Notify</Text>
                 )}
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -133,21 +125,16 @@ const createStyles = (theme: any) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
   },
   modalPopup: {
     width: 440,
     maxWidth: '92%',
     padding: theme.Spacing.xl,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
     backgroundColor: theme.Colors.surfaceContainerLowest,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 8,
   },
   headerRow: {
     flexDirection: 'row',
@@ -158,14 +145,14 @@ const createStyles = (theme: any) => StyleSheet.create({
   iconCircle: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 104, 117, 0.1)',
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 104, 117, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
     fontSize: theme.Typography.bodyLg.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   subtitle: {
@@ -175,6 +162,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   summaryCard: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderRadius: 16,
     padding: theme.Spacing.md,
@@ -183,26 +171,25 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   summaryItem: {
     flex: 1,
+    minWidth: 100,
   },
   summaryLabel: {
-    fontSize: 11,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
     marginBottom: 4,
   },
   summaryValue: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: theme.Typography.titleMedium.fontSize,
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   sectionHeader: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: theme.Typography.bodySmall.fontSize,
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 0.2,
     marginBottom: 8,
   },
   channelsList: {
@@ -222,12 +209,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     flex: 1,
   },
   channelTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: theme.Typography.bodySmall.fontSize,
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   channelDesc: {
-    fontSize: 11,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
   },
   infoBanner: {
@@ -241,7 +228,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   infoBannerText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     lineHeight: 16,
   },
@@ -251,37 +238,38 @@ const createStyles = (theme: any) => StyleSheet.create({
     gap: 12,
   },
   cancelBtn: {
+    minHeight: 44,
     paddingVertical: 10,
     paddingHorizontal: theme.Spacing.md,
-    borderRadius: 100,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 22,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
     justifyContent: 'center',
     alignItems: 'center',
   },
   cancelBtnText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
   confirmBtnWrapper: {
-    borderRadius: 100,
+    borderRadius: 22,
     overflow: 'hidden',
-    shadowColor: theme.Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
   },
   confirmBtn: {
+    minHeight: 44,
     paddingVertical: 10,
     paddingHorizontal: 22,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 150,
+    backgroundColor: theme.Colors.primary,
   },
   confirmBtnText: {
-    color: '#ffffff',
+    color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
 });

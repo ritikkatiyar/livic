@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { apiRequest } from '@/src/api/client';
 
 export type OwnerModule = 'PROPERTY' | 'LEASE' | 'INVENTORY';
@@ -57,10 +58,27 @@ export async function requestUploadAuthorization(
 
 export async function uploadToCloudinary(
   auth: UploadAuthorizationResponse,
-  file: File | Blob | any
+  file: any
 ): Promise<{ public_id: string; secure_url: string; url: string }> {
+  let filePayload: any = file;
+
+  if (Platform.OS === 'web' && file?.uri && !(file instanceof Blob) && typeof window !== 'undefined') {
+    try {
+      const res = await fetch(file.uri);
+      filePayload = await res.blob();
+    } catch {
+      filePayload = file;
+    }
+  } else if (Platform.OS !== 'web' && file?.uri && !file.name) {
+    filePayload = {
+      uri: file.uri,
+      type: file.type || file.mimeType || 'image/jpeg',
+      name: file.fileName || file.name || 'upload.jpg',
+    };
+  }
+
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', filePayload);
   formData.append('api_key', auth.apiKey);
   formData.append('timestamp', String(auth.timestamp));
   formData.append('signature', auth.signature);

@@ -1,11 +1,8 @@
-import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Theme } from '@/src/theme/Theme';
+import { PageShell } from '@/src/components/common/layout/PageShell';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
 
 interface ModeSelectionScreenProps {
@@ -33,7 +30,6 @@ const MODES = [
 export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSelectionScreenProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-
   const { isDesktop } = useResponsive();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -62,12 +58,12 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
         activeOpacity={mode.disabled ? 1 : 0.7}
         disabled={mode.disabled || isLoading}
       >
-        <BlurView intensity={isSelected ? 80 : 50} tint={isDark ? 'dark' : 'light'} style={styles.cardInner}>
+        <View style={styles.cardInner}>
           <View style={styles.iconWrapper}>
             <MaterialIcons 
               name={mode.icon as any} 
               size={36} 
-              color={mode.disabled ? theme.Colors.outline : theme.Colors.primary} 
+              color={mode.disabled ? theme.Colors.outline : isSelected ? theme.Colors.primary : theme.Colors.onSurfaceVariant} 
             />
           </View>
           <Text style={[styles.cardLabel, mode.disabled && styles.labelDisabled]}>
@@ -85,46 +81,41 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
               <ActivityIndicator color={theme.Colors.primary} />
             </View>
           )}
-        </BlurView>
+        </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <LinearGradient colors={theme.Colors.backgroundGradient as [string, string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          <Text style={styles.title}>What do you want to manage?</Text>
-          <Text style={styles.subtitle}>Select a property type to get started</Text>
-          
-          <View style={[styles.grid, isDesktop && styles.gridDesktop]}>
-            {MODES.map(renderCard)}
-          </View>
+    <PageShell
+      scrollable={false}
+      edges={['top', 'bottom']}
+    >
+      <View style={styles.content}>
+        <Text style={styles.title}>What do you want to manage?</Text>
+        <Text style={styles.subtitle}>Select a property type to get started</Text>
+        
+        <View style={[styles.grid, isDesktop && styles.gridDesktop]}>
+          {MODES.map(renderCard)}
         </View>
-      </SafeAreaView>
-    </LinearGradient>
+      </View>
+    </PageShell>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
   content: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Theme.Spacing.containerPadding,
+    padding: theme.Spacing.containerPadding,
   },
   title: {
     fontSize: theme.Typography.headlineMd.fontSize,
     fontWeight: theme.Typography.headlineMd.fontWeight as any,
     color: theme.Colors.onSurface,
     textAlign: 'center',
-    marginBottom: Theme.Spacing.stackSm,
+    marginBottom: theme.Spacing.stackSm,
   },
   subtitle: {
     fontSize: theme.Typography.bodyMd.fontSize,
@@ -136,7 +127,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: Theme.Spacing.gutter,
+    gap: theme.Spacing.gutter,
     maxWidth: 400,
   },
   gridDesktop: {
@@ -146,33 +137,34 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardContainer: {
     width: '45%',
     aspectRatio: 1,
-    borderRadius: Theme.Rounded.lg,
+    borderRadius: theme.Rounded.lg,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   cardDisabled: {
     opacity: 0.6,
   },
   cardSelected: {
-    borderColor: theme.Colors.primaryContainer,
-    shadowColor: theme.Colors.primaryContainer,
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    borderColor: theme.Colors.primary,
+    shadowColor: theme.Colors.primary,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   cardInner: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Theme.Spacing.gutter,
-    backgroundColor: theme.Colors.glassFill,
+    padding: theme.Spacing.gutter,
   },
   iconWrapper: {
     width: 64,
     height: 64,
-    borderRadius: Theme.Rounded.xl,
-    backgroundColor: theme.Colors.glassFill,
+    borderRadius: 20,
+    backgroundColor: isDark ? 'rgba(0, 104, 117, 0.2)' : 'rgba(0, 104, 117, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -188,21 +180,21 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: Theme.Spacing.stackSm,
-    right: Theme.Spacing.stackSm,
+    top: theme.Spacing.stackSm,
+    right: theme.Spacing.stackSm,
     backgroundColor: theme.Colors.surfaceContainer,
-    paddingHorizontal: Theme.Spacing.stackSm,
+    paddingHorizontal: theme.Spacing.stackSm,
     paddingVertical: theme.Spacing.xs,
-    borderRadius: Theme.Rounded.md,
+    borderRadius: theme.Rounded.md,
   },
   badgeText: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: theme.Colors.outline,
   },
   loaderOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },

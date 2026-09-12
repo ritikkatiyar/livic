@@ -2,11 +2,9 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
 import { inventoryItems, tenantAmenities, type InventoryItem } from '@/src/features/inventory/mockInventoryData';
-import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
@@ -36,20 +34,17 @@ export default function TenantInventoryScreen() {
               </View>
             )}
             <TouchableOpacity style={[styles.reportButtonWrapper, !isDesktop && { flex: 1, width: '100%' }]} activeOpacity={0.78}>
-              <LinearGradient
-                colors={['#00e0ff', '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.reportButton}
+              <View
+                style={[styles.reportButton, { backgroundColor: theme.Colors.primary }]}
               >
                 <MaterialIcons name="support-agent" size={18} color={theme.Colors.onPrimary} />
                 <Text style={styles.reportButtonText}>Raise Issue</Text>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </View>
 
           <View style={[styles.bentoGrid, isDesktop && styles.bentoGridDesktop]}>
-            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.snapshotCard}>
+            <View style={styles.snapshotCard}>
               <Text style={styles.cardTitle}>Unit Condition Snapshot</Text>
               <MetricRow label="Total Visible Items" value={String(tenantVisibleItems.length)} theme={theme} styles={styles} />
               <MetricRow label="Excellent Condition" value="2" theme={theme} styles={styles} />
@@ -61,7 +56,7 @@ export default function TenantInventoryScreen() {
                   Last verified by management on Jul 20, 2026 during move-in walkthrough.
                 </Text>
               </View>
-            </BlurView>
+            </View>
 
             <View style={styles.inventoryColumn}>
               <View style={styles.sectionHeader}>
@@ -83,14 +78,11 @@ export default function TenantInventoryScreen() {
                 <Text style={styles.sectionSubtitle}>Common facilities visible to all active tenants in this property.</Text>
               </View>
               <TouchableOpacity style={styles.bookButtonWrapper} activeOpacity={0.78}>
-                <LinearGradient
-                  colors={['#00e0ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.bookButton}
+                <View
+                  style={[styles.bookButton, { backgroundColor: theme.Colors.primary }]}
                 >
                   <Text style={styles.bookButtonText}>Book Amenity</Text>
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             </View>
 
@@ -116,7 +108,7 @@ export default function TenantInventoryScreen() {
 
 function TenantItemCard({ item, theme, isDark, styles }: { item: InventoryItem, theme: any, isDark: boolean, styles: any }) {
   return (
-    <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={styles.itemCard}>
+    <View style={styles.itemCard}>
       <Image source={{ uri: item.image }} style={styles.itemImage} />
       <View style={styles.itemBody}>
         <View style={styles.itemTopRow}>
@@ -135,7 +127,7 @@ function TenantItemCard({ item, theme, isDark, styles }: { item: InventoryItem, 
           <Text style={styles.itemId}>{item.id}</Text>
         </View>
       </View>
-    </BlurView>
+    </View>
   );
 }
 
@@ -154,10 +146,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   scrollContent: { gap: theme.Spacing.lg },
   scrollContentDesktop: { padding: theme.Spacing.xl, maxWidth: 1200, width: '100%', alignSelf: 'center' },
   header: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 18 },
-  kicker: { fontFamily: 'Inter', fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: theme.Colors.primary, textTransform: 'uppercase' },
+  kicker: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', lineHeight: 16, letterSpacing: 0.2, color: theme.Colors.primary },
   title: { ...theme.Typography.headlineLg, color: theme.Colors.onSurface, lineHeight: 38, marginTop: 6 },
   titleMobile: { ...theme.Typography.headlineMedium, lineHeight: 36 },
-  subtitle: { fontFamily: 'Inter', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '400', lineHeight: 24, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm, maxWidth: 700 },
+  subtitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '400', lineHeight: 24, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm, maxWidth: 700 },
   titleBlock: { maxWidth: 720 },
   reportButtonWrapper: {
     height: 46,
@@ -171,23 +163,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.md,
     gap: theme.Spacing.sm,
   },
-  reportButtonText: { color: theme.Colors.onPrimary, fontWeight: '800', fontSize: theme.Typography.bodyMedium.fontSize },
+  reportButtonText: { color: theme.Colors.onPrimary, fontWeight: '600', fontSize: theme.Typography.bodyMedium.fontSize },
   bentoGrid: { gap: 18 },
   bentoGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   snapshotCard: {
     flex: 0.85,
     minWidth: 280,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outline,
     borderRadius: Theme.Rounded.lg,
     padding: 18,
     gap: 12,
     overflow: 'hidden',
   },
-  cardTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.primary, marginBottom: theme.Spacing.xs },
+  cardTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.primary, marginBottom: theme.Spacing.xs },
   metricRow: {
-    backgroundColor: theme.Colors.surfaceContainerLowest,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
     borderRadius: Theme.Rounded.lg,
@@ -197,40 +189,40 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   metricLabel: { color: theme.Colors.onSurfaceVariant, fontWeight: '600', fontSize: theme.Typography.bodyMedium.fontSize },
-  metricValue: { color: theme.Colors.primary, fontFamily: 'Inter', fontWeight: '800' },
+  metricValue: { color: theme.Colors.primary, fontWeight: '600' },
   dashedDivider: { borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant, borderStyle: 'dashed', marginVertical: 2 },
   verifiedRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   verifiedText: { flex: 1, color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodyMedium.fontSize, lineHeight: 19, fontStyle: 'italic' },
   inventoryColumn: { flex: 1.7, gap: 12 },
   sectionHeader: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  sectionTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
+  sectionTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
   sectionSubtitle: { color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs, maxWidth: 620 },
   readOnlyPill: { backgroundColor: theme.Colors.secondaryFixed, paddingHorizontal: 11, paddingVertical: 5, borderRadius: Theme.Rounded.full },
-  readOnlyText: { fontFamily: 'Inter', fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: theme.Colors.secondary },
+  readOnlyText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: theme.Colors.secondary },
   itemCard: {
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outline,
     borderRadius: Theme.Rounded.lg,
     overflow: 'hidden',
   },
   itemImage: { width: '100%', height: 180, backgroundColor: theme.Colors.surfaceVariant },
   itemBody: { padding: theme.Spacing.md, gap: 12 },
   itemTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
-  itemTitle: { flex: 1, fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
+  itemTitle: { flex: 1, fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
   conditionPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(0,104,117,0.1)', paddingHorizontal: 9, paddingVertical: 5, borderRadius: Theme.Rounded.lg },
   conditionPillWarn: { backgroundColor: theme.Colors.tertiaryFixed },
-  conditionPillText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800' },
+  conditionPillText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600' },
   conditionPillTextWarn: { color: theme.Colors.tertiary },
   itemDescription: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodyMedium.fontSize, lineHeight: 20 },
   itemFooter: { borderTopWidth: 1, borderTopColor: theme.Colors.surfaceVariant, paddingTop: 12, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 },
   photoLink: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  photoLinkText: { color: theme.Colors.primary, fontWeight: '800', fontSize: theme.Typography.bodyMedium.fontSize },
-  itemId: { color: theme.Colors.outline, fontFamily: 'Inter', fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700' },
+  photoLinkText: { color: theme.Colors.primary, fontWeight: '600', fontSize: theme.Typography.bodyMedium.fontSize },
+  itemId: { color: theme.Colors.outline, fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700' },
   amenitySection: { gap: theme.Spacing.md },
   bookButtonWrapper: { borderRadius: Theme.Rounded.lg, overflow: 'hidden' },
   bookButton: { paddingHorizontal: theme.Spacing.md, paddingVertical: 12 },
-  bookButtonText: { color: theme.Colors.onPrimary, fontWeight: '800', fontSize: theme.Typography.bodyMedium.fontSize },
+  bookButtonText: { color: theme.Colors.onPrimary, fontWeight: '600', fontSize: theme.Typography.bodyMedium.fontSize },
   amenityGrid: { gap: 14 },
   amenityGridDesktop: { flexDirection: 'row' },
   amenityCard: { flex: 1, minHeight: 230, borderRadius: Theme.Rounded.lg, overflow: 'hidden', backgroundColor: theme.Colors.surfaceVariant },
@@ -238,6 +230,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   amenityOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.34)' },
   amenityContent: { flex: 1, justifyContent: 'flex-end', padding: 18, gap: 5 },
   amenityTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  amenityTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', flex: 1 },
+  amenityTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', flex: 1 },
   amenityMeta: { color: 'rgba(255,255,255,0.84)', fontWeight: '600', fontSize: theme.Typography.bodyMedium.fontSize },
 });

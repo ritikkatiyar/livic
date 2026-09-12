@@ -12,8 +12,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
@@ -387,8 +385,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean = false) =
   headerTitle: {
     color: theme.Colors.onSurface,
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontFamily: 'Inter',
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1,
   },
   scrollContent: {

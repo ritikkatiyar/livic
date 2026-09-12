@@ -2,8 +2,6 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
@@ -52,7 +50,7 @@ export function AnnouncementComposer({
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
-    <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+    <View style={styles.card}>
       <Text style={styles.sectionHeader}>NEW BROADCAST NOTICE</Text>
 
 
@@ -150,46 +148,43 @@ export function AnnouncementComposer({
         onPress={handleSendBroadcast}
         style={{ marginTop: 16 }}
       />
-    </BlurView>
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   card: {
     padding: theme.Spacing.lg,
-    borderRadius: 24,
-    backgroundColor: theme.Colors.glassFill,
+    borderRadius: 16,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
     overflow: 'hidden',
   },
   sectionHeader: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
     marginBottom: 20,
-    fontFamily: 'Inter',
   },
   composerLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
     marginBottom: theme.Spacing.sm,
     marginTop: 18,
-    fontFamily: 'Inter',
   },
   composerInput: {
     height: 48,
-    borderRadius: 14,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.6)' : 'rgba(255, 255, 255, 0.85)',
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
+    borderRadius: 12,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
     paddingHorizontal: theme.Spacing.md,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    color: theme.Colors.onBackground,
-    fontFamily: 'Inter',
+    color: theme.Colors.onSurface,
   },
   composerTextarea: {
     height: 120,
@@ -216,7 +211,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
-    fontFamily: 'Inter',
   },
   chipTextActive: {
     color: theme.Colors.surfaceContainerLowest,
@@ -241,7 +235,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   composerSendText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
-    fontFamily: 'Inter',
+    fontWeight: '600',
   },
 });

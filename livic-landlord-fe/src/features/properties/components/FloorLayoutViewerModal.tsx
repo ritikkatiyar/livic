@@ -11,8 +11,6 @@ import {
   ScrollView as RNScrollView 
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Skeleton } from '@/src/components/common/feedback/Skeleton';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { 
@@ -327,7 +325,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
     return (
       <View style={styles.directoryContainer}>
         {/* Floor Overview Card */}
-        <BlurView intensity={theme.BlurIntensity.modalOverlay} tint="light" style={styles.directoryHeroCard}>
+        <View style={styles.directoryHeroCard}>
           <View style={styles.directoryHeroHeader}>
             <View>
               <Text style={styles.directoryKicker}>FLOOR INTELLIGENCE</Text>
@@ -356,7 +354,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
               <Text style={styles.directoryMetricValue}>₹{totalRent.toLocaleString()}</Text>
             </View>
           </View>
-        </BlurView>
+        </View>
 
         {/* Unit Directory Roster */}
         <View style={styles.unitListWrapper}>
@@ -410,14 +408,10 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
   if (isDesktop) {
     return (
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-        <BlurView intensity={theme.BlurIntensity.medium} tint="light" style={styles.modalOverlay}>
+        <View style={styles.modalOverlay}>
+          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0,0,0,0.5)' }]} />
           <View style={[styles.modalContent, styles.modalContentDesktop]}>
-            <LinearGradient
-              colors={theme.Colors.backgroundGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.desktopShell}
-            >
+            <View style={[styles.desktopShell, { backgroundColor: theme.Colors.background }]}>
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <View style={styles.desktopMain}>
                   {/* Header: Title + Floor Switcher Tabs + Close Button */}
@@ -558,9 +552,9 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                   </View>
                 </View>
               </GestureHandlerRootView>
-            </LinearGradient>
+            </View>
           </View>
-        </BlurView>
+        </View>
       </Modal>
     );
   }
@@ -568,19 +562,14 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
   // Mobile Version
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <BlurView intensity={theme.BlurIntensity.modalOverlay} tint="light" style={styles.modalOverlay}>
+      <View style={styles.modalOverlay}>
         <TouchableOpacity
           activeOpacity={1}
-          style={StyleSheet.absoluteFillObject}
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0,0,0,0.5)' }]}
           onPress={onClose}
         />
-        <View style={styles.modalContent}>
-          <LinearGradient
-            colors={theme.Colors.backgroundGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ flex: 1 }}
-          >
+        <View style={[styles.modalContent, { backgroundColor: theme.Colors.background }]}>
+          <View style={{ flex: 1 }}>
             <GestureHandlerRootView style={{ flex: 1 }}>
               <View style={{ flex: 1 }}>
                 <View style={styles.dragHandleContainer}>
@@ -660,9 +649,9 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                 )}
               </View>
             </GestureHandlerRootView>
-          </LinearGradient>
+          </View>
         </View>
-      </BlurView>
+      </View>
     </Modal>
   );
 }

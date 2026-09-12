@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 
 type RentRollHeaderProps = {
@@ -38,12 +36,8 @@ export function RentRollHeader({
   styles,
 }: RentRollHeaderProps) {
   return (
-    <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-      <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
+    <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top, backgroundColor: theme.Colors.surfaceContainerLowest, borderBottomWidth: 1, borderBottomColor: theme.Colors.outline }]}>
       <View style={styles.headerContent}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-        </TouchableOpacity>
         <View style={styles.titleWrapper}>
           <Text style={styles.compactTitleText}>Rent Roll</Text>
         </View>
@@ -55,11 +49,8 @@ export function RentRollHeader({
             disabled={isGenerating || !!(checklist && !checklist.isReady)}
             activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerGradientInner}
+            <View
+              style={[styles.headerGradientInner, { backgroundColor: theme.Colors.primary, borderRadius: 8 }]}
             >
               {isGenerating ? (
                 <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
@@ -69,7 +60,7 @@ export function RentRollHeader({
                   <Text style={styles.headerGradientText}>GENERATE</Text>
                 </>
               )}
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
         ) : pendingCount > 0 ? (
           <TouchableOpacity 
@@ -78,11 +69,8 @@ export function RentRollHeader({
             disabled={isPublishing}
             activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerGradientInner}
+            <View
+              style={[styles.headerGradientInner, { backgroundColor: theme.Colors.primary, borderRadius: 8 }]}
             >
               {isPublishing ? (
                 <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
@@ -92,7 +80,7 @@ export function RentRollHeader({
                   <Text style={styles.headerGradientText}>PUBLISH</Text>
                 </>
               )}
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity 
@@ -101,18 +89,15 @@ export function RentRollHeader({
             disabled={isUnpublishing}
             activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={['#ff416c', '#ff4b2b']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerGradientInner}
+            <View
+              style={[styles.headerGradientInner, { backgroundColor: theme.Colors.error, borderRadius: 8 }]}
             >
               {isUnpublishing ? (
                 <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
               ) : (
                 <Text style={styles.headerGradientText}>UNPUBLISH</Text>
               )}
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
         )}
       </View>

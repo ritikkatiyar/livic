@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
@@ -56,10 +55,7 @@ export function SettingsHero({
             onPress={onGenerateInvitePress}
             activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
+            <View
               style={styles.actionPillGradient}
             >
               <MaterialIcons
@@ -68,7 +64,7 @@ export function SettingsHero({
                 color={theme.Colors.surfaceContainerLowest}
               />
               <Text style={styles.actionPillText}>GENERATE INVITE</Text>
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
         </View>
       )}

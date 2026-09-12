@@ -14,8 +14,6 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { createInventoryItem, type CreateInventoryItemPayload } from '../api/inventory.api';
 import { uploadAndConfirmMedia } from '@/src/features/storage/api/media.api';
 
@@ -157,7 +155,6 @@ export function AddItemModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFillObject} />
         <View style={styles.modalCard}>
           <View style={styles.modalHeader}>
             <View>
@@ -261,7 +258,7 @@ export function AddItemModal({
                     ]}
                   >
                     <View style={[styles.dot, { backgroundColor: cond.color }]} />
-                    <Text style={[styles.chipText, isSelected && { color: cond.color, fontWeight: '800' }]}>
+                    <Text style={[styles.chipText, isSelected && { color: cond.color, fontWeight: '600' }]}>
                       {cond.label}
                     </Text>
                   </TouchableOpacity>
@@ -310,12 +307,7 @@ export function AddItemModal({
               <Text style={styles.cancelBtnText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleSubmit} disabled={loading} style={styles.submitBtn}>
-              <LinearGradient
-                colors={[theme.Colors.primary, '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.submitBtnInner}
-              >
+              <View style={styles.submitBtnInner}>
                 {loading ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.sm }}>
                     <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
@@ -327,7 +319,7 @@ export function AddItemModal({
                     <Text style={styles.submitBtnText}>Save Item</Text>
                   </>
                 )}
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -365,10 +357,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingTop: 20,
     paddingBottom: theme.Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.Colors.outlineVariant,
   },
-  modalKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 1 },
-  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '900', color: theme.Colors.onSurface, marginTop: 2 },
+  modalKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: theme.Colors.primary, letterSpacing: 1 },
+  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onSurface, marginTop: 2 },
   closeBtn: { padding: theme.Spacing.sm, borderRadius: 20, backgroundColor: theme.Colors.surfaceContainer },
   modalBody: { paddingHorizontal: theme.Spacing.lg, paddingVertical: theme.Spacing.md },
   label: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurface, marginBottom: 6, marginTop: 10 },
@@ -396,7 +388,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   chipSelected: { borderColor: theme.Colors.primary, backgroundColor: 'rgba(0,104,117,0.08)' },
   chipText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant },
-  chipTextSelected: { color: theme.Colors.primary, fontWeight: '800' },
+  chipTextSelected: { color: theme.Colors.primary, fontWeight: '600' },
   toggleRow: { flexDirection: 'row', gap: 10, marginTop: theme.Spacing.xs },
   toggleBtn: {
     flex: 1,
@@ -412,7 +404,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   toggleBtnActive: { borderColor: theme.Colors.primary, backgroundColor: 'rgba(0,104,117,0.08)' },
   toggleText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant },
-  toggleTextActive: { color: theme.Colors.primary, fontWeight: '800' },
+  toggleTextActive: { color: theme.Colors.primary, fontWeight: '600' },
   dot: { width: 6, height: 6, borderRadius: 3 },
   twoCol: { flexDirection: 'row', gap: 12 },
 
@@ -437,7 +429,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 2,
   },
-  uploadTitle: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
+  uploadTitle: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
   uploadSubtitle: { fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant },
 
   previewContainer: {
@@ -475,7 +467,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.lg,
     paddingVertical: theme.Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: theme.Colors.outlineVariant,
     backgroundColor: theme.Colors.surfaceContainerLow,
   },
   cancelBtn: { paddingHorizontal: theme.Spacing.md, paddingVertical: 10 },
@@ -487,6 +479,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 6,
     paddingHorizontal: 20,
     paddingVertical: 12,
+    backgroundColor: theme.Colors.primary,
   },
-  submitBtnText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.surfaceContainerLowest },
+  submitBtnText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.surfaceContainerLowest },
 });

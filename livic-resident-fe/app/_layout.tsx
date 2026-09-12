@@ -122,7 +122,6 @@ function MainAppLayout() {
                 {!showDesktop && !hideHeader && (
                   <MobileHeader 
                     title={getHeaderTitle(pathname)} 
-                    onMenuPress={() => setMoreSheetVisible(true)} 
                     onNotificationPress={() => router.push('/tenant-home')}
                   />
                 )}

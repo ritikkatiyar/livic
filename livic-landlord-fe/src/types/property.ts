@@ -29,4 +29,6 @@ export type PropertyResponse = {
   isActive?: boolean;
   amenities?: string[];
   autoBillDayOfMonth?: number | null;
+  totalUnits?: number;
+  occupiedUnits?: number;
 };

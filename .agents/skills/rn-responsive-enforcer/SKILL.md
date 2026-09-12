@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   desktopRow: { flexDirection: 'row', gap: 24 },
   contentLeft: { width: 280 },
   contentRight: { flex: 1, justifyContent: 'space-between' },
-  title: { fontSize: 20, fontWeight: '800', color: '#151d1e' },
+  title: { fontSize: 20, fontWeight: '600', color: '#151d1e' },
   metricRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -163,13 +163,21 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: 12,
   },
-  metricLabel: { fontSize: 10, fontWeight: '800', color: '#6b7a7d' },
-  metricValue: { fontSize: 13, fontWeight: '700', color: '#151d1e' },
+  metricLabel: { fontSize: 10, fontWeight: '500', color: '#6b7a7d' },
+  metricValue: { fontSize: 13, fontWeight: '600', color: '#151d1e' },
   metricsMobile: { flexDirection: 'row', gap: 10, marginTop: 14 },
   metricRowMobile: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 14, backgroundColor: 'rgba(255, 255, 255, 0.45)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.65)' },
   manageButtonWrapper: { borderRadius: 16, overflow: 'hidden' },
   manageButtonWrapperMobile: { borderRadius: 16, overflow: 'hidden', marginTop: 16 },
   button: { paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
-  buttonText: { color: '#fff', fontSize: 13, fontWeight: '800' }
+  buttonText: { color: '#fff', fontSize: 13, fontWeight: '600' }
 });
 ```
+
+## 3. Global Typography & Apple HIG Standards
+
+- **Zero Local `fontFamily` Declarations**: Screens and components MUST NEVER declare local `fontFamily` properties (e.g., `fontFamily: 'Inter'`, `fontFamily: 'Playfair Display'`). Every screen inherits the global Apple SF Pro font stack from the root (`+html.tsx` on web, system font on iOS).
+- **Prohibited Excessive Boldness**: Weights `'800'` and `'900'` are strictly forbidden. Use `'600'` for titles/metrics/CTAs, `'500'` for labels/badges, and `'400'` for body text.
+- **Theme Token Usage**: Typography must resolve through `theme.Typography.*` tokens.
+- **Automated Verification**: Enforced via `npm run check:typography` and `TypographyGuardrail.test.ts`.
+

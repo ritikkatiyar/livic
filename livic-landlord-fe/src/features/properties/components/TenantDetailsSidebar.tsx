@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { UnitBlock } from '../hooks/useFloorLayoutViewer';
@@ -88,7 +86,7 @@ export function TenantDetailsSidebar({
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
-    <BlurView intensity={65} tint={isDark ? "dark" : "light"} style={[styles.desktopCard, { flex: 1 }]}>
+    <View style={[styles.desktopCard, { flex: 1 }]}>
       <View style={styles.sheetHeader}>
         <View style={{ flex: 1 }}>
           <Text style={styles.sheetUnitTitle}>Unit {selectedBlock.unitNumber}</Text>
@@ -343,21 +341,15 @@ export function TenantDetailsSidebar({
                         style={styles.saveButton}
                         onPress={() => handleAssignTenant()}
                         disabled={tenantAssigning}
+                        activeOpacity={0.8}
                       >
-                        <LinearGradient
-                          colors={['#00d4ff', '#0072ff']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 0 }}
-                          style={styles.saveButtonGradient}
-                        >
-                          {tenantAssigning ? (
-                            <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
-                          ) : (
-                            <Text style={styles.saveButtonText}>
-                              ASSIGN {tenantSearchResult.fullName.toUpperCase()}
-                            </Text>
-                          )}
-                        </LinearGradient>
+                        {tenantAssigning ? (
+                          <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
+                        ) : (
+                          <Text style={styles.saveButtonText}>
+                            Assign {tenantSearchResult.fullName}
+                          </Text>
+                        )}
                       </TouchableOpacity>
                     </View>
                   )}
@@ -400,6 +392,6 @@ export function TenantDetailsSidebar({
           </>
         )}
       </ScrollView>
-    </BlurView>
+    </View>
   );
 }

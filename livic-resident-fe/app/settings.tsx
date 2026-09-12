@@ -262,7 +262,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   cardTitle: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   cardSub: {
     fontSize: theme.Typography.bodySmall.fontSize,
@@ -297,7 +297,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   prefIconCircle: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 12,
     backgroundColor: theme.Colors.surfaceContainerHigh || theme.Colors.surfaceVariant,
     justifyContent: 'center',
     alignItems: 'center',
@@ -309,9 +309,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   themeOptionBtn: {
     flex: 1,
+    minHeight: 44,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 10,
+    borderRadius: 22,
     borderWidth: 1.5,
     alignItems: 'center',
     flexDirection: 'row',
@@ -320,7 +321,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   themeOptionText: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     textTransform: 'capitalize',
   },
 });

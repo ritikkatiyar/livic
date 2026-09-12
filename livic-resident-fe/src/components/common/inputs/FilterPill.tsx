@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, StyleProp } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
@@ -52,15 +51,8 @@ export function FilterPill({
 
   if (active) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.pill, styles.activeShadow, style]}>
-        <LinearGradient
-          colors={['#00d4ff', '#0072ff']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradient}
-        >
-          {renderContent()}
-        </LinearGradient>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.pill, styles.activePill, styles.activeShadow, style]}>
+        {renderContent()}
       </TouchableOpacity>
     );
   }
@@ -80,28 +72,26 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md') => {
   return StyleSheet.create({
     pill: {
       height,
-      borderRadius: 100,
+      borderRadius: theme.Rounded.full,
       overflow: 'hidden',
       justifyContent: 'center',
       alignItems: 'center',
     },
-    gradient: {
-      height: '100%',
+    activePill: {
+      backgroundColor: theme.Colors.primary,
       paddingHorizontal,
-      justifyContent: 'center',
-      alignItems: 'center',
     },
     activeShadow: {
-      shadowColor: '#0072ff',
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.2,
-      shadowRadius: 6,
-      elevation: 3,
+      shadowColor: theme.Colors.outline,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.15,
+      shadowRadius: 3,
+      elevation: 1,
     },
     inactivePill: {
-      backgroundColor: theme.Colors.glassFill,
+      backgroundColor: theme.Colors.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: theme.Colors.glassStroke,
+      borderColor: theme.Colors.outline,
       paddingHorizontal,
     },
     contentRow: {
@@ -111,8 +101,8 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md') => {
     },
     text: {
       fontSize,
-      fontWeight: '700',
-      letterSpacing: 0.3,
+      fontWeight: '500',
+      letterSpacing: 0.2,
     },
     textActive: {
       color: theme.Colors.surfaceContainerLowest,
@@ -136,8 +126,8 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md') => {
       backgroundColor: theme.Colors.surfaceContainerLow,
     },
     badgeText: {
-      fontSize: 11,
-      fontWeight: '800',
+      fontSize: theme.Typography.labelSmall.fontSize,
+      fontWeight: '600',
     },
     badgeTextActive: {
       color: theme.Colors.surfaceContainerLowest,

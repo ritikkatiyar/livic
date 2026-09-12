@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { useProperties } from '@/src/hooks/useProperties';
@@ -164,6 +163,11 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   });
 
 
+  const totalVacantUnits = React.useMemo(() => {
+    return properties.reduce((sum, p) => sum + Math.max(0, (p.totalUnits || 0) - (p.occupiedUnits || 0)), 0);
+  }, [properties]);
+  const totalAlerts = issueMetrics.open + issueMetrics.escalated;
+
   const renderStatCard = (label: string, value: string, icon: keyof typeof MaterialIcons.glyphMap, color = theme.Colors.primary, valueColor?: string) => (
     <StatCard
       label={label}
@@ -172,11 +176,9 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
       iconName={icon}
       iconColor={color}
       valueColor={valueColor || color}
-      style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
+      style={isDesktop ? { flex: 1 } : { flexBasis: '47%', minWidth: '47%' }}
     />
   );
-
-
 
   const renderPropertyCard = (item: PropertyResponse) => (
     <PropertyCard
@@ -196,58 +198,108 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const ListHeader = () => (
     <Animated.View style={[styles.titleContainer, !isDesktop && { opacity: largeTitleOpacity }]}>
       {isDesktop ? (
-        <View style={styles.desktopTitleRow}>
-          <Text style={styles.mainTitle}>My Properties</Text>
+        <>
+          <View style={styles.desktopTitleRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Text style={styles.mainTitle}>My Properties</Text>
+              {properties.length > 0 && (
+                <View style={styles.countBadge}>
+                  <Text style={styles.countBadgeText}>{properties.length}</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              {/* In-page Desktop Search */}
+              <View style={styles.desktopSearchBox}>
+                <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
+                <TextInput
+                  style={styles.desktopSearchInput}
+                  placeholder="Filter properties by name or location..."
+                  placeholderTextColor={theme.Colors.onSurfaceVariant}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+                {searchQuery ? (
+                  <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <MaterialIcons name="close" size={16} color={theme.Colors.onSurfaceVariant} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+
+              {properties.length > 0 && (
+                <ActionButton
+                  label="Add Property"
+                  icon="add"
+                  iconPosition="left"
+                  variant="primary"
+                  size="md"
+                  onPress={onNavigateToCreateProperty}
+                />
+              )}
+            </View>
+          </View>
           {properties.length > 0 && (
-            <ActionButton
-              label="ADD PROPERTY"
-              icon="add"
-              iconPosition="right"
-              variant="primary"
-              size="md"
-              onPress={onNavigateToCreateProperty}
-            />
+            <View style={styles.desktopStatusStrip}>
+              <View style={styles.desktopStatusChip}>
+                <MaterialIcons name="apartment" size={16} color={theme.Colors.primary} />
+                <Text style={styles.desktopStatusChipText}>{properties.length} Properties</Text>
+              </View>
+              <View style={styles.desktopStatusChip}>
+                <MaterialIcons name="meeting-room" size={16} color={totalVacantUnits > 0 ? theme.Colors.secondary : theme.Colors.primary} />
+                <Text style={styles.desktopStatusChipText}>{totalVacantUnits} Units Vacant</Text>
+              </View>
+              <View style={styles.desktopStatusChip}>
+                <MaterialIcons name="warning-amber" size={16} color={totalAlerts > 0 ? theme.Colors.error : theme.Colors.onSurfaceVariant} />
+                <Text style={styles.desktopStatusChipText}>{totalAlerts} Maintenance Alerts</Text>
+              </View>
+            </View>
           )}
-        </View>
+        </>
       ) : (
-        <View style={styles.mobileTitleRow}>
-          <Text style={styles.mainTitle}>My Properties</Text>
-          {properties.length > 0 && (
-            <ActionButton
-              label="ADD PROPERTY"
-              icon="add"
-              iconPosition="right"
-              variant="primary"
-              size="md"
-              onPress={onNavigateToCreateProperty}
-            />
-          )}
-        </View>
-      )}
-      {isDesktop ? (
-        <View style={styles.statsGrid}>
-          {renderStatCard('TOTAL ASSETS', String(properties.length), 'real-estate-agent', theme.Colors.primary, theme.Colors.primary)}
-          {renderStatCard('OCCUPANCY', properties.length > 0 ? occupancyRate : '0.0%', 'trending-up', theme.Colors.tertiary, theme.Colors.tertiary)}
-          {renderStatCard('REVENUE', revenueText, 'payments', theme.Colors.secondary, isDark ? '#A78BFA' : theme.Colors.secondary)}
-          {renderStatCard('ALERTS', String(issueMetrics.open + issueMetrics.escalated), 'warning', theme.Colors.error, theme.Colors.error)}
-        </View>
-      ) : (
-        <View style={styles.mobileSearchRow}>
-          <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={styles.mobileSearchBox}>
-            <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search portfolio..."
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </BlurView>
-          <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={styles.mobileFilterButtonWrapper}>
-            <TouchableOpacity style={styles.mobileFilterButton}>
-              <MaterialIcons name="filter-list" size={22} color={theme.Colors.primary} />
-            </TouchableOpacity>
-          </BlurView>
+        /* Mobile Layout: Clean, Focused, No Redundant Stat Boxes */
+        <View>
+          <View style={styles.mobileTitleRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Text style={styles.mainTitle}>My Properties</Text>
+              {properties.length > 0 && (
+                <View style={styles.countBadge}>
+                  <Text style={styles.countBadgeText}>{properties.length}</Text>
+                </View>
+              )}
+            </View>
+            {properties.length > 0 && (
+              <TouchableOpacity
+                style={styles.mobileAddBtn}
+                onPress={onNavigateToCreateProperty}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityLabel="Add Property"
+                accessibilityRole="button"
+              >
+                <MaterialIcons name="add" size={22} color="#ffffff" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Search Box directly on top fold */}
+          <View style={styles.mobileSearchRow}>
+            <View style={styles.mobileSearchBox}>
+              <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search properties or locations..."
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery ? (
+                <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <MaterialIcons name="close" size={18} color={theme.Colors.onSurfaceVariant} />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          </View>
         </View>
       )}
     </Animated.View>
@@ -262,15 +314,12 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const ListFooter = () => (
     properties.length > 0 && !isDesktop ? (
       <TouchableOpacity
-        style={styles.addNewCard}
+        style={styles.mobileAddFooterBtn}
         onPress={onNavigateToCreateProperty}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
       >
-        <View style={styles.plusIconWrapper}>
-          <MaterialIcons name="add" size={40} color={theme.Colors.onSurfaceVariant} />
-        </View>
-        <Text style={styles.addNewTitle}>Add New Property</Text>
-        <Text style={styles.addNewSubtitle}>Expand your portfolio</Text>
+        <MaterialIcons name="add-circle-outline" size={20} color={theme.Colors.primary} />
+        <Text style={styles.mobileAddFooterText}>Add Another Property</Text>
       </TouchableOpacity>
     ) : null
   );

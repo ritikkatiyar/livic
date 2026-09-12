@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Theme, SerifHeadlineFont } from '@/src/theme/Theme';
+import { Theme} from '@/src/theme/Theme';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: { flex: 1 },
@@ -17,7 +17,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   titleContainer: { marginBottom: theme.Spacing.xl },
   titleLineDesktop: {
     fontSize: theme.Typography.headlineLg.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onBackground,
     lineHeight: 38,
     letterSpacing: -0.5,
@@ -48,20 +48,18 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   compactTitleText: {
     fontSize: theme.Typography.titleMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
-    fontFamily: 'Inter',
   },
   mobileLargeTitle: {
     marginBottom: theme.Spacing.lg,
   },
   titleLine: {
     fontSize: theme.Typography.headlineXl.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onBackground,
     lineHeight: 46,
     letterSpacing: -1,
-    fontFamily: SerifHeadlineFont,
   },
   mobileSubtitle: {
     fontSize: theme.Typography.bodyMedium.fontSize,
@@ -99,19 +97,17 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   statValue: {
     fontSize: theme.Typography.headlineMd.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
-    fontFamily: 'Inter',
   },
   statWarning: {
     color: theme.Colors.tertiary,
   },
   statLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    letterSpacing: 0.2,
   },
   statDot: {
     width: 6,
@@ -146,7 +142,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   workflowLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 1.2,
   },
@@ -160,16 +156,11 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 2,
   },
   menuCard: {
-    backgroundColor: theme.Colors.glassFill,
-    borderRadius: 20,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outline,
     overflow: 'hidden',
-    shadowColor: theme.Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 3,
     marginBottom: 12,
   },
   cardStripe: {
@@ -178,8 +169,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 4,
-    borderTopLeftRadius: 20,
-    borderBottomLeftRadius: 20,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
   },
   cardContent: {
     flexDirection: 'row',
@@ -199,15 +190,10 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
   },
   stepNumber: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
     color: theme.Colors.surfaceContainerLowest,
   },
   iconWrapper: {
@@ -222,10 +208,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   menuTitle: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginBottom: 3,
-    fontFamily: 'Inter',
   },
   menuDesc: {
     fontSize: theme.Typography.bodyMedium.fontSize,
@@ -254,8 +239,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 10,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.7)',
-    overflow: 'hidden',
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     paddingVertical: 12,
     paddingHorizontal: theme.Spacing.md,
     marginTop: theme.Spacing.sm,

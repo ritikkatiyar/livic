@@ -1,7 +1,6 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Dimensions } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -37,11 +36,9 @@ export default function UpgradeModal({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFillObject} />
-        
         <View style={styles.modalCard}>
           <View style={styles.iconCircle}>
-            <Ionicons name="sparkles" size={32} color="#00e0ff" />
+            <Ionicons name="sparkles" size={32} color={theme.Colors.primary} />
           </View>
 
           <Text style={styles.title}>UPGRADE REQUIRED</Text>
@@ -56,7 +53,7 @@ export default function UpgradeModal({
           </View>
 
           <TouchableOpacity style={styles.upgradeBtn} onPress={handleUpgrade}>
-            <MaterialIcons name="arrow-upward" size={18} color="#001e2b" />
+            <MaterialIcons name="arrow-upward" size={18} color={theme.Colors.surfaceContainerLowest} />
             <Text style={styles.upgradeBtnText}>VIEW SUBSCRIPTION PLANS</Text>
           </TouchableOpacity>
 
@@ -75,38 +72,38 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
   },
   modalCard: {
     width: '100%',
     maxWidth: 420,
     borderRadius: 24,
     padding: 28,
-    backgroundColor: theme.Colors.onSurface,
-    borderWidth: 1.5,
-    borderColor: 'rgba(0, 224, 255, 0.4)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
     alignItems: 'center',
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.1,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: 4,
   },
   iconCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(0, 224, 255, 0.12)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: 'rgba(0, 224, 255, 0.3)',
+    borderColor: theme.Colors.outlineVariant,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.Spacing.md,
   },
   title: {
-    color: theme.Colors.surfaceContainerLowest,
+    color: theme.Colors.onSurface,
     fontSize: theme.Typography.bodyLg.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
     letterSpacing: 1.5,
     marginBottom: theme.Spacing.sm,
     textAlign: 'center',
@@ -125,12 +122,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: theme.Colors.outlineVariant,
   },
   planBadgeText: {
-    color: theme.Colors.outlineVariant,
+    color: theme.Colors.primary,
     fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
   },
@@ -148,7 +145,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   upgradeBtnText: {
     color: theme.Colors.onPrimary,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   closeBtn: {

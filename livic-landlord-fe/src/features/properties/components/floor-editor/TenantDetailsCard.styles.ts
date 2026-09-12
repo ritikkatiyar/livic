@@ -19,7 +19,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     createTenantTitle: {
       fontSize: theme.Typography.labelMedium.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
       letterSpacing: 1,
     },
@@ -33,7 +33,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     inputLabel: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
       letterSpacing: 1.5,
     },
@@ -67,7 +67,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     statusToggleText: {
       fontSize: theme.Typography.labelMedium.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
     },
     statusActiveOccupied: {
@@ -109,7 +109,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     tenantTagText: {
       fontSize: theme.Typography.labelMedium.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
     },
     sheetSubtitle: {
@@ -172,7 +172,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     suggestionName: {
       fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     suggestionPhone: {
@@ -191,7 +191,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     quickCreatePromptText: {
       fontSize: theme.Typography.labelMedium.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
       flex: 1,
     },
@@ -206,7 +206,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     quickCreateTitle: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
       letterSpacing: 1.5,
     },
@@ -215,7 +215,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     quickCreateLabel: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
       letterSpacing: 1,
     },

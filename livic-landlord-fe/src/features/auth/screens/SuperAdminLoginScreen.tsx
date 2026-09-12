@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { login } from '@/src/features/auth/api/auth.api';
@@ -63,14 +62,10 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
       keyboardAvoiding={true}
       contentContainerStyle={styles.scrollContent}
     >
-      {/* Ambient Background Orbs */}
-          <View style={[styles.orb, styles.orb1]} />
-          <View style={[styles.orb, styles.orb2]} />
-          
-          {/* Main Content Area */}
-          <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.cardContainer}>
-            {/* Branding */}
-            <View style={styles.brandingContainer}>
+      {/* Main Content Area */}
+      <View style={styles.cardContainer}>
+        {/* Branding */}
+        <View style={styles.brandingContainer}>
               <View style={styles.iconWrapper}>
                 <MaterialIcons name="home" size={28} color={theme.Colors.primary} />
               </View>
@@ -170,30 +165,30 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
                 <Text style={styles.footerLink}>Sign Up</Text>
               </TouchableOpacity>
             </View>
-          </BlurView>
-    </PageShell>
+          </View>
+        </PageShell>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: theme.Colors.background,
   },
-  container: {
+  keyboardAvoid: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.Spacing.containerPadding,
+    padding: theme.Spacing.stackMd,
     position: 'relative',
   },
   orb: {
     position: 'absolute',
     borderRadius: theme.Rounded.full,
-    opacity: 0.3,
+    opacity: 0.15,
   },
   orb1: {
     top: '10%',
@@ -214,13 +209,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: theme.Rounded.lg,
     paddingHorizontal: theme.Spacing.stackLg,
     paddingTop: theme.Spacing.xxl,
     paddingBottom: theme.Spacing.stackLg,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
@@ -302,10 +297,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   submitButton: {
     marginTop: theme.Spacing.sm,
     width: '100%',
+    minHeight: 48,
     backgroundColor: theme.Colors.primaryContainer,
     paddingVertical: theme.Spacing.md,
     paddingHorizontal: theme.Spacing.stackMd,
-    borderRadius: theme.Rounded.default,
+    borderRadius: 24,
+    justifyContent: 'center',
     alignItems: 'center',
     shadowColor: theme.Colors.primaryContainer,
     shadowOffset: { width: 0, height: 4 },
@@ -350,6 +347,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   footerLink: {
     ...theme.Typography.bodyMd,
     color: theme.Colors.surfaceTint,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });

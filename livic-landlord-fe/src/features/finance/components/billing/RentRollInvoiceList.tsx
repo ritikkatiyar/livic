@@ -131,7 +131,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   invoiceUnit: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   invoiceIdText: {
@@ -141,7 +141,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   invoiceTotal: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
   },
   chargesList: {

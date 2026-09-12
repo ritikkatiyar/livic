@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -203,7 +202,7 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
   },
   cardTitle: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   cardSub: {
@@ -223,7 +222,7 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
   },
   badgeText: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   amountContainer: {
     flexDirection: 'row',
@@ -231,7 +230,7 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
   },
   amountBold: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   amountSuffix: {

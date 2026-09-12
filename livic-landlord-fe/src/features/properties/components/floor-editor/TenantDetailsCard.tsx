@@ -458,7 +458,7 @@ export function TenantDetailsCard({
                         <ActivityIndicator size="small" color="#fff" />
                       ) : (
                         <Text style={[styles.statusToggleText, styles.statusTextActive]}>
-                          ASSIGN {tenantSearchResult.fullName.toUpperCase()}
+                          Assign {tenantSearchResult.fullName}
                         </Text>
                       )}
                     </TouchableOpacity>

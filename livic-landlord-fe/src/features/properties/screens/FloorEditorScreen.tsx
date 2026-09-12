@@ -11,10 +11,8 @@ import {
   Keyboard,
   ScrollView as RNScrollView
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import Animated, { 
   FadeInUp, 
   FadeOutDown,
@@ -169,12 +167,7 @@ export default function FloorEditorScreen({
   if (isDesktop) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <LinearGradient
-          colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.desktopShell}
-        >
+        <View style={styles.desktopShell}>
           {/* Main Workspace */}
           <View style={styles.desktopMain}>
 
@@ -251,7 +244,7 @@ export default function FloorEditorScreen({
                   <View style={styles.desktopSidebarColumn}>
                     <View style={{ flex: 1 }}>
                       {selectedBlock ? (
-                        <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={[styles.desktopCard, { flex: 1, backgroundColor: theme.Colors.glassFill }]}>
+                        <View style={[styles.desktopCard, { flex: 1 }]}>
                           <RNScrollView 
                             ref={sheetScrollRef}
                             scrollEnabled={parentScrollEnabled}
@@ -271,17 +264,19 @@ export default function FloorEditorScreen({
                                 tenantAssignProps.resetTenantAssignmentForm();
                               }}
                               tenantAssignProps={tenantAssignProps}
+                              propertyId={propertyId}
+                              userToken={userToken}
                             />
                           </RNScrollView>
-                        </BlurView>
+                        </View>
                       ) : (
-                        <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={[styles.desktopCard, { flex: 1, justifyContent: 'center', alignItems: 'center', padding: theme.Spacing.xl, backgroundColor: theme.Colors.glassFill }]}>
+                        <View style={[styles.desktopCard, { flex: 1, justifyContent: 'center', alignItems: 'center', padding: theme.Spacing.xl }]}>
                           <MaterialIcons name="info-outline" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: theme.Spacing.md }} />
                           <Text style={{ fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '700', color: theme.Colors.onSurface, textAlign: 'center', marginBottom: theme.Spacing.sm }}>No Unit Selected</Text>
                           <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 }}>
                             Select any unit block in the grid layout to configure unit capacity and assign tenants.
                           </Text>
-                        </BlurView>
+                        </View>
                       )}
                     </View>
                   </View>
@@ -290,7 +285,7 @@ export default function FloorEditorScreen({
               </View>
             </View>
           </View>
-        </LinearGradient>
+        </View>
 
         <TypeSelectionModal
           visible={typeSelectionModalVisible}
@@ -309,56 +304,29 @@ export default function FloorEditorScreen({
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <LinearGradient
-        colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
-        <SafeAreaView style={styles.safeArea}>
-        <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-          <View>
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={24} color={theme.Colors.onSurface} />
-            </TouchableOpacity>
-            <View style={styles.titleContainer}>
-              <Text style={styles.titleLine}>Edit Floor {floorNumber}</Text>
-              <Text style={styles.titleLine}>Layout</Text>
+      <PageShell
+        scrollable={false}
+        edges={['top', 'bottom']}
+        header={
+          <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+            <View>
+              <View style={styles.titleContainer}>
+                <Text style={styles.titleLine}>Edit Floor {floorNumber}</Text>
+                <Text style={styles.titleLine}>Layout</Text>
+              </View>
             </View>
+            
+            <ActionButton
+              variant="primary"
+              label="Save"
+              icon="check"
+              iconPosition="right"
+              onPress={handleSave}
+              loading={saving}
+            />
           </View>
-          
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={handleSave}
-            disabled={saving}
-            style={{
-              borderRadius: 100,
-              overflow: 'hidden',
-              shadowColor: theme.Colors.primary,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 4,
-            }}
-          >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{ paddingVertical: theme.Spacing.sm, paddingHorizontal: theme.Spacing.md, flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.xs }}
-            >
-              {saving ? (
-                <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
-              ) : (
-                <>
-                  <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', letterSpacing: 0.5 }}>Save</Text>
-                  <MaterialIcons name="check" size={16} color={theme.Colors.surfaceContainerLowest} />
-                </>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-
+        }
+      >
         <View style={styles.contentContainer}>
           <EditorToolbar
             activeTool={activeTool}
@@ -402,7 +370,7 @@ export default function FloorEditorScreen({
 
         {selectedBlock && (
           <View style={[StyleSheet.absoluteFillObject, { zIndex: 999, overflow: 'hidden' }]}>
-            <BlurView intensity={35} tint="light" style={StyleSheet.absoluteFillObject} />
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.4)' }]} />
 
             <TouchableOpacity
               activeOpacity={1}
@@ -412,20 +380,6 @@ export default function FloorEditorScreen({
                 tenantAssignProps.resetTenantAssignmentForm();
               }}
             />
-
-            <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
-              <View style={styles.header}>
-                <TouchableOpacity 
-                  onPress={() => {
-                    setSelectedUnitId(null);
-                    tenantAssignProps.resetTenantAssignmentForm();
-                  }}
-                  style={styles.backButton}
-                >
-                  <MaterialIcons name="arrow-back" size={24} color={theme.Colors.onSurface} />
-                </TouchableOpacity>
-              </View>
-            </SafeAreaView>
           </View>
         )}
 
@@ -437,7 +391,7 @@ export default function FloorEditorScreen({
               exiting={FadeOutDown}
               style={[styles.detailSheetWrapper, { bottom: bottomPosition }]}
             >
-              <BlurView intensity={95} tint="light" style={styles.detailSheet}>
+              <View style={styles.detailSheet}>
                 <RNScrollView 
                   ref={sheetScrollRef}
                   scrollEnabled={parentScrollEnabled}
@@ -457,14 +411,15 @@ export default function FloorEditorScreen({
                       tenantAssignProps.resetTenantAssignmentForm();
                     }}
                     tenantAssignProps={tenantAssignProps}
+                    propertyId={propertyId}
+                    userToken={userToken}
                   />
                 </RNScrollView>
-              </BlurView>
+              </View>
             </Animated.View>
           );
         })()}
-        </SafeAreaView>
-      </LinearGradient>
+      </PageShell>
 
       <TypeSelectionModal
         visible={typeSelectionModalVisible}

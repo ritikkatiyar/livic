@@ -49,7 +49,21 @@ const ROUTE_TITLES: Record<string, string> = {
   '/properties/create': 'New Property',
 };
 
-function getHeaderTitle(pathname: string): string {
+const PRIMARY_ROUTES = [
+  '/command-center',
+  '/leases',
+  '/inventory',
+  '/expenses',
+  '/analytics',
+  '/reports',
+  '/ai',
+  '/announcements',
+  '/escalations',
+  '/settings',
+  '/'
+];
+
+function getMobileHeaderTitle(pathname: string): string {
   const clean = pathname.split('?')[0];
   if (ROUTE_TITLES[clean]) {
     return ROUTE_TITLES[clean];
@@ -71,19 +85,6 @@ function getHeaderTitle(pathname: string): string {
   }
   return 'Livic';
 }
-
-const PRIMARY_ROUTES = [
-  '/command-center',
-  '/leases',
-  '/inventory',
-  '/expenses',
-  '/analytics',
-  '/reports',
-  '/ai',
-  '/announcements',
-  '/escalations',
-  '/settings'
-];
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -107,6 +108,11 @@ function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
   const { properties } = useProperties();
   const { selectedPropertyId, setSelectedPropertyId, searchQuery, setSearchQuery } = useGlobalPropertySelection();
 
+  const isPortfolio = pathname === '/command-center' || pathname === '/';
+  const isAI = pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant';
+  const showScopeSelector = !isAI;
+  const showTopbarSearch = !isPortfolio && !isAI;
+
   return (
     <LinearGradientWithDataSet
       dataSet={{ responsiveLayout: 'desktop' }}
@@ -121,13 +127,13 @@ function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
       {/* 2. Main Desktop Column with Persistent Pinned Topbar */}
       <View style={{ flex: 1, flexDirection: 'column' }}>
         <DesktopNavBar 
-          title={getHeaderTitle(pathname)}
-          properties={(properties || []).map((p: any) => ({ id: p.id, name: p.name }))}
+          properties={showScopeSelector ? (properties || []).map((p: any) => ({ id: p.id, name: p.name })) : []}
           selectedPropertyId={selectedPropertyId}
           onPropertyChange={setSelectedPropertyId}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          searchPlaceholder="Search property or portfolio..."
+          searchQuery={showTopbarSearch ? searchQuery : undefined}
+          onSearchChange={showTopbarSearch ? setSearchQuery : undefined}
+          showSearch={showTopbarSearch}
+          searchPlaceholder="Search or jump to..."
         />
 
         {/* 3. Dynamic Inner Screen View */}
@@ -302,7 +308,7 @@ export default function RootLayout() {
                       <MobileLayoutShell>
                         {!hideHeader && (
                           <MobileHeader 
-                            title={getHeaderTitle(pathname)} 
+                            title={getMobileHeaderTitle(pathname)} 
                             onNotificationPress={() => router.push('/escalations')}
                           />
                         )}

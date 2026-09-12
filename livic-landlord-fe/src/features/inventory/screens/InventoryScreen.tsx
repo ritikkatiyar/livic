@@ -9,7 +9,6 @@ import {
   View,
 } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
@@ -108,15 +107,7 @@ export default function InventoryScreen() {
           {/* Mobile search + add row */}
           {!isDesktop && (
             <View style={styles.mobileTopBar}>
-              {leaseId && (
-                <TouchableOpacity
-                  style={styles.mobileBackBtn}
-                  onPress={() => router.push('/leases')}
-                >
-                  <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
-                </TouchableOpacity>
-              )}
-                <View style={styles.searchBox}>
+              <View style={styles.searchBox}>
                   <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
                   <TextInput
                     value={query} onChangeText={setQuery}
@@ -135,9 +126,9 @@ export default function InventoryScreen() {
                   activeOpacity={0.82}
                   onPress={handleOpenAddModal}
                 >
-                  <LinearGradient colors={[theme.Colors.primary, '#0072ff']} style={styles.addIconBtnInner}>
+                  <View style={styles.addIconBtnInner}>
                     <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
-                  </LinearGradient>
+                  </View>
                 </TouchableOpacity>
               </View>
           )}
@@ -237,7 +228,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   pageHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: theme.Spacing.md, marginBottom: theme.Spacing.sm },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, color: theme.Colors.primary, textTransform: 'uppercase' },
+  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 0.2, color: theme.Colors.primary },
   propertyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -247,32 +238,45 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 8,
   },
-  propertyBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
+  propertyBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: theme.Colors.primary },
   title: { ...theme.Typography.headlineLg, color: theme.Colors.onSurface, lineHeight: 38, marginTop: theme.Spacing.xs },
   subtitle: { fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm, lineHeight: 22, maxWidth: 600 },
-  contextLine: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800', marginTop: 6 },
+  contextLine: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', marginTop: 6 },
   addBtnWrapper: { borderRadius: 14, overflow: 'hidden' },
   addBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 13, gap: theme.Spacing.sm },
-  addBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
+  addBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
 
   mobileTopBar: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   mobileBackBtn: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.07)',
+    borderColor: theme.Colors.outline,
     justifyContent: 'center',
     alignItems: 'center',
   },
   addIconBtn: { width: 46, height: 46, borderRadius: 14, overflow: 'hidden' },
-  addIconBtnInner: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  addIconBtnInner: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.Colors.primary,
+    borderRadius: 14,
+  },
 
   searchBox: {
-    flex: 1, height: 46, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: theme.Colors.glassFill, borderRadius: 100,
-    borderWidth: 1.5, borderColor: theme.Colors.glassStroke, paddingHorizontal: 14, gap: theme.Spacing.sm,
+    flex: 1,
+    height: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
+    paddingHorizontal: 14,
+    gap: theme.Spacing.sm,
   },
   searchInput: {
     flex: 1,
@@ -286,10 +290,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   tab: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
     height: 40, paddingHorizontal: theme.Spacing.md, borderRadius: 100,
-    backgroundColor: theme.Colors.glassFill,
-    borderWidth: 1.5, borderColor: theme.Colors.glassStroke, overflow: 'hidden',
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderWidth: 1, borderColor: theme.Colors.outline, overflow: 'hidden',
   },
   tabActive: { borderWidth: 0 },
   tabText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
-  tabTextActive: { color: theme.Colors.surfaceContainerLowest, fontWeight: '800' },
+  tabTextActive: { color: theme.Colors.surfaceContainerLowest, fontWeight: '600' },
 });

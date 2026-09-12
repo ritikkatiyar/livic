@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, ActivityIndicator, View, ViewStyle, TextStyle, StyleProp } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 export interface ActionButtonProps {
   title?: string;
@@ -36,7 +36,8 @@ export function ActionButton({
   textStyle,
 }: ActionButtonProps) {
   const { theme, isDark } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme, isDark, size, fullWidth), [theme, isDark, size, fullWidth]);
+  const { isMobile } = useResponsive();
+  const styles = React.useMemo(() => createStyles(theme, isDark, size, fullWidth, isMobile), [theme, isDark, size, fullWidth, isMobile]);
 
   const buttonText = title || label || '';
   const activeIcon = iconName || icon;
@@ -80,6 +81,8 @@ export function ActionButton({
           textStyle,
         ]}
         numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.82}
       >
         {buttonText}
       </Text>
@@ -104,21 +107,16 @@ export function ActionButton({
         onPress={onPress}
         disabled={isInteractionDisabled}
         activeOpacity={0.85}
+        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         style={[
           styles.button,
+          styles.primary,
           styles.primaryShadow,
           isInteractionDisabled && { opacity: 0.55 },
           sanitizedStyle,
         ]}
       >
-        <LinearGradient
-          colors={['#00d4ff', '#0072ff']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradient}
-        >
-          {renderContent()}
-        </LinearGradient>
+        {renderContent()}
       </TouchableOpacity>
     );
   }
@@ -144,6 +142,7 @@ export function ActionButton({
       onPress={onPress}
       disabled={isInteractionDisabled}
       activeOpacity={0.75}
+      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
       style={[styles.button, getVariantStyle(), sanitizedStyle]}
     >
       {renderContent()}
@@ -151,60 +150,52 @@ export function ActionButton({
   );
 }
 
-const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md' | 'lg', fullWidth: boolean) => {
-  const height = size === 'sm' ? 36 : size === 'lg' ? 54 : 46;
-  const paddingHorizontal = size === 'sm' ? 14 : size === 'lg' ? 26 : 20;
+const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md' | 'lg', fullWidth: boolean, isMobile: boolean) => {
+  // Apple HIG touch target: minimum 44px on mobile
+  const height = size === 'sm' ? 36 : size === 'lg' ? (isMobile ? 48 : 54) : (isMobile ? 44 : 46);
+  const paddingHorizontal = size === 'sm' ? (isMobile ? 12 : 14) : size === 'lg' ? (isMobile ? 20 : 26) : (isMobile ? 16 : 20);
   const fontSize = size === 'sm' ? 12 : size === 'lg' ? 16 : 14;
 
   return StyleSheet.create({
     button: {
-      height,
-      borderRadius: 100,
+      minHeight: height,
+      borderRadius: theme.Rounded.full,
       overflow: 'hidden',
       justifyContent: 'center',
       alignItems: 'center',
+      paddingHorizontal,
       width: fullWidth ? '100%' : undefined,
     },
-    gradient: {
-      width: '100%',
-      height: '100%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal,
+    primary: {
+      backgroundColor: theme.Colors.primary,
     },
     primaryShadow: {
-      shadowColor: '#0072ff',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 10,
-      elevation: 4,
+      shadowColor: theme.Colors.outline,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.15,
+      shadowRadius: 3,
+      elevation: 1,
     },
     primaryDisabled: {
       backgroundColor: theme.Colors.outlineVariant,
-      paddingHorizontal,
     },
     secondary: {
-      backgroundColor: 'rgba(0, 229, 255, 0.12)',
-      paddingHorizontal,
+      backgroundColor: theme.Colors.surfaceContainerLow,
     },
     outline: {
-      backgroundColor: theme.Colors.glassFill,
-      borderWidth: 1.5,
-      borderColor: theme.Colors.primary,
-      paddingHorizontal,
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: theme.Colors.outline,
     },
     danger: {
       backgroundColor: theme.Colors.error,
-      paddingHorizontal,
     },
     ghost: {
       backgroundColor: 'transparent',
-      paddingHorizontal,
     },
     disabled: {
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(107, 122, 125, 0.12)',
-      paddingHorizontal,
-      opacity: 0.6,
+      backgroundColor: theme.Colors.outlineVariant,
+      opacity: 0.5,
     },
     contentRow: {
       flexDirection: 'row',
@@ -213,8 +204,8 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md' | 'lg', ful
     },
     text: {
       fontSize,
-      fontWeight: '800',
-      letterSpacing: 0.5,
+      fontWeight: '600',
+      letterSpacing: 0.3,
       color: '#ffffff',
       textAlign: 'center',
     },

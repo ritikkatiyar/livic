@@ -85,8 +85,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1, 
     maxWidth: 200 
   },
-  checklistLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', marginBottom: theme.Spacing.sm },
-  checklistValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.primary },
+  checklistLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.2, marginBottom: theme.Spacing.sm },
+  checklistValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.primary },
   statusBox: { flexDirection: 'row', backgroundColor: theme.Colors.secondaryContainer, padding: theme.Spacing.md, borderRadius: 12, marginBottom: theme.Spacing.xl, width: '100%', alignItems: 'center', gap: theme.Spacing.sm },
   statusText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.secondary },
   generateBtn: { width: '100%', maxWidth: 300 },

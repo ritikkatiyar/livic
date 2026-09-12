@@ -9,9 +9,7 @@ import {
   Pressable,
   ScrollView,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useResponsive } from '@/src/hooks/useResponsive';
 
 const UNIT_TYPE_OPTIONS = [
@@ -49,7 +47,7 @@ export default function UnitTypeSelectionModal({
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <View style={[styles.modalContainer, isWide ? styles.desktopModal : styles.mobileModal]}>
-          <BlurView tint="light" intensity={90} style={styles.blurContainer}>
+          <View style={styles.blurContainer}>
             <View style={styles.header}>
               <View>
                 <Text style={styles.title}>Select Default Unit Type</Text>
@@ -78,7 +76,7 @@ export default function UnitTypeSelectionModal({
                         <MaterialIcons
                           name={item.icon as any}
                           size={24}
-                          color={isSelected ? '#0072ff' : '#006875'}
+                          color={isSelected ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
                         />
                       </View>
                       <View style={styles.cardInfo}>
@@ -104,18 +102,11 @@ export default function UnitTypeSelectionModal({
               <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmBtnWrapper} onPress={onClose}>
-                <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.confirmBtn}
-                >
-                  <Text style={styles.confirmBtnText}>Confirm Selection</Text>
-                </LinearGradient>
+              <TouchableOpacity style={styles.confirmBtn} onPress={onClose}>
+                <Text style={styles.confirmBtnText}>Confirm Selection</Text>
               </TouchableOpacity>
             </View>
-          </BlurView>
+          </View>
         </View>
       </Pressable>
     </Modal>
@@ -125,21 +116,22 @@ export default function UnitTypeSelectionModal({
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContainer: {
-    borderRadius: 24,
+    borderRadius: theme.Rounded.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     shadowColor: 'black',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   desktopModal: {
     width: '100%',
@@ -150,7 +142,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   blurContainer: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   header: {
     flexDirection: 'row',
@@ -158,11 +150,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'flex-start',
     padding: theme.Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+    borderBottomColor: theme.Colors.outline,
   },
   title: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   subtitle: {
@@ -174,7 +166,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   closeButton: {
     padding: theme.Spacing.xs,
     borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: theme.Colors.surfaceContainerHigh,
   },
   scrollContent: {
     padding: theme.Spacing.lg,
@@ -185,28 +177,28 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 16,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
+    borderRadius: theme.Rounded.lg,
     padding: theme.Spacing.md,
     position: 'relative',
   },
   cardSelected: {
-    borderColor: theme.Colors.secondary,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderColor: theme.Colors.primary,
+    backgroundColor: theme.Colors.surfaceContainerHighest,
   },
   iconWrapper: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: theme.Colors.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.Spacing.md,
   },
   iconWrapperSelected: {
-    backgroundColor: 'rgba(0, 114, 255, 0.08)',
+    backgroundColor: theme.Colors.primaryContainer,
   },
   cardInfo: {
     flex: 1,
@@ -218,7 +210,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   cardLabelSelected: {
-    color: theme.Colors.secondary,
+    color: theme.Colors.primary,
   },
   cardDesc: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -233,7 +225,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: theme.Colors.secondary,
+    backgroundColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -245,26 +237,24 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.lg,
     paddingVertical: 18,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+    borderTopColor: theme.Colors.outline,
   },
   cancelBtn: {
     paddingHorizontal: 18,
     paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: theme.Rounded.md,
+    backgroundColor: theme.Colors.surfaceContainerHigh,
   },
   cancelBtnText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
   },
-  confirmBtnWrapper: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
   confirmBtn: {
     paddingHorizontal: 20,
     paddingVertical: 12,
+    borderRadius: theme.Rounded.md,
+    backgroundColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

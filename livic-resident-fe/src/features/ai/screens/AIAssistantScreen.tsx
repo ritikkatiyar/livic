@@ -1,11 +1,10 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -17,8 +16,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 
 import { getJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
 import { useRouter } from 'expo-router';
@@ -46,46 +43,35 @@ const EXAMPLES = [
 export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const router = useRouter();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { isDesktop } = useResponsive();
-  const scrollViewRef = useRef<ScrollView>(null);
-  
-  const [input, setInput] = React.useState('');
+
   const [messages, setMessages] = React.useState<Message[]>([
     {
-      id: 'welcome',
+      id: '1',
       role: 'assistant',
-      text: 'Hello! I am your AI Property Assistant. How can I assist with your properties, billing, or unit planning today?',
+      text: 'Hello! I am your Livic AI Concierge. Ask me anything about your tenancy, lease agreement, maintenance requests, or building policies.',
     },
   ]);
+  const [input, setInput] = React.useState('');
   const [isSending, setIsSending] = React.useState(false);
 
-  // Animations & Gestures
-  const translateY = useRef(new Animated.Value(500)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const translateY = useRef(new Animated.Value(0)).current;
 
-  // Slide up on mount
-  useEffect(() => {
-    Animated.spring(translateY, {
-      toValue: 0,
-      tension: 60,
-      friction: 9,
-      useNativeDriver: true,
-    }).start();
-  }, []);
-
-  const animateClose = React.useCallback(() => {
+  const animateClose = () => {
     Keyboard.dismiss();
     Animated.timing(translateY, {
-      toValue: 550,
-      duration: 220,
+      toValue: 600,
+      duration: 240,
       useNativeDriver: true,
     }).start(() => {
       router.back();
     });
-  }, [router, translateY]);
+  };
 
-  // PanResponder for drag-down-to-dismiss handle gesture
+  // PanResponder to enable smooth drag-to-dismiss gesture
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -96,116 +82,123 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 80 || gestureState.vy > 0.5) {
+        if (gestureState.dy > 120 || gestureState.vy > 0.8) {
           animateClose();
         } else {
           Animated.spring(translateY, {
             toValue: 0,
-            tension: 80,
-            friction: 8,
             useNativeDriver: true,
+            bounciness: 6,
           }).start();
         }
       },
     })
   ).current;
 
-  // Auto scroll to latest message
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [messages, isSending]);
+  const pollJobStatus = async (jobId: string, assistantMsgId: string) => {
+    const maxAttempts = 30;
+    const intervalMs = 2000;
+    let attempts = 0;
 
-  const sendMessage = React.useCallback(async (text: string) => {
-    const trimmedText = text.trim();
-    if (!trimmedText || isSending) {
-      return;
-    }
+    const interval = setInterval(async () => {
+      attempts++;
+      try {
+        const job = await getJobStatus(jobId, token);
+        if (job.status === 'COMPLETED') {
+          clearInterval(interval);
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMsgId
+                ? { ...msg, text: job.response || (job as any).result?.message || 'Operation executed successfully.' }
+                : msg
+            )
+          );
+          setIsSending(false);
+        } else if (job.status === 'FAILED') {
+          clearInterval(interval);
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMsgId
+                ? { ...msg, text: job.errorMessage || (job as any).error || 'Failed to process AI command.' }
+                : msg
+            )
+          );
+          setIsSending(false);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMsgId
+                ? { ...msg, text: 'AI processing timed out. Please review active tasks later.' }
+                : msg
+            )
+          );
+          setIsSending(false);
+        }
+      } catch (err: any) {
+        clearInterval(interval);
+        logger.error('[AIAssistantScreen] Polling error:', err);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMsgId
+              ? { ...msg, text: 'Network disturbance while awaiting AI response.' }
+              : msg
+          )
+        );
+        setIsSending(false);
+      }
+    }, intervalMs);
+  };
 
-    const userMessage: Message = {
-      id: `${Date.now()}-user`,
-      role: 'user',
-      text: trimmedText,
-    };
+  const sendMessage = React.useCallback(async (textToSend?: string) => {
+    const query = (textToSend || input).trim();
+    if (!query || isSending) return;
 
-    setMessages((current) => [...current, userMessage]);
     setInput('');
+    const userMsgId = Date.now().toString();
+    const assistantMsgId = (Date.now() + 1).toString();
+
+    setMessages((prev) => [
+      ...prev,
+      { id: userMsgId, role: 'user', text: query },
+      { id: assistantMsgId, role: 'assistant', text: 'Thinking...' },
+    ]);
     setIsSending(true);
 
     try {
-      const response = await runAICommand({ message: trimmedText }, token);
-      
-      if (response.jobId && response.status === 'PENDING') {
-        const jobId = response.jobId;
-        let pollCount = 0;
-        const maxPolls = 40;
-
-        const poll = async (): Promise<string> => {
-          return new Promise((resolve, reject) => {
-            const interval = setInterval(async () => {
-              pollCount++;
-              if (pollCount > maxPolls) {
-                clearInterval(interval);
-                reject(new Error('AI command execution timed out. Please try again.'));
-                return;
-              }
-
-              try {
-                const jobStatus = await getJobStatus(jobId, token);
-                if (jobStatus.status === 'COMPLETED') {
-                  clearInterval(interval);
-                  resolve(jobStatus.response || 'Command completed successfully.');
-                } else if (jobStatus.status === 'FAILED') {
-                  clearInterval(interval);
-                  reject(new Error(jobStatus.errorMessage || 'AI execution failed.'));
-                }
-              } catch (pollErr) {
-                logger.warn('AI polling transient error:', pollErr);
-              }
-            }, 1500);
-          });
-        };
-
-        const resultText = await poll();
-        setMessages((current) => [
-          ...current,
-          {
-            id: `${Date.now()}-assistant`,
-            role: 'assistant',
-            text: resultText,
-          },
-        ]);
+      const response = await runAICommand({ message: query }, token);
+      if (response?.jobId) {
+        pollJobStatus(response.jobId, assistantMsgId);
+      } else if (response?.message) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMsgId ? { ...msg, text: response.message } : msg
+          )
+        );
+        setIsSending(false);
       } else {
-        setMessages((current) => [
-          ...current,
-          {
-            id: `${Date.now()}-assistant`,
-            role: 'assistant',
-            text: response.message || 'I received the command, but no response was returned.',
-          },
-        ]);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMsgId ? { ...msg, text: 'Command processed.' } : msg
+          )
+        );
+        setIsSending(false);
       }
-    } catch (error: any) {
-      setMessages((current) => [
-        ...current,
-        {
-          id: `${Date.now()}-error`,
-          role: 'assistant',
-          text: error?.message || 'AI request failed. Check backend configuration.',
-        },
-      ]);
-    } finally {
+    } catch (err: any) {
+      logger.error('[AIAssistantScreen] Send error:', err);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMsgId
+            ? { ...msg, text: 'Unable to communicate with AI Assistant. Try again later.' }
+            : msg
+        )
+      );
       setIsSending(false);
     }
-  }, [isSending, token]);
+  }, [input, isSending, token]);
 
   return (
     <View style={styles.outerWrapper}>
-      {/* Translucent Frosted Glass Background */}
-      <BlurView intensity={35} tint="dark" style={StyleSheet.absoluteFillObject} />
-
       {isDesktop && (
         <DesktopNavBar 
           hideTabs={true}
@@ -237,7 +230,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
           ]}
           pointerEvents="auto"
         >
-          <BlurView intensity={95} tint="light" style={styles.glassCard}>
+          <View style={styles.glassCard}>
             {/* Drag Handle Container with PanResponder */}
             <View {...panResponder.panHandlers} style={styles.dragHandleZone}>
               <View style={styles.dragBar} />
@@ -246,14 +239,11 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
             {/* Header */}
             <View style={styles.dialogueHeader}>
               <View style={styles.headerTitleGroup}>
-                <LinearGradient
-                  colors={['#00F2FE', '#4FACFE', '#7F00FF']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.aiOrbIcon}
+                <View
+                  style={[styles.aiOrbIcon, { backgroundColor: theme.Colors.primary }]}
                 >
                   <MaterialIcons name="auto-awesome" size={16} color={theme.Colors.surfaceContainerLowest} />
-                </LinearGradient>
+                </View>
                 <View>
                   <Text style={styles.dialogueTitle}>AI Command Desk</Text>
                   <View style={styles.onlineBadge}>
@@ -308,18 +298,15 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                   )}
 
                   {message.role === 'user' ? (
-                    <LinearGradient
-                      colors={['#008394', '#005b66']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={[styles.bubble, styles.userBubble]}
+                    <View
+                      style={[styles.bubble, styles.userBubble, { backgroundColor: theme.Colors.primary }]}
                     >
                       <Text style={styles.userText}>{message.text}</Text>
-                    </LinearGradient>
+                    </View>
                   ) : (
-                    <BlurView intensity={95} tint="light" style={[styles.bubble, styles.assistantBubble]}>
+                    <View style={[styles.bubble, styles.assistantBubble]}>
                       <Text style={styles.assistantText}>{message.text}</Text>
-                    </BlurView>
+                    </View>
                   )}
                 </View>
               ))}
@@ -329,10 +316,10 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                   <View style={styles.assistantAvatar}>
                     <MaterialIcons name="auto-awesome" size={14} color={theme.Colors.primary} />
                   </View>
-                  <BlurView intensity={95} tint="light" style={[styles.bubble, styles.assistantBubble, styles.loadingBubble]}>
+                  <View style={[styles.bubble, styles.assistantBubble, styles.loadingBubble]}>
                     <ActivityIndicator size="small" color={theme.Colors.primary} />
                     <Text style={styles.loadingText}>Analyzing command...</Text>
-                  </BlurView>
+                  </View>
                 </View>
               )}
             </ScrollView>
@@ -366,22 +353,18 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                       <MaterialIcons name="arrow-upward" size={18} color="rgba(0, 104, 117, 0.3)" />
                     </View>
                   ) : (
-                    <LinearGradient
-                      colors={['#00e0ff', '#0072ff']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.sendButtonActive}
+                    <View
+                      style={[styles.sendButtonActive, { backgroundColor: theme.Colors.primary }]}
                     >
                       <MaterialIcons name="arrow-upward" size={18} color={theme.Colors.surfaceContainerLowest} />
-                    </LinearGradient>
+                    </View>
                   )}
                 </TouchableOpacity>
               </View>
             </View>
-          </BlurView>
+          </View>
         </Animated.View>
       </KeyboardAvoidingView>
     </View>
   );
 }
-

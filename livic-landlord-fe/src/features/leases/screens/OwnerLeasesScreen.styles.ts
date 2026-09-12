@@ -8,7 +8,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   desktopHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: theme.Spacing.md, marginBottom: theme.Spacing.xs },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, color: theme.Colors.primary, textTransform: 'uppercase' },
+  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 0.2, color: theme.Colors.primary },
   propertyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -27,7 +27,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   btnPrimary: { borderRadius: 100, overflow: 'hidden' },
   btnPrimaryInner: { height: 46, paddingHorizontal: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.Spacing.sm },
-  btnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', letterSpacing: 0.5 },
+  btnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', letterSpacing: 0.5 },
 
   mobileHeader: { paddingHorizontal: theme.Spacing.md, paddingTop: theme.Spacing.md, paddingBottom: theme.Spacing.sm },
   mobileTitle: { ...theme.Typography.headlineMd, color: theme.Colors.onSurface, letterSpacing: -0.5 },
@@ -68,16 +68,16 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     shadowRadius: 10,
   },
   statHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  statTitle: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5 },
+  statTitle: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5 },
   statIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  statVal: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '900', color: theme.Colors.onSurface },
+  statVal: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
 
   tabsRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)', marginTop: theme.Spacing.sm, paddingHorizontal: theme.Spacing.md },
   tabsRowDesktop: { paddingHorizontal: 0, marginTop: theme.Spacing.md },
   tabBtn: { paddingVertical: 12, paddingHorizontal: theme.Spacing.md, borderBottomWidth: 2, borderBottomColor: 'transparent', marginRight: theme.Spacing.md },
   activeTabBtn: { borderBottomColor: theme.Colors.primary },
   tabText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
-  activeTabText: { color: theme.Colors.primary, fontWeight: '800' },
+  activeTabText: { color: theme.Colors.primary, fontWeight: '600' },
 
   sectionCard: {
     borderRadius: 28,
@@ -91,7 +91,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     shadowRadius: 20,
     overflow: 'hidden',
   },
-  sectionTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: theme.Spacing.md },
+  sectionTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', color: theme.Colors.onSurface, marginBottom: theme.Spacing.md },
 
   gridContainer: { gap: theme.Spacing.md },
   gridContainerDesktop: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.Spacing.lg },
@@ -108,7 +108,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 12,
   },
   headerLeft: {
@@ -116,6 +116,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     flex: 1,
+    minWidth: 0,
   },
   headerRight: {
     flexDirection: 'row',
@@ -123,12 +124,19 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 8,
     flexShrink: 0,
   },
-  cardTitle: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
+  propertyUnitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  cardTitle: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
   cardSubtitle: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontWeight: '600' },
 
   infoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   infoCol: { flex: 1, minWidth: 120 },
-  infoLabel: { fontSize: theme.Typography.labelSmall.fontSize - 2, fontWeight: '800', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5 },
+  infoLabel: { fontSize: theme.Typography.labelSmall.fontSize - 2, fontWeight: '600', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5 },
   infoValue: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurface, marginTop: theme.Spacing.xs },
 
   actionRow: { flexDirection: 'row', gap: 12, marginTop: 6 },
@@ -144,7 +152,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 6,
     backgroundColor: 'rgba(0,104,117,0.04)',
   },
-  btnSecondaryText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800' },
+  btnSecondaryText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600' },
 
   btnActionDestructive: {
     flex: 1,
@@ -158,7 +166,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 6,
     backgroundColor: 'rgba(229,57,53,0.04)',
   },
-  btnActionDestructiveText: { color: theme.Colors.error, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800' },
+  btnActionDestructiveText: { color: theme.Colors.error, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600' },
 
   btnActionSuccess: {
     flex: 1,
@@ -173,7 +181,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
   },
-  btnActionSuccessText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800' },
+  btnActionSuccessText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600' },
 
   emptyContainer: { padding: 40, alignItems: 'center', justifyContent: 'center', gap: 12 },
   emptyText: { fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
@@ -181,17 +189,17 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
   modalCard: { width: '100%', backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 28, overflow: 'hidden', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.9)' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: theme.Spacing.lg, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
-  modalKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 1, color: theme.Colors.onSurfaceVariant },
-  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginTop: theme.Spacing.xs },
-  closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.03)', alignItems: 'center', justifyContent: 'center' },
+  modalKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 1, color: theme.Colors.onSurfaceVariant },
+  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onSurface, marginTop: theme.Spacing.xs },
+  closeBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.03)', alignItems: 'center', justifyContent: 'center' },
   modalBody: { padding: theme.Spacing.lg, gap: theme.Spacing.md },
   modalFooter: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, padding: theme.Spacing.lg, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.06)' },
 
-  cancelBtn: { paddingVertical: 12, paddingHorizontal: 20, borderRadius: 100 },
-  cancelBtnText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
+  cancelBtn: { minHeight: 44, justifyContent: 'center', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 100 },
+  cancelBtnText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant },
   submitBtn: { borderRadius: 100, overflow: 'hidden' },
-  submitBtnInner: { paddingVertical: 12, paddingHorizontal: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.Spacing.sm },
-  submitBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
+  submitBtnInner: { minHeight: 44, paddingVertical: 10, paddingHorizontal: 22, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.Spacing.sm },
+  submitBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
 
   input: {
     height: 48,
@@ -205,7 +213,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '600',
     outlineWidth: 0,
   },
-  label: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5 },
+  label: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5 },
 
   // Pagination Styles
   paginationRow: {
@@ -221,6 +229,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 0,
   },
   pageBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingHorizontal: theme.Spacing.md,
     paddingVertical: 10,
     borderRadius: 100,
@@ -242,9 +252,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   pageBtnText: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
-    fontFamily: 'Inter',
   },
   pageBtnTextDisabled: {
     color: theme.Colors.onSurfaceVariant,
@@ -259,9 +268,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   pageNumberText: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
-    fontFamily: 'Inter',
   },
   actionBtnOutline: {
     flexDirection: 'row',
@@ -327,7 +335,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   emptyTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginTop: theme.Spacing.sm,
   },
@@ -352,15 +360,16 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   tenantAvatarText: {
     fontSize: theme.Typography.titleMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
   },
   tenantTextContainer: {
     flex: 1,
+    minWidth: 0,
   },
   tenantName: {
     fontSize: theme.Typography.titleMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   tenantContact: {
@@ -382,7 +391,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   unitBadgeText: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
   },
   noticeAlertBar: {
@@ -418,15 +427,14 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 104, 117, 0.08)',
   },
   detailLabel: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
+    letterSpacing: 0.2,
   },
   detailValue: {
     fontSize: theme.Typography.titleMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginTop: 4,
   },
@@ -573,12 +581,12 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   statValue: {
     fontSize: theme.Typography.headlineMd.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
     marginTop: 12,
   },
   statLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.5,
     marginTop: theme.Spacing.xs,
@@ -608,7 +616,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   tabActive: {},
   tabTextActive: {
     color: theme.Colors.onPrimary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   tabBadge: {
     paddingHorizontal: 6,
@@ -670,7 +678,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   title: {
     fontSize: theme.Typography.headlineMd.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     letterSpacing: -0.5,
     marginTop: theme.Spacing.xs,
@@ -701,7 +709,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   createBtnText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   loadingMoreBox: {

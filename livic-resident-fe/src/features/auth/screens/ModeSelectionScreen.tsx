@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
-import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface ModeSelectionScreenProps {
@@ -60,12 +59,12 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
         activeOpacity={mode.disabled ? 1 : 0.7}
         disabled={mode.disabled || isLoading}
       >
-        <BlurView intensity={isSelected ? 80 : 50} tint="light" style={styles.cardInner}>
+        <View style={styles.cardInner}>
           <View style={styles.iconWrapper}>
             <MaterialIcons 
               name={mode.icon as any} 
               size={36} 
-              color={mode.disabled ? '#a0aab2' : isSelected ? theme.Colors.primary : '#006875'} 
+              color={mode.disabled ? theme.Colors.outline : isSelected ? theme.Colors.primary : theme.Colors.onSurfaceVariant} 
             />
           </View>
           <Text style={[styles.cardLabel, mode.disabled && styles.labelDisabled]}>
@@ -83,7 +82,7 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
               <ActivityIndicator color={theme.Colors.primary} />
             </View>
           )}
-        </BlurView>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -106,12 +105,6 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
   content: {
     flex: 1,
     alignItems: 'center',
@@ -147,31 +140,32 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     aspectRatio: 1,
     borderRadius: theme.Rounded.lg,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   cardDisabled: {
     opacity: 0.6,
   },
   cardSelected: {
-    borderColor: theme.Colors.primaryContainer,
-    shadowColor: theme.Colors.primaryContainer,
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    borderColor: theme.Colors.primary,
+    shadowColor: theme.Colors.primary,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   cardInner: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: theme.Spacing.gutter,
-    backgroundColor: theme.Colors.glassFill,
   },
   iconWrapper: {
     width: 64,
     height: 64,
-    borderRadius: theme.Rounded.xl,
-    backgroundColor: theme.Colors.glassFill,
+    borderRadius: 20,
+    backgroundColor: isDark ? 'rgba(0, 104, 117, 0.2)' : 'rgba(0, 104, 117, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -196,12 +190,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   badgeText: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: theme.Colors.outline,
   },
   loaderOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },

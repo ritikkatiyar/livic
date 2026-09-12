@@ -3,8 +3,6 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useActiveLease, usePropertyDetails } from '@/src/hooks/useResidentData';
@@ -36,7 +34,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
       contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
     >
           {/* Main Unit Card */}
-          <BlurView intensity={40} tint="light" style={styles.glassCard}>
+          <View style={styles.glassCard}>
             <View style={styles.mainCardHeaderRow}>
               <View style={styles.iconBox}>
                 <MaterialIcons name="apartment" size={theme.IconSizes.xl} color={theme.Colors.primary} />
@@ -54,19 +52,23 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
               <View style={styles.statBox}>
                 <Text style={styles.statLabel}>Monthly Rent</Text>
                 <View style={styles.statValueRow}>
-                  <Text style={styles.statValue}>{lease?.monthlyRentAmount ? `₹${lease.monthlyRentAmount.toLocaleString()}` : 'N/A'}</Text>
+                  <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                    {lease?.monthlyRentAmount ? `₹${lease.monthlyRentAmount.toLocaleString()}` : 'N/A'}
+                  </Text>
                   <Text style={styles.statSubLabel}> / month</Text>
                 </View>
               </View>
               <View style={styles.statBox}>
                 <Text style={styles.statLabel}>Security Deposit</Text>
-                <Text style={styles.statValueHighlight}>{lease?.securityDeposit ? `₹${lease.securityDeposit.toLocaleString()}` : 'N/A'}</Text>
+                <Text style={styles.statValueHighlight} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                  {lease?.securityDeposit ? `₹${lease.securityDeposit.toLocaleString()}` : 'N/A'}
+                </Text>
               </View>
             </View>
-          </BlurView>
+          </View>
 
           {/* Lease Contract Card */}
-          <BlurView intensity={40} tint="light" style={styles.glassCard}>
+          <View style={styles.glassCard}>
             <View style={styles.leaseHeaderRow}>
               <Text style={styles.leaseTitle}>Lease Agreement Details</Text>
               <MaterialIcons name="gavel" size={theme.IconSizes.lg} color={theme.Colors.primary} />
@@ -102,18 +104,13 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
               onPress={() => setShowLeaseModal(true)}
               activeOpacity={0.85}
             >
-              <LinearGradient
-                colors={[theme.Colors.accentGradientStart, theme.Colors.accentGradientEnd]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.leaseBtn}
-              >
+              <View style={[styles.leaseBtn, { backgroundColor: theme.Colors.primary }]}>
                 <MaterialIcons name="description" size={theme.IconSizes.sm} color={theme.Colors.onPrimary} />
                 <Text style={styles.leaseBtnText}>View Digital Lease Contract</Text>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
             <Text style={styles.leaseSignedText}>Digitally Signed & Timestamped on Record</Text>
-          </BlurView>
+          </View>
 
           {/* Property Amenities Grid */}
           <View style={styles.sectionHeader}>
@@ -125,13 +122,13 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
             {amenitiesList.map((amenityName, idx) => {
               const meta = getAmenityMeta(amenityName);
               return (
-                <BlurView key={idx} intensity={40} tint="light" style={styles.amenityCard}>
+                <View key={idx} style={styles.amenityCard}>
                   <View style={styles.amenityIconBox}>
                     <MaterialIcons name={meta.icon} size={theme.IconSizes.lg} color={theme.Colors.primary} />
                   </View>
                   <Text style={styles.amenityTitle}>{amenityName}</Text>
                   <Text style={styles.amenitySub}>{meta.sub}</Text>
-                </BlurView>
+                </View>
               );
             })}
           </View>
@@ -140,7 +137,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
         {/* Digital Lease Contract Modal */}
         {showLeaseModal && (
           <Modal transparent visible={true} animationType="slide" onRequestClose={() => setShowLeaseModal(false)}>
-            <BlurView intensity={40} tint="dark" style={styles.modalOverlay}>
+            <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Digital Lease Contract</Text>
@@ -165,17 +162,12 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
                   onPress={() => setShowLeaseModal(false)}
                   activeOpacity={0.85}
                 >
-                  <LinearGradient
-                    colors={[theme.Colors.accentGradientStart, theme.Colors.accentGradientEnd]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.modalCloseBtn}
-                  >
+                  <View style={[styles.modalCloseBtn, { backgroundColor: theme.Colors.primary }]}>
                     <Text style={styles.modalCloseBtnText}>Close Agreement Viewer</Text>
-                  </LinearGradient>
+                  </View>
                 </TouchableOpacity>
               </View>
-            </BlurView>
+            </View>
           </Modal>
         )}
     </PageShell>
@@ -189,72 +181,75 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   scrollContentDesktop: { paddingTop: theme.Spacing.lg },
   
   glassCard: {
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: theme.Rounded.xl,
     padding: theme.Spacing.containerPadding,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
-    shadowColor: theme.Colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 30,
-    elevation: 3,
+    borderColor: theme.Colors.outlineVariant,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0.2 : 0.05,
+    shadowRadius: 8,
+    elevation: 2,
     overflow: 'hidden'
   },
   mainCardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.md, marginBottom: theme.Spacing.lg },
   mainCardHeaderRowContent: { flex: 1 },
-  iconBox: { width: theme.Spacing.xxl, height: theme.Spacing.xxl, borderRadius: theme.Rounded.lg, backgroundColor: theme.Colors.primaryContainer, alignItems: 'center', justifyContent: 'center' },
-  propertyName: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  iconBox: { width: theme.Spacing.xxl, height: theme.Spacing.xxl, borderRadius: theme.Rounded.lg, backgroundColor: theme.Colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
+  propertyName: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onBackground },
   unitInfo: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm },
-  statusBadge: { backgroundColor: theme.Colors.primaryContainer, paddingHorizontal: theme.Spacing.md, paddingVertical: theme.Spacing.sm, borderRadius: theme.Rounded.md },
-  statusBadgeText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800', letterSpacing: 0.8 },
+  statusBadge: { backgroundColor: theme.Colors.surfaceContainerLow, paddingHorizontal: theme.Spacing.md, paddingVertical: theme.Spacing.sm, borderRadius: theme.Rounded.md },
+  statusBadgeText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', letterSpacing: 0.4 },
   
-  statsGrid: { flexDirection: 'row', gap: theme.Spacing.md },
-  statBox: { flex: 1, backgroundColor: theme.Colors.glassFill, borderRadius: theme.Rounded.lg, padding: theme.Spacing.md, borderWidth: 1, borderColor: theme.Colors.glassStroke },
-  statLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: theme.Spacing.sm },
-  statSubLabel: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant },
+  statsGrid: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  statBox: { flex: 1, minWidth: '47%', backgroundColor: theme.Colors.surfaceContainerLow, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: theme.Colors.outlineVariant },
+  statLabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.2, marginBottom: theme.Spacing.xs },
+  statSubLabel: { fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant },
   statValueRow: { flexDirection: 'row', alignItems: 'baseline' },
-  statValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
-  statValueHighlight: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.primary },
+  statValue: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '600', color: theme.Colors.onBackground, letterSpacing: -0.3 },
+  statValueHighlight: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '600', color: theme.Colors.primary, letterSpacing: -0.3 },
 
   leaseHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.lg },
-  leaseTitle: { color: theme.Colors.onBackground, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800' },
+  leaseTitle: { color: theme.Colors.onBackground, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600' },
   leaseGrid: { gap: theme.Spacing.md, marginBottom: theme.Spacing.lg },
   leaseRow: { flexDirection: 'row', alignItems: 'center' },
   leaseRowContent: { marginLeft: theme.Spacing.md },
-  leaseLabel: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '400', marginBottom: theme.Spacing.sm },
-  leaseValue: { color: theme.Colors.onSurface, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
+  leaseLabel: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '400', marginBottom: theme.Spacing.xs },
+  leaseValue: { color: theme.Colors.onSurface, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600' },
   leaseBtn: {
-    paddingVertical: theme.Spacing.md,
+    minHeight: 46,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: theme.Rounded.full,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: theme.Spacing.sm,
-    shadowColor: theme.Colors.primary,
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  leaseBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
+  leaseBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
   leaseSignedText: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodySmall.fontSize, textAlign: 'center', marginTop: theme.Spacing.md },
 
   sectionHeader: { marginTop: theme.Spacing.sm },
-  sectionTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  sectionTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onBackground },
   sectionSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm },
   
   amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.Spacing.md },
-  amenityCard: { width: '47.8%', backgroundColor: theme.Colors.glassFill, borderRadius: theme.Rounded.xl, padding: theme.Spacing.md, borderWidth: 1, borderColor: theme.Colors.glassStroke, overflow: 'hidden' },
-  amenityIconBox: { width: theme.Spacing.xxl, height: theme.Spacing.xxl, borderRadius: theme.Rounded.md, backgroundColor: theme.Colors.primaryContainer, alignItems: 'center', justifyContent: 'center', marginBottom: theme.Spacing.md },
-  amenityTitle: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onBackground },
+  amenityCard: { width: '47.8%', backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: theme.Rounded.xl, padding: theme.Spacing.md, borderWidth: 1, borderColor: theme.Colors.outlineVariant, overflow: 'hidden' },
+  amenityIconBox: { width: theme.Spacing.xxl, height: theme.Spacing.xxl, borderRadius: theme.Rounded.md, backgroundColor: theme.Colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center', marginBottom: theme.Spacing.md },
+  amenityTitle: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onBackground },
   amenitySub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm },
 
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.Spacing.containerPadding
+    padding: theme.Spacing.containerPadding,
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.45)',
   },
   modalContent: {
     width: '100%',
@@ -262,28 +257,28 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: theme.Rounded.xl,
     overflow: 'hidden',
     padding: theme.Spacing.containerPadding,
-    backgroundColor: theme.Colors.glassFill,
-    shadowColor: theme.Surface.shadowColor,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
     shadowRadius: 24,
     elevation: 10,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
   },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.md },
-  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onBackground },
   modalScrollView: { maxHeight: theme.Dimensions.modalScrollMaxHeight },
-  modalContractTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700', color: theme.Colors.primary, marginBottom: theme.Spacing.md },
+  modalContractTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600', color: theme.Colors.primary, marginBottom: theme.Spacing.md },
   modalContractText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: theme.Typography.bodyLarge.lineHeight },
   modalCloseBtnWrapper: {
     marginTop: theme.Spacing.lg,
     borderRadius: theme.Rounded.full,
-    shadowColor: theme.Colors.primary,
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
     overflow: 'hidden',
   },
   modalCloseBtn: {
@@ -292,7 +287,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  modalCloseBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
+  modalCloseBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600' }
 });
 
 function getAmenityMeta(name: string): { icon: React.ComponentProps<typeof MaterialIcons>['name']; sub: string } {

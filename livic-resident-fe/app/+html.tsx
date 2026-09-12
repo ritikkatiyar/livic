@@ -14,21 +14,22 @@ export default function HTML({ children }: { children: React.ReactNode }) {
         <link rel="preconnect" href="https://tenantappbackend.onrender.com" />
         <link rel="preconnect" href="https://ai-service-ws9z.onrender.com" />
         <link rel="dns-prefetch" href="https://tenantappbackend.onrender.com" />
-        {/* Google Fonts: Playfair Display & Inter */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700&display=swap" rel="stylesheet" />
-
         <ScrollViewStyleReset />
 
         <style dangerouslySetInnerHTML={{ __html: `
+          @font-face {
+            font-family: 'Inter';
+            src: local('-apple-system'), local('BlinkMacSystemFont'), local('SF Pro Text'), local('SF Pro Display'), local('Helvetica Neue'), local('Helvetica');
+          }
           html, body, #root {
             background-color: ${DarkColors.background};
             min-height: 100%;
             height: 100%;
             margin: 0;
             padding: 0;
-            font-family: ${SansFont};
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
           }
           @media (min-width: ${Breakpoints.desktop}px) {
             [data-responsive-layout="mobile"],

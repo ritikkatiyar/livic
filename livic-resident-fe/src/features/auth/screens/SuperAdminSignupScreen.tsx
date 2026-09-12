@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { Theme } from '@/src/theme/Theme';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { signup } from '@/src/features/auth/api/auth.api';
@@ -33,13 +32,13 @@ interface SuperAdminSignupScreenProps {
   onNavigateToLogin?: () => void;
 }
 
-export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: SuperAdminSignupScreenProps) {
+export default function SuperAdminSignupScreen({
+  onSignup,
+  onNavigateToLogin,
+}: SuperAdminSignupScreenProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const emailInputRef = useRef<TextInput>(null);
-  const phoneInputRef = useRef<TextInput>(null);
-  const passwordInputRef = useRef<TextInput>(null);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -48,32 +47,55 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Field Touched states for inline visual validation
+  const [fullNameTouched, setFullNameTouched] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
+
+  // Field references for auto-advance keyboard flow
+  const emailInputRef = useRef<TextInput>(null);
+  const phoneInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
+
+  // Dynamic Password Policy Checks
+  const hasMinLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const isFormValid = fullName.trim().length > 0 && email.includes('@') && hasMinLength;
+
   const handleSignup = async () => {
     if (!fullName || !email || !password) {
-      setErrorMsg('Please fill in all required fields (Name, Email, Password).');
+      setErrorMsg('Please complete all mandatory credential fields.');
       return;
     }
 
-    if (phoneNumber && phoneNumber.trim() !== '') {
-      if (phoneNumber.length !== 10) {
-        setErrorMsg('Mobile number must be exactly 10 digits.');
-        return;
-      }
+    if (!hasMinLength) {
+      setErrorMsg('Security Policy: Password must be at least 8 characters.');
+      return;
     }
-    
+
     setLoading(true);
     setErrorMsg('');
-    
+
     try {
-      const data = await signup({ fullName, email, phoneNumber, password });
-      
-      // Success! Pass token bundle back to index.tsx (or context)
+      const data = await signup({
+        fullName,
+        email,
+        phoneNumber,
+        password,
+      });
+
       if (onSignup) {
         onSignup(data);
       }
-    } catch (error: any) {
-      console.error('Signup Request Error:', error);
-      setErrorMsg(error.message || 'Cannot connect to server. Ensure backend is running.');
+    } catch (err: any) {
+      console.error('[SuperAdminSignupScreen] Signup error:', err);
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Registration failed. Please try again.';
+      setErrorMsg(message);
     } finally {
       setLoading(false);
     }
@@ -85,12 +107,8 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
       keyboardAvoiding={true}
       contentContainerStyle={styles.scrollContent}
     >
-      {/* Ambient Background Orbs */}
-          <View style={[styles.orb, styles.orb1]} />
-          <View style={[styles.orb, styles.orb2]} />
-
           {/* Main Content Area */}
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.cardContainer}>
+          <View style={styles.cardContainer}>
             {/* Branding */}
             <View style={styles.brandingContainer}>
               <View style={styles.iconWrapper}>
@@ -117,56 +135,56 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                   <MaterialIcons name="person-outline" size={20} color={theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="Ada Tenant"
+                    placeholder="John Doe"
                     placeholderTextColor={theme.Colors.outlineVariant}
                     value={fullName}
                     onChangeText={setFullName}
+                    onBlur={() => setFullNameTouched(true)}
                     autoCapitalize="words"
                     returnKeyType="next"
                     onSubmitEditing={() => emailInputRef.current?.focus()}
                     blurOnSubmit={false}
                   />
-                  {fullName ? (
-                    <TouchableOpacity 
-                      style={styles.clearIcon}
-                      onPress={() => setFullName('')}
-                    >
-                      <MaterialIcons name="cancel" size={20} color={theme.Colors.outlineVariant} />
-                    </TouchableOpacity>
-                  ) : null}
+                  {fullNameTouched && (
+                    fullName.trim().length > 0 ? (
+                      <MaterialIcons name="check" size={20} color={theme.Colors.primary} style={styles.validationIcon} />
+                    ) : (
+                      <MaterialIcons name="close" size={20} color={theme.Colors.error} style={styles.validationIcon} />
+                    )
+                  )}
                 </View>
               </View>
 
-              {/* Email Input */}
+              {/* Email Address Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>EMAIL</Text>
+                <Text style={styles.label}>EMAIL ADDRESS</Text>
                 <View style={styles.inputWrapper}>
                   <MaterialIcons name="mail-outline" size={20} color={theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
                     ref={emailInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="resident@livic.app"
+                    placeholder="user@example.com"
                     placeholderTextColor={theme.Colors.outlineVariant}
                     value={email}
                     onChangeText={setEmail}
+                    onBlur={() => setEmailTouched(true)}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     returnKeyType="next"
                     onSubmitEditing={() => phoneInputRef.current?.focus()}
                     blurOnSubmit={false}
                   />
-                  {email ? (
-                    <TouchableOpacity 
-                      style={styles.clearIcon}
-                      onPress={() => setEmail('')}
-                    >
-                      <MaterialIcons name="cancel" size={20} color={theme.Colors.outlineVariant} />
-                    </TouchableOpacity>
-                  ) : null}
+                  {emailTouched && (
+                    email.includes('@') && email.includes('.') ? (
+                      <MaterialIcons name="check" size={20} color={theme.Colors.primary} style={styles.validationIcon} />
+                    ) : (
+                      <MaterialIcons name="close" size={20} color={theme.Colors.error} style={styles.validationIcon} />
+                    )
+                  )}
                 </View>
               </View>
 
-              {/* Phone Input (Optional) */}
+              {/* Phone Number Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>PHONE NUMBER</Text>
                 <View style={styles.inputWrapper}>
@@ -174,12 +192,12 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                   <TextInput
                     ref={phoneInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="1234567890"
+                    placeholder="+1 555-0199"
                     placeholderTextColor={theme.Colors.outlineVariant}
                     value={phoneNumber}
-                    onChangeText={(text) => setPhoneNumber(text.replace(/[^0-9]/g, ''))}
-                    keyboardType="number-pad"
-                    maxLength={10}
+                    onChangeText={setPhoneNumber}
+                    onBlur={() => setPhoneTouched(true)}
+                    keyboardType="phone-pad"
                     returnKeyType="next"
                     onSubmitEditing={() => passwordInputRef.current?.focus()}
                     blurOnSubmit={false}
@@ -256,7 +274,7 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                 <Text style={styles.footerLink}>Sign In</Text>
               </TouchableOpacity>
             </View>
-          </BlurView>
+          </View>
     </PageShell>
   );
 }
@@ -301,17 +319,18 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: theme.Rounded.lg,
     paddingHorizontal: theme.Spacing.stackLg,
     paddingTop: 40,
     paddingBottom: theme.Spacing.stackLg,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
-    shadowColor: theme.Colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 30,
+    borderColor: theme.Colors.outlineVariant,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0.2 : 0.05,
+    shadowRadius: 8,
+    elevation: 2,
     alignItems: 'center',
     overflow: 'hidden',
   },
@@ -405,12 +424,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   submitButton: {
-    marginTop: 12,
+    marginTop: theme.Spacing.sm,
     width: '100%',
+    minHeight: 48,
     backgroundColor: theme.Colors.primaryContainer,
     paddingVertical: theme.Spacing.md,
     paddingHorizontal: theme.Spacing.stackMd,
-    borderRadius: theme.Rounded.default,
+    borderRadius: 24,
+    justifyContent: 'center',
     alignItems: 'center',
     shadowColor: theme.Colors.primaryContainer,
     shadowOffset: { width: 0, height: 4 },
@@ -455,6 +476,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   footerLink: {
     ...theme.Typography.bodyMd,
     color: theme.Colors.surfaceTint,
-    fontWeight: 'bold',
+    fontWeight: '600',
+  },
+  validationIcon: {
+    position: 'absolute',
+    right: 14,
   },
 });

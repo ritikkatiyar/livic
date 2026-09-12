@@ -10,10 +10,8 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageShell } from '@/src/components/common/layout/PageShell';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -161,9 +159,9 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
 
   if (isQueryLoading) {
     return (
-      <LinearGradient colors={theme.Colors.backgroundGradient as [string, string, string]} style={styles.loaderContainer}>
+      <View style={[styles.loaderContainer, { backgroundColor: theme.Colors.background }]}>
         <ActivityIndicator size="large" color={theme.Colors.primary} />
-      </LinearGradient>
+      </View>
     );
   }
 
@@ -255,26 +253,19 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
 
       {/* Action Submit Button */}
       <TouchableOpacity 
-        style={[styles.submitButtonWrapper, isSaving && { opacity: 0.6 }]} 
+        style={[styles.submitButton, isSaving && { opacity: 0.6 }]} 
         onPress={handleSubmit}
         disabled={isSaving}
         activeOpacity={0.8}
       >
-        <LinearGradient
-          colors={['#00d4ff', '#0072ff']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.submitButton}
-        >
-          {isSaving ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <>
-              <Text style={styles.submitButtonText}>{isEditMode ? 'UPDATE CONFIGURATION' : 'ACTIVATE CHARGE CONFIG'}</Text>
-              <MaterialIcons name="bolt" size={20} color="#fff" />
-            </>
-          )}
-        </LinearGradient>
+        {isSaving ? (
+          <ActivityIndicator size="small" color={theme.Colors.onPrimary} />
+        ) : (
+          <>
+            <Text style={styles.submitButtonText}>{isEditMode ? 'Update Configuration' : 'Activate Charge Config'}</Text>
+            <MaterialIcons name="bolt" size={20} color={theme.Colors.onPrimary} />
+          </>
+        )}
       </TouchableOpacity>
     </View>
     );
@@ -353,8 +344,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   headerTitle: {
     color: theme.Colors.onSurface,
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontFamily: 'Inter',
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1.5,
   },
   scrollContent: {
@@ -389,28 +379,27 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   contentContainer: {
     width: '100%',
   },
-  submitButtonWrapper: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginTop: 10,
-    shadowColor: theme.Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 6,
-  },
   submitButton: {
+    backgroundColor: theme.Colors.primary,
+    borderRadius: 24,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     gap: theme.Spacing.sm,
+    marginTop: 10,
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   submitButtonText: {
     color: theme.Colors.onPrimary,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '900',
-    letterSpacing: 1,
+    fontWeight: '600',
   },
   desktopInner: {
     maxWidth: 1080,

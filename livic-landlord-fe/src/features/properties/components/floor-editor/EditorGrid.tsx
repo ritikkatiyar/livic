@@ -137,7 +137,7 @@ export function EditorGrid({
                 >
                   <View style={{ flexDirection: 'column', gap: 2 }}>
                     <Text style={[styles.cellText, { color: colorStyles.textColor }]}>{block.unitNumber}</Text>
-                    <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: colorStyles.textColor + 'ee' }}>
+                    <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: colorStyles.textColor + 'ee' }}>
                       {UNIT_TYPE_OPTIONS.find(opt => opt.value === block.type)?.label || '1 BHK'}
                     </Text>
                   </View>
@@ -225,8 +225,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   cellText: {
     fontSize: theme.Typography.labelMedium.fontSize,
-    fontWeight: '900',
-    fontFamily: 'Inter',
+    fontWeight: '600',
   },
   cellDrawingStart: {
     backgroundColor: isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 104, 117, 0.25)',
@@ -269,14 +268,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   badgeText: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
-    fontFamily: 'Inter',
   },
   badgeTextSmall: {
     fontSize: theme.Typography.labelSmall.fontSize - 3,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
-    fontFamily: 'Inter',
   },
 });

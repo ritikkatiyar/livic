@@ -3,8 +3,6 @@ import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, Activi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { getMaintenanceTickets, getTicketHealthStats, createMaintenanceTicket, MaintenanceTicket, TicketHealthStats } from '@/src/features/tenant/api/maintenance.api';
@@ -91,7 +89,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
       contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
     >
           {/* New Ticket Form Glass Card */}
-          <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
+          <View style={styles.glassCard}>
             <View style={styles.formHeaderRow}>
               <View style={styles.iconBox}>
                 <MaterialIcons name="build" size={24} color={theme.Colors.primary} />
@@ -160,11 +158,8 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
               disabled={!title.trim() || !description.trim() || submitting}
               activeOpacity={0.85}
             >
-              <LinearGradient
-                colors={['#00e0ff', '#0070ea']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.submitBtn, (!title.trim() || !description.trim() || submitting) && styles.submitBtnDisabled]}
+              <View
+                style={[styles.submitBtn, { backgroundColor: theme.Colors.primary }, (!title.trim() || !description.trim() || submitting) && styles.submitBtnDisabled]}
               >
                 {submitting ? (
                   <ActivityIndicator color="#ffffff" />
@@ -174,16 +169,13 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
                     <Text style={styles.submitBtnText}>Submit Service Request</Text>
                   </>
                 )}
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
-          </BlurView>
+          </View>
 
-          {/* AI Desk Cyan Banner */}
-          <LinearGradient
-            colors={['#00e0ff', '#0070ea']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.promoCard}
+          {/* AI Desk Banner */}
+          <View
+            style={[styles.promoCard, { backgroundColor: theme.Colors.primary }]}
           >
             <View style={styles.promoBadge}><Text style={styles.promoBadgeText}>AI TROUBLESHOOTING DESK</Text></View>
             <Text style={styles.promoTitle}>Need immediate DIY fixes?</Text>
@@ -193,10 +185,10 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
               <Text style={styles.promoBtnText}>Open AI Assistance</Text>
             </TouchableOpacity>
             <MaterialIcons name="psychology" size={130} color="rgba(255,255,255,0.12)" style={styles.promoBgIcon} />
-          </LinearGradient>
+          </View>
 
           {/* Service Health Metrics */}
-          <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
+          <View style={styles.glassCard}>
             <Text style={styles.healthTitle}>Service Health Overview</Text>
             
             <View style={styles.healthRow}>
@@ -220,10 +212,10 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
               </View>
               <MaterialIcons name="check-circle" size={24} color={theme.Colors.primary} />
             </View>
-          </BlurView>
+          </View>
 
           {/* Ticket History Glass Tracker */}
-          <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.historyCard}>
+          <View style={styles.historyCard}>
             <View style={styles.historyHeader}>
               <Text style={styles.historyTitle}>Recent Service Tickets</Text>
               <Text style={styles.historySub}>Live dispatch tracker</Text>
@@ -255,7 +247,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
                 </View>
               )}
             </View>
-          </BlurView>
+          </View>
 
 
         {/* Success Confirmation Modal */}
@@ -328,86 +320,85 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   mobileHeaderTitle: {
     fontSize: theme.Typography.bodyLg.fontSize,
-    fontFamily: 'Inter',
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   
   glassCard: {
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 24,
     padding: 22,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)',
-    shadowColor: theme.Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: isDark ? 0.2 : 0.06,
-    shadowRadius: 20,
-    elevation: 4,
+    borderColor: theme.Colors.outlineVariant,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0.2 : 0.05,
+    shadowRadius: 8,
+    elevation: 2,
     overflow: 'hidden'
   },
   formHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
-  iconBox: { width: 48, height: 48, borderRadius: 14, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
-  cardTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  iconBox: { width: 48, height: 48, borderRadius: 14, backgroundColor: theme.Colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
+  cardTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onBackground },
   cardSubtitle: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   
-  label: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, marginTop: 14 },
-  input: { backgroundColor: isDark ? '#131C26' : 'rgba(255, 255, 255, 0.8)', borderWidth: 1, borderColor: isDark ? '#202D3D' : 'rgba(186, 201, 204, 0.4)', borderRadius: 14, padding: 14, fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onBackground },
+  label: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.2, marginBottom: 8, marginTop: 14 },
+  input: { backgroundColor: theme.Colors.surfaceContainerLow, borderWidth: 1, borderColor: theme.Colors.outlineVariant, borderRadius: 14, padding: 14, fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onBackground },
   textArea: { minHeight: 90, textAlignVertical: 'top' },
   
   pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pickerChip: { backgroundColor: isDark ? '#131C26' : 'rgba(255, 255, 255, 0.8)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: isDark ? '#202D3D' : 'rgba(186, 201, 204, 0.4)' },
+  pickerChip: { minHeight: 36, backgroundColor: theme.Colors.surfaceContainerLow, paddingHorizontal: 14, paddingVertical: 8, borderRadius: theme.Rounded.full, borderWidth: 1, borderColor: theme.Colors.outlineVariant, justifyContent: 'center', alignItems: 'center' },
   pickerChipActive: { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary },
   pickerChipActivePrio: { backgroundColor: theme.Colors.error, borderColor: theme.Colors.error },
-  pickerChipText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
+  pickerChipText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant },
   pickerChipTextActive: { color: '#ffffff' },
 
-  uploadBox: { borderWidth: 2, borderColor: isDark ? 'rgba(0, 229, 255, 0.3)' : 'rgba(0, 104, 117, 0.25)', borderStyle: 'dashed', borderRadius: 16, padding: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? 'rgba(15, 23, 32, 0.6)' : 'rgba(255, 255, 255, 0.4)', marginTop: 18, marginBottom: 18 },
-  uploadText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.primary, marginTop: 6 },
+  uploadBox: { borderWidth: 1, borderColor: theme.Colors.outlineVariant, borderStyle: 'dashed', borderRadius: 16, padding: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.Colors.surfaceContainerLow, marginTop: 18, marginBottom: 18 },
+  uploadText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.primary, marginTop: 6 },
   
-  submitBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  submitBtn: { minHeight: 46, paddingVertical: 12, paddingHorizontal: 20, borderRadius: theme.Rounded.full, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   submitBtnDisabled: { opacity: 0.5 },
-  submitBtnText: { color: '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
+  submitBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
 
-  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
+  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3 },
   promoBadge: { backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginBottom: 12 },
-  promoBadgeText: { color: '#ffffff', fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800' },
-  promoTitle: { color: '#ffffff', fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', marginBottom: 6, zIndex: 1 },
+  promoBadgeText: { color: '#ffffff', fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600' },
+  promoTitle: { color: '#ffffff', fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', marginBottom: 6, zIndex: 1 },
   promoDesc: { color: 'rgba(255,255,255,0.9)', fontSize: theme.Typography.bodyMedium.fontSize, lineHeight: 20, marginBottom: 16, width: '80%', zIndex: 1 },
-  promoBtn: { backgroundColor: '#ffffff', flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
-  promoBtnText: { color: '#006875', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
+  promoBtn: { minHeight: 44, backgroundColor: theme.Colors.surfaceContainerLowest, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8, paddingHorizontal: 18, paddingVertical: 10, borderRadius: theme.Rounded.full, zIndex: 1 },
+  promoBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
   promoBgIcon: { position: 'absolute', right: -25, bottom: -25 },
 
-  healthCard: { backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)', borderRadius: 24, padding: 22, borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
-  healthTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 16 },
-  healthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isDark ? 'rgba(27, 38, 51, 0.85)' : 'rgba(255, 255, 255, 0.8)', padding: 14, borderRadius: 14, marginBottom: 10, borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(186, 201, 204, 0.25)' },
+  healthCard: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: 22, borderWidth: 1, borderColor: theme.Colors.outlineVariant, overflow: 'hidden' },
+  healthTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', color: theme.Colors.onBackground, marginBottom: 16 },
+  healthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.Colors.surfaceContainerLow, padding: 14, borderRadius: 14, marginBottom: 10, borderWidth: 1, borderColor: theme.Colors.outlineVariant },
   healthRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   healthPill: { width: 6, height: 32, borderRadius: 3 },
-  healthLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
-  healthValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800' },
+  healthLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant },
+  healthValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600' },
 
-  historyCard: { backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: isDark ? 0.2 : 0.06, shadowRadius: 20, elevation: 4 },
-  historyHeader: { padding: 20, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(186, 201, 204, 0.3)' },
-  historyTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  historyCard: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: theme.Colors.outlineVariant, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: isDark ? 0.2 : 0.05, shadowRadius: 8, elevation: 2 },
+  historyHeader: { padding: 20, borderBottomWidth: 1, borderBottomColor: theme.Colors.outlineVariant },
+  historyTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', color: theme.Colors.onBackground },
   historySub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
-  historyList: { backgroundColor: isDark ? 'rgba(19, 28, 38, 0.85)' : 'rgba(255, 255, 255, 0.7)' },
-  historyItem: { padding: 18, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(186, 201, 204, 0.25)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  historyList: { backgroundColor: theme.Colors.surfaceContainerLowest },
+  historyItem: { padding: 18, borderBottomWidth: 1, borderBottomColor: theme.Colors.outlineVariant, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   historyItemMain: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  historyItemId: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.primary },
-  historyItemTitle: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onBackground },
+  historyItemId: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.primary },
+  historyItemTitle: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onBackground },
   historyItemSub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   historyItemRight: { alignItems: 'flex-end' },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  statusBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800' },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: theme.Colors.surfaceContainerLow },
+  statusBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600' },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.75)', justifyContent: 'center', padding: 20 },
-  modalContent: { backgroundColor: isDark ? '#131C26' : theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: 24, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
+  modalOverlay: { flex: 1, backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.45)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: 24, borderWidth: 1, borderColor: theme.Colors.outlineVariant, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onBackground },
   modalSubTitle: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
-  aiHelpTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: theme.Colors.primary, marginBottom: 12 },
+  aiHelpTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600', color: theme.Colors.primary, marginBottom: 12 },
   aiHelpText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 22 },
   modalCloseBtn: { backgroundColor: theme.Colors.primary, paddingVertical: 14, borderRadius: 14, alignItems: 'center', width: '100%' },
-  modalCloseBtnText: { color: isDark ? '#090D12' : '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
+  modalCloseBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600' }
 });
 

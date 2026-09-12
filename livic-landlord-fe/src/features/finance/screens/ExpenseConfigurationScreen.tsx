@@ -13,10 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
@@ -158,7 +156,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
   const renderContent = () => {
     if (!properties || properties.length === 0) {
       return (
-        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
+        <View style={styles.emptyCard}>
           <View style={styles.emptyIconCircle}>
             <MaterialIcons name="business" size={36} color={theme.Colors.primary} />
           </View>
@@ -171,17 +169,12 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
             activeOpacity={0.8}
             onPress={() => router.push('/properties/create')}
           >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.createPropertyGradient}
-            >
+            <View style={styles.createPropertyGradient}>
               <MaterialIcons name="add" size={24} color={theme.Colors.surfaceContainerLowest} />
               <Text style={styles.createPropertyText}>CREATE FIRST PROPERTY</Text>
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
-        </BlurView>
+        </View>
       );
     }
 
@@ -208,7 +201,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
 
     if (charges.length === 0) {
       return (
-        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
+        <View style={styles.emptyCard}>
           <View style={styles.emptyIconCircle}>
             <MaterialIcons name="receipt-long" size={36} color={theme.Colors.onSurfaceVariant} />
           </View>
@@ -222,17 +215,12 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
             activeOpacity={0.8}
             onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
           >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.createPropertyGradient}
-            >
+            <View style={styles.createPropertyGradient}>
               <MaterialIcons name="add" size={24} color={theme.Colors.surfaceContainerLowest} />
               <Text style={styles.createPropertyText}>CREATE CHARGE</Text>
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
-        </BlurView>
+        </View>
       );
     }
 
@@ -311,15 +299,10 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                 onPress={handleConfigureExpense}
                 activeOpacity={0.8}
               >
-                <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.headerCreateInner}
-                >
+                <View style={styles.headerCreateInner}>
                   <MaterialIcons name="add" size={16} color={theme.Colors.surfaceContainerLowest} />
                   <Text style={styles.headerCreateText}>ADD</Text>
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             </View>
             <Text style={styles.screenSubtitle}>Configure ledger charge codes, utility scales and automation thresholds</Text>
@@ -334,7 +317,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
               onPress={handleConfigureExpense}
             >
               <View style={styles.dashedIconCircle}>
-                 <MaterialIcons name="add" size={24} color="#00bcd4" />
+                 <MaterialIcons name="add" size={24} color={theme.Colors.primary} />
               </View>
               <Text style={styles.dashedButtonText}>Create New Expense</Text>
             </TouchableOpacity>

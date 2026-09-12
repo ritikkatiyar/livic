@@ -37,7 +37,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   statValue: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onBackground,
     marginTop: 2,
   },
@@ -61,7 +61,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarBrandTitle: {
     fontSize: theme.Typography.displaySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     lineHeight: 40,
     color: theme.Colors.primary,
   },
@@ -120,7 +120,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   upgradeText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   desktopMain: {
     flex: 1,
@@ -191,7 +191,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   avatarText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontWeight: '800',
+    fontWeight: '600',
     fontSize: theme.Typography.bodyLg.fontSize,
   },
   desktopContent: {
@@ -223,7 +223,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   footerBrand: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
     marginRight: 22,
   },
@@ -254,7 +254,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   mobileBrand: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
   },
   mobileAvatar: {
@@ -270,7 +270,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   mobileAvatarText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   headerRight: {
     flexDirection: 'row',
@@ -279,13 +279,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   headerTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
     letterSpacing: 1,
   },
   compactHeaderTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onBackground,
   },
   menuButton: {
@@ -327,6 +327,49 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
+  countBadge: {
+    backgroundColor: `${theme.Colors.primary}18`,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  countBadgeText: {
+    fontSize: theme.Typography.bodySmall.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.primary,
+  },
+  mobileAddBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: theme.Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  mobileAddFooterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 48,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: theme.Colors.outlineVariant,
+    borderStyle: 'dashed',
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    marginTop: 12,
+    marginBottom: 20,
+  },
+  mobileAddFooterText: {
+    fontSize: theme.Typography.bodySmall.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.primary,
+  },
   headerAddButtonWrapper: {
     borderRadius: 19,
     overflow: 'hidden',
@@ -346,7 +389,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   headerAddButtonText: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.surfaceContainerLowest,
     letterSpacing: 0.5,
   },
@@ -380,10 +423,10 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   mobileSearchBox: {
     flex: 1,
     height: 50,
-    borderRadius: 12,
+    borderRadius: theme.Rounded.md,
     borderWidth: 1,
-    borderColor: theme.Surface.border,
-    backgroundColor: theme.Colors.glassFill,
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -407,10 +450,10 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   mobileFilterButtonWrapper: {
     width: 50,
     height: 50,
-    borderRadius: 12,
+    borderRadius: theme.Rounded.md,
     borderWidth: 1,
-    borderColor: theme.Surface.border,
-    backgroundColor: theme.Colors.glassFill,
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
   },
   mobileFilterButton: {
@@ -423,6 +466,29 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 12,
     marginTop: 22,
     flexWrap: 'wrap',
+  },
+  desktopStatusStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 14,
+    marginBottom: 4,
+  },
+  desktopStatusChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  desktopStatusChipText: {
+    fontSize: theme.Typography.bodySmall.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.onSurface,
   },
   manageButtonWrapperMobile: {
     marginHorizontal: theme.Spacing.lg,
@@ -453,7 +519,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   manageButtonText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   addNewCard: {
@@ -561,7 +627,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   createPropertyText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1,
   },
   learnMoreContainer: {
@@ -635,7 +701,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   composerTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   composerSubtitle: {
@@ -716,7 +782,25 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   composerSendText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1.2,
+  },
+  desktopSearchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    height: 40,
+    width: 280,
+  },
+  desktopSearchInput: {
+    flex: 1,
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    color: theme.Colors.onSurface,
+    paddingVertical: 0,
   },
 });

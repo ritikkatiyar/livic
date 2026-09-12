@@ -18,19 +18,21 @@ The project utilizes a centralized theme structure defined in `src/theme/Theme.t
 - **Background Gradient**: All full-screen screens must render inside a standard page wrapper utilizing the `backgroundGradient`: `["#d4f5f9", "#e8f8fb", "#e2e0fb"]` (luminous cyan, ice blue, and pastel lavender). All gradient instances must be configured as diagonal (start=`{ x: 0, y: 0 }`, end=`{ x: 1, y: 1 }`) rather than vertical or default.
 - **Accent Gradients**: Key visual triggers (active segment selections, call-to-action buttons) must use `accentGradientStart` (`#00e0ff`) to `accentGradientEnd` (`#0070ea`).
 
-### B. Typography Hierarchy
-All text components must select from the predefined typography styles. Default system font references are banned. Approved font families are `Playfair Display` (`SerifHeadlineFont` for luxury editorial headlines), `Inter` (body, labels, controls), `Manrope` (metrics, section headers), and `JetBrains Mono` (caps and codes).
+### B. Typography Hierarchy (Apple Human Interface Guidelines)
+All text components MUST consume predefined typography tokens from `theme.Typography.*` (`useAppTheme()`). Individual screens and components are strictly prohibited from declaring local `fontFamily` or overriding font styles. The global font stack is Apple's San Francisco SF Pro (`-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif` on web, `System` on iOS).
+
+Heavy shouting weights (`800` and `900`) and serif fonts (`Playfair Display`, `Georgia`) are strictly banned across the entire codebase.
 
 | Token | Family | Size | Weight | Line Height | Purpose |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `displayLarge` / `headlineXl` | `Playfair Display` / `Manrope` | 32px - 57px | 800 (ExtraBold) | 38px - 64px | Screen title & hero headline headers |
-| `displayMetrics` | `Manrope` | 48px | 800 (ExtraBold) | 56px | Large layout display figures |
-| `headlineLg` | `Playfair Display` / `Manrope` | 24px - 32px | 700 - 800 (Bold) | 31px - 40px | Section headers |
-| `bodyLg` | `Inter` | 18px | 400 (Regular) | 28px | Interactive body/readable text |
-| `bodyMd` | `Inter` | 16px | 400 (Regular) | 24px | Standard paragraphs |
-| `labelCaps` | `JetBrains Mono` | 12px | 700 (Bold) | 14px | Form field labels (uppercase) |
-| `buttonText` | `Manrope` | 14px | 700 (Bold) | 14px | Primary actions |
-| `labelMuted` | `Inter` | 14px | 400 (Regular) | 20px | Descriptive hints, secondary labels |
+| `displayLarge` / `headlineXl` | Apple SF Pro (System) | 40px - 48px | 600 (Semibold) | 48px - 56px | Screen title & hero headline headers |
+| `displayMetrics` | Apple SF Pro (System) | 40px | 600 (Semibold) | 48px | Large layout display figures |
+| `headlineLarge` / `headlineMedium` | Apple SF Pro (System) | 24px - 28px | 600 (Semibold) | 32px - 36px | Section headers |
+| `titleLarge` / `titleMedium` | Apple SF Pro (System) | 16px - 18px | 600 (Semibold) / 500 (Medium) | 24px | Card titles & sub-headers |
+| `bodyLarge` | Apple SF Pro (System) | 16px | 400 (Regular) | 24px | Interactive body / readable text |
+| `bodyMedium` / `bodySmall` | Apple SF Pro (System) | 12px - 14px | 400 (Regular) | 16px - 20px | Standard paragraphs & descriptions |
+| `labelLarge` / `labelMedium` | Apple SF Pro (System) | 12px - 14px | 500 (Medium) | 16px - 20px | Field labels, control text |
+| `labelSmall` | Apple SF Pro (System) | 11px | 500 (Medium) | 16px | Badges, tags, status pills |
 
 ### C. Spacing & Borders
 - **Spacing Unit (`Spacing.unit = 8`)**: Margins, paddings, and gap configurations must be multiples of 8 (`stackSm` = 8px, `stackMd` = 16px, `containerPadding` = 20px, `stackLg` = 32px).

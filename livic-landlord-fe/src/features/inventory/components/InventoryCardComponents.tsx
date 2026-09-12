@@ -1,9 +1,7 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { InventoryCondition, InventoryItem, AssignmentItem, VerificationItem } from '@/src/features/inventory/mockInventoryData';
 
 const getConditionConfig = (theme: any) => ({
@@ -57,7 +55,7 @@ export function SummaryLine({ label, value, danger = false, bold = false }: {
 
   return (
     <View style={styles.summaryLine}>
-      <Text style={[styles.summaryLabel, bold && { fontWeight: '800', color: theme.Colors.onSurface }]}>{label}</Text>
+      <Text style={[styles.summaryLabel, bold && { fontWeight: '600', color: theme.Colors.onSurface }]}>{label}</Text>
       <Text style={[styles.summaryValue, danger && { color: theme.Colors.error }, bold && { fontSize: theme.Typography.bodyLarge.fontSize }]}>{value}</Text>
     </View>
   );
@@ -69,9 +67,9 @@ export function MobileInventoryCard({ item }: { item: InventoryItem }) {
 
   const serviceDue = item.status === 'Service Due';
   return (
-    <BlurView intensity={48} tint={isDark ? 'dark' : 'light'} style={[styles.inventoryCard, serviceDue && styles.inventoryCardAlert]}>
+    <View style={[styles.inventoryCard, serviceDue && styles.inventoryCardAlert]}>
       {serviceDue && (
-        <LinearGradient colors={[theme.Colors.error, '#ef4444']} style={styles.alertStripe} />
+        <View style={styles.alertStripe} />
       )}
       <View style={styles.inventoryCardInner}>
         <Image source={{ uri: item.image }} style={styles.inventoryThumb} />
@@ -97,7 +95,7 @@ export function MobileInventoryCard({ item }: { item: InventoryItem }) {
           <Text style={styles.serviceAlertText}>Service overdue · {item.nextService}</Text>
         </View>
       )}
-    </BlurView>
+    </View>
   );
 }
 
@@ -147,7 +145,7 @@ export function AssignmentCard({ item }: { item: AssignmentItem }) {
   const isDraft  = item.assignmentStatus === 'Draft';
 
   return (
-    <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={[styles.assignCard, !selected && styles.assignCardMuted]}>
+    <View style={[styles.assignCard, !selected && styles.assignCardMuted]}>
       <View style={styles.assignHeader}>
         <View style={styles.assignIdentity}>
           <Image source={{ uri: item.image }} style={styles.assignThumb} />
@@ -190,7 +188,7 @@ export function AssignmentCard({ item }: { item: AssignmentItem }) {
       ) : (
         <Text style={styles.assignHint}>{"Tap to select and document this item's condition"}</Text>
       )}
-    </BlurView>
+    </View>
   );
 }
 
@@ -203,11 +201,11 @@ export function VerificationCard({ item }: { item: VerificationItem }) {
   const statusCfg = isDamaged
     ? { color: theme.Colors.error, bg: 'rgba(186,26,26,0.1)', label: 'Damaged' }
     : isReview
-    ? { color: theme.Colors.tertiary, bg: 'rgba(217,119,6,0.1)',  label: 'Under Review' }
+    ? { color: theme.Colors.tertiary || theme.Colors.secondary, bg: 'rgba(217,119,6,0.1)',  label: 'Under Review' }
     : { color: theme.Colors.primary, bg: 'rgba(5,150,105,0.1)',  label: 'Good' };
 
   return (
-    <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={styles.verifyCard}>
+    <View style={styles.verifyCard}>
       <View style={styles.verifyHeader}>
         <View style={[styles.verifyIconCircle, { backgroundColor: statusCfg.bg }]}>
           <MaterialIcons name={item.icon as any} size={20} color={statusCfg.color} />
@@ -237,19 +235,17 @@ export function VerificationCard({ item }: { item: VerificationItem }) {
       <View style={styles.photoGrid}>
         <View style={styles.photoPanel}>
           <Image source={{ uri: item.moveInPhoto }} style={styles.photoImage} />
-          <BlurView intensity={60} tint="dark" style={styles.photoTag}>
+          <View style={[styles.photoTag, { backgroundColor: 'rgba(0,0,0,0.65)' }]}>
             <Text style={styles.photoTagText}>MOVE-IN</Text>
-          </BlurView>
+          </View>
         </View>
         <View style={styles.photoPanel}>
           <Image source={{ uri: item.returnPhoto }} style={styles.photoImage} />
-          <BlurView
-            intensity={60}
-            tint={isDamaged ? 'extraLight' : 'dark'}
-            style={[styles.photoTag, isDamaged && styles.photoTagDanger]}
+          <View
+            style={[styles.photoTag, isDamaged ? styles.photoTagDanger : { backgroundColor: 'rgba(0,0,0,0.65)' }]}
           >
             <Text style={[styles.photoTagText, isDamaged && { color: theme.Colors.error }]}>RETURN</Text>
-          </BlurView>
+          </View>
         </View>
       </View>
 
@@ -267,90 +263,90 @@ export function VerificationCard({ item }: { item: VerificationItem }) {
           )}
         </View>
       )}
-    </BlurView>
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   conditionPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: theme.Spacing.xs, borderRadius: 20, alignSelf: 'flex-start' },
   conditionDot: { width: 6, height: 6, borderRadius: 3 },
-  conditionText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', fontFamily: 'Inter' },
+  conditionText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500' },
   statusPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: theme.Spacing.xs, borderRadius: 20, alignSelf: 'flex-start' },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
-  statusText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', fontFamily: 'Inter' },
+  statusText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500' },
   summaryLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: theme.Spacing.xs },
-  summaryLabel: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, flex: 1, fontFamily: 'Inter' },
-  summaryValue: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
+  summaryLabel: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, flex: 1 },
+  summaryValue: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
 
-  inventoryCard: { borderRadius: 20, borderWidth: 1.5, borderColor: theme.Colors.glassStroke, backgroundColor: theme.Colors.glassFill, overflow: 'hidden' },
-  inventoryCardAlert: { borderColor: 'rgba(186,26,26,0.25)' },
-  alertStripe: { height: 3 },
+  inventoryCard: { borderRadius: 16, borderWidth: 1, borderColor: theme.Colors.outlineVariant, backgroundColor: theme.Colors.surfaceContainerLowest, overflow: 'hidden' },
+  inventoryCardAlert: { borderColor: theme.Colors.error },
+  alertStripe: { height: 3, backgroundColor: theme.Colors.error },
   inventoryCardInner: { flexDirection: 'row', gap: 12, padding: 14 },
   inventoryThumb: { width: 76, height: 76, borderRadius: 12, backgroundColor: theme.Colors.outlineVariant },
   inventoryContent: { flex: 1, gap: theme.Spacing.xs },
   inventoryTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  inventoryCategoryPill: { flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.xs, backgroundColor: 'rgba(0,0,0,0.05)', paddingHorizontal: theme.Spacing.sm, paddingVertical: 3, borderRadius: 6 },
-  inventoryCategoryText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, fontFamily: 'Inter' },
-  inventoryName: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
-  inventoryMeta: { fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant, fontFamily: 'Inter' },
+  inventoryCategoryPill: { flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.xs, backgroundColor: theme.Colors.surfaceContainerLow, paddingHorizontal: theme.Spacing.sm, paddingVertical: 3, borderRadius: 6 },
+  inventoryCategoryText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant },
+  inventoryName: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
+  inventoryMeta: { fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant },
   inventoryFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
-  inventoryValue: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
-  serviceAlertBar: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(186,26,26,0.07)', paddingHorizontal: 14, paddingVertical: theme.Spacing.sm, borderTopWidth: 1, borderTopColor: 'rgba(186,26,26,0.12)' },
-  serviceAlertText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', color: theme.Colors.error, fontFamily: 'Inter' },
+  inventoryValue: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
+  serviceAlertBar: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: theme.Colors.surfaceContainerLow, paddingHorizontal: 14, paddingVertical: theme.Spacing.sm, borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant },
+  serviceAlertText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: theme.Colors.error },
 
-  tableRow: { flexDirection: 'row', alignItems: 'center', minHeight: 72, paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.04)' },
-  tableRowAlert: { backgroundColor: 'rgba(186,26,26,0.04)' },
+  tableRow: { flexDirection: 'row', alignItems: 'center', minHeight: 72, paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: theme.Colors.outlineVariant },
+  tableRowAlert: { backgroundColor: theme.Colors.surfaceContainerLow },
   tableCell: { flex: 1, justifyContent: 'center' },
   itemCell: { flex: 2.2, flexDirection: 'row', alignItems: 'center', gap: 12 },
   itemThumb: { width: 44, height: 44, borderRadius: 10, backgroundColor: theme.Colors.outlineVariant },
   itemTextBlock: { flex: 1 },
-  itemName: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
-  itemMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontFamily: 'Inter' },
-  categoryChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(0,0,0,0.05)', paddingHorizontal: 9, paddingVertical: theme.Spacing.xs, borderRadius: 8, alignSelf: 'flex-start' },
-  categoryChipText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, fontFamily: 'Inter' },
-  cellText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '500', fontFamily: 'Inter' },
-  valueText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
+  itemName: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
+  itemMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
+  categoryChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: theme.Colors.surfaceContainerLow, paddingHorizontal: 9, paddingVertical: theme.Spacing.xs, borderRadius: 8, alignSelf: 'flex-start' },
+  categoryChipText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant },
+  cellText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '400' },
+  valueText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
   moreBtn: { padding: 6 },
 
-  assignCard: { borderRadius: 20, borderWidth: 1.5, borderColor: theme.Colors.glassStroke, backgroundColor: theme.Colors.glassFill, overflow: 'hidden', padding: 14, gap: 12 },
+  assignCard: { borderRadius: 16, borderWidth: 1, borderColor: theme.Colors.outlineVariant, backgroundColor: theme.Colors.surfaceContainerLowest, overflow: 'hidden', padding: 14, gap: 12 },
   assignCardMuted: { opacity: 0.6 },
   assignHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   assignIdentity: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   assignThumb: { width: 56, height: 56, borderRadius: 10, backgroundColor: theme.Colors.outlineVariant },
-  assignName: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
-  assignMeta: { fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontFamily: 'Inter' },
+  assignName: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
+  assignMeta: { fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   checkbox: { width: 24, height: 24, borderRadius: 8, borderWidth: 1.5, borderColor: theme.Colors.outlineVariant, alignItems: 'center', justifyContent: 'center' },
   checkboxSelected: { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary },
   assignFields: { flexDirection: 'row', gap: 10 },
   assignField: { flex: 1, gap: 5 },
-  fieldLabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.8, textTransform: 'uppercase', fontFamily: 'Inter' },
-  fieldValue: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurface, fontFamily: 'Inter' },
-  assignFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: theme.Spacing.sm, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.06)' },
+  fieldLabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.2 },
+  fieldValue: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '500', color: theme.Colors.onSurface },
+  assignFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: theme.Spacing.sm, borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant },
   photoLink: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  photoLinkText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.primary, fontFamily: 'Inter' },
-  draftBadge: { backgroundColor: 'rgba(217,119,6,0.1)', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8 },
-  draftBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.tertiary, fontFamily: 'Inter' },
-  assignHint: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, paddingTop: theme.Spacing.xs, fontFamily: 'Inter' },
+  photoLinkText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '500', color: theme.Colors.primary },
+  draftBadge: { backgroundColor: theme.Colors.surfaceContainerLow, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8, borderWidth: 1, borderColor: theme.Colors.outlineVariant },
+  draftBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: theme.Colors.tertiary || theme.Colors.secondary },
+  assignHint: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, paddingTop: theme.Spacing.xs },
 
-  verifyCard: { borderRadius: 20, borderWidth: 1.5, borderColor: theme.Colors.glassStroke, backgroundColor: theme.Colors.glassFill, overflow: 'hidden', padding: theme.Spacing.md, gap: 14 },
+  verifyCard: { borderRadius: 16, borderWidth: 1, borderColor: theme.Colors.outlineVariant, backgroundColor: theme.Colors.surfaceContainerLowest, overflow: 'hidden', padding: theme.Spacing.md, gap: 14 },
   verifyHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   verifyIconCircle: { width: 42, height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  verifyName: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
-  verifyArea: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontFamily: 'Inter' },
+  verifyName: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
+  verifyArea: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   verifyBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  verifyBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', fontFamily: 'Inter' },
+  verifyBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500' },
   conditionCompare: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   conditionCompareItem: { gap: theme.Spacing.xs },
-  compareLabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.8, textTransform: 'uppercase', fontFamily: 'Inter' },
+  compareLabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.2 },
   photoGrid: { flexDirection: 'row', gap: 10 },
   photoPanel: { flex: 1, height: 160, borderRadius: 14, overflow: 'hidden', backgroundColor: theme.Colors.outlineVariant },
   photoImage: { width: '100%', height: '100%' },
   photoTag: { position: 'absolute', top: 8, left: 8, paddingHorizontal: theme.Spacing.sm, paddingVertical: theme.Spacing.xs, borderRadius: 6, overflow: 'hidden' },
-  photoTagDanger: { backgroundColor: 'rgba(186,26,26,0.15)' },
-  photoTagText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '900', color: theme.Colors.surfaceContainerLowest, letterSpacing: 0.8, fontFamily: 'Inter' },
-  damageRow: { flexDirection: 'row', gap: 12, backgroundColor: 'rgba(186,26,26,0.04)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(186,26,26,0.1)' },
+  photoTagDanger: { backgroundColor: theme.Colors.error },
+  photoTagText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: theme.Colors.surfaceContainerLowest, letterSpacing: 0.4 },
+  damageRow: { flexDirection: 'row', gap: 12, backgroundColor: theme.Colors.surfaceContainerLow, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: theme.Colors.outlineVariant },
   damageDesc: { flex: 1, gap: theme.Spacing.xs },
-  damageText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurface, lineHeight: 19, fontFamily: 'Inter' },
+  damageText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurface, lineHeight: 19 },
   deductionBox: { gap: theme.Spacing.xs, alignItems: 'flex-end' },
-  deductionAmount: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '900', color: theme.Colors.error, fontFamily: 'Inter' },
+  deductionAmount: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', color: theme.Colors.error },
 });

@@ -2,8 +2,6 @@ import React from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, TextInput, ActivityIndicator,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LeaseResponse } from '@/src/features/tenant/api/lease.api';
 import { UnitResponse } from '@/src/features/properties/api/unit.api';
@@ -16,7 +14,6 @@ function ModalShell({ visible, onClose, children }: { visible: boolean; onClose:
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
         {children}
       </View>
     </Modal>
@@ -38,10 +35,10 @@ function ModalFooter({
         <Text style={[styles.cancelBtnText, { color: theme.Colors.onSurface }]}>Cancel</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={onSubmit} disabled={disabled} style={styles.submitBtn}>
-        <LinearGradient colors={submitColors} style={styles.submitBtnInner}>
+        <View style={[styles.submitBtnInner, { backgroundColor: submitColors[0] || theme.Colors.primary }]}>
           <MaterialIcons name={submitIcon as any} size={18} color="#ffffff" />
           <Text style={styles.submitBtnText}>{submitLabel}</Text>
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     </View>
   );
@@ -234,7 +231,7 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
         <View style={styles.body}>
           {editingLease && (
             <View style={{ marginBottom: 14, padding: 12, backgroundColor: `${theme.Colors.primary}12`, borderRadius: 12, borderWidth: 1, borderColor: `${theme.Colors.primary}30` }}>
-              <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.primary }}>
+              <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.primary }}>
                 Unit {editingLease.unitNumber} • {editingLease.tenantName || 'Tenant'}
               </Text>
               {editingLease.tenantPhone ? <Text style={{ fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>{editingLease.tenantPhone}</Text> : null}
@@ -250,14 +247,14 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
             <Text style={[styles.cancelBtnText, { color: theme.Colors.onSurface }]}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onSubmit} disabled={isSaving} style={styles.submitBtn}>
-            <LinearGradient colors={[theme.Colors.primary, theme.Colors.secondary]} style={styles.submitBtnInner}>
+            <View style={[styles.submitBtnInner, { backgroundColor: theme.Colors.primary }]}>
               {isSaving ? <ActivityIndicator size="small" color="#ffffff" /> : (
                 <>
                   <MaterialIcons name="check" size={18} color="#ffffff" />
                   <Text style={styles.submitBtnText}>Save Terms</Text>
                 </>
               )}
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
@@ -266,27 +263,28 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  overlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
+  },
   card: {
     width: '100%',
     maxWidth: 560,
-    backgroundColor: isDark ? theme.Colors.surfaceContainer : theme.Colors.surface,
-    borderRadius: 24,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: isDark ? 0.45 : 0.18,
-    shadowRadius: 24,
-    elevation: 12,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outline,
   },
   header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: 20, paddingBottom: 12 },
-  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 },
-  title: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '900' },
+  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 0.2, marginBottom: 2 },
+  title: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '600' },
   closeBtn: { padding: theme.Spacing.xs },
   body: { paddingHorizontal: 20, paddingBottom: theme.Spacing.sm, maxHeight: 420 },
-  label: { fontSize: theme.Typography.labelMedium.fontSize, fontWeight: '700', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
+  label: { fontSize: theme.Typography.labelMedium.fontSize, fontWeight: '600', marginBottom: 6, letterSpacing: 0.2 },
   input: {
     borderWidth: 1.5,
     borderRadius: 12,
@@ -332,5 +330,5 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cancelBtnText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
   submitBtn: { flex: 2, borderRadius: 12, overflow: 'hidden' },
   submitBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.Spacing.sm, paddingVertical: 12 },
-  submitBtnText: { color: '#ffffff', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
+  submitBtnText: { color: '#ffffff', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
 });

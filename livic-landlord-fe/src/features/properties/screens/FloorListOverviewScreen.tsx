@@ -1,20 +1,13 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   View, 
   Text, 
-  StyleSheet,
-  ScrollView, 
   TouchableOpacity, 
-  ActivityIndicator,
-  RefreshControl,
-  Alert,
-  Animated,
-  TextInput
+  ActivityIndicator, 
+  RefreshControl, 
+  Alert, 
+  TextInput 
 } from 'react-native';
-
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
@@ -25,7 +18,7 @@ import { useFocusEffect } from 'expo-router';
 
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
-import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { createStyles } from './FloorListOverviewScreen.styles';
 
 const UNIT_TYPE_OPTIONS = [
@@ -51,9 +44,7 @@ export default function FloorListOverviewScreen({
 }: FloorListOverviewScreenProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-
   const { isDesktop } = useResponsive();
-  const { handleScroll } = useScrollNav();
 
   const [propertyName, setPropertyName] = useState('Loading...');
   const [floors, setFloors] = useState<FloorSummaryResponse[]>([]);
@@ -63,14 +54,6 @@ export default function FloorListOverviewScreen({
   const [quickCounts, setQuickCounts] = useState<Record<number, string>>({});
   const [quickUnitTypes, setQuickUnitTypes] = useState<Record<number, string>>({});
   const [generatingFloor, setGeneratingFloor] = useState<number | null>(null);
-  const scrollY = useRef(new Animated.Value(0)).current;
-
-  const largeTitleOpacity = scrollY.interpolate({
-    inputRange: [0, 70],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
 
   const fetchInitialData = useCallback(async () => {
     setLoading(true);
@@ -99,8 +82,8 @@ export default function FloorListOverviewScreen({
     try {
       const floorData = await getFloorSummaries(propertyId, userToken, totalFloorsFromProperty);
       setFloors([...floorData].sort((a, b) => b.floorNumber - a.floorNumber));
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      Alert.alert('Error', formatErrorMessage(error));
     } finally {
       setRefreshing(false);
     }
@@ -122,8 +105,8 @@ export default function FloorListOverviewScreen({
 
   const handleQuickGenerate = async (floorNum: number) => {
     const countStr = quickCounts[floorNum];
-    if (!countStr || parseInt(countStr, 10) < 1) {
-      Alert.alert('Validation', 'Please enter a valid number of units.');
+    if (!countStr || parseInt(countStr, 10) <= 0) {
+      Alert.alert('Error', 'Please enter a valid number of units.');
       return;
     }
 
@@ -154,13 +137,9 @@ export default function FloorListOverviewScreen({
     }
   };
 
-
-
   const renderFloorCard = (floor: FloorSummaryResponse) => (
-    <BlurView 
+    <View 
       key={floor.floorNumber} 
-      intensity={60} 
-      tint={isDark ? "dark" : "light"} 
       style={[
         styles.floorCard, 
         isDesktop && styles.floorCardDesktop
@@ -179,7 +158,7 @@ export default function FloorListOverviewScreen({
               <MaterialIcons 
                 name={floor.configured ? "check-circle" : "warning"} 
                 size={12} 
-                color={floor.configured ? theme.Colors.primary : theme.Colors.error} 
+                color={floor.configured ? theme.Colors.success : theme.Colors.error} 
               />
               <Text style={[styles.statusText, floor.configured ? styles.textConfigured : styles.textNotConfigured]}>
                 {floor.configured ? 'Configured' : 'Not Configured'}
@@ -200,25 +179,13 @@ export default function FloorListOverviewScreen({
 
       {!floor.configured && (
         <View style={styles.quickCreateSection}>
-          <Text style={styles.quickCreateTitle}>QUICK CREATE UNITS</Text>
+          <Text style={styles.quickCreateTitle}>Quick Create Units</Text>
           <View style={styles.quickCreateRow}>
             <View style={{ width: '30%' }}>
               <TextInput
-                style={[
-                  styles.quickCreateInput,
-                  {
-                    width: '100%',
-                    height: 48,
-                    flex: 0,
-                    textAlign: 'center',
-                    borderRadius: 12,
-                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                    borderColor: 'rgba(255, 255, 255, 0.8)',
-                    paddingHorizontal: 0,
-                  }
-                ]}
+                style={styles.quickCreateInput}
                 placeholder="#"
-                placeholderTextColor="#bac9cc"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
                 keyboardType="numeric"
                 maxLength={2}
                 value={quickCounts[floor.floorNumber] || ''}
@@ -252,104 +219,77 @@ export default function FloorListOverviewScreen({
           </TouchableOpacity>
         </View>
       )}
-    </BlurView>
-  );
-
-  const DesktopShell = () => (
-    <LinearGradient
-      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.container}
-    >
-        {/* Main Workspace */}
-        <View style={styles.desktopMain}>
-
-
-          <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.desktopInner}>
-              {/* Full Width Header Row */}
-              <View style={styles.desktopHeaderRow}>
-                <TouchableOpacity
-                  onPress={onBack}
-                  style={styles.backButtonBadge}
-                  activeOpacity={0.75}
-                >
-                  <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
-                </TouchableOpacity>
-
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <Text style={styles.titleLineDesktop}>Floor Overview</Text>
-                    <View style={styles.propertyBadge}>
-                      <View style={styles.propertyIconWrapper}>
-                        <MaterialIcons name="business" size={14} color={theme.Colors.surfaceContainerLowest} />
-                      </View>
-                      <Text style={styles.propertyNameLabel}>{propertyName}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.subtitleDesktop}>Manage structural floor plans and unit layouts</Text>
-                </View>
-              </View>
-
-              {loading ? (
-                <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 40 }} />
-              ) : (
-                <View style={styles.floorsGridDesktop}>
-                  {floors.map(renderFloorCard)}
-                </View>
-              )}
-            </View>
-          </ScrollView>
-        </View>
-    </LinearGradient>
+    </View>
   );
 
   if (isDesktop) {
-    return DesktopShell();
-  }
+    return (
+      <PageShell scrollable={true}>
+        <View style={styles.desktopInner}>
+          {/* Full Width Header Row */}
+          <View style={styles.desktopHeaderRow}>
+            <TouchableOpacity
+              onPress={onBack}
+              style={styles.backButtonBadge}
+              activeOpacity={0.75}
+            >
+              <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+            </TouchableOpacity>
 
-  return (
-    <LinearGradient
-      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient}
-    >
-      <SafeAreaView style={styles.safeArea} edges={[]}>
-        <Animated.ScrollView 
-          style={styles.container}
-          contentContainerStyle={[styles.scrollContent, { paddingTop: 80 }]}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.Colors.primary} />
-          }
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false, listener: handleScroll }
-          )}
-          scrollEventThrottle={16}
-        >
-          <Animated.View style={[styles.largeTitleContainer, { opacity: largeTitleOpacity }]}>
-            <Text style={styles.titleLine}>Floor Overview</Text>
-            <View style={styles.propertyBadge}>
-              <View style={styles.propertyIconWrapper}>
-                <MaterialIcons name="business" size={14} color={theme.Colors.surfaceContainerLowest} />
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Text style={styles.titleLineDesktop}>Floor Overview</Text>
+                <View style={styles.propertyBadge}>
+                  <View style={styles.propertyIconWrapper}>
+                    <MaterialIcons name="business" size={14} color={theme.Colors.surfaceContainerLowest} />
+                  </View>
+                  <Text style={styles.propertyNameLabel}>{propertyName}</Text>
+                </View>
               </View>
-              <Text style={styles.propertyNameLabel}>{propertyName}</Text>
+              <Text style={styles.subtitleDesktop}>Manage structural floor plans and unit layouts</Text>
             </View>
-          </Animated.View>
-          
+          </View>
+
           {loading ? (
             <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 40 }} />
           ) : (
-            <View style={styles.floorsList}>
+            <View style={styles.floorsGridDesktop}>
               {floors.map(renderFloorCard)}
             </View>
           )}
-        </Animated.ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+        </View>
+      </PageShell>
+    );
+  }
+
+  return (
+    <PageShell 
+      scrollable={true}
+      header={
+        <View style={styles.headerContent}>
+          <View style={styles.titleWrapper}>
+            <Text style={styles.compactTitleText}>Floor Overview</Text>
+          </View>
+        </View>
+      }
+    >
+      <View style={styles.largeTitleContainer}>
+        <Text style={styles.titleLine}>Floor Overview</Text>
+        <View style={styles.propertyBadge}>
+          <View style={styles.propertyIconWrapper}>
+            <MaterialIcons name="business" size={14} color={theme.Colors.surfaceContainerLowest} />
+          </View>
+          <Text style={styles.propertyNameLabel}>{propertyName}</Text>
+        </View>
+      </View>
+      
+      {loading ? (
+        <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 40 }} />
+      ) : (
+        <View style={styles.floorsList}>
+          {floors.map(renderFloorCard)}
+        </View>
+      )}
+    </PageShell>
   );
 }
-

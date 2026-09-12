@@ -1,9 +1,14 @@
 import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
-import { 
-  View, Text, StyleSheet, TouchableOpacity, Modal, 
-  ScrollView, Platform, Pressable, Dimensions 
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  Pressable,
+  ScrollView,
+  Dimensions,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -32,8 +37,8 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
     const [dropdownCoords, setDropdownCoords] = useState({ top: 0, left: 0, width: 0 });
     const triggerRef = useRef<any>(null);
     const { isDesktop } = useResponsive();
-    const { theme } = useAppTheme();
-    const styles = React.useMemo(() => createStyles(theme), [theme]);
+    const { theme, isDark } = useAppTheme();
+    const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
     const selectedOption = options.find(o => o.value === value);
 
@@ -106,11 +111,12 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
               ]}
             >
               <Pressable style={{ width: '100%' }}>
-                <BlurView tint="light" intensity={60} style={styles.blurContainer}>
+                <View style={styles.blurContainer}>
                   <ScrollView 
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={Platform.OS === 'web'}
+                    showsVerticalScrollIndicator={false}
+                    showsHorizontalScrollIndicator={false}
                   >
                     {options.map((option, idx) => {
                       const isSelected = option.value === value;
@@ -133,7 +139,7 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
                       );
                     })}
                   </ScrollView>
-                </BlurView>
+                </View>
               </Pressable>
             </View>
           </Pressable>
@@ -147,14 +153,14 @@ GlassDropdown.displayName = 'GlassDropdown';
 
 export default GlassDropdown;
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   dropdownTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.outlineVariant,
     borderRadius: 12,
     paddingHorizontal: theme.Spacing.md,
     paddingVertical: 12,
@@ -183,16 +189,16 @@ const createStyles = (theme: any) => StyleSheet.create({
     maxHeight: 350,
     shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.1,
     shadowRadius: 20,
-    elevation: 8,
+    elevation: 4,
   },
   blurContainer: {
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   scrollView: {
     maxHeight: 350,
@@ -209,15 +215,15 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   optionBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
+    borderBottomColor: theme.Colors.outlineVariant,
   },
   optionText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '600',
-    color: theme.Colors.onSurfaceVariant,
+    fontWeight: '700',
+    color: theme.Colors.onSurface,
   },
   optionTextSelected: {
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
 });

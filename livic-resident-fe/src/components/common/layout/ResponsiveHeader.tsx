@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 interface ResponsiveHeaderProps {
   title: string;
@@ -15,12 +16,13 @@ export function ResponsiveHeader({
   rightAction,
 }: ResponsiveHeaderProps) {
   const { theme, isDark } = useAppTheme();
+  const { isDesktop } = useResponsive();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
     <View style={styles.container}>
       <View style={styles.leftSection}>
-        {onBack && (
+        {isDesktop && onBack && (
           <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.7}>
             <MaterialIcons name="arrow-back" size={24} color={theme.Colors.primary} />
           </TouchableOpacity>

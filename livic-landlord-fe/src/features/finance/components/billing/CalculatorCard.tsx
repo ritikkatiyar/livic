@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface CalculatorCardProps {
@@ -37,7 +36,7 @@ export function CalculatorCard({
   };
 
   return (
-    <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.calculatorCard}>
+    <View style={styles.calculatorCard}>
       <Text style={styles.calculatorTitle}>INTERACTIVE PAY-AS-YOU-GO CALCULATOR</Text>
       <Text style={styles.calculatorSub}>Estimate custom SaaS billing limits tailored to your scale:</Text>
 
@@ -101,22 +100,22 @@ export function CalculatorCard({
         </Text>
         <Text style={styles.estimateDesc}>Pro Plan + Customized Out-of-Bundle AI Credit Pack</Text>
       </View>
-    </BlurView>
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   calculatorCard: {
-    borderRadius: 24,
+    borderRadius: 16,
     padding: theme.Spacing.lg,
     marginVertical: 15,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
   },
   calculatorTitle: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
     marginBottom: theme.Spacing.xs,
@@ -192,13 +191,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   estimateLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1,
   },
   estimateTotal: {
     fontSize: theme.Typography.headlineLg.fontSize,
     color: theme.Colors.onSurface,
-    fontWeight: '900',
+    fontWeight: '600',
     marginVertical: theme.Spacing.xs,
   },
   estimateCycle: {

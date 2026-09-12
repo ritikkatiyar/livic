@@ -1,7 +1,6 @@
 import React from 'react';
 import * as Haptics from 'expo-haptics';
 import { View, Text, StyleSheet, Switch, TextInput } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
@@ -28,7 +27,7 @@ export function AdvancedLogicCard({
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
-    <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+    <View style={styles.card}>
       <View style={styles.cardHeader}>
         <Ionicons name="settings-outline" size={20} color={theme.Colors.primary} />
         <Text style={styles.cardTitle}>Advanced Logic</Text>
@@ -79,17 +78,17 @@ export function AdvancedLogicCard({
         />
         <Text style={styles.percentSymbol}>%</Text>
       </View>
-    </BlurView>
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create({
   card: {
-    borderRadius: 24,
+    borderRadius: 16,
     padding: theme.Spacing.lg,
-    borderWidth: 1.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.Colors.glassStroke,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : theme.Colors.glassFill,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
     marginBottom: 20,
   },
@@ -101,7 +100,7 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
   },
   cardTitle: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   rowBetween: {
@@ -124,7 +123,7 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
   },
   badgeText: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
   },
   label: {

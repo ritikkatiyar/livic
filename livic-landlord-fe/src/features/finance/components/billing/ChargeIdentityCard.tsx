@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
@@ -31,7 +30,7 @@ export function ChargeIdentityCard({
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
-    <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+    <View style={styles.card}>
       <View style={styles.cardHeader}>
         <MaterialCommunityIcons name="file-document-outline" size={20} color={theme.Colors.primary} />
         <Text style={styles.cardTitle}>Charge Identity</Text>
@@ -99,17 +98,17 @@ export function ChargeIdentityCard({
           );
         })}
       </View>
-    </BlurView>
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create({
   card: {
-    borderRadius: 24,
+    borderRadius: 16,
     padding: theme.Spacing.lg,
-    borderWidth: 1.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.Colors.glassStroke,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : theme.Colors.glassFill,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
     marginBottom: 20,
   },
@@ -121,7 +120,7 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
   },
   cardTitle: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   label: {
@@ -183,11 +182,11 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
   },
   categoryTextActiveDark: {
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   categoryTextActiveLight: {
     color: theme.Colors.onPrimary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   segmentContainer: {
     flexDirection: 'row',
@@ -224,7 +223,7 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
   segmentTextActive: {
     color: theme.Colors.onPrimary,
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   segmentText: {
     color: theme.Colors.onSurfaceVariant,

@@ -4,11 +4,8 @@ import {
   View, Text, StyleSheet, Animated, TouchableOpacity,
   ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
@@ -108,12 +105,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
   });
 
   const renderDesktopShell = () => (
-    <LinearGradient
-      colors={theme.Colors.backgroundGradient as [string, string, ...string[]]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.desktopShell}
-    >
+    <View style={styles.desktopShell}>
       <View style={styles.desktopMain}>
 
         <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
@@ -135,33 +127,26 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
 
               {/* Action Save Button */}
               <TouchableOpacity 
-                style={[styles.desktopSaveButtonWrapper, (isSaving || worksheet.length === 0) && { opacity: 0.5 }]} 
+                style={[styles.desktopSaveButton, (isSaving || worksheet.length === 0) && { opacity: 0.5 }]} 
                 onPress={handleSave}
                 disabled={isSaving || worksheet.length === 0}
                 activeOpacity={0.85}
               >
-                <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.desktopSaveButton}
-                >
-                  {isSaving ? (
-                    <ActivityIndicator color={theme.Colors.surfaceContainerLowest} size="small" />
-                  ) : (
-                    <>
-                      <Text style={styles.desktopSaveButtonText}>SAVE READINGS</Text>
-                      <MaterialIcons name="check" size={18} color={theme.Colors.surfaceContainerLowest} />
-                    </>
-                  )}
-                </LinearGradient>
+                {isSaving ? (
+                  <ActivityIndicator color={theme.Colors.surfaceContainerLowest} size="small" />
+                ) : (
+                  <>
+                    <Text style={styles.desktopSaveButtonText}>SAVE READINGS</Text>
+                    <MaterialIcons name="check" size={18} color={theme.Colors.surfaceContainerLowest} />
+                  </>
+                )}
               </TouchableOpacity>
             </View>
 
             {/* Filter Section Row */}
             <View style={styles.desktopFilterRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.filterLabelCaps}>UTILITY CONFIGURATION</Text>
+                <Text style={styles.filterLabelCaps}>Utility Configuration</Text>
                 <GlassDropdown 
                   options={configs.map(c => ({ label: c.chargeName, value: c.id }))}
                   value={selectedConfigId}
@@ -172,7 +157,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
               </View>
               
               <View style={{ width: 300 }}>
-                <Text style={styles.filterLabelCaps}>BILLING PERIOD</Text>
+                <Text style={styles.filterLabelCaps}>Billing Period</Text>
                 <View style={styles.desktopMonthSelector}>
                   <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.monthBtn}>
                     <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
@@ -198,10 +183,10 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
             ) : isLoading ? (
               <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />
             ) : worksheet.length === 0 ? (
-              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
+              <View style={styles.emptyStateCard}>
                 <MaterialIcons name="receipt-long" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
                 <Text style={styles.emptyText}>No metered units found for this configuration.</Text>
-              </BlurView>
+              </View>
             ) : (
               <View style={styles.desktopGrid}>
                 {/* Left Column: Floor Cards */}
@@ -300,18 +285,11 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
           </View>
         </ScrollView>
       </View>
-    </LinearGradient>
+    </View>
   );
 
   const renderMobileShell = () => (
-    <LinearGradient
-      colors={theme.Colors.backgroundGradient as [string, string, ...string[]]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient}
-    >
-      <SafeAreaView style={styles.safeArea} edges={[]}>
-
+    <View style={styles.gradient}>
         {/* Filters */}
         <View style={[styles.filterSection, { paddingTop: 64 }]}>
           <GlassDropdown 
@@ -340,24 +318,24 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
           keyboardShouldPersistTaps="handled"
         >
           {(!properties || properties.length === 0) ? (
-            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginTop: 40, width: '100%' }}>
-              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ padding: 32, borderRadius: 16, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginTop: 40, width: '100%', backgroundColor: theme.Colors.surfaceContainerLowest, borderWidth: 1, borderColor: theme.Colors.outline }}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: theme.Colors.surfaceContainerHigh, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
                 <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
               </View>
-              <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
+              <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
               <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
                 Logging meter readings requires an active property. Create your first property to start inputting meter logs.
               </Text>
               <TouchableOpacity 
-                style={{ borderRadius: 100, overflow: 'hidden' }}
+                style={{ borderRadius: 10 }}
                 onPress={() => router.push('/properties/create')}
               >
-                <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8, backgroundColor: theme.Colors.primary, borderRadius: 10 }}>
                   <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
-                  <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
-                </LinearGradient>
+                  <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
+                </View>
               </TouchableOpacity>
-            </BlurView>
+            </View>
           ) : isLoading ? (
             <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 50 }} />
           ) : worksheet.length === 0 ? (
@@ -418,19 +396,13 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
 
         {/* Floating Save Button */}
         <View style={styles.floatingSaveBar}>
-          <BlurView intensity={55} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
           <TouchableOpacity
             style={[styles.floatingSaveBtn, (isSaving || worksheet.length === 0) && { opacity: 0.5 }]}
             onPress={handleSave}
             disabled={isSaving || worksheet.length === 0}
             activeOpacity={0.85}
           >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.floatingSaveBtnInner}
-            >
+            <View style={styles.floatingSaveBtnInner}>
               {isSaving ? (
                 <ActivityIndicator color={theme.Colors.surfaceContainerLowest} size="small" />
               ) : (
@@ -439,15 +411,14 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                   <Text style={styles.floatingSaveText}>SAVE READINGS</Text>
                 </>
               )}
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 
   return (
-    <PageShell scrollable keyboardAvoiding edges={isDesktop ? ['top'] : []}>
+    <PageShell scrollable={false} keyboardAvoiding edges={isDesktop ? ['top'] : []}>
       {isDesktop ? renderDesktopShell() : renderMobileShell()}
     </PageShell>
   );

@@ -9,9 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { EmptyState } from '@/src/components/common/display/EmptyState';
@@ -71,20 +69,23 @@ export default function OwnerLeasesScreen() {
   } = data;
 
   const STAT_COLORS = React.useMemo(() => [
-    theme.Colors.primary, theme.Colors.error, theme.Colors.secondary, theme.Colors.primary,
+    theme.Colors.primary, theme.Colors.error, theme.Colors.secondary, theme.Colors.tertiary,
   ], [theme]);
 
-  const totalRentRoll = filteredLeases.reduce((sum, l) => sum + (Number(l.monthlyRentAmount) || 0), 0);
   const noticeCount = filteredLeases.filter((l) => Boolean(l.moveOutDate)).length;
   const pendingBookingsCount = filteredBookings.filter((b) => b.status === 'BOOKED').length;
   const activeLeasesDisplayCount = totalLeasesElements > 0 ? totalLeasesElements : filteredLeases.length;
   const currentPropertyName = properties.find(p => p.id === selectedPropertyId)?.name || 'All Properties';
 
+  const totalUnitsInScope = properties.filter(p => !selectedPropertyId || p.id === selectedPropertyId).reduce((acc, p) => acc + (p.totalUnits || 0), 0);
+  const occupiedUnitsInScope = properties.filter(p => !selectedPropertyId || p.id === selectedPropertyId).reduce((acc, p) => acc + (p.occupiedUnits || 0), 0);
+  const availableUnitsCount = Math.max(0, totalUnitsInScope - occupiedUnitsInScope);
+
   const stats = [
-    { label: 'Active Leases', value: String(activeLeasesDisplayCount), helper: `${properties.find(p => p.id === selectedPropertyId)?.name || 'Property'} units`, icon: 'vpn-key' as const },
-    { label: 'Notices Served', value: String(noticeCount).padStart(2, '0'), helper: 'Vacating soon', icon: 'warning-amber' as const },
+    { label: 'Active Leases', value: String(activeLeasesDisplayCount), helper: 'Occupied tenancies', icon: 'vpn-key' as const },
+    { label: 'Notices Served', value: String(noticeCount).padStart(2, '0'), helper: 'Vacating soon', icon: 'door-sliding' as const },
     { label: 'Pending Bookings', value: String(pendingBookingsCount).padStart(2, '0'), helper: 'Tokens received', icon: 'bookmark' as const },
-    { label: 'Monthly Rent Roll', value: formatCompactCurrency(totalRentRoll), helper: 'Contracted revenue', icon: 'calculate' as const },
+    { label: 'Available Units', value: String(availableUnitsCount).padStart(2, '0'), helper: 'Ready to market', icon: 'meeting-room' as const },
   ];
   const TABS = [
     { id: 'leases' as const, label: 'Active Leases', icon: 'description' as const, count: activeLeasesDisplayCount },
@@ -289,7 +290,7 @@ function LeasesTab({
         const hasNotice = Boolean(l.moveOutDate);
         return (
           <GlassCard key={l.id} style={[styles.leaseCard, hasNotice && styles.leaseCardAlert]}>
-            {/* Header Row: Tenant identity on left, Unit & Status Badges on right */}
+            {/* Header Row: Tenant identity on left, Status Badge on right */}
             <View style={styles.cardHeader}>
               <View style={styles.headerLeft}>
                 <View style={styles.tenantAvatarCircle}>
@@ -302,13 +303,17 @@ function LeasesTab({
               </View>
 
               <View style={styles.headerRight}>
-                <View style={styles.unitBadge}>
-                  <MaterialIcons name="meeting-room" size={13} color={theme.Colors.primary} />
-                  <Text style={styles.unitBadgeText}>
-                    {l.propertyName ? `${l.propertyName} · ` : ''}Unit {l.unitNumber || '—'}
-                  </Text>
-                </View>
                 <StatusPill status={hasNotice ? 'ENDING_SOON' : l.status || 'ACTIVE'} />
+              </View>
+            </View>
+
+            {/* Sub-row: Unit & Property Scope Badge */}
+            <View style={styles.propertyUnitRow}>
+              <View style={styles.unitBadge}>
+                <MaterialIcons name="meeting-room" size={13} color={theme.Colors.primary} />
+                <Text style={styles.unitBadgeText} numberOfLines={1}>
+                  {l.propertyName ? `${l.propertyName} · ` : ''}Unit {l.unitNumber || '—'}
+                </Text>
               </View>
             </View>
 
@@ -339,7 +344,7 @@ function LeasesTab({
               {l.moveOutDate && (
                 <View style={[styles.detailItem, { borderColor: 'rgba(239, 68, 68, 0.25)' }]}>
                   <Text style={[styles.detailLabel, { color: theme.Colors.error }]}>EXPECTED VACATE</Text>
-                  <Text style={[styles.detailValueSecondary, { color: theme.Colors.error, fontWeight: '800' }]}>{l.moveOutDate}</Text>
+                  <Text style={[styles.detailValueSecondary, { color: theme.Colors.error, fontWeight: '600' }]}>{l.moveOutDate}</Text>
                 </View>
               )}
             </View>
@@ -461,11 +466,14 @@ function BookingsTab({ filteredBookings, isDark, isDesktop, styles, theme, onCas
             </View>
 
             <View style={styles.headerRight}>
-              <View style={styles.unitBadge}>
-                <MaterialIcons name="meeting-room" size={13} color={theme.Colors.primary} />
-                <Text style={styles.unitBadgeText}>Unit {b.unitNumber || '—'}</Text>
-              </View>
               <StatusPill status={b.status} />
+            </View>
+          </View>
+
+          <View style={styles.propertyUnitRow}>
+            <View style={styles.unitBadge}>
+              <MaterialIcons name="meeting-room" size={13} color={theme.Colors.primary} />
+              <Text style={styles.unitBadgeText} numberOfLines={1}>Unit {b.unitNumber || '—'}</Text>
             </View>
           </View>
 

@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, usePathname, Href, useLocalSearchParams } from 'expo-router';
 import Animated, { useAnimatedStyle, withSpring, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -64,7 +62,6 @@ export default function SidebarNavigation() {
 
   return (
     <Animated.View style={[styles.sidebar, animatedStyles]}>
-      <BlurView intensity={75} tint={isDark ? "dark" : "light"} style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(11, 17, 24, 0.92)' : theme.Colors.glassFill }]} />
       <View style={[styles.sidebarHeader, isCollapsed && styles.sidebarHeaderCollapsed]}>
         {!isCollapsed ? (
           <View style={styles.sidebarBrand}>
@@ -83,7 +80,7 @@ export default function SidebarNavigation() {
       </View>
 
       <ScrollView style={styles.sidebarNavScroll} contentContainerStyle={styles.sidebarNav} showsVerticalScrollIndicator={false}>
-        {renderSidebarLink('dashboard', 'Overview', '/analytics')}
+        {renderSidebarLink('dashboard', 'Analytics', '/analytics')}
         {renderSidebarLink('business', 'Portfolio', '/command-center')}
         {renderSidebarLink('assessment', 'Reports', '/reports')}
         {renderSidebarLink('groups', 'AI Desk', '/ai')}
@@ -98,15 +95,15 @@ export default function SidebarNavigation() {
       <View style={[styles.sidebarFooter, isCollapsed && styles.sidebarFooterCollapsed]}>
         {!isCollapsed ? (
           <TouchableOpacity style={styles.upgradeButton} onPress={() => router.push('/billing')} activeOpacity={0.85}>
-            <LinearGradient colors={[theme.Colors.primary, theme.Colors.secondaryContainer]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.upgradeGradient}>
+            <View style={[styles.upgradeGradient, { backgroundColor: theme.Colors.primary }]}>
               <Text style={styles.upgradeText}>UPGRADE PLAN</Text>
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.upgradeButtonCollapsed} onPress={() => router.push('/billing')} activeOpacity={0.85}>
-            <LinearGradient colors={[theme.Colors.primary, theme.Colors.secondaryContainer]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.upgradeGradientCollapsed}>
+            <View style={[styles.upgradeGradientCollapsed, { backgroundColor: theme.Colors.primary }]}>
               <MaterialIcons name="bolt" size={24} color={theme.Colors.surfaceContainerLowest} />
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
         )}
         <TouchableOpacity style={[styles.sidebarLink, isCollapsed && styles.sidebarLinkCollapsed]} onPress={async () => {
@@ -127,36 +124,38 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingTop: theme.Spacing.xl,
     paddingBottom: theme.Spacing.lg,
     borderRightWidth: 1,
-    borderRightColor: theme.Surface.border,
+    borderRightColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
   },
   sidebarHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 54,
+    marginBottom: 48,
   },
   sidebarHeaderCollapsed: {
     flexDirection: 'column',
     alignItems: 'center',
     gap: 20,
+    marginBottom: 20,
   },
   sidebarBrand: { flex: 1 },
   sidebarBrandCollapsed: { alignItems: 'center' },
-  sidebarBrandTitleCollapsed: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
+  sidebarBrandTitleCollapsed: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '600', color: theme.Colors.primary },
   collapseButton: {
     padding: theme.Spacing.xs,
     borderRadius: 8,
     backgroundColor: theme.Colors.surfaceContainerLow,
   },
-  sidebarBrandTitle: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '800', lineHeight: 34, color: theme.Colors.primary },
+  sidebarBrandTitle: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '600', lineHeight: 34, color: theme.Colors.primary },
   sidebarBrandSub: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', letterSpacing: 2, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
   sidebarNavScroll: { flex: 1, marginBottom: theme.Spacing.md },
   sidebarNav: { gap: 14, paddingBottom: theme.Spacing.md },
   sidebarLink: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.md, paddingHorizontal: 18, borderRadius: theme.Rounded.lg },
   sidebarLinkCollapsed: { justifyContent: 'center', paddingHorizontal: 0 },
   sidebarLinkActive: {
-    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.16)' : 'rgba(0, 104, 117, 0.10)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderRightWidth: 4,
     borderRightColor: theme.Colors.primary,
   },
@@ -168,13 +167,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarLinkTextActive: {
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   sidebarFooter: { marginTop: 'auto', borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant, paddingTop: 28, gap: 10 },
   sidebarFooterCollapsed: { alignItems: 'center' },
-  upgradeButton: { borderRadius: theme.Rounded.lg, overflow: 'hidden', marginBottom: 14, shadowColor: theme.Colors.secondary, shadowOpacity: 0.24, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } },
-  upgradeButtonCollapsed: { borderRadius: 24, overflow: 'hidden', marginBottom: 14, shadowColor: theme.Colors.secondary, shadowOpacity: 0.24, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, width: 48, height: 48 },
+  upgradeButton: { borderRadius: theme.Rounded.lg, overflow: 'hidden', marginBottom: 14 },
+  upgradeButtonCollapsed: { borderRadius: 24, overflow: 'hidden', marginBottom: 14, width: 48, height: 48 },
   upgradeGradient: { paddingVertical: theme.Spacing.md, alignItems: 'center' },
   upgradeGradientCollapsed: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  upgradeText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
+  upgradeText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
 });

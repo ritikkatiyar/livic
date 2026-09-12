@@ -1,8 +1,6 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const UNIT_TYPE_OPTIONS = [
@@ -79,13 +77,8 @@ export function TypeSelectionModal({
       onRequestClose={handleDiscard}
     >
       <View style={styles.modalOverlay}>
-        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFillObject} />
-        <LinearGradient
-          colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.typeModalContent}
-        >
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0,0,0,0.5)' }]} />
+        <View style={styles.typeModalContent}>
           <Text style={styles.typeModalTitle}>Configure New Unit</Text>
           <Text style={styles.typeModalSubtitle}>Select type for Unit {pendingBlockNum}</Text>
           
@@ -122,7 +115,7 @@ export function TypeSelectionModal({
           >
             <Text style={[styles.typeCancelText, { color: theme.Colors.error }]}>Discard Unit</Text>
           </TouchableOpacity>
-        </LinearGradient>
+        </View>
       </View>
     </Modal>
   );
@@ -139,30 +132,28 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     backgroundColor: theme.Colors.surfaceContainerLowest,
-    borderRadius: 32,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: theme.Rounded.xl,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
     padding: theme.Spacing.lg,
     shadowColor: 'black',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
     alignItems: 'center',
   },
   typeModalTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginBottom: theme.Spacing.xs,
-    fontFamily: 'Inter',
   },
   typeModalSubtitle: {
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
     marginBottom: 20,
-    fontFamily: 'Inter',
   },
   typeGrid: {
     width: '100%',
@@ -174,10 +165,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   typeCard: {
     width: '47%',
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.1)',
-    borderRadius: 20,
+    borderColor: theme.Colors.outline,
+    borderRadius: theme.Rounded.lg,
     padding: 14,
     alignItems: 'center',
   },
@@ -192,17 +183,15 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   typeCardLabel: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
     color: theme.Colors.primary,
     marginBottom: 2,
-    fontFamily: 'Inter',
     textAlign: 'center',
   },
   typeCardDesc: {
     fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
-    fontFamily: 'Inter',
     textAlign: 'center',
   },
   typeCancelButton: {
@@ -214,7 +203,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   typeCancelText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '900',
-    fontFamily: 'Inter',
+    fontWeight: '600',
   },
 });

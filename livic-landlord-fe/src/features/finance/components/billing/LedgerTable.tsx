@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -39,14 +37,16 @@ export function LedgerTable({
 
   const getTransactionTypeColor = (type: string) => {
     switch (type) {
-      case 'PAYMENT_RECEIVED':
-        return { text: theme.Colors.primary, bg: '#d1fae5' };
-      case 'INVOICE_GENERATED':
-        return { text: '#2563eb', bg: '#dbeafe' };
-      case 'LATE_FEE_APPLIED':
-        return { text: theme.Colors.error, bg: '#fee2e2' };
-      case 'REFUND':
-        return { text: '#d97706', bg: '#fef3c7' };
+      case 'RENT_CHARGE':
+      case 'CHARGE':
+        return { text: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)' };
+      case 'PAYMENT':
+        return { text: '#10b981', bg: 'rgba(16, 185, 129, 0.12)' };
+      case 'SECURITY_DEPOSIT':
+      case 'DEPOSIT':
+        return { text: '#3b82f6', bg: 'rgba(59, 130, 246, 0.12)' };
+      case 'LATE_FEE':
+        return { text: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)' };
       case 'ADJUSTMENT':
       default:
         return { text: '#4b5563', bg: '#f3f4f6' };
@@ -59,7 +59,7 @@ export function LedgerTable({
 
   if (!properties || properties.length === 0) {
     return (
-      <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCardCentered}>
+      <View style={styles.emptyCardCentered}>
         <View style={styles.emptyIconCircle}>
           <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
         </View>
@@ -68,15 +68,15 @@ export function LedgerTable({
           Viewing financial ledgers requires an active property. Create your first property to start logging transactions.
         </Text>
         <TouchableOpacity 
-          style={{ borderRadius: 100, overflow: 'hidden' }}
+          style={{ borderRadius: 10, overflow: 'hidden' }}
           onPress={() => router.push('/properties/create')}
         >
-          <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.createBtnGradient}>
+          <View style={styles.createBtnGradient}>
             <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
             <Text style={styles.createBtnText}>CREATE FIRST PROPERTY</Text>
-          </LinearGradient>
+          </View>
         </TouchableOpacity>
-      </BlurView>
+      </View>
     );
   }
 
@@ -86,17 +86,17 @@ export function LedgerTable({
 
   if (ledger.length === 0) {
     return (
-      <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
+      <View style={styles.emptyCard}>
         <MaterialIcons name="account-balance" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 12 }} />
         <Text style={styles.emptyCardTitle}>No transaction logs found.</Text>
         <Text style={styles.emptyCardSubtitle}>Transactions appear here once rent cycles are generated or payments are made.</Text>
-      </BlurView>
+      </View>
     );
   }
 
   if (isDesktop) {
     return (
-      <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.desktopTableCard}>
+      <View style={styles.desktopTableCard}>
         <View style={styles.tableHeader}>
           <Text style={[styles.th, { flex: 1.5 }]}>DATE</Text>
           <Text style={[styles.th, { flex: 1 }]}>UNIT</Text>
@@ -130,7 +130,7 @@ export function LedgerTable({
                 { 
                   flex: 1.2, 
                   textAlign: 'right', 
-                  fontWeight: '800',
+                  fontWeight: '600',
                   color: isPayment ? theme.Colors.primary : theme.Colors.error
                 }
               ]}>
@@ -150,7 +150,7 @@ export function LedgerTable({
             </View>
           );
         })}
-      </BlurView>
+      </View>
     );
   }
 
@@ -160,7 +160,7 @@ export function LedgerTable({
         const colors = getTransactionTypeColor(item.transactionType);
         const isPayment = item.amount < 0;
         return (
-          <BlurView key={item.id} intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.mobileCard}>
+          <View key={item.id} style={styles.mobileCard}>
             <View style={styles.cardHeaderRow}>
               <Text style={styles.cardUnitText}>{item.unitName}</Text>
               <View style={{ alignItems: 'flex-end' }}>
@@ -188,7 +188,7 @@ export function LedgerTable({
             </View>
 
             <Text style={styles.cardDescText}>{item.description}</Text>
-          </BlurView>
+          </View>
         );
       })}
     </View>
@@ -198,28 +198,28 @@ export function LedgerTable({
 const createStyles = (theme: any) => StyleSheet.create({
   emptyCardCentered: {
     padding: theme.Spacing.xl,
-    borderRadius: 24,
+    borderRadius: 16,
     alignItems: 'center',
     maxWidth: 500,
     alignSelf: 'center',
     marginTop: 40,
     width: '100%',
-    backgroundColor: theme.Colors.glassFill,
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
   },
   emptyIconCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(0, 104, 117, 0.1)',
+    backgroundColor: theme.Colors.surfaceContainerHigh,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.Spacing.md,
   },
   emptyTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginBottom: theme.Spacing.sm,
     textAlign: 'center',
@@ -237,26 +237,28 @@ const createStyles = (theme: any) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.lg,
     paddingVertical: 14,
     gap: theme.Spacing.sm,
+    backgroundColor: theme.Colors.primary,
+    borderRadius: 10,
   },
   createBtnText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1,
   },
   emptyCard: {
-    borderRadius: 24,
+    borderRadius: 16,
     padding: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     marginTop: 20,
   },
   emptyCardTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginBottom: 6,
   },
@@ -268,24 +270,24 @@ const createStyles = (theme: any) => StyleSheet.create({
     lineHeight: 20,
   },
   desktopTableCard: {
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     marginTop: theme.Spacing.lg,
   },
   tableHeader: {
     flexDirection: 'row',
     paddingHorizontal: theme.Spacing.lg,
     paddingVertical: 18,
-    borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(0, 104, 117, 0.1)',
-    backgroundColor: 'rgba(0, 104, 117, 0.03)',
+    borderBottomWidth: 1,
+    borderBottomColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
   th: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
     letterSpacing: 1,
   },
@@ -295,7 +297,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.lg,
     paddingVertical: theme.Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 104, 117, 0.05)',
+    borderBottomColor: theme.Colors.outlineVariant || theme.Colors.outline,
   },
   td: {
     fontSize: theme.Typography.bodyMedium.fontSize,
@@ -309,19 +311,19 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   pillText: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
-    textTransform: 'uppercase',
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   listContainer: {
     gap: theme.Spacing.md,
     marginTop: theme.Spacing.md,
   },
   mobileCard: {
-    borderRadius: 20,
+    borderRadius: 16,
     padding: theme.Spacing.md,
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
   },
   cardHeaderRow: {
@@ -331,12 +333,12 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   cardUnitText: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   cardAmountText: {
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
   },
   cardDetailRow: {
     flexDirection: 'row',

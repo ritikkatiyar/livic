@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
@@ -16,11 +14,8 @@ export function WalletCard({ currentPlan, remainingCredits, loading = false }: W
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
-    <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.walletStatusCard}>
-      <LinearGradient
-        colors={['rgba(0, 224, 255, 0.12)', 'rgba(0, 112, 234, 0.06)']}
-        style={styles.walletStatusGradient}
-      >
+    <View style={styles.walletStatusCard}>
+      <View style={styles.walletStatusGradient}>
         <View style={styles.walletHeader}>
           <View>
             <Text style={styles.walletLabel}>ACTIVE SUBSCRIPTION TIER</Text>
@@ -50,19 +45,19 @@ export function WalletCard({ currentPlan, remainingCredits, loading = false }: W
           </View>
           <Ionicons name="wallet-outline" size={32} color={theme.Colors.primary} />
         </View>
-      </LinearGradient>
-    </BlurView>
+      </View>
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   walletStatusCard: {
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
     marginVertical: 15,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   walletStatusGradient: {
     padding: 20,
@@ -82,20 +77,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   walletValue: {
     color: theme.Colors.onSurface,
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   badgeContainer: {
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
-    backgroundColor: 'rgba(0, 104, 119, 0.12)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 119, 0.24)',
+    borderColor: theme.Colors.outlineVariant,
   },
   activeBadge: {
     color: theme.Colors.primary,
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   divider: {
     height: 1,
@@ -110,7 +105,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   creditValue: {
     color: theme.Colors.onSurface,
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   creditUnit: {
     fontSize: theme.Typography.bodyMedium.fontSize,

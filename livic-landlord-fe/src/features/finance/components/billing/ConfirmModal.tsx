@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface ConfirmModalProps {
@@ -25,7 +23,6 @@ export function ConfirmModal({
   return (
     <Modal visible={visible} animationType="fade" transparent={true}>
       <View style={styles.modalOverlay}>
-        <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
         <View style={styles.modalPopup}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
@@ -35,14 +32,9 @@ export function ConfirmModal({
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.confirmBtnWrapper} onPress={onConfirm}>
-              <LinearGradient
-                colors={['#ff416c', '#ff4b2b']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.confirmBtn}
-              >
+              <View style={styles.confirmBtn}>
                 <Text style={styles.confirmBtnText}>Confirm</Text>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -56,19 +48,20 @@ const createStyles = (theme: any) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
   },
   modalPopup: {
     width: 400,
     maxWidth: '90%',
     padding: theme.Spacing.lg,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
     backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   title: {
     fontSize: theme.Typography.bodyLg.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginBottom: 12,
   },
@@ -85,34 +78,36 @@ const createStyles = (theme: any) => StyleSheet.create({
     gap: 12,
   },
   cancelBtn: {
+    minHeight: 44,
     paddingVertical: 10,
     paddingHorizontal: theme.Spacing.md,
-    borderRadius: 100,
-    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    borderRadius: 22,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cancelBtnText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
   confirmBtnWrapper: {
-    borderRadius: 100,
+    borderRadius: 22,
     overflow: 'hidden',
-    shadowColor: theme.Colors.error,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 2,
   },
   confirmBtn: {
+    minHeight: 44,
     paddingVertical: 10,
     paddingHorizontal: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: theme.Colors.error,
   },
   confirmBtnText: {
-    color: theme.Colors.onPrimary,
+    color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
 });

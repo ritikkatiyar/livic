@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
@@ -30,9 +29,7 @@ export function PlanCard({
   const price = isAnnual ? (plan.priceYearly ? plan.priceYearly / 12 : plan.priceMonthly * 0.8) : plan.priceMonthly;
 
   return (
-    <BlurView
-      intensity={60}
-      tint={isDark ? 'dark' : 'light'}
+    <View
       style={[
         styles.planCard,
         plan.planKey === 'PREMIUM' && styles.planCardPro,
@@ -86,27 +83,29 @@ export function PlanCard({
         onPress={() => onSubscribe(plan.planKey, plan.priceMonthly)}
         style={{ marginTop: 16, borderRadius: 100 }}
       />
-    </BlurView>
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   planCard: {
-    borderRadius: 24,
+    borderRadius: 16,
     padding: theme.Spacing.lg,
     marginVertical: 10,
-    backgroundColor: theme.Colors.glassFill,
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
     width: '100%',
     position: 'relative',
     overflow: 'hidden',
   },
   planCardPro: {
     borderColor: theme.Colors.primary,
+    borderWidth: 2,
   },
   planCardActive: {
-    borderColor: theme.Colors.primaryContainer,
+    borderColor: theme.Colors.primary,
+    borderWidth: 2,
   },
   currentPlanRibbon: {
     position: 'absolute',
@@ -121,7 +120,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   ribbonText: {
     color: theme.Colors.onPrimary,
     fontSize: theme.Typography.labelSmall.fontSize - 1,
-    fontWeight: '900',
+    fontWeight: '600',
     letterSpacing: 1,
   },
   proHeaderRow: {
@@ -132,7 +131,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   planTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   popularBadge: {
@@ -144,7 +143,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   popularText: {
     color: theme.Colors.onPrimary,
     fontSize: theme.Typography.labelSmall.fontSize - 2,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   priceContainer: {
     flexDirection: 'row',
@@ -153,7 +152,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   priceDollar: {
     fontSize: theme.Typography.headlineMd.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   priceMonth: {

@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -42,7 +41,7 @@ export function RecordCashModal({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <BlurView intensity={90} tint="dark" style={styles.modalBlur}>
+        <View style={styles.modalBlur}>
           <View style={styles.modalContent}>
             {!receiptSuccess ? (
               <>
@@ -123,7 +122,7 @@ export function RecordCashModal({
               </View>
             )}
           </View>
-        </BlurView>
+        </View>
       </View>
     </Modal>
   );
@@ -134,6 +133,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
   },
   modalBlur: {
     ...StyleSheet.absoluteFillObject,
@@ -144,9 +144,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: '90%',
     maxWidth: 480,
     backgroundColor: theme.Colors.surfaceContainerLowest,
-    borderRadius: 24,
+    borderRadius: 16,
     padding: theme.Spacing.lg,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
   },
   modalHeader: {
@@ -157,7 +157,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   modalTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   modalSubtitle: {
@@ -171,10 +171,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   inputLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '700',
-    color: theme.Colors.primary,
+    fontWeight: '600',
+    color: theme.Colors.onSurfaceVariant,
     marginBottom: 6,
-    textTransform: 'uppercase',
+    letterSpacing: 0.2,
   },
   textInput: {
     height: 48,
@@ -201,7 +201,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   successTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginBottom: theme.Spacing.sm,
   },
@@ -249,6 +249,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   metaValue: {
     fontSize: theme.Typography.bodyLarge.fontSize,
     color: theme.Colors.onSurface,
-    fontWeight: '800',
+    fontWeight: '600',
   },
 });

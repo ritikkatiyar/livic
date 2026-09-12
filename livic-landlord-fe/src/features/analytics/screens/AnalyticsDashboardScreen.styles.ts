@@ -6,14 +6,19 @@ export const createStyles = (theme: any, isDark: boolean, isDesktop: boolean) =>
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+      padding: 30,
     },
     scrollContent: {
-      gap: 20,
+      gap: 24,
+      paddingHorizontal: 16,
+      paddingVertical: 20,
     },
     scrollContentDesktop: {
-      paddingTop: 24,
-      paddingHorizontal: 32,
-      paddingBottom: 40,
+      paddingTop: 28,
+      paddingHorizontal: 36,
+      paddingBottom: 48,
+      maxWidth: 1400,
+      alignSelf: 'center',
       width: '100%',
     },
     headerContainer: {
@@ -21,234 +26,169 @@ export const createStyles = (theme: any, isDark: boolean, isDesktop: boolean) =>
       justifyContent: 'space-between',
       alignItems: 'center',
       flexWrap: 'wrap',
-      gap: 10,
+      gap: 14,
     },
-    mobileTitle: {
-      ...theme.Typography.titleLarge,
-      color: theme.Colors.onBackground,
+    titleBlock: {
+      flex: 1,
+      minWidth: 260,
     },
-    demoBadge: {
+    screenTitle: {
+      fontSize: isDesktop ? 28 : 22,
+      fontWeight: '600',
+      color: theme.Colors.onSurface,
+      letterSpacing: -0.5,
+    },
+    screenSubtitle: {
+      fontSize: isDesktop ? 14 : 12,
+      color: theme.Colors.onSurfaceVariant,
+      marginTop: 4,
+    },
+    exportBtn: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
-      backgroundColor: 'rgba(91, 94, 207, 0.15)',
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 8,
+      gap: 8,
+      minHeight: 44,
+      paddingHorizontal: 18,
+      borderRadius: 22,
+      backgroundColor: theme.Colors.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: 'rgba(91, 94, 207, 0.3)',
+      borderColor: theme.Colors.outlineVariant,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
     },
-    demoBadgeText: {
-      fontSize: 10,
-      fontWeight: '800',
-      color: theme.Colors.secondary,
-      letterSpacing: 0.5,
+    exportBtnText: {
+      fontSize: theme.Typography.bodySmall.fontSize,
+      fontWeight: '600',
+      color: theme.Colors.onSurface,
+      letterSpacing: 0.2,
     },
     kpiGrid: {
       flexDirection: 'row',
-      gap: isDesktop ? 16 : 8,
+      flexWrap: 'wrap',
+      gap: 12,
+      width: '100%',
     },
-    kpiCard: {
-      flex: 1,
-      backgroundColor: theme.Colors.glassFill,
-      borderRadius: 16,
-      padding: isDesktop ? 20 : 12,
-      borderWidth: 1,
-      borderColor: theme.Colors.glassStroke,
-    },
-    kpiLabel: {
-      fontSize: isDesktop ? 10 : 9,
-      fontWeight: '800',
-      color: theme.Colors.onSurfaceVariant,
-      letterSpacing: 0.5,
-      marginBottom: 4,
-    },
-    kpiValue: {
-      fontSize: isDesktop ? theme.Typography.headlineSmall.fontSize : 16,
-      fontWeight: '900',
-      color: theme.Colors.onSurface,
-      marginBottom: 2,
-    },
-    kpiSub: {
-      fontSize: isDesktop ? theme.Typography.bodySmall.fontSize : 10,
-      color: theme.Colors.onSurfaceVariant,
-    },
-    sectionRow: {
-      flexDirection: 'column',
+    twoColumnSection: {
+      flexDirection: isDesktop ? 'row' : 'column',
       gap: 20,
-    },
-    sectionRowDesktop: {
-      flexDirection: 'row',
+      width: '100%',
       alignItems: 'stretch',
     },
-    mainColumn: {
-      flex: isDesktop ? 1.2 : undefined,
-      gap: isDesktop ? 20 : 16,
+    trajectoryCol: {
+      flex: isDesktop ? 1.65 : 1,
     },
-    sideColumn: {
-      flex: isDesktop ? 1 : undefined,
-      gap: isDesktop ? 20 : 16,
+    eventsCol: {
+      flex: isDesktop ? 1 : 1,
     },
-    glassCard: {
-      backgroundColor: theme.Colors.glassFill,
-      borderRadius: isDesktop ? 24 : 16,
-      padding: isDesktop ? 24 : 16,
-      borderWidth: 1,
-      borderColor: theme.Colors.glassStroke,
+    breakdownSection: {
+      gap: 20,
+      width: '100%',
+    },
+    sectionCard: {
+      borderRadius: 24,
       overflow: 'hidden',
     },
-    cardHeaderTitle: {
-      fontSize: isDesktop ? theme.Typography.titleLarge.fontSize : 16,
-      fontWeight: '800',
-      color: theme.Colors.onBackground,
-      marginBottom: isDesktop ? 20 : 12,
+    sectionCardContent: {
+      padding: isDesktop ? 24 : 16,
     },
-    chartContainer: {
+    sectionHeaderRow: {
       flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'flex-end',
-      height: isDesktop ? 200 : 130,
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    sectionTitle: {
+      fontSize: theme.Typography.bodyLarge.fontSize,
+      fontWeight: '600',
+      color: theme.Colors.onSurface,
+      letterSpacing: -0.2,
+    },
+    tableHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
       borderBottomWidth: 1,
       borderBottomColor: theme.Colors.outlineVariant,
-      paddingBottom: 8,
     },
-    barColumn: {
+    tableHeaderCell: {
+      fontSize: theme.Typography.labelSmall.fontSize,
+      fontWeight: '600',
+      color: theme.Colors.onSurfaceVariant,
+      letterSpacing: 0.5,
+    },
+    tableRow: {
+      flexDirection: 'row',
       alignItems: 'center',
-      width: 70,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.Colors.outlineVariant,
     },
-    barTrack: {
-      height: isDesktop ? 130 : 80,
-      width: 28,
-      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-      borderRadius: 8,
-      justifyContent: 'flex-end',
-      overflow: 'hidden',
+    tableCellName: {
+      fontSize: theme.Typography.bodySmall.fontSize,
+      fontWeight: '600',
+      color: theme.Colors.onSurface,
     },
-    barFill: {
-      width: '100%',
-      borderRadius: 8,
-    },
-    barValText: {
-      fontSize: 11,
-      fontWeight: '800',
-      color: theme.Colors.primary,
-      marginTop: 8,
-    },
-    barLabel: {
-      fontSize: 11,
+    tableCellSub: {
+      fontSize: theme.Typography.labelSmall.fontSize,
       color: theme.Colors.onSurfaceVariant,
       marginTop: 2,
     },
-    expenseBreakdownList: {
-      gap: 16,
+    tableCellText: {
+      fontSize: theme.Typography.bodySmall.fontSize,
+      color: theme.Colors.onSurface,
+      fontWeight: '500',
     },
-    expenseRow: {
-      gap: 6,
+    yieldBadge: {
+      backgroundColor: `${theme.Colors.primary}15`,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 8,
+      alignSelf: 'flex-start',
     },
-    expenseRowHeader: {
+    yieldBadgeText: {
+      fontSize: theme.Typography.labelSmall.fontSize,
+      fontWeight: '600',
+      color: theme.Colors.primary,
+    },
+    mobileCardList: {
+      gap: 12,
+    },
+    mobileCard: {
+      padding: 14,
+      borderRadius: 16,
+      backgroundColor: theme.Colors.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: theme.Colors.outlineVariant,
+      gap: 10,
+    },
+    mobileCardHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      alignItems: 'center',
     },
-    expenseCategory: {
+    mobileCardTitle: {
       fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
-    expenseValue: {
-      fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '800',
-      color: theme.Colors.error,
+    mobileCardSub: {
+      fontSize: theme.Typography.bodySmall.fontSize,
+      color: theme.Colors.onSurfaceVariant,
     },
     progressBarBg: {
-      height: 8,
-      backgroundColor: 'rgba(0, 0, 0, 0.05)',
-      borderRadius: 4,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: theme.Colors.surfaceContainerHigh || 'rgba(0,0,0,0.06)',
       overflow: 'hidden',
+      marginTop: 6,
     },
     progressBarFill: {
       height: '100%',
-      borderRadius: 4,
-    },
-    occupancyList: {
-      gap: 20,
-    },
-    occupancyItem: {
-      gap: 8,
-    },
-    propHeaderRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    propertyName: {
-      fontSize: theme.Typography.bodyLarge.fontSize,
-      fontWeight: '800',
-      color: theme.Colors.onSurface,
-    },
-    yieldPill: {
-      fontSize: 10,
-      fontWeight: '800',
-      color: theme.Colors.primary,
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 6,
-    },
-    occupancyRateText: {
-      fontSize: theme.Typography.bodySmall.fontSize,
-      color: theme.Colors.onSurfaceVariant,
-    },
-    defaultersList: {
-      gap: 16,
-    },
-    defaulterItem: {
-      backgroundColor: theme.Colors.glassFill,
-      borderRadius: 14,
-      padding: 14,
-      borderWidth: 1,
-      borderColor: 'rgba(239, 68, 68, 0.15)',
-      gap: 4,
-    },
-    defHeaderRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    defName: {
-      fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '700',
-      color: theme.Colors.onSurface,
-    },
-    defAmount: {
-      fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '800',
-      color: theme.Colors.error,
-    },
-    defFooterRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    defProperty: {
-      fontSize: theme.Typography.bodySmall.fontSize,
-      color: theme.Colors.onSurfaceVariant,
-    },
-    defDays: {
-      fontSize: theme.Typography.bodySmall.fontSize,
-      fontWeight: '700',
-      color: theme.Colors.error,
-    },
-    allClearContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      paddingVertical: 12,
-    },
-    allClearText: {
-      fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '700',
-      color: theme.Colors.primary,
-    },
-    emptyText: {
-      fontSize: theme.Typography.bodyMedium.fontSize,
-      color: theme.Colors.onSurfaceVariant,
+      borderRadius: 3,
     },
   });

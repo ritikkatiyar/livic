@@ -11,8 +11,6 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { useRouter, usePathname } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -125,9 +123,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
   return (
     <Modal animationType="none" transparent visible={visible} onRequestClose={closeSheet}>
       <View style={styles.overlay}>
-        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={closeSheet}>
-          <BlurView intensity={isDark ? 80 : 60} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
-        </TouchableOpacity>
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={closeSheet} />
 
         <Animated.View
           style={[
@@ -165,11 +161,8 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
               activeOpacity={0.85}
               onPress={() => handleNavigate('/billing')}
             >
-              <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.upgradeBannerGradient}
+              <View
+                style={[styles.upgradeBannerGradient, { backgroundColor: theme.Colors.primary }]}
               >
                 <View style={styles.upgradeBannerContent}>
                   <MaterialIcons name="workspace-premium" size={22} color={theme.Colors.surfaceContainerLowest} />
@@ -179,7 +172,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
                   </View>
                   <MaterialIcons name="chevron-right" size={20} color={theme.Colors.surfaceContainerLowest} />
                 </View>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </View>
 
@@ -226,7 +219,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
                 <MaterialIcons name="logout" size={24} color={theme.Colors.error} />
               </View>
               <View style={[styles.cardContent, { flex: 1 }]}>
-                <Text style={[styles.cardTitle, { color: theme.Colors.error, fontWeight: '800', fontSize: theme.Typography.bodyLg.fontSize }]}>Log Out</Text>
+                <Text style={[styles.cardTitle, { color: theme.Colors.error, fontWeight: '600', fontSize: theme.Typography.bodyLg.fontSize }]}>Log Out</Text>
                 <Text style={styles.cardSubtitle}>Sign out securely from Livic Landlord</Text>
               </View>
               <MaterialIcons name="chevron-right" size={22} color={theme.Colors.error} />
@@ -245,19 +238,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.4)',
   },
   sheetContainer: {
-    backgroundColor: theme.Surface.card,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
     maxHeight: '85%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     shadowColor: 'black',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.08,
     shadowRadius: 16,
-    elevation: 10,
+    elevation: 8,
     overflow: 'hidden',
   },
   dragHandleArea: {
@@ -279,7 +276,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.lg,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.surfaceVariant,
+    borderBottomColor: theme.Colors.outlineVariant,
   },
   profileRow: {
     flexDirection: 'row',
@@ -296,7 +293,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   avatarText: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
   },
   profileInfo: {
@@ -304,7 +301,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   profileName: {
     fontSize: theme.Typography.bodyLg.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   profileRole: {
@@ -356,7 +353,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   cardTitleActive: {
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   cardSubtitle: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -378,12 +375,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   upgradeBannerTitle: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
     color: theme.Colors.surfaceContainerLowest,
     letterSpacing: 1,
   },
   upgradeBannerSub: {
-    fontSize: 11,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: 'rgba(255, 255, 255, 0.85)',
     fontWeight: '600',
     marginTop: 1,

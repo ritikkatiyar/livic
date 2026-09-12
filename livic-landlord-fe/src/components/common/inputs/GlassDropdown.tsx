@@ -1,9 +1,14 @@
 import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
-import { 
-  View, Text, StyleSheet, TouchableOpacity, Modal, 
-  ScrollView, Platform, Pressable, Dimensions 
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  Pressable,
+  ScrollView,
+  Dimensions,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -106,7 +111,7 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
               ]}
             >
               <Pressable style={{ width: '100%' }}>
-                <BlurView tint={isDark ? "dark" : "light"} intensity={80} style={styles.blurContainer}>
+                <View style={styles.blurContainer}>
                   <ScrollView 
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -134,7 +139,7 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
                       );
                     })}
                   </ScrollView>
-                </BlurView>
+                </View>
               </Pressable>
             </View>
           </Pressable>
@@ -153,9 +158,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
     borderRadius: 12,
     paddingHorizontal: theme.Spacing.md,
     paddingVertical: 12,
@@ -184,16 +189,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     maxHeight: 350,
     shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.1,
     shadowRadius: 20,
-    elevation: 8,
+    elevation: 4,
   },
   blurContainer: {
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   scrollView: {
     maxHeight: 350,
@@ -210,7 +215,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   optionBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+    borderBottomColor: theme.Colors.outlineVariant,
   },
   optionText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
@@ -219,6 +224,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   optionTextSelected: {
     color: theme.Colors.primary,
-    fontWeight: '900',
+    fontWeight: '600',
   },
 });

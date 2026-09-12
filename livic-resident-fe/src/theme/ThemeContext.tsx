@@ -56,8 +56,8 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeRevealOverlay() {
   const context = useContext(ThemeContext);
-  if (!context) return null;
-  const { isDark, isInitialized } = context;
+  const isDark = context?.isDark ?? false;
+  const isInitialized = context?.isInitialized ?? false;
 
   const prevIsDarkRef = useRef<boolean | null>(null);
   const isFirstRenderRef = useRef<boolean>(true);
@@ -73,7 +73,7 @@ export function ThemeRevealOverlay() {
   const opacityAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!context || !isInitialized) return;
 
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false;
@@ -102,7 +102,7 @@ export function ThemeRevealOverlay() {
       });
     }
     prevIsDarkRef.current = isDark;
-  }, [isDark, isInitialized]);
+  }, [context, isDark, isInitialized]);
 
   useEffect(() => {
     if (transitionState) {

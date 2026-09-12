@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { useRouter, usePathname, Href } from 'expo-router';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -53,8 +52,6 @@ export default function SidebarNavigation() {
 
   return (
     <Animated.View style={[styles.sidebar, animatedStyles]}>
-      <BlurView intensity={75} tint={isDark ? "dark" : "light"} style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(11, 17, 24, 0.92)' : 'rgba(255, 255, 255, 0.95)' }]} />
-      
       <View style={[styles.sidebarHeader, isCollapsed && styles.sidebarHeaderCollapsed]}>
         {!isCollapsed ? (
           <View style={styles.sidebarBrand}>
@@ -116,8 +113,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingTop: theme.Spacing.xl,
     paddingBottom: theme.Spacing.lg,
     borderRightWidth: 1,
-    borderRightColor: theme.Surface.border,
-    backgroundColor: isDark ? 'rgba(11, 17, 24, 0.96)' : '#ffffff',
+    borderRightColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
   },
   sidebarHeader: {
@@ -133,20 +130,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarBrand: { flex: 1 },
   sidebarBrandCollapsed: { alignItems: 'center' },
-  sidebarBrandTitleCollapsed: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
+  sidebarBrandTitleCollapsed: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '600', color: theme.Colors.primary },
   collapseButton: {
     padding: theme.Spacing.xs,
     borderRadius: 8,
-    backgroundColor: isDark ? '#141E2A' : theme.Colors.surfaceContainerLow,
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
-  sidebarBrandTitle: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '800', lineHeight: 34, color: theme.Colors.primary },
-  sidebarBrandSub: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', letterSpacing: 2, color: isDark ? '#94A3B8' : theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
+  sidebarBrandTitle: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '600', lineHeight: 34, color: theme.Colors.primary },
+  sidebarBrandSub: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', letterSpacing: 2, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
   sidebarNavScroll: { flex: 1, marginBottom: theme.Spacing.md },
   sidebarNav: { gap: 14, paddingBottom: theme.Spacing.md },
   sidebarLink: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.md, paddingHorizontal: 18, borderRadius: theme.Rounded.lg },
   sidebarLinkCollapsed: { justifyContent: 'center', paddingHorizontal: 0 },
   sidebarLinkActive: {
-    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.16)' : 'rgba(0, 104, 117, 0.10)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderRightWidth: 4,
     borderRightColor: theme.Colors.primary,
   },
@@ -154,12 +151,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     letterSpacing: 1.2,
-    color: isDark ? '#CBD5E1' : theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
   },
   sidebarLinkTextActive: {
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
-  sidebarFooter: { marginTop: 'auto', borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.outlineVariant, paddingTop: 28, gap: 10 },
+  sidebarFooter: { marginTop: 'auto', borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant, paddingTop: 28, gap: 10 },
   sidebarFooterCollapsed: { alignItems: 'center' },
 });

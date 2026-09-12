@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useProperties } from '@/src/hooks/useProperties';
 
@@ -52,8 +51,6 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress, 
             left: 0 !important;
             right: 0 !important;
             z-index: 9999 !important;
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
           }
           @media (min-width: 900px) {
             .mobile-header-container {
@@ -68,7 +65,6 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress, 
         className="mobile-header-container"
         style={[styles.headerWrapper, { paddingTop: insets.top, minHeight: 56 + insets.top }]}
       >
-        <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
         <View style={styles.headerContainer}>
           <View style={styles.headerLeftGroup}>
             {/* Compact Mobile Property Selector Trigger */}
@@ -76,6 +72,8 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress, 
               style={styles.propertySelectorPill}
               activeOpacity={0.75}
               onPress={() => setIsSheetOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`Select property, currently ${propertyLabel}`}
             >
               <MaterialIcons
                 name="business"
@@ -89,18 +87,14 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress, 
             </TouchableOpacity>
           </View>
 
-          <View style={styles.titleContainer}>
-            <Text style={styles.titleText} numberOfLines={1}>
-              {title}
-            </Text>
-          </View>
-
           <View style={styles.headerRightActions}>
             <TouchableOpacity
               style={styles.notificationButton}
               activeOpacity={0.7}
               onPress={onNotificationPress}
               disabled={!onNotificationPress}
+              accessibilityRole="button"
+              accessibilityLabel="Notifications"
             >
               <Ionicons name="notifications-outline" size={20} color={theme.Colors.onSurface} />
               <View style={styles.notificationBadge} />
@@ -122,8 +116,6 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress, 
               onPress={() => setIsSheetOpen(false)}
             />
             <View style={styles.sheetContent}>
-              <BlurView intensity={90} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-              
               <View style={styles.sheetHeader}>
                 <View style={styles.sheetHandle} />
                 <Text style={styles.sheetTitle}>Select Property</Text>
@@ -223,8 +215,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     right: 0,
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-    backgroundColor: isDark ? 'rgba(9, 13, 18, 0.60)' : 'rgba(255, 255, 255, 0.70)',
+    borderBottomColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
@@ -250,41 +242,29 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.55)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.7)',
+    borderColor: theme.Colors.outlineVariant,
     justifyContent: 'center',
     alignItems: 'center',
   },
   propertySelectorPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    maxWidth: 130,
-    paddingHorizontal: 10,
+    gap: 6,
+    maxWidth: 220,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.55)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.7)',
+    borderColor: theme.Colors.outlineVariant,
   },
   propertySelectorText: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '700',
-    color: theme.Colors.onSurface,
-    maxWidth: 80,
-  },
-  titleContainer: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  titleText: {
-    fontFamily: 'Inter',
-    fontSize: 16,
     fontWeight: '600',
     color: theme.Colors.onSurface,
-    letterSpacing: -0.2,
+    maxWidth: 160,
   },
   headerRightActions: {
     flexDirection: 'row',
@@ -294,9 +274,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   notificationButton: {
     padding: theme.Spacing.sm,
     borderRadius: 20,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.65)',
+    borderColor: theme.Colors.outlineVariant,
     position: 'relative',
   },
   notificationBadge: {
@@ -311,7 +291,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.4)',
   },
   sheetContent: {
     borderTopLeftRadius: 24,
@@ -319,19 +299,21 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
     maxHeight: '70%',
     paddingBottom: 30,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
   },
   sheetHeader: {
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+    borderBottomColor: theme.Colors.outlineVariant,
   },
   sheetHandle: {
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: theme.Colors.outlineVariant,
     marginBottom: 8,
   },
   sheetTitle: {
@@ -346,9 +328,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 12,
     height: 42,
     borderRadius: 12,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+    borderColor: theme.Colors.outlineVariant,
     gap: 8,
   },
   searchInput: {
@@ -369,7 +351,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 4,
   },
   propertyItemActive: {
-    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.12)' : 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
   propertyItemText: {
     flex: 1,
@@ -379,6 +361,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   propertyItemTextActive: {
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
 });

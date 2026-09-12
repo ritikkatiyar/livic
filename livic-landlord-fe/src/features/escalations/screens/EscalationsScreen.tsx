@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -203,20 +202,20 @@ export default function EscalationsScreen() {
               <ActivityIndicator size="large" color={theme.Colors.primary} />
             </View>
           ) : error ? (
-            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
+            <View style={styles.emptyCard}>
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity style={styles.filterButton} onPress={refresh}>
                 <Text style={styles.filterButtonText}>Retry</Text>
               </TouchableOpacity>
-            </BlurView>
+            </View>
           ) : issues.length === 0 ? (
-            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
+            <View style={styles.emptyCard}>
               <MaterialIcons name="report-off" size={48} color={theme.Colors.onSurfaceVariant} />
               <Text style={styles.emptyTitle}>No issues logged</Text>
               <Text style={styles.emptySubtitle}>
                 No matching reported issues or maintenance requests found for this property.
               </Text>
-            </BlurView>
+            </View>
           ) : (
             <View style={styles.listContainer}>
               {issues.map((item) => (
@@ -225,7 +224,7 @@ export default function EscalationsScreen() {
                   onPress={() => setSelectedIssueId(item.id)}
                   activeOpacity={0.8}
                 >
-                  <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.mobileCard}>
+                  <View style={styles.mobileCard}>
                     <View style={styles.cardHeaderRow}>
                       <Text style={styles.cardUnitText}>{item.ticketNumber}</Text>
                       <View
@@ -270,7 +269,7 @@ export default function EscalationsScreen() {
                         {new Date(item.createdAt).toLocaleDateString()}
                       </Text>
                     </View>
-                  </BlurView>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>

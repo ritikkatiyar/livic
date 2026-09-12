@@ -116,7 +116,7 @@ export function PageShell({
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.Colors.background }}>
+    <View style={{ flex: 1, height: '100%', backgroundColor: theme.Colors.background }}>
       {keyboardAvoiding ? (
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -141,9 +141,11 @@ const createStyles = (
   StyleSheet.create({
     keyboardAvoid: {
       flex: 1,
+      height: '100%',
     },
     safeArea: {
       flex: 1,
+      height: '100%',
     },
     scrollView: {
       flex: 1,
@@ -157,6 +159,7 @@ const createStyles = (
     },
     flatContainer: {
       flex: 1,
+      height: '100%',
       width: '100%',
       paddingHorizontal: isDesktop ? 32 : theme.Spacing.containerPadding,
       paddingTop: isDesktop ? 24 : (mobileHeaderOffset + 16),

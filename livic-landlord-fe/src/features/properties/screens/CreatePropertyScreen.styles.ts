@@ -1,5 +1,4 @@
 import { StyleSheet } from 'react-native';
-import { SerifHeadlineFont } from '@/src/theme/Theme';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
@@ -32,13 +31,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   compactTitleText: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -48,21 +47,25 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 20,
   },
   titleLine: {
-    fontFamily: SerifHeadlineFont,
     fontSize: theme.Typography.headlineXl.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     lineHeight: 52,
     letterSpacing: -1,
   },
   cardContainer: {
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderRadius: theme.Rounded.xl,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
     padding: theme.Spacing.lg,
     marginBottom: 30,
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
   description: {
     fontSize: theme.Typography.bodyMedium.fontSize,
@@ -79,7 +82,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   label: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 1,
   },
@@ -142,7 +145,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   submitText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1,
   },
   errorContainer: {
@@ -184,13 +187,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarBrandTitle: {
     fontSize: theme.Typography.displaySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     lineHeight: 40,
     color: theme.Colors.primary,
   },
   sidebarBrandSub: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 2,
     color: theme.Colors.onSurfaceVariant,
     marginTop: theme.Spacing.xs,
@@ -213,7 +216,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarLinkText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 1.6,
     color: theme.Colors.onSurface,
   },
@@ -243,7 +246,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   upgradeText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   desktopMain: {
     flex: 1,
@@ -269,7 +272,6 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   titleLineDesktop: {
     ...theme.Typography.headlineLg,
-    fontFamily: SerifHeadlineFont,
     color: theme.Colors.onSurface,
   },
   subtitleDesktop: {
@@ -293,7 +295,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   desktopSaveButtonText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1,
   },
   desktopFormContainer: {
@@ -330,7 +332,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   amenityChipText: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
   amenityChipTextSelected: {

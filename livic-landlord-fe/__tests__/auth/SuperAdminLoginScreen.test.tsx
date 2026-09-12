@@ -25,12 +25,12 @@ describe('SuperAdminLoginScreen Interaction', () => {
       <SuperAdminLoginScreen onLogin={handleLogin} />
     );
 
-    const emailInput = getByPlaceholderText('super@admin.system');
+    const emailInput = getByPlaceholderText('landlord@livic.app');
     const passwordInput = getByPlaceholderText('••••••••');
     const submitBtn = getByTestId('login-button');
 
     await act(async () => {
-      fireEvent.changeText(emailInput, 'super@admin.system');
+      fireEvent.changeText(emailInput, 'landlord@livic.app');
       fireEvent.changeText(passwordInput, 'admin123');
     });
 

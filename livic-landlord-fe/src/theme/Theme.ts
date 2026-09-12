@@ -1,4 +1,4 @@
-import { TextStyle } from 'react-native';
+import { TextStyle, Platform } from 'react-native';
 
 export const LightColors = {
   surfaceContainerLow: "#F2F1ED",
@@ -160,176 +160,187 @@ export interface TypographyStyle extends Omit<TextStyle, 'fontWeight'> {
   letterSpacing?: number;
 }
 
-export const SerifHeadlineFont = 'Playfair Display, Georgia, "Times New Roman", serif';
-export const SansFont = 'Inter, sans-serif';
+export const AppleFont = Platform.select({
+  ios: 'System',
+  web: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif',
+  android: 'Roboto',
+  default: 'System',
+}) as string;
+
+export const SerifHeadlineFont = AppleFont;
+export const SansFont = AppleFont;
 
 export const Fonts = {
-  headline: SerifHeadlineFont,
-  serifHeadline: SerifHeadlineFont,
-  playfairDisplay: 'Playfair Display',
-  body: 'Inter',
-  inter: 'Inter',
-  mono: 'JetBrains Mono',
-  sans: SansFont,
+  headline: AppleFont,
+  serifHeadline: AppleFont,
+  playfairDisplay: AppleFont,
+  body: AppleFont,
+  inter: AppleFont,
+  mono: Platform.select({
+    ios: 'SF Mono',
+    web: 'ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace',
+    default: 'monospace',
+  }) as string,
+  sans: AppleFont,
+  apple: AppleFont,
 } as const;
 
 export const Typography = {
   displayLarge: {
-    fontFamily: SerifHeadlineFont,
-    fontSize: 57,
-    fontWeight: '800' as const,
-    lineHeight: 64,
+    fontFamily: AppleFont,
+    fontSize: 48,
+    fontWeight: '600' as const,
+    lineHeight: 56,
   },
   displayMedium: {
-    fontFamily: SerifHeadlineFont,
-    fontSize: 45,
-    fontWeight: '800' as const,
-    lineHeight: 52,
+    fontFamily: AppleFont,
+    fontSize: 40,
+    fontWeight: '600' as const,
+    lineHeight: 48,
   },
   displaySmall: {
-    fontFamily: SerifHeadlineFont,
-    fontSize: 36,
-    fontWeight: '800' as const,
-    lineHeight: 44,
-  },
-  headlineLarge: {
-    fontFamily: SerifHeadlineFont,
+    fontFamily: AppleFont,
     fontSize: 32,
-    fontWeight: '800' as const,
+    fontWeight: '600' as const,
     lineHeight: 40,
   },
-  headlineMedium: {
-    fontFamily: SerifHeadlineFont,
+  headlineLarge: {
+    fontFamily: AppleFont,
     fontSize: 28,
-    fontWeight: '800' as const,
+    fontWeight: '600' as const,
     lineHeight: 36,
   },
-  headlineSmall: {
-    fontFamily: SerifHeadlineFont,
+  headlineMedium: {
+    fontFamily: AppleFont,
     fontSize: 24,
-    fontWeight: '700' as const,
+    fontWeight: '600' as const,
     lineHeight: 32,
   },
-  titleLarge: {
-    fontFamily: SerifHeadlineFont,
-    fontSize: 22,
-    fontWeight: '800' as const,
+  headlineSmall: {
+    fontFamily: AppleFont,
+    fontSize: 20,
+    fontWeight: '600' as const,
     lineHeight: 28,
   },
+  titleLarge: {
+    fontFamily: AppleFont,
+    fontSize: 18,
+    fontWeight: '600' as const,
+    lineHeight: 24,
+  },
   titleMedium: {
-    fontFamily: 'Inter',
+    fontFamily: AppleFont,
     fontSize: 16,
     fontWeight: '500' as const,
     lineHeight: 24,
     letterSpacing: 0.15,
   },
   titleSmall: {
-    fontFamily: 'Inter',
+    fontFamily: AppleFont,
     fontSize: 14,
     fontWeight: '500' as const,
     lineHeight: 20,
     letterSpacing: 0.1,
   },
   labelLarge: {
-    fontFamily: 'Inter',
+    fontFamily: AppleFont,
     fontSize: 14,
     fontWeight: '500' as const,
     lineHeight: 20,
     letterSpacing: 0.1,
   },
   labelMedium: {
-    fontFamily: 'Inter',
+    fontFamily: AppleFont,
     fontSize: 12,
     fontWeight: '500' as const,
     lineHeight: 16,
     letterSpacing: 0.5,
   },
   labelSmall: {
-    fontFamily: 'Inter',
+    fontFamily: AppleFont,
     fontSize: 11,
     fontWeight: '500' as const,
     lineHeight: 16,
     letterSpacing: 0.5,
   },
   bodyLarge: {
-    fontFamily: 'Inter',
+    fontFamily: AppleFont,
     fontSize: 16,
     fontWeight: 'normal' as const,
     lineHeight: 24,
     letterSpacing: 0.15,
   },
   bodyMedium: {
-    fontFamily: 'Inter',
+    fontFamily: AppleFont,
     fontSize: 14,
     fontWeight: 'normal' as const,
     lineHeight: 20,
     letterSpacing: 0.25,
   },
   bodySmall: {
-    fontFamily: 'Inter',
+    fontFamily: AppleFont,
     fontSize: 12,
     fontWeight: 'normal' as const,
     lineHeight: 16,
     letterSpacing: 0.4,
   },
   displayMetrics: {
-    fontFamily: 'Inter',
-    fontSize: 48,
-    fontWeight: '800' as const,
-    lineHeight: 56,
+    fontFamily: AppleFont,
+    fontSize: 40,
+    fontWeight: '600' as const,
+    lineHeight: 48,
   },
   headlineXl: {
-    fontFamily: SerifHeadlineFont,
-    fontSize: 48,
-    fontWeight: '800' as const,
-    lineHeight: 56,
+    fontFamily: AppleFont,
+    fontSize: 40,
+    fontWeight: '600' as const,
+    lineHeight: 48,
   },
   headlineLg: {
-    fontFamily: SerifHeadlineFont,
-    fontSize: 32,
-    fontWeight: '800' as const,
-    lineHeight: 40,
-  },
-  headlineMd: {
-    fontFamily: SerifHeadlineFont,
+    fontFamily: AppleFont,
     fontSize: 28,
-    fontWeight: '700' as const,
+    fontWeight: '600' as const,
     lineHeight: 36,
   },
-  bodyLg: {
-    fontFamily: 'Inter',
-    fontSize: 18,
-    fontWeight: '400' as const,
+  headlineMd: {
+    fontFamily: AppleFont,
+    fontSize: 22,
+    fontWeight: '600' as const,
     lineHeight: 28,
   },
+  bodyLg: {
+    fontFamily: AppleFont,
+    fontSize: 17,
+    fontWeight: '400' as const,
+    lineHeight: 26,
+  },
   bodyMd: {
-    fontFamily: 'Inter',
+    fontFamily: AppleFont,
     fontSize: 14,
     fontWeight: 'normal' as const,
     lineHeight: 20,
     letterSpacing: 0.25,
   },
   labelCaps: {
-    fontFamily: 'Inter',
-    fontSize: 11,
-    fontWeight: '800' as const,
+    fontFamily: AppleFont,
+    fontSize: 12,
+    fontWeight: '500' as const,
     lineHeight: 16,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase' as const,
+    letterSpacing: 0.2,
   },
   labelMuted: {
-    fontFamily: 'Inter',
+    fontFamily: AppleFont,
     fontSize: 13,
     fontWeight: '500' as const,
     lineHeight: 18,
     color: '#94A3B8',
   },
   buttonText: {
-    fontFamily: 'Inter',
+    fontFamily: AppleFont,
     fontSize: 15,
-    fontWeight: '700' as const,
+    fontWeight: '600' as const,
     lineHeight: 24,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
 };
 

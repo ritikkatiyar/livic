@@ -101,8 +101,8 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md') => {
     },
     text: {
       fontSize,
-      fontWeight: '700',
-      letterSpacing: 0.3,
+      fontWeight: '500',
+      letterSpacing: 0.2,
     },
     textActive: {
       color: theme.Colors.surfaceContainerLowest,
@@ -126,8 +126,8 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md') => {
       backgroundColor: theme.Colors.surfaceContainerLow,
     },
     badgeText: {
-      fontSize: 11,
-      fontWeight: '800',
+      fontSize: theme.Typography.labelSmall.fontSize,
+      fontWeight: '600',
     },
     badgeTextActive: {
       color: theme.Colors.surfaceContainerLowest,

@@ -15,10 +15,9 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     kicker: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
-      letterSpacing: 1.5,
-      textTransform: 'uppercase',
+      letterSpacing: 0.2,
       marginBottom: 4,
     },
     pageTitle: {
@@ -71,17 +70,19 @@ export const createStyles = (theme: any, isDark: boolean) =>
     toggleHistoryBtn: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 44,
       gap: 6,
-      paddingHorizontal: 14,
+      paddingHorizontal: 16,
       paddingVertical: 8,
-      borderRadius: 12,
+      borderRadius: 22,
       backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.10)',
       borderWidth: 1,
       borderColor: isDark ? 'rgba(0, 229, 255, 0.3)' : 'rgba(0, 104, 117, 0.25)',
     },
     toggleHistoryText: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
     },
   });

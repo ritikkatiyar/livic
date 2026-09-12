@@ -1,13 +1,13 @@
-import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { saveUserPreference, SaveUserPreferenceRequest } from '@/src/features/user/api/userPreference.api';
 import { validateAndApplyJoinCode } from '@/src/features/properties/api/rolePermission.api';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { setLocalOnboardingStatus } from '@/src/components/common/layout/OnboardingGate';
 
 const MODULES = [
@@ -28,7 +28,6 @@ const MODULES = [
 export default function OnboardingScreen() {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const insets = useSafeAreaInsets();
   const { isDesktop } = useResponsive();
   const [selectedModule, setSelectedModule] = useState<SaveUserPreferenceRequest['activeMode'] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -101,13 +100,7 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <ScrollView 
-      style={styles.container} 
-      contentContainerStyle={[
-        styles.content, 
-        { paddingTop: isDesktop ? 60 : Math.max(insets.top + 24, 48) }
-      ]}
-    >
+    <PageShell scrollable contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.title}>Welcome to Livic</Text>
         <Text style={styles.subtitle}>How do you plan to use Livic today?</Text>
@@ -150,7 +143,7 @@ export default function OnboardingScreen() {
 
           <View style={styles.footer}>
             <ActionButton
-              label="GET STARTED"
+              label="Get Started"
               variant="primary"
               size="lg"
               fullWidth
@@ -162,7 +155,7 @@ export default function OnboardingScreen() {
         </>
       ) : (
         <View style={styles.inviteContainer}>
-          <Text style={styles.inviteLabel}>ENTER YOUR 6-DIGIT CODE</Text>
+          <Text style={styles.inviteLabel}>Enter your invite code</Text>
           <TextInput
             style={styles.inviteInput}
             placeholder="e.g. AB12CD"
@@ -178,7 +171,7 @@ export default function OnboardingScreen() {
 
           <View style={{ marginTop: 24 }}>
             <ActionButton
-              label="JOIN WORKSPACE"
+              label="Join Workspace"
               variant="primary"
               size="lg"
               fullWidth
@@ -189,17 +182,13 @@ export default function OnboardingScreen() {
           </View>
         </View>
       )}
-    </ScrollView>
+    </PageShell>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.Colors.background,
-  },
   content: {
-    padding: 24,
+    padding: theme.Spacing.containerPadding,
     alignSelf: 'center',
     width: '100%',
     maxWidth: 640,
@@ -209,8 +198,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   title: {
     fontSize: theme.Typography.headlineMedium.fontSize,
-    fontWeight: '800',
-    color: theme.Colors.onBackground,
+    fontWeight: '700',
+    color: theme.Colors.onSurface,
     marginBottom: 8,
   },
   subtitle: {
@@ -219,8 +208,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: theme.Colors.surfaceVariant || 'rgba(0,0,0,0.05)',
-    borderRadius: 12,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderRadius: theme.Rounded.md,
     padding: 4,
     marginBottom: 24,
   },
@@ -228,24 +217,24 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: theme.Rounded.sm,
   },
   activeTab: {
-    backgroundColor: theme.Colors.surface,
-    shadowColor: theme.Colors.shadow || theme.Colors.onSurface,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    shadowColor: theme.Colors.outline,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1,
   },
   tabText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '600',
+    fontWeight: '500',
     color: theme.Colors.onSurfaceVariant,
   },
   activeTabText: {
     color: theme.Colors.primary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   grid: {
     gap: 16,
@@ -253,14 +242,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   card: {
     padding: 20,
-    borderRadius: 16,
-    backgroundColor: theme.Colors.surface,
-    borderWidth: 2,
-    borderColor: theme.Colors.outlineVariant || 'rgba(0,0,0,0.1)',
+    borderRadius: theme.Rounded.lg,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
   },
   selectedCard: {
     borderColor: theme.Colors.primary,
-    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.05)' : 'rgba(0, 104, 117, 0.05)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
   icon: {
     fontSize: theme.Typography.headlineLarge.fontSize,
@@ -268,7 +257,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   cardTitle: {
     fontSize: theme.Typography.titleMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginBottom: 4,
   },
@@ -286,28 +275,28 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   inviteContainer: {
     padding: 20,
-    borderRadius: 16,
-    backgroundColor: theme.Colors.surface,
+    borderRadius: theme.Rounded.lg,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant || 'rgba(0,0,0,0.1)',
+    borderColor: theme.Colors.outline,
   },
   inviteLabel: {
     fontSize: theme.Typography.labelMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     marginBottom: 8,
   },
   inviteInput: {
     fontSize: theme.Typography.headlineSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 4,
     textAlign: 'center',
     padding: 16,
-    borderRadius: 12,
-    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+    borderRadius: theme.Rounded.md,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     color: theme.Colors.onSurface,
     borderWidth: 1,
-    borderColor: theme.Colors.outline || 'rgba(0,0,0,0.1)',
+    borderColor: theme.Colors.outline,
   },
   inviteHint: {
     fontSize: theme.Typography.bodySmall.fontSize,

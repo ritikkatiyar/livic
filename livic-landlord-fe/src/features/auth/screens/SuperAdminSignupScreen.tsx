@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { Theme } from '@/src/theme/Theme';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { signup } from '@/src/features/auth/api/auth.api';
@@ -85,12 +84,8 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
       keyboardAvoiding={true}
       contentContainerStyle={styles.scrollContent}
     >
-      {/* Ambient Background Orbs */}
-          <View style={[styles.orb, styles.orb1]} />
-          <View style={[styles.orb, styles.orb2]} />
-
-          {/* Main Content Area */}
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.cardContainer}>
+      {/* Main Content Area */}
+      <View style={styles.cardContainer}>
             {/* Branding */}
             <View style={styles.brandingContainer}>
               <View style={styles.iconWrapper}>
@@ -256,7 +251,7 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                 <Text style={styles.footerLink}>Sign In</Text>
               </TouchableOpacity>
             </View>
-          </BlurView>
+          </View>
     </PageShell>
   );
 }
@@ -301,13 +296,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: theme.Rounded.lg,
     paddingHorizontal: theme.Spacing.stackLg,
     paddingTop: 40,
     paddingBottom: theme.Spacing.stackLg,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
@@ -405,12 +400,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   submitButton: {
-    marginTop: 12,
+    marginTop: theme.Spacing.sm,
     width: '100%',
+    minHeight: 48,
     backgroundColor: theme.Colors.primaryContainer,
     paddingVertical: theme.Spacing.md,
     paddingHorizontal: theme.Spacing.stackMd,
-    borderRadius: theme.Rounded.default,
+    borderRadius: 24,
+    justifyContent: 'center',
     alignItems: 'center',
     shadowColor: theme.Colors.primaryContainer,
     shadowOffset: { width: 0, height: 4 },
@@ -455,6 +452,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   footerLink: {
     ...theme.Typography.bodyMd,
     color: theme.Colors.surfaceTint,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });

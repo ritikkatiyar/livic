@@ -1,9 +1,9 @@
 import { StyleSheet } from 'react-native';
-import { SerifHeadlineFont } from '@/src/theme/Theme';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
     flex: 1,
+    backgroundColor: theme.Colors.background,
   },
   safeArea: {
     flex: 1,
@@ -34,9 +34,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   titleLineDesktop: {
-    fontFamily: SerifHeadlineFont,
     fontSize: theme.Typography.headlineMd.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     letterSpacing: -0.5,
   },
@@ -59,7 +58,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.Spacing.md,
@@ -68,9 +69,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: theme.Spacing.sm,
   },
   titleLine: {
-    fontFamily: SerifHeadlineFont,
     fontSize: theme.Typography.headlineXl.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     lineHeight: 46,
     letterSpacing: -1,
@@ -81,10 +81,10 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   gridWrapper: {
     flex: 1,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outline,
     overflow: 'hidden',
     marginBottom: 20,
     position: 'relative',
@@ -119,14 +119,14 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   detailSheet: {
     borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 10 },
+    borderColor: theme.Colors.outline,
+    shadowColor: theme.Colors.outline,
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowRadius: 10,
+    elevation: 6,
     maxHeight: 480,
     overflow: 'hidden',
   },
@@ -138,6 +138,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   desktopShell: {
     flex: 1,
     flexDirection: 'row',
+    backgroundColor: theme.Colors.background,
   },
   sidebar: {
     width: 260,
@@ -155,13 +156,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarBrandTitle: {
     fontSize: theme.Typography.displaySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     lineHeight: 40,
     color: theme.Colors.primary,
   },
   sidebarBrandSub: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 2,
     color: theme.Colors.onSurfaceVariant,
     marginTop: theme.Spacing.xs,
@@ -171,7 +172,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarLinkTextDesktop: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 1.6,
     color: theme.Colors.onSurface,
   },
@@ -201,7 +202,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   upgradeText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   desktopMain: {
     flex: 1,
@@ -222,25 +223,25 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   desktopGridWrapper: {
     flex: 1,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
     overflow: 'hidden',
     position: 'relative',
   },
   desktopCard: {
     borderRadius: 24,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     padding: theme.Spacing.lg,
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
     overflow: 'hidden',
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 8 },
+    shadowColor: theme.Colors.outline,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowRadius: 6,
+    elevation: 2,
   },
   sidebarLink: {
     flexDirection: 'row',
@@ -255,12 +256,11 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarLinkText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
-    fontFamily: 'Inter',
   },
   sidebarLinkTextActive: {
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
 });

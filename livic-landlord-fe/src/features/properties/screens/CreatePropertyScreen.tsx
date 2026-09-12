@@ -1,6 +1,4 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useRef } from 'react';
 import {
   ActivityIndicator,
@@ -21,6 +19,7 @@ import { PageShell } from '@/src/components/common/layout/PageShell';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useCreateProperty } from '@/src/features/properties/hooks/useCreateProperty';
+import { MediaUploadGrid } from '@/src/components/common/display/MediaUploadGrid';
 import { createStyles } from './CreatePropertyScreen.styles';
 
 const UNIT_TYPE_OPTIONS = [
@@ -81,6 +80,8 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
     setGlobalUnitsPerFloor,
     globalUnitType,
     setGlobalUnitType,
+    stagedPhotos,
+    setStagedPhotos,
     selectedAmenities,
     toggleAmenity,
     loading,
@@ -284,7 +285,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
                     size={16}
                     color={isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant}
                   />
-                  <Text style={[styles.amenityChipText, isSelected && styles.amenityChipTextSelected, { fontSize: 13 }]}>
+                  <Text style={[styles.amenityChipText, isSelected && styles.amenityChipTextSelected, { fontSize: theme.Typography.bodySmall.fontSize }]}>
                     {preset.label}
                   </Text>
                 </TouchableOpacity>
@@ -292,14 +293,14 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
             })}
           </View>
 
-          <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 4 }}>
+          <Text style={{ fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4 }}>
             Day of the month when rent cycle drafts are automatically generated for active leases.
           </Text>
         </View>
 
         {/* Property Amenities Selector */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>PROPERTY AMENITIES</Text>
+          <Text style={styles.label}>Property Amenities</Text>
           <View style={styles.amenitiesContainer}>
             {[
               'High-speed Fiber Wi-Fi',
@@ -335,9 +336,23 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
           </View>
         </View>
 
+        {/* Property Photos Section */}
+        <View style={styles.inputGroup}>
+          <MediaUploadGrid
+            ownerModule="PROPERTY"
+            userToken={userToken}
+            stagedFiles={stagedPhotos}
+            onStagedFilesChange={setStagedPhotos}
+            maxFiles={12}
+            label="Property Photos"
+            helperText="Upload exterior, lobby, or unit photos to showcase your property."
+          />
+        </View>
+
         {showSubmit ? (
           <ActionButton
-            label="BUILD PROPERTY"
+            testID="save-button"
+            label="Build Property"
             icon="arrow-forward"
             iconPosition="right"
             variant="primary"
@@ -362,7 +377,8 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
         </View>
 
         <ActionButton
-          label="BUILD PROPERTY"
+          testID="save-button"
+          label="Build Property"
           icon="check"
           iconPosition="right"
           variant="primary"
@@ -376,21 +392,21 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
       {/* Split panels layout */}
       <View style={styles.desktopFormContainer}>
         <View style={styles.desktopFormLeft}>
-          <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={styles.cardContainer}>
+          <View style={styles.cardContainer}>
             {renderFormFieldsContent(false)}
-          </BlurView>
+          </View>
         </View>
 
         <View style={styles.desktopFormRight}>
-          <BlurView intensity={50} tint={isDark ? 'dark' : 'light'} style={[styles.cardContainer, { padding: 30, gap: theme.Spacing.md }]}>
-            <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={[styles.cardContainer, { padding: 30, gap: theme.Spacing.md }]}>
+            <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: theme.Colors.primaryContainer, justifyContent: 'center', alignItems: 'center' }}>
               <MaterialIcons name="layers" size={24} color={theme.Colors.primary} />
             </View>
-            <Text style={{ fontSize: theme.Typography.bodyLg?.fontSize || 18, fontWeight: '800', color: theme.Colors.onSurface }}>Floor & Units Auto-Allocation</Text>
+            <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurface }}>Floor & Units Auto-Allocation</Text>
             <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 20, fontWeight: '500' }}>
               By providing global units per floor, the builder automatically generates vacant unit blocks for each floor grid. You can manually customize or draw floor maps later in the floor editor.
             </Text>
-          </BlurView>
+          </View>
         </View>
       </View>
     </View>
@@ -398,9 +414,9 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
 
   const renderMobileContent = () => (
     <View style={styles.container}>
-      <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.cardContainer}>
-        {renderFormFieldsContent(false)}
-      </BlurView>
+      <View style={styles.cardContainer}>
+        {renderFormFieldsContent(true)}
+      </View>
     </View>
   );
 

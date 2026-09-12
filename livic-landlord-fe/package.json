@@ -12,8 +12,9 @@
     "web": "expo start --web --offline",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
+    "check:typography": "node ./scripts/check-typography-guardrails.js",
     "test": "jest",
-    "quality": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "quality": "npm run check:typography && npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -28,6 +29,7 @@
     "expo-font": "~14.0.11",
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
+    "expo-image-picker": "~17.0.11",
     "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~8.0.11",
     "expo-router": "~6.0.23",
@@ -62,6 +64,9 @@
     "preset": "jest-expo",
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
+    ],
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
     ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1"

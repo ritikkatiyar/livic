@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -28,7 +27,7 @@ export default function DesktopNavBar({
   const initial = user?.fullName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
   return (
-    <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.topbar}>
+    <View style={styles.topbar}>
       {/* Left Area: Back Button */}
       <View style={styles.topbarLeft}>
         {onBack ? (
@@ -56,7 +55,7 @@ export default function DesktopNavBar({
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
       </View>
-    </BlurView>
+    </View>
   );
 }
 
@@ -68,8 +67,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.Spacing.xl,
     borderBottomWidth: 1,
-    borderColor: theme.Surface.border,
-    backgroundColor: isDark ? 'rgba(11, 17, 24, 0.94)' : theme.Colors.glassFill,
+    borderColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   topbarLeft: {
     flexDirection: 'row',
@@ -77,7 +76,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   pageTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onBackground,
   },
   topbarRight: {
@@ -89,9 +88,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: theme.Surface.card,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.outlineVariant,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -112,9 +111,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.md,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: theme.Surface.card,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.outlineVariant,
   },
   backButtonTextDesktop: {
     fontSize: theme.Typography.bodyMedium.fontSize,

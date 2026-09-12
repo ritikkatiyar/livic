@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, ScrollView, Modal } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { SkeletonCardGrid } from '@/src/components/common/feedback/Skeleton';
 
 import { ActiveLeaseSummary, getMyContext } from '@/src/features/auth/api/me.api';
@@ -73,6 +71,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
   const activePropertyName = lease?.propertyName || "Assigned Property";
   const activeUnitNumber = lease?.unitNumber ? `Unit ${lease.unitNumber}` : "Active Lease";
   const activeRent = lease?.rentAmount ? `₹${lease.rentAmount.toLocaleString()}` : "Contact Manager";
+  const activeDueDate = (lease as any)?.dueDate || (lease as any)?.nextDueDate || "1st of month";
   const activeStatus = lease?.status || "ACTIVE";
 
   return (
@@ -115,7 +114,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
             ))}
 
             {/* Active Property Glass Card */}
-            <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
+            <View style={styles.glassCard}>
               <View style={styles.cardHeaderRow}>
                 <View style={styles.iconBox}>
                   <MaterialIcons name="apartment" size={30} color={theme.Colors.primary} />
@@ -133,40 +132,48 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>Monthly Rent</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                    <Text style={styles.statValue}>{activeRent}</Text>
+                    <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{activeRent}</Text>
                     <Text style={styles.statSubLabel}>/month</Text>
                   </View>
                 </View>
                 <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Payment Status</Text>
-                  <Text style={[styles.statValue, { color: theme.Colors.primary }]}>Up to Date</Text>
+                  <Text style={styles.statLabel}>Next Due Date</Text>
+                  <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{activeDueDate}</Text>
                 </View>
               </View>
 
+              {/* Primary Pay Action */}
+              <TouchableOpacity
+                style={styles.primaryPayBtn}
+                onPress={() => router.push('/tenant-payments')}
+                activeOpacity={0.85}
+              >
+                <MaterialIcons name="payments" size={20} color="#ffffff" />
+                <Text style={styles.primaryPayBtnText}>Pay Rent • {activeRent}</Text>
+                <MaterialIcons name="arrow-forward" size={18} color="#ffffff" style={{ marginLeft: 'auto' }} />
+              </TouchableOpacity>
+
               {/* Quick Actions Bar */}
               <View style={styles.quickActionsRow}>
-                <TouchableOpacity style={styles.quickActionBtn} onPress={() => router.push('/tenant-payments')} activeOpacity={0.8}>
-                  <MaterialIcons name="account-balance-wallet" size={18} color={theme.Colors.primary} />
-                  <Text style={styles.quickActionText}>Payments</Text>
+                <TouchableOpacity style={styles.quickActionBtn} onPress={() => router.push('/tenant-payments')} activeOpacity={0.8} hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}>
+                  <MaterialIcons name="history" size={16} color={theme.Colors.primary} />
+                  <Text style={styles.quickActionText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>History</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.quickActionBtn} onPress={() => router.push('/tenant-property')} activeOpacity={0.8}>
-                  <MaterialIcons name="description" size={18} color={theme.Colors.primary} />
-                  <Text style={styles.quickActionText}>My Lease</Text>
+                <TouchableOpacity style={styles.quickActionBtn} onPress={() => router.push('/tenant-property')} activeOpacity={0.8} hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}>
+                  <MaterialIcons name="description" size={16} color={theme.Colors.primary} />
+                  <Text style={styles.quickActionText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>My Lease</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.quickActionBtn} onPress={() => router.push('/tenant-maintenance')} activeOpacity={0.8}>
-                  <MaterialIcons name="build" size={18} color={theme.Colors.primary} />
-                  <Text style={styles.quickActionText}>Maintenance</Text>
+                <TouchableOpacity style={styles.quickActionBtn} onPress={() => router.push('/tenant-maintenance')} activeOpacity={0.8} hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}>
+                  <MaterialIcons name="build" size={16} color={theme.Colors.primary} />
+                  <Text style={styles.quickActionText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>Maintenance</Text>
                 </TouchableOpacity>
               </View>
-            </BlurView>
+            </View>
 
-            {/* Maintenance Action Cyan Gradient Strip */}
+            {/* Maintenance Action Strip */}
             <TouchableOpacity onPress={() => router.push('/tenant-maintenance')} activeOpacity={0.88}>
-              <LinearGradient
-                colors={['#00e0ff', '#0070ea']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.actionStrip}
+              <View
+                style={[styles.actionStrip, { backgroundColor: theme.Colors.primary }]}
               >
                 <View style={styles.actionStripLeft}>
                   <View style={styles.actionStripIcon}>
@@ -178,13 +185,13 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
                   </View>
                 </View>
                 <View style={styles.actionStripBtn}>
-                  <Text style={styles.actionStripBtnText}>Log Issue</Text>
+                  <Text style={[styles.actionStripBtnText, { color: theme.Colors.primary }]}>Log Issue</Text>
                 </View>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
 
-            {/* Notice Board Glass Section */}
-            <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
+            {/* Notice Board Section */}
+            <View style={styles.glassCard}>
               <View style={styles.noticeHeaderRow}>
                 <View>
                   <Text style={styles.noticeSectionTitle}>Landlord Notice Board</Text>
@@ -223,7 +230,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
                   </TouchableOpacity>
                 ))
               )}
-            </BlurView>
+            </View>
         </>
       )}
 
@@ -277,82 +284,104 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   scrollContentDesktop: { paddingTop: theme.Spacing.xl, paddingHorizontal: theme.Spacing.xl },
   mobileScrollPadding: { paddingTop: theme.Spacing.xl * 2.2 },
   greetingHeader: { marginBottom: theme.Spacing.xs },
-  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 1.2, marginBottom: theme.Spacing.xs },
+  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: theme.Colors.primary, letterSpacing: 0.8, marginBottom: theme.Spacing.xs },
   greetingText: { ...theme.Typography.headlineMd, color: theme.Colors.onBackground },
   greetingSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
 
   glassCard: {
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 24,
     padding: 22,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)',
-    shadowColor: theme.Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: isDark ? 0.2 : 0.06,
-    shadowRadius: 20,
-    elevation: 4,
+    borderColor: theme.Colors.outlineVariant,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0.2 : 0.05,
+    shadowRadius: 8,
+    elevation: 2,
     overflow: 'hidden'
   },
   cardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
-  iconBox: { width: 50, height: 50, borderRadius: 14, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
-  propertyName: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  iconBox: { width: 50, height: 50, borderRadius: 14, backgroundColor: theme.Colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
+  propertyName: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onBackground },
   unitInfo: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
-  statusBadge: { backgroundColor: isDark ? 'rgba(0, 229, 255, 0.18)' : 'rgba(0, 104, 117, 0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  statusBadgeText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800', letterSpacing: 0.8 },
+  statusBadge: { backgroundColor: theme.Colors.surfaceContainerLow, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  statusBadgeText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', letterSpacing: 0.4 },
 
-  statsGrid: { flexDirection: 'row', gap: 14, marginBottom: 20 },
-  statBox: { flex: 1, backgroundColor: isDark ? 'rgba(27, 38, 51, 0.85)' : 'rgba(255, 255, 255, 0.7)', borderRadius: 16, padding: theme.Spacing.md, borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.9)' },
-  statLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
-  statSubLabel: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginLeft: 2 },
-  statValue: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
+  statsGrid: { flexDirection: 'row', gap: 12, marginBottom: 18, flexWrap: 'wrap' },
+  statBox: { flex: 1, minWidth: '47%', backgroundColor: theme.Colors.surfaceContainerLow, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: theme.Colors.outlineVariant },
+  statLabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.2, marginBottom: 4 },
+  statSubLabel: { fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant, marginLeft: 2 },
+  statValue: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '600', color: theme.Colors.primary, letterSpacing: -0.3 },
 
-  quickActionsRow: { flexDirection: 'row', gap: 10, paddingTop: theme.Spacing.md, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(186, 201, 204, 0.3)' },
-  quickActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: isDark ? 'rgba(27, 38, 51, 0.9)' : 'rgba(255, 255, 255, 0.8)', paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 104, 117, 0.15)' },
-  quickActionText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.primary },
+  primaryPayBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.Colors.primary,
+    minHeight: 48,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    gap: 10,
+    marginBottom: 12,
+    shadowColor: theme.Colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  primaryPayBtnText: {
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    fontWeight: '600',
+    color: '#ffffff',
+    letterSpacing: 0.2,
+  },
+  quickActionsRow: { flexDirection: 'row', gap: 8, paddingTop: 14, borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant, flexWrap: 'wrap' },
+  quickActionBtn: { flex: 1, minWidth: 85, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: theme.Colors.surfaceContainerLow, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 12, borderWidth: 1, borderColor: theme.Colors.outlineVariant },
+  quickActionText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', color: theme.Colors.primary },
 
-  actionStrip: { borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
+  actionStrip: { borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3 },
   actionStripLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   actionStripIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255, 255, 255, 0.25)', alignItems: 'center', justifyContent: 'center' },
-  actionStripTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: '#ffffff' },
+  actionStripTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600', color: '#ffffff' },
   actionStripSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: 'rgba(255, 255, 255, 0.9)', marginTop: 2 },
   actionStripBtn: { backgroundColor: '#ffffff', paddingHorizontal: theme.Spacing.md, paddingVertical: 10, borderRadius: 14 },
-  actionStripBtnText: { color: '#006875', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
+  actionStripBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
 
   noticeHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.md },
-  noticeSectionTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  noticeSectionTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onBackground },
   noticeSectionSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
-  emptyNoticeBox: { alignItems: 'center', paddingVertical: theme.Spacing.xl, paddingHorizontal: 20, borderRadius: 16, borderWidth: 2, borderColor: isDark ? 'rgba(0, 229, 255, 0.3)' : 'rgba(186, 201, 204, 0.4)', borderStyle: 'dashed', backgroundColor: isDark ? 'rgba(15, 23, 32, 0.6)' : 'rgba(255, 255, 255, 0.4)' },
-  emptyNoticeIconWrapper: { width: 56, height: 56, borderRadius: 28, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  emptyNoticeText: { fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onBackground, fontWeight: '700' },
+  emptyNoticeBox: { alignItems: 'center', paddingVertical: theme.Spacing.xl, paddingHorizontal: 20, borderRadius: 16, borderWidth: 1, borderColor: theme.Colors.outlineVariant, borderStyle: 'dashed', backgroundColor: theme.Colors.surfaceContainerLow },
+  emptyNoticeIconWrapper: { width: 56, height: 56, borderRadius: 28, backgroundColor: theme.Colors.surfaceContainer, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  emptyNoticeText: { fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onBackground, fontWeight: '600' },
   emptyNoticeSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
 
   noticeItem: { padding: theme.Spacing.md, borderRadius: 16, borderWidth: 1, marginBottom: 12 },
-  noticeItemRead: { backgroundColor: isDark ? 'rgba(19, 28, 38, 0.85)' : 'rgba(255, 255, 255, 0.7)', borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(186, 201, 204, 0.4)' },
-  noticeItemUnread: { backgroundColor: isDark ? '#141E2A' : theme.Colors.surfaceContainerLowest, borderColor: isDark ? 'rgba(0, 229, 255, 0.3)' : theme.Colors.primaryContainer, shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
+  noticeItemRead: { backgroundColor: theme.Colors.surfaceContainerLow, borderColor: theme.Colors.outlineVariant },
+  noticeItemUnread: { backgroundColor: theme.Colors.surfaceContainerLowest, borderColor: theme.Colors.primary, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   noticeItemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.sm },
   noticeBadge: { paddingHorizontal: theme.Spacing.sm, paddingVertical: theme.Spacing.xs, borderRadius: 6 },
-  noticeBadgeText: { color: '#ffffff', fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 0.5 },
+  noticeBadgeText: { color: '#ffffff', fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 0.3 },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.Colors.primary },
-  noticeTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onBackground, marginBottom: theme.Spacing.xs },
+  noticeTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600', color: theme.Colors.onBackground, marginBottom: theme.Spacing.xs },
   noticeSummary: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 20 },
   noticeDate: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.outline, marginTop: theme.Spacing.sm, textAlign: 'right' },
 
   criticalBanner: { backgroundColor: theme.Colors.error, borderRadius: 20, padding: theme.Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   criticalBannerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 },
-  criticalTitle: { color: '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800' },
+  criticalTitle: { color: '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600' },
   criticalText: { color: 'rgba(255, 255, 255, 0.95)', fontSize: theme.Typography.bodyMedium.fontSize, marginTop: 2 },
   criticalDismissBtn: { backgroundColor: 'rgba(255, 255, 255, 0.25)', paddingHorizontal: 14, paddingVertical: theme.Spacing.sm, borderRadius: 10 },
-  criticalDismissText: { color: '#ffffff', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
+  criticalDismissText: { color: '#ffffff', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.75)', justifyContent: 'center', padding: 20 },
-  modalContent: { backgroundColor: isDark ? '#131C26' : theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: theme.Spacing.lg, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
+  modalOverlay: { flex: 1, backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.45)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: theme.Spacing.lg, borderWidth: 1, borderColor: theme.Colors.outlineVariant, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.md },
-  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 6 },
+  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onBackground, marginBottom: 6 },
   modalMeta: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginBottom: theme.Spacing.md },
   modalBody: { fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 24 },
   modalCloseBtn: { backgroundColor: theme.Colors.primary, marginTop: 20, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
-  modalCloseBtnText: { color: isDark ? '#090D12' : '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
+  modalCloseBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600' }
 });
 
 

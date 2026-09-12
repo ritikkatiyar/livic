@@ -13,7 +13,6 @@ import {
   Alert
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { useRouter, usePathname, Href } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { Theme } from '@/src/theme/Theme';
@@ -23,9 +22,7 @@ interface MobileDrawerProps {
   onClose: () => void;
 }
 
-const DRAWER_WIDTH = Dimensions.get('window').width * 0.78;
-const MAX_DRAWER_WIDTH = 300;
-const actualWidth = Math.min(DRAWER_WIDTH, MAX_DRAWER_WIDTH);
+const actualWidth = 280;
 
 export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
   const { theme, isDark } = useAppTheme();
@@ -133,9 +130,7 @@ export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
       <View style={styles.overlay}>
         {/* Backdrop overlay */}
         <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFillObject} />
-          </Pressable>
+          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>
 
         {/* Slide-in Drawer Container */}
@@ -148,7 +143,6 @@ export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
             },
           ]}
         >
-          <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFillObject} />
           {/* Header Profile Section */}
           <View style={styles.drawerHeader}>
             <View style={styles.avatarCircle}>
@@ -204,12 +198,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.45)',
     zIndex: 1,
   },
   drawerContainer: {
     height: '100%',
-    backgroundColor: 'rgba(239, 244, 255, 0.45)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     shadowColor: 'black',
     shadowOffset: { width: 4, height: 0 },
     shadowOpacity: 0.12,
@@ -217,8 +211,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     elevation: 24,
     borderTopRightRadius: 16,
     borderBottomRightRadius: 16,
-    borderRightWidth: 1.5,
-    borderRightColor: 'rgba(255, 255, 255, 0.65)',
+    borderRightWidth: 1,
+    borderRightColor: theme.Colors.outlineVariant,
     overflow: 'hidden',
     zIndex: 2,
   },
@@ -226,27 +220,27 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 54,
     paddingBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.4)',
+    borderBottomColor: theme.Colors.outlineVariant,
   },
   avatarCircle: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(0, 102, 119, 0.08)',
+    backgroundColor: theme.Colors.primaryContainer,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 102, 119, 0.25)',
+    borderColor: theme.Colors.primary,
   },
   avatarText: {
-    color: 'black',
+    color: theme.Colors.primary,
     fontSize: theme.Typography.bodyLg.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   userInfo: {
     flex: 1,
@@ -254,7 +248,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   userName: {
     color: theme.Colors.onSurface,
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   userEmail: {
     color: theme.Colors.onSurfaceVariant,
@@ -265,15 +259,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: theme.Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderBottomColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   sectionTitle: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
-    color: 'black',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    fontWeight: '600',
+    color: theme.Colors.onSurfaceVariant,
+    letterSpacing: 0.2,
     marginBottom: 10,
   },
   roleToggleRow: {
@@ -304,8 +297,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'transparent',
   },
   linkItemActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
-    borderColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderColor: theme.Colors.outlineVariant,
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -319,15 +312,15 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginLeft: 12,
   },
   linkTextActive: {
-    color: 'black',
-    fontWeight: '800',
+    color: theme.Colors.primary,
+    fontWeight: '600',
   },
   drawerFooter: {
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderTopColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   logoutButton: {
     flexDirection: 'row',

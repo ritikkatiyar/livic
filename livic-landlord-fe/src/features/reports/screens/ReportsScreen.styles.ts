@@ -1,5 +1,4 @@
 import { StyleSheet, Platform } from 'react-native';
-import { SerifHeadlineFont } from '@/src/theme/Theme';
 
 export const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
@@ -20,17 +19,15 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginBottom: 20,
     },
     pageKicker: {
-      fontSize: 10,
-      fontWeight: '800',
-      letterSpacing: 1.2,
+      fontSize: theme.Typography.labelSmall.fontSize,
+      fontWeight: '600',
+      letterSpacing: 0.2,
       color: theme.Colors.primary,
-      textTransform: 'uppercase',
       marginBottom: 4,
     },
     pageTitle: {
-      fontFamily: SerifHeadlineFont,
-      fontSize: 28,
-      fontWeight: '800',
+      fontSize: theme.Typography.headlineMedium.fontSize,
+      fontWeight: '600',
       color: theme.Colors.onSurface,
       letterSpacing: -0.5,
       marginBottom: 4,
@@ -70,13 +67,13 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     kpiLabel: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       letterSpacing: 1.2,
       color: theme.Colors.onSurfaceVariant,
     },
     kpiValue: {
       fontSize: theme.Typography.headlineSmall.fontSize,
-      fontWeight: '900',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
       marginBottom: 4,
     },
@@ -101,17 +98,15 @@ export const createStyles = (theme: any, isDark: boolean) =>
       minWidth: 200,
     },
     kicker: {
-      fontSize: 10,
-      fontWeight: '800',
-      letterSpacing: 1.2,
+      fontSize: theme.Typography.labelSmall.fontSize,
+      fontWeight: '600',
+      letterSpacing: 0.2,
       color: theme.Colors.primary,
-      textTransform: 'uppercase',
       marginBottom: 3,
     },
     sectionTitle: {
-      fontFamily: SerifHeadlineFont,
-      fontSize: 24,
-      fontWeight: '800',
+      fontSize: theme.Typography.headlineMedium.fontSize,
+      fontWeight: '600',
       color: theme.Colors.onSurface,
       letterSpacing: -0.4,
     },
@@ -142,8 +137,8 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginHorizontal: 8,
     },
     monthLabel: {
-      fontSize: 13,
-      fontWeight: '700',
+      fontSize: theme.Typography.labelMedium.fontSize,
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     propertyTabsWrap: {
@@ -245,7 +240,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     statusChipText: {
       fontSize: theme.Typography.bodySmall.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.onSurfaceVariant,
     },
     statusChipTextActive: {
@@ -270,9 +265,9 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     headerCell: {
       fontSize: theme.Typography.bodySmall.fontSize,
-      fontWeight: '700',
-      color: theme.Colors.outline,
-      textTransform: 'uppercase',
+      fontWeight: '600',
+      color: theme.Colors.onSurfaceVariant,
+      letterSpacing: 0.2,
     },
     row: {
       flexDirection: 'row',
@@ -301,7 +296,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     tenantAvatarText: {
       color: theme.Colors.surfaceContainerLowest,
-      fontWeight: '800',
+      fontWeight: '600',
       fontSize: theme.Typography.bodyMedium.fontSize,
     },
     downloadBtn: {
@@ -317,7 +312,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     downloadBtnText: {
       fontSize: theme.Typography.bodySmall.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.primary,
     },
     mobileCard: {
@@ -336,7 +331,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     mobileTenantName: {
       fontSize: theme.Typography.bodyLarge.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     mobileCardDetail: {
@@ -365,7 +360,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     mobileAmount: {
       fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     paginationBar: {
@@ -419,7 +414,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     pageNumberText: {
       fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '700',
+      fontWeight: '600',
       color: theme.Colors.primary,
     },
     center: {

@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Theme } from '@/src/theme/Theme';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -42,7 +40,6 @@ export function PropertyCard({
   if (isDesktop) {
     return (
       <View style={[styles.propertyCard, styles.propertyCardDesktop]}>
-        <BlurView intensity={isDark ? 80 : 60} tint={isDark ? 'dark' : 'light'} style={[styles.cardBlurBackground, { backgroundColor: theme.Colors.glassFill }]} />
         <View style={styles.desktopCardRow}>
           {/* Left Side: 3D Building Preview */}
           <View style={styles.desktopCardLeft}>
@@ -68,7 +65,7 @@ export function PropertyCard({
                 <MaterialIcons name="3d-rotation" size={18} color={theme.Colors.primary} />
               </TouchableOpacity>
               
-              <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: theme.Colors.errorContainer }]}>
+              <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: 'rgba(186, 26, 26, 0.25)' }]}>
                 <Text style={[styles.statusPillText, item.isActive === false && { color: theme.Colors.error }]}>
                   {item.isActive === false ? 'INACTIVE' : 'ACTIVE'}
                 </Text>
@@ -84,9 +81,9 @@ export function PropertyCard({
             </View>
           </View>
 
-          {/* Right Side: Info, Metrics, Actions */}
+          {/* Right Side: Property Details & Actions */}
           <View style={styles.desktopCardRight}>
-            <View style={styles.propertyInfo}>
+            <View>
               <Text style={styles.propertyName}>{item.name}</Text>
               <View style={styles.addressContainer}>
                 <MaterialIcons name="location-on" size={14} color={theme.Colors.onSurfaceVariant} />
@@ -95,15 +92,15 @@ export function PropertyCard({
             </View>
 
             <View style={styles.desktopMetricsContainer}>
-              <BlurView intensity={isDark ? 70 : 65} tint={isDark ? 'dark' : 'light'} style={[styles.desktopMetricRow, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'transparent' }]}>
+              <View style={styles.desktopMetricRow}>
                 <Text style={styles.propertyMetricLabel}>STATUS</Text>
                 <Text style={[styles.desktopMetricValue, styles.propertyMetricAccent]}>READY</Text>
-              </BlurView>
-              <BlurView intensity={isDark ? 70 : 65} tint={isDark ? 'dark' : 'light'} style={[styles.desktopMetricRow, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'transparent' }]}>
+              </View>
+              <View style={styles.desktopMetricRow}>
                 <Text style={styles.propertyMetricLabel}>FLOORS</Text>
                 <Text style={styles.desktopMetricValue}>{item.totalFloors ?? '-'}</Text>
-              </BlurView>
-              <BlurView intensity={isDark ? 70 : 65} tint={isDark ? 'dark' : 'light'} style={[styles.desktopMetricRow, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : 'transparent' }]}>
+              </View>
+              <View style={styles.desktopMetricRow}>
                 <Text style={styles.propertyMetricLabel}>PROPERTY LIFE CYCLE</Text>
                 <TouchableOpacity
                   onPress={async () => {
@@ -118,7 +115,7 @@ export function PropertyCard({
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.desktopMetricValue, { color: item.isActive === false ? theme.Colors.error : theme.Colors.primary, fontWeight: '800' }]}>
+                  <Text style={[styles.desktopMetricValue, { color: item.isActive === false ? theme.Colors.error : theme.Colors.primary, fontWeight: '600' }]}>
                     {item.isActive === false ? 'DEACTIVATED' : 'ACTIVE'}
                   </Text>
                   <MaterialIcons 
@@ -127,7 +124,7 @@ export function PropertyCard({
                     color={item.isActive === false ? theme.Colors.outlineVariant : theme.Colors.primary} 
                   />
                 </TouchableOpacity>
-              </BlurView>
+              </View>
             </View>
 
             <View style={styles.desktopCardActions}>
@@ -155,7 +152,6 @@ export function PropertyCard({
 
   return (
     <View style={[styles.propertyCard, item.isActive === false && { opacity: 0.85 }]}>
-      <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.cardBlurBackground} />
       <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerMobile, item.isActive === false && { opacity: 0.65 }]}>
         <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           {accessToken && (
@@ -224,14 +220,18 @@ export function PropertyCard({
       </View>
 
       <View style={[styles.propertyMetrics, styles.propertyMetricsMobile]}>
-        <BlurView intensity={65} tint={isDark ? "dark" : "light"} style={styles.propertyMetric}>
+        <View style={styles.propertyMetric}>
           <Text style={styles.propertyMetricLabel}>FLOORS</Text>
-          <Text style={styles.propertyMetricValue}>{item.totalFloors ?? '-'}</Text>
-        </BlurView>
-        <BlurView intensity={65} tint={isDark ? "dark" : "light"} style={styles.propertyMetric}>
+          <Text style={styles.propertyMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            {item.totalFloors ?? '-'}
+          </Text>
+        </View>
+        <View style={styles.propertyMetric}>
           <Text style={styles.propertyMetricLabel}>STATUS</Text>
-          <Text style={[styles.propertyMetricValue, styles.propertyMetricAccent]}>READY</Text>
-        </BlurView>
+          <Text style={[styles.propertyMetricValue, styles.propertyMetricAccent]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            READY
+          </Text>
+        </View>
       </View>
       
       <View style={{ gap: 10, marginTop: 14 }}>
@@ -259,24 +259,22 @@ export function PropertyCard({
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   propertyCard: {
-    borderRadius: 24,
+    borderRadius: theme.Rounded.xl,
     padding: theme.Spacing.lg,
     overflow: 'visible',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
     shadowColor: 'black',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowRadius: 12,
+    elevation: 2,
     position: 'relative',
     zIndex: 1,
   },
   cardBlurBackground: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 24,
-    overflow: 'hidden',
-    backgroundColor: theme.Colors.glassFill,
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
+    display: 'none',
   },
   propertyCardDesktop: {
     minHeight: 280,
@@ -335,9 +333,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   statusPillText: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
-    fontFamily: 'Inter',
   },
   deleteButtonOverlay: {
     position: 'absolute',
@@ -353,9 +350,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   propertyName: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onBackground,
-    fontFamily: 'Inter',
   },
   addressContainer: {
     flexDirection: 'row',
@@ -366,7 +362,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
-    fontFamily: 'Inter',
   },
   desktopMetricsContainer: {
     gap: 10,
@@ -377,28 +372,26 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: theme.Spacing.md,
-    borderRadius: 12,
-    backgroundColor: theme.Colors.glassFill,
+    borderRadius: theme.Rounded.md,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.outline,
     overflow: 'hidden',
   },
   propertyMetricLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.5,
-    fontFamily: 'Inter',
   },
   desktopMetricValue: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onBackground,
-    fontFamily: 'Inter',
   },
   propertyMetricAccent: {
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   desktopCardActions: {
     flexDirection: 'row',
@@ -424,8 +417,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   manageButtonText: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
-    fontFamily: 'Inter',
+    fontWeight: '600',
   },
   broadcastButtonWrapper: {
     borderRadius: 16,
@@ -450,8 +442,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   broadcastButtonText: {
     color: theme.Colors.primary,
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
-    fontFamily: 'Inter',
+    fontWeight: '600',
   },
   propertyHeaderRow: {
     marginTop: theme.Spacing.md,
@@ -459,25 +450,26 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   propertyHeaderRowMobile: {},
   propertyMetrics: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     marginTop: 14,
   },
   propertyMetricsMobile: {},
   propertyMetric: {
     flex: 1,
+    minWidth: 100,
     paddingVertical: 12,
-    borderRadius: 14,
-    backgroundColor: theme.Colors.glassFill,
+    borderRadius: 12,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.outline,
     alignItems: 'center',
     overflow: 'hidden',
   },
   propertyMetricValue: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onBackground,
     marginTop: theme.Spacing.xs,
-    fontFamily: 'Inter',
   },
 });

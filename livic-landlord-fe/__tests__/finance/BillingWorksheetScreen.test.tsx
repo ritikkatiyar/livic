@@ -56,6 +56,6 @@ describe('BillingWorksheetScreen Component', () => {
         <BillingWorksheetScreen token="token" />
       </QueryClientProvider>
     );
-    expect(getByText('Worksheets')).toBeTruthy();
+    expect(getByText(/Worksheets/i)).toBeTruthy();
   }, 30000);
 });

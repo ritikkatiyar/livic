@@ -67,29 +67,46 @@ export function StatCard({
     }
   };
 
+  const iconSize = isMobile ? 16 : 18;
+  const trendIconSize = isMobile ? 13 : 15;
+
+  const adaptiveFontSize = React.useMemo(() => {
+    const str = String(value ?? '');
+    const len = str.length;
+    if (isMobile) {
+      if (len > 12) return 14;
+      if (len > 9) return 16;
+      if (len > 6) return 18;
+      return 20;
+    }
+    if (len > 14) return 18;
+    if (len > 10) return 21;
+    return theme.Typography.headlineMedium.fontSize;
+  }, [value, isMobile, theme]);
+
   return (
-    <GlassCard style={[styles.card, style]}>
+    <GlassCard style={[styles.card, style]} contentStyle={styles.cardContent}>
       <View style={styles.header}>
-        <Text style={styles.label} numberOfLines={1}>
+        <Text style={styles.label} numberOfLines={2}>
           {label}
         </Text>
         {iconName && (
           <View style={[styles.iconContainer, { backgroundColor: activeIconBg }]}>
-            <MaterialIcons name={iconName} size={18} color={activeIconColor} />
+            <MaterialIcons name={iconName} size={iconSize} color={activeIconColor} />
           </View>
         )}
       </View>
 
       {loading ? (
         <View style={styles.skeletonContainer}>
-          <SkeletonRow style={{ width: 70, height: 24 }} />
+          <SkeletonRow style={{ width: isMobile ? 60 : 70, height: isMobile ? 20 : 24 }} />
         </View>
       ) : (
         <Text
-          style={[styles.value, { color: activeValueColor }, valueStyle]}
+          style={[styles.value, { color: activeValueColor, fontSize: adaptiveFontSize }, valueStyle]}
           numberOfLines={1}
           adjustsFontSizeToFit
-          minimumFontScale={0.7}
+          minimumFontScale={0.65}
         >
           {value}
         </Text>
@@ -97,14 +114,14 @@ export function StatCard({
 
       {trend && !loading && (
         <View style={styles.trendRow}>
-          <MaterialIcons name={getTrendIcon()} size={15} color={getTrendColor()} style={styles.trendIcon} />
-          <Text style={[styles.trendText, { color: getTrendColor() }]}>
+          <MaterialIcons name={getTrendIcon()} size={trendIconSize} color={getTrendColor()} style={styles.trendIcon} />
+          <Text style={[styles.trendText, { color: getTrendColor() }]} numberOfLines={2}>
             {trend}
           </Text>
         </View>
       )}
       {helperText && !trend && !loading && (
-        <Text style={styles.helperText} numberOfLines={1}>
+        <Text style={styles.helperText} numberOfLines={2}>
           {helperText}
         </Text>
       )}
@@ -115,58 +132,63 @@ export function StatCard({
 const createStyles = (theme: any, isDark: boolean, isMobile: boolean) => StyleSheet.create({
   card: {
     flex: 1,
-    minWidth: isMobile ? '46%' : 150,
-    borderRadius: theme.Rounded.lg,
-    padding: theme.Spacing.md,
+    minWidth: isMobile ? '47%' : 150,
+    flexBasis: isMobile ? '47%' : 150,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  cardContent: {
+    padding: isMobile ? 12 : 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: theme.Spacing.xs,
+    marginBottom: isMobile ? 4 : theme.Spacing.xs,
   },
   label: {
-    fontSize: theme.Typography.labelSmall.fontSize,
+    fontSize: isMobile ? 11 : theme.Typography.labelSmall.fontSize,
     fontWeight: '500',
     color: theme.Colors.onSurfaceVariant,
     flex: 1,
     marginRight: theme.Spacing.xs,
+    letterSpacing: 0.2,
   },
   iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: theme.Rounded.md,
+    width: isMobile ? 30 : 34,
+    height: isMobile ? 30 : 34,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   value: {
-    fontSize: theme.Typography.headlineMedium.fontSize,
-    fontWeight: '800',
+    fontSize: isMobile ? 20 : theme.Typography.headlineMedium.fontSize,
+    fontWeight: '600',
     color: theme.Colors.onSurface,
-    letterSpacing: -0.5,
-    marginVertical: theme.Spacing.xs,
+    letterSpacing: -0.4,
+    marginVertical: isMobile ? 2 : theme.Spacing.xs,
   },
   skeletonContainer: {
-    marginVertical: theme.Spacing.xs,
-    height: 32,
+    marginVertical: isMobile ? 2 : theme.Spacing.xs,
+    height: isMobile ? 24 : 32,
     justifyContent: 'center',
   },
   trendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.Spacing.xs,
+    marginTop: isMobile ? 2 : theme.Spacing.xs,
   },
   trendIcon: {
     marginRight: 4,
   },
   trendText: {
-    fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '600',
+    fontSize: isMobile ? 10 : theme.Typography.labelSmall.fontSize,
+    fontWeight: '500',
   },
   helperText: {
-    fontSize: theme.Typography.labelSmall.fontSize,
+    fontSize: isMobile ? 10 : theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
-    marginTop: theme.Spacing.xs,
-    fontWeight: '500',
+    marginTop: isMobile ? 2 : theme.Spacing.xs,
+    fontWeight: '400',
   },
 });

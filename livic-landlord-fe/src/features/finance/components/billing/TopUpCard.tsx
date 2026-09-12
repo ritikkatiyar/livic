@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface TopUpCardProps {
@@ -24,7 +22,7 @@ export function TopUpCard({
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
-    <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.topUpCard}>
+    <View style={styles.topUpCard}>
       <Text style={styles.calculatorTitle}>METERED CREDIT WALLET TOP-UP</Text>
       <Text style={styles.calculatorSub}>Out-of-bundle credit purchases (never expire):</Text>
 
@@ -59,33 +57,28 @@ export function TopUpCard({
         {isTopUpProcessing ? (
           <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
         ) : (
-          <LinearGradient
-            colors={[theme.Colors.primaryContainer, theme.Colors.secondaryContainer]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.topUpSubmitGradient}
-          >
+          <View style={styles.topUpSubmitGradient}>
             <Ionicons name="shield-checkmark" size={18} color={theme.Colors.surfaceContainerLowest} />
             <Text style={styles.topUpSubmitText}>PROCEED TO PAYMENT</Text>
-          </LinearGradient>
+          </View>
         )}
       </TouchableOpacity>
-    </BlurView>
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   topUpCard: {
-    borderRadius: 24,
+    borderRadius: 16,
     padding: theme.Spacing.lg,
     marginVertical: 15,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineVariant,
   },
   calculatorTitle: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
     marginBottom: theme.Spacing.xs,
@@ -140,7 +133,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   presetBtnActive: {
     borderColor: theme.Colors.primary,
-    backgroundColor: theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
   presetText: {
     fontSize: theme.Typography.bodySmall.fontSize,
@@ -151,7 +144,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.primary,
   },
   topUpSubmit: {
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   topUpSubmitGradient: {
@@ -160,11 +153,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     gap: theme.Spacing.sm,
+    backgroundColor: theme.Colors.primary,
   },
   topUpSubmitText: {
-    color: theme.Colors.onPrimary,
+    color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.buttonText.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1,
   },
 });

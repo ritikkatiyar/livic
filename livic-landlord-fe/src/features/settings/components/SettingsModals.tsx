@@ -10,8 +10,6 @@ import {
   View,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 
 import { MembershipResponse } from '@/src/features/properties/api/membership.api';
 
@@ -58,7 +56,6 @@ export function PermissionsMatrixModal({
   return (
     <Modal visible={selectedMember !== null} animationType="fade" transparent>
       <View style={styles.modalOverlay}>
-        <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
         <View style={styles.modalCard}>
           <View style={styles.modalHeader}>
             <View>
@@ -79,7 +76,7 @@ export function PermissionsMatrixModal({
               }, {} as Record<string, typeof ALL_PERMISSIONS>)
             ).map(([category, items]) => (
               <View key={category} style={styles.categoryBlock}>
-                <Text style={styles.categoryHeading}>{category.toUpperCase()}</Text>
+                <Text style={styles.categoryHeading}>{category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()}</Text>
                 {items.map((item) => {
                   const isChecked = editingPermissions.includes(item.code);
                   const isDelegatable = canDelegatePermission(item.code);
@@ -134,10 +131,7 @@ export function PermissionsMatrixModal({
               disabled={savingPermissions}
               activeOpacity={0.8}
             >
-              <LinearGradient
-                colors={[theme.Colors.primary, theme.Colors.secondary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+              <View
                 style={styles.modalBtnGradient}
               >
                 {savingPermissions ? (
@@ -145,7 +139,7 @@ export function PermissionsMatrixModal({
                 ) : (
                   <Text style={styles.modalBtnText}>SAVE CHANGES</Text>
                 )}
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -182,7 +176,6 @@ export function EditMemberDetailsModal({
   return (
     <Modal visible={editDetailsMember !== null} animationType="fade" transparent>
       <View style={styles.modalOverlay}>
-        <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
         <View style={[styles.modalCard, { maxHeight: 420 }]}>
           <View style={styles.modalHeader}>
             <View>
@@ -230,10 +223,7 @@ export function EditMemberDetailsModal({
               disabled={savingMemberDetails}
               activeOpacity={0.8}
             >
-              <LinearGradient
-                colors={[theme.Colors.primary, theme.Colors.secondary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+              <View
                 style={styles.modalBtnGradient}
               >
                 {savingMemberDetails ? (
@@ -241,7 +231,7 @@ export function EditMemberDetailsModal({
                 ) : (
                   <Text style={styles.modalBtnText}>SAVE CHANGES</Text>
                 )}
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -258,7 +248,7 @@ type GenerateInviteCodeModalProps = {
   inviteMaxUses: string;
   inviteModalVisible: boolean;
   handleGenerateInvite: () => void;
-  handleToggleInvitePerm: (code: string) => void;
+  handleToggleInvitePerm: (permCode: string) => void;
   setInviteTitle: (title: string) => void;
   setInviteAccessType: (accessType: 'FULL_ACCESS' | 'CUSTOM_ACCESS') => void;
   setInviteMaxUses: (maxUses: string) => void;
@@ -286,7 +276,6 @@ export function GenerateInviteCodeModal({
   return (
     <Modal visible={inviteModalVisible} animationType="fade" transparent>
       <View style={styles.modalOverlay}>
-        <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
         <View style={[styles.modalCard, { maxHeight: 600 }]}>
           <View style={styles.modalHeader}>
             <View>
@@ -371,10 +360,7 @@ export function GenerateInviteCodeModal({
               disabled={generatingInvite || !inviteTitle.trim()}
               activeOpacity={0.8}
             >
-              <LinearGradient
-                colors={[theme.Colors.primary, theme.Colors.secondary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+              <View
                 style={styles.modalBtnGradient}
               >
                 {generatingInvite ? (
@@ -382,7 +368,7 @@ export function GenerateInviteCodeModal({
                 ) : (
                   <Text style={styles.modalBtnText}>GENERATE & COPY CODE</Text>
                 )}
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
           </ScrollView>
         </View>

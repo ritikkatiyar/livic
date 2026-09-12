@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, View, Text, Modal, Pressable } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { GlassCard } from '../display/GlassCard';
 import { ActionButton } from '../inputs/ActionButton';
@@ -39,9 +38,12 @@ export function ConfirmDialog({
       onRequestClose={onCancel}
     >
       <View style={styles.backdrop}>
-        <BlurView intensity={30} tint="dark" style={styles.blurBackdrop}>
-          <Pressable style={styles.dismissPressable} onPress={onCancel} />
-        </BlurView>
+        <Pressable 
+          style={styles.dismissPressable} 
+          onPress={onCancel}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss dialog"
+        />
         <View style={styles.contentContainer}>
           <GlassCard style={styles.card}>
             <Text style={styles.title}>{title}</Text>
@@ -75,12 +77,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: theme.Spacing.containerPadding,
-  },
-  blurBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.45)',
   },
   dismissPressable: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
   },
   contentContainer: {
     width: '100%',

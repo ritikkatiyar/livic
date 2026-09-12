@@ -36,6 +36,10 @@ jest.mock('@/src/features/tenant/api/payments.api', () => ({
   fetchStatementHtml: jest.fn(() => Promise.resolve('<html></html>')),
 }));
 
+jest.mock('@/src/features/tenant/api/lease.api', () => ({
+  getActiveLease: jest.fn(() => Promise.resolve(null)),
+}));
+
 jest.setTimeout(30000);
 
 describe('TenantPaymentsScreen Component', () => {

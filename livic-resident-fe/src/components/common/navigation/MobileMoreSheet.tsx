@@ -11,7 +11,6 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { useRouter, usePathname } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -120,9 +119,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
   return (
     <Modal animationType="none" transparent visible={visible} onRequestClose={closeSheet}>
       <View style={styles.overlay}>
-        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={closeSheet}>
-          <BlurView intensity={isDark ? 80 : 60} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
-        </TouchableOpacity>
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={closeSheet} />
 
         <Animated.View
           style={[
@@ -192,19 +189,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.4)',
   },
   sheetContainer: {
-    backgroundColor: theme.Surface.card,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
     maxHeight: '85%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     shadowColor: 'black',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.08,
     shadowRadius: 16,
-    elevation: 10,
+    elevation: 8,
     overflow: 'hidden',
   },
   dragHandleArea: {
@@ -226,7 +227,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.lg,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: theme.Colors.surfaceVariant,
+    borderBottomColor: theme.Colors.outlineVariant,
   },
   profileRow: {
     flexDirection: 'row',
@@ -243,7 +244,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   avatarText: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
   },
   profileInfo: {
@@ -251,7 +252,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   profileName: {
     fontSize: theme.Typography.bodyLg.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   profileRole: {
@@ -303,7 +304,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   cardTitleActive: {
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   cardSubtitle: {
     fontSize: theme.Typography.labelSmall.fontSize,

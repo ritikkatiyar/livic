@@ -8,8 +8,6 @@ import {
   Platform,
 } from 'react-native';
 
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
@@ -18,6 +16,7 @@ import Building3DView from '@/src/features/properties/components/Building3DView'
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useEditProperty } from '@/src/features/properties/hooks/useEditProperty';
+import { MediaUploadGrid } from '@/src/components/common/display/MediaUploadGrid';
 import { createStyles } from './EditPropertyScreen.styles';
 
 const UNIT_TYPE_OPTIONS = [
@@ -231,7 +230,7 @@ export default function EditPropertyScreen({
                   size={16}
                   color={isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant}
                 />
-                <Text style={[styles.amenityChipText, isSelected && styles.amenityChipTextSelected, { fontSize: 13 }]}>
+                <Text style={[styles.amenityChipText, isSelected && styles.amenityChipTextSelected, { fontSize: theme.Typography.bodySmall.fontSize }]}>
                   {preset.label}
                 </Text>
               </TouchableOpacity>
@@ -239,14 +238,14 @@ export default function EditPropertyScreen({
           })}
         </View>
 
-        <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 4 }}>
+        <Text style={{ fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4 }}>
           Day of the month when monthly rent cycle drafts are automatically generated for active leases.
         </Text>
       </View>
 
       {/* Property Amenities Selector */}
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>PROPERTY AMENITIES</Text>
+        <Text style={styles.label}>Property Amenities</Text>
         <View style={styles.amenitiesContainer}>
           {[
             'High-speed Fiber Wi-Fi',
@@ -282,9 +281,21 @@ export default function EditPropertyScreen({
         </View>
       </View>
 
+      {/* Property Photos Section */}
+      <View style={styles.inputGroup}>
+        <MediaUploadGrid
+          ownerModule="PROPERTY"
+          referenceId={propertyId}
+          userToken={userToken}
+          maxFiles={12}
+          label="Property Photos"
+          helperText="Upload exterior, lobby, or unit photos to showcase your property."
+        />
+      </View>
+
       {showSave && (
         <ActionButton
-          label="SAVE CHANGES"
+          label="Save Changes"
           icon="check"
           iconPosition="right"
           variant="primary"
@@ -301,7 +312,7 @@ export default function EditPropertyScreen({
 
   const renderConfigCardContent = () => (
     <>
-      <Text style={styles.sectionTitle}>STRUCTURE & UNITS</Text>
+      <Text style={styles.sectionTitle}>Structure & Units</Text>
       <TouchableOpacity style={styles.configButton} activeOpacity={0.7} onPress={onConfigureFloors}>
         <View style={styles.configIconWrapper}>
           <MaterialIcons name="layers" size={24} color={theme.Colors.primary} />
@@ -350,41 +361,34 @@ export default function EditPropertyScreen({
             </View>
 
             <TouchableOpacity
-              style={[styles.desktopSaveButtonWrapper, saving && { opacity: 0.8 }]}
+              style={[styles.desktopSaveButton, saving && { opacity: 0.8 }]}
               onPress={handleUpdate}
               disabled={saving}
               activeOpacity={0.85}
             >
-              <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.desktopSaveButton}
-              >
-                {saving ? (
-                  <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
-                ) : (
-                  <>
-                    <Text style={styles.desktopSaveButtonText}>SAVE CHANGES</Text>
-                    <MaterialIcons name="check" size={20} color={theme.Colors.surfaceContainerLowest} />
-                  </>
-                )}
-              </LinearGradient>
+              {saving ? (
+                <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
+              ) : (
+                <>
+                  <Text style={styles.desktopSaveButtonText}>Save Changes</Text>
+                  <MaterialIcons name="check" size={20} color={theme.Colors.surfaceContainerLowest} />
+                </>
+              )}
             </TouchableOpacity>
           </View>
 
           <View style={styles.desktopFormContainer}>
             <View style={styles.desktopFormLeft}>
-              <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+              <View style={styles.card}>
                 {renderFormFieldsContent(false)}
                 <View style={styles.divider} />
                 {renderConfigCardContent()}
-              </BlurView>
+              </View>
             </View>
 
             <View style={styles.desktopFormRight}>
-              <BlurView intensity={50} tint={isDark ? 'dark' : 'light'} style={styles.desktop3DPreviewCard}>
-                <Text style={styles.desktopPreviewLabel}>3D ISOMETRIC PREVIEW</Text>
+              <View style={styles.desktop3DPreviewCard}>
+                <Text style={styles.desktopPreviewLabel}>3D Isometric Preview</Text>
 
                 <View style={styles.desktop3DContainer}>
                   <Building3DView
@@ -408,17 +412,17 @@ export default function EditPropertyScreen({
                     {address ? `${address}, ${city}` : 'No Address Specified'}
                   </Text>
                 </View>
-              </BlurView>
+              </View>
             </View>
           </View>
         </View>
       ) : (
         <View style={styles.container}>
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+          <View style={styles.card}>
             {renderFormFieldsContent(true)}
             <View style={styles.divider} />
             {renderConfigCardContent()}
-          </BlurView>
+          </View>
         </View>
       )}
     </PageShell>

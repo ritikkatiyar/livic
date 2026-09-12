@@ -7,13 +7,11 @@ import {
   Animated, 
   TouchableOpacity,
   ScrollView,
-  TextInput
+  TextInput,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
@@ -76,9 +74,15 @@ export default function LedgerScreen({ token }: { token: string | null }) {
   useEffect(() => {
     if (ledger && ledger.length > 0) {
       setAccumulatedLedger(prev => {
-        if (page === 0) return ledger;
+        if (page === 0) {
+          if (prev.length === ledger.length && prev.every((item: any, idx: number) => item.id === ledger[idx]?.id)) {
+            return prev;
+          }
+          return ledger;
+        }
         const existingIds = new Set(prev.map((i: any) => i.id));
         const newItems = ledger.filter((i: any) => !existingIds.has(i.id));
+        if (newItems.length === 0) return prev;
         return [...prev, ...newItems];
       });
     }
@@ -120,15 +124,10 @@ export default function LedgerScreen({ token }: { token: string | null }) {
 
   const renderGlassyHeader = () => (
     <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-      <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
       <View style={styles.headerContent}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-        </TouchableOpacity>
         <View style={styles.titleWrapper}>
           <Text style={styles.compactTitleText}>Finance Ledger</Text>
         </View>
-        <View style={{ width: 36 }} />
       </View>
     </View>
   );
@@ -309,9 +308,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 999,
-    borderBottomWidth: 1.5,
-    borderBottomColor: theme.Colors.glassFill,
-    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   headerContent: {
     height: 56,
@@ -324,9 +323,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.glassFill,
+    borderColor: theme.Colors.outline,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -334,8 +333,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   compactTitleText: {
     color: theme.Colors.onSurface,
     fontSize: theme.Typography.bodyLarge.fontSize,
-    fontFamily: 'Inter',
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   desktopScroll: { paddingVertical: theme.Spacing.lg, paddingHorizontal: 40, alignItems: 'center' },
@@ -370,9 +368,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    backgroundColor: theme.Colors.glassFill,
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -383,39 +381,46 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   filterLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   dateInput: {
     width: 110,
-    height: 38,
-    borderRadius: 10,
+    minHeight: 44,
+    borderRadius: 22,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
     color: theme.Colors.onSurface,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
     textAlign: 'center',
   },
   filterButtonsRow: { flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.sm },
   filterButton: {
-    paddingVertical: theme.Spacing.sm,
-    paddingHorizontal: theme.Spacing.md,
-    borderRadius: 10,
+    minHeight: 44,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 22,
     backgroundColor: theme.Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   filterButtonText: {
     color: theme.Surface.card,
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   clearFilterButton: {
+    minWidth: 44,
+    minHeight: 44,
     padding: theme.Spacing.sm,
-    borderRadius: 10,
+    borderRadius: 22,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   paginationRow: {
     flexDirection: 'row',
@@ -425,19 +430,19 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: 20,
   },
   pageButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.Colors.glassFill,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outline,
     justifyContent: 'center',
     alignItems: 'center',
   },
   pageButtonDisabled: { opacity: 0.5 },
   pageText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   desktopHeaderRow: {
@@ -449,7 +454,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   largeTitleContainer: { flex: 1 },
   titleLineDesktop: {
     fontSize: theme.Typography.headlineLg.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
   },
   desktopSubtitle: {

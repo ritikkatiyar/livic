@@ -10,7 +10,6 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
@@ -156,7 +155,7 @@ export default function QRScannerModal({ visible, onClose }: QRScannerModalProps
           )
         )}
 
-        <BlurView intensity={Platform.OS === 'ios' ? 40 : 60} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.4)' }]} />
 
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Scan QR Code</Text>
@@ -355,12 +354,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     gap: theme.Spacing.sm,
     marginTop: theme.Spacing.md,
-    backgroundColor: 'rgba(0, 216, 246, 0.2)',
+    backgroundColor: theme.Colors.primary,
     paddingVertical: 10,
     paddingHorizontal: theme.Spacing.md,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 216, 246, 0.4)',
   },
   retryCameraText: {
     color: theme.Colors.surfaceContainerLowest,
@@ -373,11 +370,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 12,
   },
   shortcutTitle: {
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(255, 255, 255, 0.6)',
     fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.2,
   },
   shortcutRow: {
     flexDirection: 'row',

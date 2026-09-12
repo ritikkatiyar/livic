@@ -58,9 +58,7 @@ export function StatusPill({ status, style }: StatusPillProps) {
   };
 
   const formatStatus = (val: string) => {
-    const raw = (val || '').trim().replace(/_/g, ' ');
-    if (!raw) return '';
-    return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+    return (val || '').trim().replace(/_/g, ' ').toUpperCase();
   };
 
   const { bg, text, border } = getStatusStyles();
@@ -86,7 +84,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   text: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '600',
-    fontFamily: 'Inter',
+    fontWeight: '500',
+    fontFamily: theme.Typography.labelSmall.fontFamily,
   },
 });

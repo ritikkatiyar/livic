@@ -3,6 +3,8 @@ import { Animated, ScrollView } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { createProperty } from '@/src/features/properties/api/property.api';
 import { generateBatchUnits } from '@/src/features/properties/api/unit.api';
+import { uploadAndConfirmMedia } from '@/src/features/storage/api/media.api';
+import { StagedMediaItem } from '@/src/components/common/display/MediaUploadGrid';
 
 interface UseCreatePropertyProps {
   userToken: string;
@@ -18,6 +20,7 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
   const [autoBillDayOfMonth, setAutoBillDayOfMonth] = useState('1');
   const [globalUnitsPerFloor, setGlobalUnitsPerFloor] = useState('');
   const [globalUnitType, setGlobalUnitType] = useState('SINGLE_UNIT');
+  const [stagedPhotos, setStagedPhotos] = useState<StagedMediaItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showErrors, setShowErrors] = useState(false);
@@ -105,6 +108,24 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
         }, userToken);
       }
 
+      if (stagedPhotos.length > 0) {
+        for (const photo of stagedPhotos) {
+          try {
+            await uploadAndConfirmMedia(
+              photo,
+              {
+                ownerModule: 'PROPERTY',
+                referenceId: property.id,
+                fileType: 'IMAGE',
+              },
+              userToken
+            );
+          } catch (uploadErr) {
+            console.warn('Failed to upload photo during property creation:', uploadErr);
+          }
+        }
+      }
+
       if (onSaveAndConfigure) {
         onSaveAndConfigure(property.id, parseInt(totalFloors, 10));
       }
@@ -133,6 +154,8 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
     setGlobalUnitsPerFloor,
     globalUnitType,
     setGlobalUnitType,
+    stagedPhotos,
+    setStagedPhotos,
     selectedAmenities,
     toggleAmenity,
     loading,

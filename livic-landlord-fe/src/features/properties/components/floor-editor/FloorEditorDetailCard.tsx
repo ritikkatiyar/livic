@@ -3,6 +3,9 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { TenantDetailsCard } from './TenantDetailsCard';
+import { MediaUploadGrid } from '@/src/components/common/display/MediaUploadGrid';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 
 interface UnitBlock {
   id: string; 
@@ -20,6 +23,7 @@ interface UnitBlock {
   capacity?: number;
   activeLeases?: any[];
   type?: string;
+  photos?: any[];
 }
 
 interface FloorEditorDetailCardProps {
@@ -31,6 +35,8 @@ interface FloorEditorDetailCardProps {
   onRemoveTenant: (leaseId: string, tenantName?: string | null) => void;
   onClose: () => void;
   tenantAssignProps: any;
+  propertyId?: string;
+  userToken?: string;
 }
 
 export function FloorEditorDetailCard({
@@ -41,10 +47,18 @@ export function FloorEditorDetailCard({
   updateUnitDetails,
   onRemoveTenant,
   onClose,
-  tenantAssignProps
+  tenantAssignProps,
+  propertyId,
+  userToken,
 }: FloorEditorDetailCardProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
+  const { accessToken } = useAuth();
+  const { selectedPropertyId } = useGlobalPropertySelection();
+
+  const effectiveToken = userToken || accessToken || '';
+  const effectivePropertyId = propertyId || selectedPropertyId || '';
 
   return (
     <View style={{ flex: 1 }}>
@@ -56,6 +70,8 @@ export function FloorEditorDetailCard({
         <TouchableOpacity 
           onPress={onClose}
           style={styles.closeButton}
+          accessibilityRole="button"
+          accessibilityLabel="Close unit details"
         >
           <MaterialIcons name="close" size={20} color={theme.Colors.onSurfaceVariant} />
         </TouchableOpacity>
@@ -104,6 +120,22 @@ export function FloorEditorDetailCard({
               <Text style={styles.statusLockedText}>Status synced with active lease</Text>
             </View>
           )}
+
+          {/* Unit / Room Photo Upload Section */}
+          <View style={styles.photosSection}>
+            <MediaUploadGrid
+              ownerModule="PROPERTY"
+              referenceId={effectivePropertyId || undefined}
+              userToken={effectiveToken}
+              stagedFiles={selectedBlock.photos || []}
+              onStagedFilesChange={(files) => updateUnitDetails(selectedBlock.id, { photos: files })}
+              maxFiles={8}
+              label={`Unit ${selectedBlock.unitNumber} Photos`}
+              helperText="Upload or snap photos of this room condition, inventory, or layout."
+              caption={`unit:${selectedBlock.id}:${selectedBlock.unitNumber}`}
+              filterCaption={`unit:${selectedBlock.id}:${selectedBlock.unitNumber}`}
+            />
+          </View>
         </>
       )}
     </View>
@@ -119,15 +151,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sheetUnitTitle: {
     fontSize: theme.Typography.headlineSmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
-    fontFamily: 'Inter',
   },
   sheetSubtitle: {
     fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
-    fontFamily: 'Inter',
   },
   closeButton: {
     width: 32,
@@ -162,12 +192,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'transparent',
   },
   statusToggleText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
+    fontSize: theme.Typography.bodySmall.fontSize,
+    fontWeight: '600',
+    letterSpacing: 0.2,
     color: theme.Colors.onSurfaceVariant,
-    fontFamily: 'Inter',
   },
   statusActiveVacant: {
     backgroundColor: isDark ? 'rgba(0, 229, 255, 0.14)' : 'rgba(0, 104, 117, 0.10)',
@@ -175,8 +203,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   statusTextVacant: {
     color: isDark ? '#00E5FF' : '#006875',
-    fontWeight: '800',
-    fontFamily: 'Inter',
+    fontWeight: '600',
   },
   statusDotVacant: {
     width: 7,
@@ -190,8 +217,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   statusTextOccupied: {
     color: isDark ? '#FF6B6B' : '#ba1a1a',
-    fontWeight: '800',
-    fontFamily: 'Inter',
+    fontWeight: '600',
   },
   statusDotOccupied: {
     width: 7,
@@ -210,13 +236,17 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 4,
   },
   statusLockedText: {
-    fontSize: 11,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
-    fontFamily: 'Inter',
   },
   statusTextActive: {
     color: theme.Colors.primary,
-    fontFamily: 'Inter',
+  },
+  photosSection: {
+    marginTop: theme.Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.Colors.outlineVariant,
+    paddingTop: theme.Spacing.sm,
   },
 });

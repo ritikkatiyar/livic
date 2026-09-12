@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 import { View, Text, StyleSheet, Animated, Platform, Alert, TouchableOpacity, Modal } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
@@ -86,44 +84,23 @@ function ToastItem({
       {/* Glow shadow effect */}
       <View style={[styles.glowLayer, { backgroundColor: config.glowColor }]} />
 
-      {isWeb ? (
-        // Web fallback: plain frosted View (BlurView can crash on mobile browsers)
-        <View style={[styles.toastBlur, styles.toastBlurWeb]}>
-          <LinearGradient colors={config.gradientColors} style={styles.accentStripe} />
-          <View style={[styles.iconCircle, { backgroundColor: `${config.accentColor}18` }]}>
-            <MaterialIcons name={config.icon as any} size={22} color={config.accentColor} />
-          </View>
-          <View style={styles.textBlock}>
-            {toast.title && (
-              <Text style={[styles.toastTitle, { color: config.accentColor }]} numberOfLines={1}>
-                {toast.title}
-              </Text>
-            )}
-            <Text style={styles.toastMessage} numberOfLines={3}>{toast.message}</Text>
-          </View>
-          <TouchableOpacity onPress={onDismiss} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <MaterialIcons name="close" size={16} color={isDark ? '#94a3b8' : '#64748b'} />
-          </TouchableOpacity>
+      <View style={styles.toastBlur}>
+        <View style={[styles.accentStripe, { backgroundColor: config.accentColor }]} />
+        <View style={[styles.iconCircle, { backgroundColor: `${config.accentColor}18` }]}>
+          <MaterialIcons name={config.icon as any} size={22} color={config.accentColor} />
         </View>
-      ) : (
-        <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={styles.toastBlur}>
-          <LinearGradient colors={config.gradientColors} style={styles.accentStripe} />
-          <View style={[styles.iconCircle, { backgroundColor: `${config.accentColor}18` }]}>
-            <MaterialIcons name={config.icon as any} size={22} color={config.accentColor} />
-          </View>
-          <View style={styles.textBlock}>
-            {toast.title && (
-              <Text style={[styles.toastTitle, { color: config.accentColor }]} numberOfLines={1}>
-                {toast.title}
-              </Text>
-            )}
-            <Text style={styles.toastMessage} numberOfLines={3}>{toast.message}</Text>
-          </View>
-          <TouchableOpacity onPress={onDismiss} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <MaterialIcons name="close" size={16} color={isDark ? '#94a3b8' : '#64748b'} />
-          </TouchableOpacity>
-        </BlurView>
-      )}
+        <View style={styles.textBlock}>
+          {toast.title && (
+            <Text style={[styles.toastTitle, { color: config.accentColor }]} numberOfLines={1}>
+              {toast.title}
+            </Text>
+          )}
+          <Text style={styles.toastMessage} numberOfLines={3}>{toast.message}</Text>
+        </View>
+        <TouchableOpacity onPress={onDismiss} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <MaterialIcons name="close" size={16} color={theme.Colors.onSurfaceVariant} />
+        </TouchableOpacity>
+      </View>
     </Animated.View>
   );
 }
@@ -261,11 +238,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           onRequestClose={() => setConfirmDialog(null)}
         >
           <View style={styles.modalOverlay}>
-            {Platform.OS === 'web' ? (
-              <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(10, 20, 30, 0.4)', backdropFilter: 'blur(8px)' } as any]} />
-            ) : (
-              <BlurView intensity={45} tint="dark" style={StyleSheet.absoluteFillObject} />
-            )}
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.4)' }]} />
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>{confirmDialog.title}</Text>
               <Text style={styles.modalMessage}>{confirmDialog.message}</Text>
@@ -346,13 +319,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     borderRadius: 18,
     overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)',
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
     paddingVertical: 14,
     paddingRight: 14,
     paddingLeft: 0,
     gap: 12,
-    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   accentStripe: {
     width: 5,
@@ -374,25 +347,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   toastTitle: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
-    fontFamily: 'Inter',
+    fontWeight: '600',
     letterSpacing: 0.2,
   },
   toastMessage: {
-    color: isDark ? '#f8fafc' : '#0f172a',
+    color: theme.Colors.onSurface,
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     lineHeight: 18,
   },
   toastBlurWeb: {
-    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
-    backdropFilter: 'blur(20px)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   dismissBtn: {
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -400,42 +371,35 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.4)',
   },
   modalCard: {
     width: 320,
-    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 24,
     padding: theme.Spacing.lg,
     alignItems: 'center',
     shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.1,
     shadowRadius: 16,
     elevation: 8,
-    borderWidth: 1.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.8)',
-    ...Platform.select({
-      web: {
-        backdropFilter: 'blur(20px)',
-      } as any
-    })
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
   },
   modalTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
-    color: isDark ? '#f8fafc' : '#0f172a',
+    fontWeight: '600',
+    color: theme.Colors.onSurface,
     marginBottom: theme.Spacing.sm,
     textAlign: 'center',
-    fontFamily: 'Inter',
   },
   modalMessage: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    color: isDark ? '#94a3b8' : '#475569',
+    color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     marginBottom: theme.Spacing.lg,
     lineHeight: 20,
-    fontFamily: 'Inter',
     fontWeight: '500',
   },
   modalButtonsRow: {
@@ -464,7 +428,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onPrimary,
-    fontFamily: 'Inter',
   },
   modalButtonTextDestructive: {
     color: theme.Colors.onPrimary,

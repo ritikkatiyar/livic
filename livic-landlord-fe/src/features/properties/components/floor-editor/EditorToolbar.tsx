@@ -1,7 +1,6 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -34,7 +33,7 @@ export function EditorToolbar({
 
   if (isDesktop) {
     return (
-      <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={[styles.floatingToolbar, { backgroundColor: theme.Colors.glassFill }]}>
+      <View style={styles.floatingToolbar}>
         <TouchableOpacity 
           style={[styles.floatingToolButton, activeTool === 'PAN' && styles.floatingToolButtonActive]}
           onPress={() => setActiveTool('PAN')}
@@ -68,7 +67,7 @@ export function EditorToolbar({
           <MaterialIcons name="delete-sweep" size={18} color={theme.Colors.error} />
           <Text style={[styles.floatingToolText, { color: theme.Colors.error }]}>Clear</Text>
         </TouchableOpacity>
-      </BlurView>
+      </View>
     );
   }
 
@@ -143,16 +142,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.Spacing.md,
     paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.Colors.outline,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     gap: theme.Spacing.sm,
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
     zIndex: 100,
     width: 300,
     justifyContent: 'center',
@@ -170,35 +164,33 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   floatingToolText: {
     fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
-    fontFamily: 'Inter',
   },
   floatingToolTextActive: {
     color: theme.Colors.surfaceContainerLowest,
   },
   floatingDivider: {
-    width: 1.5,
+    width: 1,
     height: 20,
-    backgroundColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.outline,
     marginHorizontal: theme.Spacing.xs,
   },
   toolsPanel: {
     paddingVertical: 12,
     paddingHorizontal: theme.Spacing.md,
-    backgroundColor: theme.Colors.glassFill,
-    borderRadius: 20,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outline,
     marginBottom: theme.Spacing.md,
   },
   toolsTitle: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '900',
+    fontWeight: '600',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
     marginBottom: theme.Spacing.sm,
-    fontFamily: 'Inter',
   },
   toolsWrapper: {
     flexDirection: 'row',
@@ -217,10 +209,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: theme.Colors.glassFill,
+    borderRadius: 12,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outline,
     gap: theme.Spacing.sm,
     minWidth: 90,
     justifyContent: 'center',
@@ -231,9 +223,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   toolText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.primary,
-    fontFamily: 'Inter',
   },
   toolTextActive: {
     color: theme.Colors.surfaceContainerLowest,

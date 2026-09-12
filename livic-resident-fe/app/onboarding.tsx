@@ -181,7 +181,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   title: {
     fontSize: theme.Typography.headlineMedium.fontSize,
-    fontWeight: '800',
+    fontWeight: '600',
     color: theme.Colors.onSurface,
     marginBottom: 10,
     textAlign: 'center',

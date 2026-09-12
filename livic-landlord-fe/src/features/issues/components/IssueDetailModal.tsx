@@ -11,8 +11,6 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/src/theme/Theme';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import {
@@ -182,14 +180,9 @@ export default function IssueDetailModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFillObject} />
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0,0,0,0.5)' }]} />
         
-        <LinearGradient
-          colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.modalContent, isDesktop && styles.desktopModal]}
-        >
+        <View style={[styles.modalContent, isDesktop && styles.desktopModal]}>
           {/* Header */}
           <View style={styles.modalHeader}>
             <View style={{ flex: 1, marginRight: 12 }}>
@@ -382,7 +375,7 @@ export default function IssueDetailModal({
               </TouchableOpacity>
             </View>
           )}
-        </LinearGradient>
+        </View>
       </View>
     </Modal>
   );

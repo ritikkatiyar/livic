@@ -3,10 +3,10 @@ import { StyleSheet } from 'react-native';
 export const createStyles = (theme: any, isDark: boolean = false) =>
   StyleSheet.create({
     desktopCard: {
-      borderRadius: 24,
-      backgroundColor: isDark ? 'rgba(15, 23, 32, 0.70)' : theme.Colors.glassFill,
-      borderWidth: 1.5,
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.Colors.glassStroke,
+      borderRadius: theme.Rounded.xl,
+      backgroundColor: theme.Colors.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: theme.Colors.outline,
       overflow: 'hidden',
     },
     sheetHeader: {
@@ -19,7 +19,7 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
     },
     sheetUnitTitle: {
       fontSize: theme.Typography.headlineSmall.fontSize,
-      fontWeight: '900',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     sheetSubtitle: {
@@ -53,7 +53,7 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
     },
     createTenantTitle: {
       fontSize: theme.Typography.labelLarge?.fontSize || 14,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
       letterSpacing: 0.5,
     },
@@ -62,7 +62,7 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
     },
     inputLabel: {
       fontSize: theme.Typography.labelSmall.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurfaceVariant,
       letterSpacing: 0.5,
     },
@@ -106,10 +106,9 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
       backgroundColor: 'transparent',
     },
     statusToggleText: {
-      fontSize: 12,
-      fontWeight: '700',
-      letterSpacing: 0.8,
-      textTransform: 'uppercase',
+      fontSize: theme.Typography.bodySmall.fontSize,
+      fontWeight: '600',
+      letterSpacing: 0.2,
       color: theme.Colors.onSurfaceVariant,
     },
     statusActiveVacant: {
@@ -118,7 +117,7 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
     },
     statusTextVacant: {
       color: isDark ? '#00E5FF' : '#006875',
-      fontWeight: '800',
+      fontWeight: '600',
     },
     statusDotVacant: {
       width: 7,
@@ -132,7 +131,7 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
     },
     statusTextOccupied: {
       color: isDark ? '#FF6B6B' : '#ba1a1a',
-      fontWeight: '800',
+      fontWeight: '600',
     },
     statusDotOccupied: {
       width: 7,
@@ -151,7 +150,7 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
       paddingHorizontal: 4,
     },
     statusLockedText: {
-      fontSize: 11,
+      fontSize: theme.Typography.labelSmall.fontSize,
       fontWeight: '600',
       color: theme.Colors.onSurfaceVariant,
     },
@@ -180,7 +179,7 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
     },
     createAssignBtnText: {
       fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onPrimary,
       letterSpacing: 0.5,
     },
@@ -281,8 +280,11 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
       borderRadius: 12,
     },
     saveButton: {
-      borderRadius: 12,
-      overflow: 'hidden',
+      borderRadius: theme.Rounded.md,
+      backgroundColor: theme.Colors.primary,
+      height: 48,
+      justifyContent: 'center',
+      alignItems: 'center',
       marginTop: theme.Spacing.sm,
     },
     saveButtonGradient: {
@@ -293,7 +295,6 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
     saveButtonText: {
       color: theme.Colors.onPrimary,
       fontSize: theme.Typography.bodyMedium.fontSize,
-      fontWeight: '800',
-      letterSpacing: 0.5,
+      fontWeight: '700',
     },
   });

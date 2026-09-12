@@ -2,8 +2,6 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { verificationItems } from '@/src/features/inventory/mockInventoryData';
 import { VerificationCard, SummaryLine } from './InventoryCardComponents';
 
@@ -27,12 +25,7 @@ export function InventoryMoveOutView({
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   return (
     <View style={styles.sectionStack}>
-      <BlurView intensity={35} tint="light" style={styles.moveBanner}>
-        <LinearGradient
-          colors={['rgba(186,26,26,0.8)', 'rgba(217,119,6,0.8)']}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
+      <View style={[styles.moveBanner, { backgroundColor: theme.Colors.error }]}>
         <View style={styles.moveBannerContent}>
           <Text style={styles.moveBannerKicker}>MOVE-OUT INSPECTION</Text>
           <Text style={styles.moveBannerTitle}>Alex Rivera</Text>
@@ -42,18 +35,18 @@ export function InventoryMoveOutView({
           <MaterialIcons name="event" size={16} color={theme.Colors.surfaceContainerLowest} />
           <Text style={styles.moveOutDateText}>Jul 28, 2026</Text>
         </View>
-      </BlurView>
+      </View>
 
       <View style={[styles.workflowGrid, isDesktop && styles.workflowGridDesktop]}>
         <View style={styles.workflowMain}>
           {verificationItems.map(item => <VerificationCard key={item.id} item={item} />)}
         </View>
 
-        <BlurView intensity={65} tint="light" style={styles.rail}>
+        <View style={styles.rail}>
           <View style={styles.railHeader}>
-            <LinearGradient colors={[theme.Colors.error, '#ef4444']} style={styles.railIconCircle}>
+            <View style={[styles.railIconCircle, { backgroundColor: theme.Colors.error }]}>
               <MaterialIcons name="receipt-long" size={18} color={theme.Colors.surfaceContainerLowest} />
-            </LinearGradient>
+            </View>
             <Text style={styles.panelTitle}>Settlement</Text>
           </View>
           <View style={styles.railBody}>
@@ -70,19 +63,17 @@ export function InventoryMoveOutView({
             <Text style={styles.refundAmount}>{formatCurrency(netRefund)}</Text>
           </View>
           <TouchableOpacity style={styles.primaryWideBtn} activeOpacity={0.82}>
-            <LinearGradient
-              colors={[theme.Colors.primary, '#10b981']}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={styles.primaryWideBtnInner}
+            <View
+              style={[styles.primaryWideBtnInner, { backgroundColor: theme.Colors.primary }]}
             >
               <Text style={styles.primaryWideBtnText}>Confirm & Settle</Text>
               <MaterialIcons name="send" size={16} color={theme.Colors.surfaceContainerLowest} />
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.ghostWideBtn, styles.ghostWideBtnDanger]}>
             <Text style={[styles.ghostWideBtnText, { color: theme.Colors.error }]}>Dispute Settlement</Text>
           </TouchableOpacity>
-        </BlurView>
+        </View>
       </View>
     </View>
   );
@@ -92,27 +83,27 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   sectionStack: { gap: theme.Spacing.md },
   moveBanner: { borderRadius: 22, overflow: 'hidden', minHeight: 110, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 22, gap: theme.Spacing.md },
   moveBannerContent: { flex: 1 },
-  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: 'rgba(255,255,255,0.7)', letterSpacing: 1, fontFamily: 'Inter' },
-  moveBannerTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '900', color: theme.Colors.surfaceContainerLowest, marginTop: theme.Spacing.xs, fontFamily: 'Inter' },
-  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: 'rgba(255,255,255,0.8)', marginTop: theme.Spacing.xs, fontFamily: 'Inter' },
+  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: 'rgba(255,255,255,0.7)', letterSpacing: 0.6 },
+  moveBannerTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.surfaceContainerLowest, marginTop: theme.Spacing.xs },
+  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: 'rgba(255,255,255,0.8)', marginTop: theme.Spacing.xs },
   moveOutDatePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: theme.Spacing.sm, borderRadius: 12 },
-  moveOutDateText: { color: theme.Colors.surfaceContainerLowest, fontWeight: '800', fontSize: theme.Typography.bodyMedium.fontSize, fontFamily: 'Inter' },
+  moveOutDateText: { color: theme.Colors.surfaceContainerLowest, fontWeight: '600', fontSize: theme.Typography.bodyMedium.fontSize },
   workflowGrid: { gap: 14 },
   workflowGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   workflowMain: { flex: 1.9, gap: 12 },
-  panelTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
-  rail: { flex: 1, minWidth: 260, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', backgroundColor: 'rgba(255,255,255,0.35)', padding: theme.Spacing.md, gap: 14, overflow: 'hidden' },
+  panelTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
+  rail: { flex: 1, minWidth: 260, borderRadius: 16, borderWidth: 1, borderColor: theme.Colors.outlineVariant, backgroundColor: theme.Colors.surfaceContainerLowest, padding: theme.Spacing.md, gap: 14, overflow: 'hidden' },
   railHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   railIconCircle: { width: 34, height: 34, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   railBody: { gap: 10 },
-  railDivider: { height: 1, backgroundColor: 'rgba(0,0,0,0.07)', marginVertical: 2 },
-  refundBlock: { backgroundColor: 'rgba(5,150,105,0.08)', borderRadius: 14, padding: 14, gap: 2, borderWidth: 1, borderColor: 'rgba(5,150,105,0.15)' },
-  refundLabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 0.8, textTransform: 'uppercase', fontFamily: 'Inter' },
-  refundAmount: { fontSize: theme.Typography.headlineMedium.fontSize, fontWeight: '900', color: theme.Colors.primary, fontFamily: 'Inter' },
+  railDivider: { height: 1, backgroundColor: theme.Colors.outlineVariant, marginVertical: 2 },
+  refundBlock: { backgroundColor: theme.Colors.surfaceContainerLow, borderRadius: 14, padding: 14, gap: 2, borderWidth: 1, borderColor: theme.Colors.outlineVariant },
+  refundLabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: theme.Colors.primary, letterSpacing: 0.2 },
+  refundAmount: { fontSize: theme.Typography.headlineMedium.fontSize, fontWeight: '600', color: theme.Colors.primary },
   primaryWideBtn: { borderRadius: 14, overflow: 'hidden' },
   primaryWideBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.Spacing.sm, paddingVertical: 14 },
-  primaryWideBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', fontFamily: 'Inter' },
-  ghostWideBtn: { borderRadius: 14, borderWidth: 1, borderColor: 'rgba(0,0,0,0.12)', paddingVertical: 13, alignItems: 'center' },
-  ghostWideBtnDanger: { borderColor: 'rgba(186,26,26,0.3)' },
-  ghostWideBtnText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, fontFamily: 'Inter' },
+  primaryWideBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
+  ghostWideBtn: { borderRadius: 14, borderWidth: 1, borderColor: theme.Colors.outlineVariant, paddingVertical: 13, alignItems: 'center' },
+  ghostWideBtnDanger: { borderColor: theme.Colors.error },
+  ghostWideBtnText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant },
 });

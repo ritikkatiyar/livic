@@ -14,9 +14,7 @@ import {
   Pressable,
   useWindowDimensions,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -240,8 +238,6 @@ export default function FloatingAIAssistant() {
           },
         ]}
       >
-        <BlurView intensity={95} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
-
         {/* 1. Closed State Floating Bubble Trigger */}
         <Animated.View
           style={[
@@ -253,16 +249,15 @@ export default function FloatingAIAssistant() {
             style={styles.bubbleTrigger}
             onPress={handleOpen}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Open AI Assistant"
           >
             <Animated.View style={{ transform: [{ scale: bubbleScale }] }}>
-              <LinearGradient
-                colors={brandGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.bubbleGradient}
+              <View
+                style={[styles.bubbleGradient, { backgroundColor: theme.Colors.primary }]}
               >
                 <MaterialIcons name="chat" size={24} color="#ffffff" />
-              </LinearGradient>
+              </View>
             </Animated.View>
           </TouchableOpacity>
         </Animated.View>
@@ -291,7 +286,12 @@ export default function FloatingAIAssistant() {
                 </View>
                 <Text style={styles.headerTitle}>AI Assistant</Text>
               </View>
-              <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
+              <TouchableOpacity 
+                style={styles.closeBtn} 
+                onPress={handleClose}
+                accessibilityRole="button"
+                accessibilityLabel="Close AI Assistant"
+              >
                 <MaterialIcons name="close" size={20} color={theme.Colors.onSurfaceVariant} />
               </TouchableOpacity>
             </View>
@@ -388,15 +388,14 @@ export default function FloatingAIAssistant() {
                 onPress={() => sendMessage(input)}
                 disabled={isSending || !input.trim()}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Send message"
               >
-                <LinearGradient
-                  colors={brandGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.sendGradient}
+                <View
+                  style={[styles.sendGradient, { backgroundColor: theme.Colors.primary }]}
                 >
                   <MaterialIcons name="send" size={16} color="#ffffff" />
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>

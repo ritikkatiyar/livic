@@ -1,6 +1,6 @@
 package com.livic.billing.listener;
 
-import com.livic.billing.annotation.FeatureKey;
+import com.livic.common.subscription.FeatureKey;
 import com.livic.billing.aspect.SubscriptionEnforcementAspect;
 import com.livic.billing.dto.UserSubscriptionContext;
 import com.livic.billing.service.interfaces.SubscriptionCacheService;

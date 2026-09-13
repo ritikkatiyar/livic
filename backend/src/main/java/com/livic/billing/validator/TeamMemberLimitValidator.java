@@ -1,7 +1,7 @@
 package com.livic.billing.validator;
 
 import com.livic.auth.facade.AuthFacade;
-import com.livic.billing.annotation.FeatureKey;
+import com.livic.common.subscription.FeatureKey;
 import com.livic.billing.dto.UserSubscriptionContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

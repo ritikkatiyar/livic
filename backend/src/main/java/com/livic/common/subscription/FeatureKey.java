@@ -1,4 +1,4 @@
-package com.livic.billing.annotation;
+package com.livic.common.subscription;
 
 public enum FeatureKey {
     // ── Hard Cap (numeric limits) ──

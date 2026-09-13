@@ -1,4 +1,4 @@
-package com.livic.billing.annotation;
+package com.livic.common.subscription;
 
 import java.lang.annotation.*;
 

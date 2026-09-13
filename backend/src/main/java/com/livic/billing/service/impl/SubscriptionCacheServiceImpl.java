@@ -1,6 +1,6 @@
 package com.livic.billing.service.impl;
 
-import com.livic.billing.annotation.FeatureKey;
+import com.livic.common.subscription.FeatureKey;
 import com.livic.billing.domain.PlanFeatureLimitTbl;
 import com.livic.billing.domain.SaasSubscriptionTbl;
 import com.livic.billing.domain.SubscriptionPlanTbl;

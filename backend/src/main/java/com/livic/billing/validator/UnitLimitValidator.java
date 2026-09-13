@@ -1,6 +1,6 @@
 package com.livic.billing.validator;
 
-import com.livic.billing.annotation.FeatureKey;
+import com.livic.common.subscription.FeatureKey;
 import com.livic.billing.dto.UserSubscriptionContext;
 import com.livic.property.dto.PropertySummaryDTO;
 import com.livic.property.facade.PropertyFacade;

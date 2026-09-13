@@ -1,8 +1,8 @@
 package com.livic.billing.aspect;
 
 import com.livic.security.UserDetailsImpl;
-import com.livic.billing.annotation.EnforceSubscription;
-import com.livic.billing.annotation.FeatureKey;
+import com.livic.common.subscription.EnforceSubscription;
+import com.livic.common.subscription.FeatureKey;
 import com.livic.billing.dto.UserSubscriptionContext;
 import com.livic.billing.service.interfaces.SubscriptionCacheService;
 import com.livic.billing.validator.SubscriptionValidator;

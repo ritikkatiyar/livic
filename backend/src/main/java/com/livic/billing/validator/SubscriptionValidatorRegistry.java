@@ -1,6 +1,6 @@
 package com.livic.billing.validator;
 
-import com.livic.billing.annotation.FeatureKey;
+import com.livic.common.subscription.FeatureKey;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;

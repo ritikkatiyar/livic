@@ -16,8 +16,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -52,7 +54,24 @@ public class AuthFacadeImpl implements AuthFacade {
 
     @Override
     public long countMembershipsByPropertyId(UUID propertyId) {
-        return membershipCrudService.findByPropertyId(propertyId).size();
+        return membershipCrudService.findByPropertyId(propertyId).stream()
+                .filter(MembershipTbl::isActive)
+                .count();
+    }
+
+    @Override
+    public Optional<UUID> findPropertyOwnerId(UUID propertyId) {
+        List<MembershipTbl> fullAccess = membershipCrudService.findByPropertyIdAndAccessType(propertyId, AccessType.FULL_ACCESS)
+                .stream()
+                .filter(MembershipTbl::isActive)
+                .toList();
+
+        return fullAccess.stream()
+                .filter(m -> "Owner".equals(m.getTitle()))
+                .max(Comparator.comparing(MembershipTbl::getUpdatedAt, Comparator.nullsFirst(Comparator.naturalOrder())))
+                .or(() -> fullAccess.stream()
+                        .min(Comparator.comparing(MembershipTbl::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))))
+                .map(MembershipTbl::getUserId);
     }
 
     @Override

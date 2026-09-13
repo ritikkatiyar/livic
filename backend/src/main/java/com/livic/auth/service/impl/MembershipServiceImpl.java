@@ -8,10 +8,12 @@ import com.livic.auth.service.interfaces.MembershipPermissionCrudService;
 import com.livic.auth.service.interfaces.MembershipService;
 import com.livic.auth.service.interfaces.PermissionCrudService;
 import com.livic.common.enums.AccessType;
+import com.livic.common.event.MemberSeatRequestedEvent;
 import com.livic.common.exception.BusinessException;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,7 @@ public class MembershipServiceImpl implements MembershipService {
     private final MembershipPermissionCrudService membershipPermissionCrudService;
     private final PermissionCrudService permissionCrudService;
     private final UserFacade userFacade;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -75,7 +78,9 @@ public class MembershipServiceImpl implements MembershipService {
                 throw new BusinessException(HttpStatus.FORBIDDEN, "Only members with Full Access can grant Full Access.");
             }
         }
-        
+
+        eventPublisher.publishEvent(new MemberSeatRequestedEvent(this, propertyId));
+
         MembershipTbl membership = MembershipTbl.builder()
                 .userId(userId)
                 .propertyId(propertyId)
@@ -163,6 +168,10 @@ public class MembershipServiceImpl implements MembershipService {
 
         if (membership.isFullAccess() && !isActive) {
             ensureNotDemotingLastFullAccess(propertyId, membership.getId());
+        }
+
+        if (isActive && !membership.isActive()) {
+            eventPublisher.publishEvent(new MemberSeatRequestedEvent(this, propertyId));
         }
 
         membership.setActive(isActive);

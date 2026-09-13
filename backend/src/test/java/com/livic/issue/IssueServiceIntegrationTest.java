@@ -1,6 +1,9 @@
 package com.livic.issue;
 
 import com.livic.auth.facade.AuthFacade;
+import com.livic.billing.SubscriptionTestSupport;
+import com.livic.billing.repository.SaasSubscriptionRepository;
+import com.livic.billing.repository.SubscriptionPlanRepository;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.LeaseTbl;
 import com.livic.finance.repository.LeaseRepository;
@@ -65,6 +68,12 @@ public class IssueServiceIntegrationTest {
 
     @Autowired
     private AuthFacade authFacade;
+
+    @Autowired
+    private SaasSubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private SubscriptionPlanRepository planRepository;
 
     private UserTbl landlord;
     private UserTbl caretaker;
@@ -138,6 +147,7 @@ public class IssueServiceIntegrationTest {
                 .build();
         leaseRepository.save(lease);
 
+        SubscriptionTestSupport.subscribe(subscriptionRepository, planRepository, landlord.getId(), SubscriptionTestSupport.ENTERPRISE_PLAN_ID);
         // Seed property memberships
         authFacade.createOwnerMembership(property.getId(), landlord.getId());
         authFacade.createMembership(

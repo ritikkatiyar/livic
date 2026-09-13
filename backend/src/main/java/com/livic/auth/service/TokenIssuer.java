@@ -4,7 +4,7 @@ import com.livic.auth.domain.RefreshTokenTbl;
 import com.livic.auth.dto.AuthResponses.AuthUserSummary;
 import com.livic.auth.dto.AuthResponses.TokenBundle;
 import com.livic.auth.service.interfaces.RefreshTokenCrudService;
-import com.livic.config.JwtProperties;
+import com.livic.security.JwtProperties;
 import com.livic.user.dto.UserSummaryDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

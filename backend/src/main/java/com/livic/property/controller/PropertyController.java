@@ -1,6 +1,6 @@
 package com.livic.property.controller;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.billing.annotation.EnforceSubscription;
 import com.livic.billing.annotation.FeatureKey;
 import com.livic.common.response.ApiResponse;

@@ -1,13 +1,11 @@
 package com.livic.config;
 
-import com.livic.auth.service.CustomUserDetailsService;
-import com.livic.auth.security.JwtAuthenticationFilter;
-import com.livic.auth.security.JsonAuthenticationEntryPoint;
+import com.livic.security.JwtAuthenticationFilter;
+import com.livic.security.JsonAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -35,10 +33,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomUserDetailsService customUserDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
-    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Bean
     SecurityFilterChain securityFilterChain(
@@ -72,13 +68,6 @@ public class SecurityConfig {
                 .addFilterBefore(internalFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
-    }
-
-    @Bean
-    public ProviderManager authenticationManager() {
-        var provider = new org.springframework.security.authentication.dao.DaoAuthenticationProvider(customUserDetailsService);
-        provider.setPasswordEncoder(passwordEncoder);
-        return new ProviderManager(provider);
     }
 
     // Simple internal auth filter that checks a pre-shared token header and grants ADMIN role.

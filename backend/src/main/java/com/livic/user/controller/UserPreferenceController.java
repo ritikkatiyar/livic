@@ -1,7 +1,7 @@
 package com.livic.user.controller;
 
 import com.livic.common.response.ApiResponse;
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.user.dto.UserPreferenceResponse;
 import com.livic.user.dto.SaveUserPreferenceRequest;
 import com.livic.user.service.interfaces.UserPreferenceService;

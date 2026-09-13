@@ -1,6 +1,6 @@
 package com.livic.user.controller;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
 import com.livic.user.dto.UserNotificationPreferencesDTO;
 import com.livic.user.facade.UserFacade;

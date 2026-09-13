@@ -1,6 +1,6 @@
 package com.livic.finance.service.impl;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.common.domain.LeaseStatus;
 import com.livic.finance.domain.RentCycleStatus;
 import com.livic.common.exception.BusinessException;

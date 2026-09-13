@@ -1,6 +1,6 @@
 package com.livic.issue.controller;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
 import com.livic.issue.dto.IssueDTOs.CreateCommentRequest;
 import com.livic.issue.dto.IssueDTOs.CreateIssueRequest;

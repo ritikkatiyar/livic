@@ -1,6 +1,6 @@
 package com.livic.storage.controller;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
 import com.livic.common.enums.OwnerModule;
 import com.livic.storage.dto.MediaDTOs;

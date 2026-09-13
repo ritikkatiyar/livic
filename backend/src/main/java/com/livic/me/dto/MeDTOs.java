@@ -1,4 +1,4 @@
-package com.livic.user.dto;
+package com.livic.me.dto;
 
 import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.common.domain.UserRole;

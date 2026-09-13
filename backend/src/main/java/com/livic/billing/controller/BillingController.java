@@ -1,6 +1,6 @@
 package com.livic.billing.controller;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.billing.dto.*;
 import com.livic.billing.service.interfaces.BillingWalletService;
 import com.livic.billing.service.interfaces.SubscriptionPlanQueryService;

@@ -1,22 +1,9 @@
 # Module dependency edges that currently sit on a cycle (from -> to).
 # This list must only shrink. Regenerate with: mvn test -Dtest=ModuleBoundaryTest -Darch.updateBaseline=true
-auth -> config
-auth -> user
-billing -> auth
 billing -> payment
 billing -> property
-config -> auth
-finance -> auth
-finance -> notification
 finance -> payment
 finance -> property
-finance -> user
-notification -> user
-payment -> auth
 payment -> billing
-property -> auth
 property -> billing
 property -> finance
-property -> user
-user -> auth
-user -> finance

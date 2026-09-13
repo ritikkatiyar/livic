@@ -1,6 +1,6 @@
 package com.livic.payment.controller;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
 import com.livic.payment.dto.PaymentTransactionResponse;
 import com.livic.payment.dto.PaymentVerificationRequest;

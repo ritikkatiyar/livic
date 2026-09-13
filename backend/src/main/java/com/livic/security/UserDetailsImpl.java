@@ -1,7 +1,6 @@
-package com.livic.auth.principal;
+package com.livic.security;
 
 import com.livic.common.domain.UserRole;
-import com.livic.user.domain.UserTbl;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,8 +12,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Spring Security {@link UserDetails} adapter for the {@link UserTbl} entity.
- * Separates persistence shape from the security principal (interface segregation).
+ * Spring Security principal for the current user. Part of the security kernel:
+ * depends only on {@code common}, so every module (and a future service) can use it.
  */
 @Getter
 public class UserDetailsImpl implements UserDetails {
@@ -41,33 +40,20 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     /**
-     * {@code username} is the normalized email stored in {@code User.authUid}.
-     * Password hash is used by DAO authentication for login; Bearer access uses
-     * {@link com.livic.auth.security.JwtAuthenticationFilter}.
+     * Principal used by DAO authentication at login. {@code username} is the normalized email.
+     * Bearer access uses {@link #fromClaims} via {@link JwtAuthenticationFilter}.
      */
-    public static UserDetailsImpl fromUser(UserTbl user) {
-        String hash = user.getPasswordHash() != null ? user.getPasswordHash() : "";
-        boolean accountNonLocked = user.getLockoutUntil() == null || !user.getLockoutUntil().isAfter(Instant.now());
+    public static UserDetailsImpl forLogin(UUID id, String email, String passwordHash, String fullName,
+                                           Instant lockoutUntil, UserRole globalRole) {
+        boolean accountNonLocked = lockoutUntil == null || !lockoutUntil.isAfter(Instant.now());
         return new UserDetailsImpl(
-                user.getId().toString(),
-                user.getAuthUid(),
-                hash,
-                user.getFullName(),
+                id.toString(),
+                email,
+                passwordHash != null ? passwordHash : "",
+                fullName,
                 true,
                 accountNonLocked,
-                authoritiesFor(user)
-        );
-    }
-
-    public static UserDetailsImpl fromSummary(com.livic.user.dto.UserSummaryDTO summary) {
-        return new UserDetailsImpl(
-                summary.id().toString(),
-                summary.authUid(),
-                "",
-                summary.fullName(),
-                true,
-                true,
-                List.of(new SimpleGrantedAuthority("ROLE_" + (summary.globalRole() != null ? summary.globalRole() : "USER")))
+                authoritiesFor(globalRole)
         );
     }
 
@@ -83,8 +69,8 @@ public class UserDetailsImpl implements UserDetails {
         );
     }
 
-    private static List<GrantedAuthority> authoritiesFor(UserTbl user) {
-        UserRole role = user.getGlobalRole() != null ? user.getGlobalRole() : UserRole.USER;
+    private static List<GrantedAuthority> authoritiesFor(UserRole globalRole) {
+        UserRole role = globalRole != null ? globalRole : UserRole.USER;
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 

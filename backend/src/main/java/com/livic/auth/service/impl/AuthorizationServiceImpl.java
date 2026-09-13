@@ -1,6 +1,6 @@
 package com.livic.auth.service.impl;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.auth.service.interfaces.MembershipCrudService;
 import com.livic.auth.spi.ResourceScope;

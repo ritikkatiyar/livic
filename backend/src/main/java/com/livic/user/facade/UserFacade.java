@@ -16,6 +16,9 @@ public interface UserFacade {
 
     Optional<UserSummaryDTO> getUserByEmail(String email);
 
+    /** For the auth module's login flow only. */
+    Optional<com.livic.user.dto.UserCredentialsDTO> findCredentialsByEmail(String email);
+
     Optional<UserSummaryDTO> findByPhoneNumber(String phoneNumber);
 
     Map<UUID, UserSummaryDTO> getUsersByIds(Collection<UUID> userIds);

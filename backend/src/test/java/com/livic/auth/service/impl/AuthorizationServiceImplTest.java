@@ -1,7 +1,7 @@
 package com.livic.auth.service.impl;
 
 import com.livic.auth.AuthorizationTestSupport;
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.auth.service.interfaces.MembershipCrudService;
 import com.livic.common.domain.FacingDirection;
 import com.livic.common.domain.UnitType;
@@ -72,7 +72,7 @@ class AuthorizationServiceImplTest {
                 "+919876543210",
                 role
         );
-        UserDetailsImpl userDetails = UserDetailsImpl.fromSummary(userSummary);
+        UserDetailsImpl userDetails = UserDetailsImpl.fromClaims(userSummary.id().toString(), userSummary.authUid(), userSummary.globalRole().name());
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 userDetails,
                 null,

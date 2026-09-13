@@ -1,6 +1,6 @@
-package com.livic.user.service.interfaces;
+package com.livic.me.service.interfaces;
 
-import com.livic.user.dto.MeDTOs;
+import com.livic.me.dto.MeDTOs;
 import java.util.UUID;
 
 public interface MeService {

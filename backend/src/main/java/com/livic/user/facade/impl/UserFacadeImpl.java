@@ -58,6 +58,12 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     @Override
+    public Optional<com.livic.user.dto.UserCredentialsDTO> findCredentialsByEmail(String email) {
+        return userQueryService.findByEmail(email)
+                .map(com.livic.user.dto.UserCredentialsDTO::from);
+    }
+
+    @Override
     public Optional<UserSummaryDTO> findByPhoneNumber(String phoneNumber) {
         return userQueryService.findByPhoneNumber(phoneNumber)
                 .map(UserSummaryDTO::from);

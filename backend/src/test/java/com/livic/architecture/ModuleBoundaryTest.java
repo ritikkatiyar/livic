@@ -15,21 +15,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 class ModuleBoundaryTest {
 
@@ -46,87 +36,14 @@ class ModuleBoundaryTest {
                 .importPackages("com.livic");
     }
 
-    private static final Path CYCLIC_EDGE_BASELINE = Path.of("src/test/resources/architecture/cyclic-module-edges.txt");
-
     @Test
-    @DisplayName("No new module dependency cycles (known cycles are baselined and may only shrink)")
-    void noNewModuleDependencyCycles() throws IOException {
-        Set<String> cyclicEdges = cyclicEdges(moduleDependencyGraph());
+    @DisplayName("Top-level modules must be free of dependency cycles")
+    void modulesAreFreeOfCycles() {
+        ArchRule rule = slices().matching("com.livic.(*)..").namingSlices("$1")
+                .should().beFreeOfCycles()
+                .because("cross-module callbacks go through an SPI owned by the upstream module or a synchronous event");
 
-        if (Boolean.getBoolean("arch.updateBaseline")) {
-            Files.createDirectories(CYCLIC_EDGE_BASELINE.getParent());
-            Files.writeString(CYCLIC_EDGE_BASELINE, "# Module dependency edges that currently sit on a cycle (from -> to).\n"
-                    + "# This list must only shrink. Regenerate with: mvn test -Dtest=ModuleBoundaryTest -Darch.updateBaseline=true\n"
-                    + String.join("\n", cyclicEdges) + "\n");
-            return;
-        }
-
-        Set<String> baseline = Files.readAllLines(CYCLIC_EDGE_BASELINE).stream()
-                .map(String::trim)
-                .filter(line -> !line.isEmpty() && !line.startsWith("#"))
-                .collect(Collectors.toCollection(TreeSet::new));
-
-        Set<String> introduced = new TreeSet<>(cyclicEdges);
-        introduced.removeAll(baseline);
-        Set<String> resolved = new TreeSet<>(baseline);
-        resolved.removeAll(cyclicEdges);
-
-        assertThat(introduced)
-                .as("New module dependency cycle edges. Depend on the other module through an SPI or event instead")
-                .isEmpty();
-        assertThat(resolved)
-                .as("These cycles are gone. Remove them from " + CYCLIC_EDGE_BASELINE)
-                .isEmpty();
-    }
-
-    /** Top-level module (com.livic.<module>) to the set of modules it depends on. */
-    private static Map<String, Set<String>> moduleDependencyGraph() {
-        Map<String, Set<String>> graph = new TreeMap<>();
-        for (JavaClass javaClass : classes) {
-            String from = moduleOf(javaClass);
-            if (from == null) continue;
-            Set<String> targets = graph.computeIfAbsent(from, k -> new TreeSet<>());
-            javaClass.getDirectDependenciesFromSelf().forEach(dependency -> {
-                String to = moduleOf(dependency.getTargetClass().getBaseComponentType());
-                if (to != null && !to.equals(from)) {
-                    targets.add(to);
-                }
-            });
-        }
-        return graph;
-    }
-
-    private static String moduleOf(JavaClass javaClass) {
-        String packageName = javaClass.getPackageName();
-        if (!packageName.startsWith("com.livic.")) return null;
-        String rest = packageName.substring("com.livic.".length());
-        int dot = rest.indexOf('.');
-        return dot < 0 ? rest : rest.substring(0, dot);
-    }
-
-    /** An edge from -> to is cyclic when `to` can reach `from` again. */
-    private static Set<String> cyclicEdges(Map<String, Set<String>> graph) {
-        Set<String> edges = new TreeSet<>();
-        graph.forEach((from, targets) -> targets.forEach(to -> {
-            if (reaches(graph, to, from)) {
-                edges.add(from + " -> " + to);
-            }
-        }));
-        return edges;
-    }
-
-    private static boolean reaches(Map<String, Set<String>> graph, String start, String goal) {
-        Set<String> seen = new HashSet<>();
-        Deque<String> queue = new ArrayDeque<>();
-        queue.add(start);
-        while (!queue.isEmpty()) {
-            String current = queue.poll();
-            if (current.equals(goal)) return true;
-            if (seen.add(current)) {
-                queue.addAll(graph.getOrDefault(current, Set.of()));
-            }
-        }
-        return false;
+        rule.check(classes);
     }
 
     @Test

@@ -1,3 +1,0 @@
-# Module dependency edges that currently sit on a cycle (from -> to).
-# This list must only shrink. Regenerate with: mvn test -Dtest=ModuleBoundaryTest -Darch.updateBaseline=true
-

@@ -1,8 +1,8 @@
-package com.livic.me.controller;
+package com.livic.finance.controller;
 
 import com.livic.common.response.ApiResponse;
-import com.livic.me.dto.MeDTOs;
-import com.livic.me.service.interfaces.MeService;
+import com.livic.finance.dto.MeDTOs;
+import com.livic.finance.service.interfaces.MeService;
 import com.livic.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 /**
- * Composition endpoint: combines user, memberships (auth) and active lease (finance).
- * Lives outside those modules so none of them has to depend on the others.
+ * Post-login context: global role (user), property memberships (auth) and active lease.
+ * Lives in finance because finance already depends on auth and user; placing it in
+ * user would recreate the auth/user cycle.
  */
 @RestController
 @RequestMapping({"/api/v1/user", "/api/v1"})

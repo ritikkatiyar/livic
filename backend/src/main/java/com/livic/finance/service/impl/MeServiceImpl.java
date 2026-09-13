@@ -1,11 +1,11 @@
-package com.livic.me.service.impl;
+package com.livic.finance.service.impl;
 
 import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.auth.facade.AuthFacade;
 import com.livic.common.exception.BusinessException;
+import com.livic.finance.dto.MeDTOs;
 import com.livic.finance.facade.FinanceFacade;
-import com.livic.me.dto.MeDTOs;
-import com.livic.me.service.interfaces.MeService;
+import com.livic.finance.service.interfaces.MeService;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;

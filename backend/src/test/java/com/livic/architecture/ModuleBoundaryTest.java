@@ -226,12 +226,12 @@ class ModuleBoundaryTest {
         ArchRule rule = noClasses()
                 .that().resideInAPackage("com.livic.user..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.auth..", "com.livic.me..",
+                        "com.livic.auth..",
                         "com.livic.finance..", "com.livic.property..", "com.livic.inventory..",
                         "com.livic.storage..", "com.livic.billing..", "com.livic.payment..",
                         "com.livic.issue..", "com.livic.announcement..", "com.livic.analytics..",
                         "com.livic.notification..")
-                .because("user is upstream of auth; cross-module views such as /me belong in com.livic.me");
+                .because("user is upstream of auth; views combining user with memberships or leases belong in a downstream module");
 
         rule.check(classes);
     }
@@ -245,17 +245,6 @@ class ModuleBoundaryTest {
                         "com.livic.user.domain..", "com.livic.user.repository..",
                         "com.livic.user.service..", "com.livic.user.controller..")
                 .because("auth reads user data via UserFacade (e.g. UserCredentialsDTO), never the entity");
-
-        rule.check(classes);
-    }
-
-    @Test
-    @DisplayName("Nothing depends on the me composition module")
-    void nothingDependsOnMeModule() {
-        ArchRule rule = noClasses()
-                .that().resideOutsideOfPackage("com.livic.me..")
-                .should().dependOnClassesThat().resideInAPackage("com.livic.me..")
-                .because("com.livic.me composes other modules and must stay at the top of the dependency graph");
 
         rule.check(classes);
     }

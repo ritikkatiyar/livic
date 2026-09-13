@@ -8,4 +8,6 @@ import java.util.UUID;
 
 public interface RefreshTokenCrudService extends CrudService<RefreshTokenTbl, UUID> {
     Optional<RefreshTokenTbl> findByTokenHashAndRevokedIsFalse(String tokenHash);
+
+    int revokeAllForUser(UUID userId);
 }

@@ -137,6 +137,17 @@ public class UserFacadeImpl implements UserFacade {
                 });
     }
 
+    @Override
+    @Transactional
+    public void clearPassword(UUID userId) {
+        userCrudService.findById(userId)
+                .filter(user -> user.getPasswordHash() != null)
+                .ifPresent(user -> {
+                    user.setPasswordHash(null);
+                    userCrudService.save(user);
+                });
+    }
+
     private UserSummaryDTO saveNewUser(String email, String fullName, String phoneNumber, String password, boolean emailVerified) {
         UserTbl newUser = UserTbl.builder()
                 .authUid(email != null ? email.trim().toLowerCase() : "")

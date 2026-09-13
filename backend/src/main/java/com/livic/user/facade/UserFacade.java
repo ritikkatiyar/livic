@@ -39,6 +39,9 @@ public interface UserFacade {
 
     void markEmailVerified(UUID userId);
 
+    /** Removes the password so the account can only be used through a verified sign-in method. */
+    void clearPassword(UUID userId);
+
     UserMode getActiveModeForUser(UUID userId);
 
     void markOnboardingDone(UUID userId, UserMode defaultMode);

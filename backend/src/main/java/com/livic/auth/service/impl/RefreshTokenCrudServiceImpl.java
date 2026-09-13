@@ -5,6 +5,7 @@ import com.livic.auth.repository.RefreshTokenRepository;
 import com.livic.auth.service.interfaces.RefreshTokenCrudService;
 import com.livic.common.service.impl.AbstractCrudService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -19,5 +20,11 @@ public class RefreshTokenCrudServiceImpl extends AbstractCrudService<RefreshToke
     @Override
     public Optional<RefreshTokenTbl> findByTokenHashAndRevokedIsFalse(String tokenHash) {
         return repository.findByTokenHashAndRevokedIsFalse(tokenHash);
+    }
+
+    @Override
+    @Transactional
+    public int revokeAllForUser(UUID userId) {
+        return repository.revokeAllByUserId(userId);
     }
 }

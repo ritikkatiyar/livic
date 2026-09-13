@@ -13,13 +13,17 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { login } from '@/src/features/auth/api/auth.api';
+import { GoogleSignInButton } from '@/src/features/auth/components/GoogleSignInButton';
+import { ApiError } from '@/src/utils/errors';
+import type { TokenBundle } from '@/src/types/auth';
 
 interface SuperAdminLoginScreenProps {
-  onLogin?: (data: any) => void;
+  onLogin?: (data: TokenBundle) => void;
+  onUnverified?: (email: string) => void;
   onNavigateToSignup?: () => void;
 }
 
-export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: SuperAdminLoginScreenProps) {
+export default function SuperAdminLoginScreen({ onLogin, onUnverified, onNavigateToSignup }: SuperAdminLoginScreenProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
@@ -49,6 +53,10 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
         onLogin(data);
       }
     } catch (error: any) {
+      if (error instanceof ApiError && error.status === 403 && onUnverified) {
+        onUnverified(email.trim());
+        return;
+      }
       console.error('Login Request Error:', error);
       setErrorMsg(error.message || 'Cannot connect to server. Ensure backend is running.');
     } finally {
@@ -156,6 +164,8 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
                   <Text style={styles.submitButtonText}>SIGN IN</Text>
                 )}
               </TouchableOpacity>
+
+              {onLogin ? <GoogleSignInButton onSuccess={onLogin} /> : null}
             </View>
 
             {/* Footer Links */}

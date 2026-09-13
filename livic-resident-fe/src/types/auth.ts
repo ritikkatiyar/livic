@@ -24,6 +24,26 @@ export type SignupRequest = {
   phoneNumber?: string;
 };
 
+export type SignupResponse = {
+  status: 'VERIFICATION_REQUIRED';
+  email: string;
+  codeExpiresInSeconds: number;
+  resendAvailableInSeconds: number;
+};
+
+export type VerifyEmailRequest = {
+  email: string;
+  code: string;
+};
+
+export type ResendVerificationRequest = {
+  email: string;
+};
+
+export type OAuthLoginRequest = {
+  idToken: string;
+};
+
 export type RefreshRequest = {
   refreshToken: string;
 };

@@ -89,15 +89,62 @@ public class UserFacadeImpl implements UserFacade {
     @Override
     @Transactional
     public UserSummaryDTO createUser(String email, String fullName, String phoneNumber, String password) {
+        return saveNewUser(email, fullName, phoneNumber, password, true);
+    }
+
+    @Override
+    @Transactional
+    public UserSummaryDTO createUnverifiedUser(String email, String fullName, String phoneNumber, String password) {
+        return saveNewUser(email, fullName, phoneNumber, password, false);
+    }
+
+    @Override
+    @Transactional
+    public UserSummaryDTO createPasswordlessUser(String email, String fullName) {
+        return saveNewUser(email, fullName, null, null, true);
+    }
+
+    @Override
+    @Transactional
+    public UserSummaryDTO updateUnverifiedUser(UUID userId, String fullName, String phoneNumber, String password) {
+        UserTbl user = userCrudService.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        user.setFullName(fullName != null ? fullName.trim() : "");
+        user.setPhoneNumber(normalizePhone(phoneNumber));
+        user.setPasswordHash(passwordEncoder.encode(password));
+        return UserSummaryDTO.from(userCrudService.save(user));
+    }
+
+    @Override
+    public boolean isEmailVerified(UUID userId) {
+        return userCrudService.findById(userId).map(UserTbl::isEmailVerified).orElse(false);
+    }
+
+    @Override
+    @Transactional
+    public void markEmailVerified(UUID userId) {
+        userCrudService.findById(userId)
+                .filter(user -> !user.isEmailVerified())
+                .ifPresent(user -> {
+                    user.setEmailVerified(true);
+                    userCrudService.save(user);
+                });
+    }
+
+    private UserSummaryDTO saveNewUser(String email, String fullName, String phoneNumber, String password, boolean emailVerified) {
         UserTbl newUser = UserTbl.builder()
                 .authUid(email != null ? email.trim().toLowerCase() : "")
                 .fullName(fullName != null ? fullName.trim() : "")
-                .phoneNumber(phoneNumber != null ? phoneNumber.trim() : "")
-                .passwordHash(passwordEncoder.encode(password != null ? password : ""))
+                .phoneNumber(normalizePhone(phoneNumber))
+                .passwordHash(password != null ? passwordEncoder.encode(password) : null)
+                .emailVerified(emailVerified)
                 .globalRole(UserRole.USER)
                 .build();
-        UserTbl saved = userService.createUser(newUser);
-        return UserSummaryDTO.from(saved);
+        return UserSummaryDTO.from(userService.createUser(newUser));
+    }
+
+    private static String normalizePhone(String phoneNumber) {
+        return phoneNumber == null || phoneNumber.isBlank() ? null : phoneNumber.trim();
     }
 
     @Override

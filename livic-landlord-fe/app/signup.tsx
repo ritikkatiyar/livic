@@ -1,18 +1,15 @@
 import { useRouter } from 'expo-router';
 
 import SuperAdminSignupScreen from '@/src/features/auth/screens/SuperAdminSignupScreen';
-import { useAuth } from '@/src/features/auth/context/AuthProvider';
-import type { TokenBundle } from '@/src/types/auth';
+import type { SignupResponse } from '@/src/types/auth';
 
 export default function SignupRoute() {
   const router = useRouter();
-  const { signIn } = useAuth();
 
   return (
     <SuperAdminSignupScreen
-      onSignup={async (authData: TokenBundle) => {
-        await signIn(authData);
-        router.replace('/onboarding');
+      onSignup={(response: SignupResponse) => {
+        router.replace({ pathname: '/verify-email', params: { email: response.email, sent: '1' } });
       }}
       onNavigateToLogin={() => router.replace('/login')}
     />

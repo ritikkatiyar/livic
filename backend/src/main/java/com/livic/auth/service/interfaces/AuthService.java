@@ -5,11 +5,12 @@ import com.livic.auth.dto.AuthRequests.LogoutRequest;
 import com.livic.auth.dto.AuthRequests.RefreshRequest;
 import com.livic.auth.dto.AuthRequests.SignupRequest;
 import com.livic.auth.dto.AuthRequests.ValidateRequest;
+import com.livic.auth.dto.AuthResponses.SignupResponse;
 import com.livic.auth.dto.AuthResponses.TokenBundle;
 import com.livic.auth.dto.AuthResponses.ValidateResponse;
 
 public interface AuthService {
-    TokenBundle signup(SignupRequest request);
+    SignupResponse signup(SignupRequest request);
     TokenBundle login(LoginRequest request);
     TokenBundle refresh(RefreshRequest request);
     void logout(LogoutRequest request);

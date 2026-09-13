@@ -18,6 +18,13 @@ public final class AuthResponses {
             AuthUserSummary user
     ) {}
 
+        public record SignupResponse(
+                        String status,
+                        String email,
+                        long codeExpiresInSeconds,
+                        long resendAvailableInSeconds
+    ) {}
+
         public record ValidateResponse(
                         boolean valid,
                         String userId,

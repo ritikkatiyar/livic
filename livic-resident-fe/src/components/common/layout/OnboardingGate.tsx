@@ -16,7 +16,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const isAuthRoute = pathname === '/login' || pathname === '/signup';
+  const isAuthRoute = pathname === '/login' || pathname === '/signup' || pathname === '/verify-email';
 
   useEffect(() => {
     let isMounted = true;

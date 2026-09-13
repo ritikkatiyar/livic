@@ -37,7 +37,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   // Check cached status so already-onboarded users load immediately on refresh
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(() => getLocalOnboardingStatus(accessToken));
 
-  const isAuthRoute = pathname === '/login' || pathname === '/signup';
+  const isAuthRoute = pathname === '/login' || pathname === '/signup' || pathname === '/verify-email';
   const isOnboardingRoute = pathname === '/onboarding';
 
   useEffect(() => {

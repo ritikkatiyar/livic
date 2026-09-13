@@ -23,6 +23,12 @@ public interface NotificationService {
     void send(String recipientUserId, NotificationChannel channel, String title, String body);
 
     /**
+     * Same as {@link #send}, but the body is not stored in the notification audit log.
+     * Use for messages carrying secrets such as one-time verification codes.
+     */
+    void sendSensitive(String recipientUserId, NotificationChannel channel, String title, String body);
+
+    /**
      * Sends the same notification to multiple users (bulk broadcast).
      * Used by announcements to reach all property tenants at once.
      *

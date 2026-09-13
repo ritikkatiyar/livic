@@ -28,6 +28,10 @@ public class UserTbl extends BaseEntity {
     @Column(name = "password_hash")
     private String passwordHash;
 
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private boolean emailVerified = true;
+
     @Column(name = "failed_login_attempts", nullable = false)
     private int failedLoginAttempts;
 

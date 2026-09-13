@@ -1,5 +1,6 @@
 package com.livic.inventory;
 
+import com.livic.auth.AuthorizationTestSupport;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.auth.service.impl.AuthorizationServiceImpl;
 import com.livic.auth.service.interfaces.MembershipCrudService;
@@ -18,7 +19,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
@@ -48,7 +48,6 @@ class LeaseInventoryAssignmentAuthorizationTest {
     @Mock
     private InventoryFacade inventoryFacade;
 
-    @InjectMocks
     private AuthorizationServiceImpl authorizationService;
 
     private UUID propertyId;
@@ -60,6 +59,7 @@ class LeaseInventoryAssignmentAuthorizationTest {
 
     @BeforeEach
     void setUp() {
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, financeFacade, inventoryFacade, null);
         propertyId = UUID.randomUUID();
         leaseId = UUID.randomUUID();
         assignmentId = UUID.randomUUID();

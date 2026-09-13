@@ -130,6 +130,22 @@ class ModuleBoundaryTest {
     }
 
     @Test
+    @DisplayName("Auth must not depend on business modules")
+    void authDoesNotDependOnBusinessModules() {
+        // Business modules plug into authorization via com.livic.auth.spi.ResourceScopeResolver instead
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("com.livic.auth..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "com.livic.finance..", "com.livic.property..", "com.livic.inventory..",
+                        "com.livic.storage..", "com.livic.billing..", "com.livic.payment..",
+                        "com.livic.issue..", "com.livic.announcement..", "com.livic.analytics..",
+                        "com.livic.notification..")
+                .because("auth is a foundational module; business modules depend on it, not the other way round");
+
+        rule.check(classes);
+    }
+
+    @Test
     @DisplayName("No module repository should be accessed from outside its own module package")
     void noCrossModuleRepositoryAccess() {
         for (String module : MODULES) {

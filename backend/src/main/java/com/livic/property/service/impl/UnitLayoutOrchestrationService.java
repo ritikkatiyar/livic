@@ -1,12 +1,12 @@
 package com.livic.property.service.impl;
 
 import com.livic.common.exception.BusinessException;
-import com.livic.finance.dto.LeaseSummaryDTO;
-import com.livic.finance.facade.FinanceFacade;
 import com.livic.property.domain.UnitTbl;
 import com.livic.property.dto.UnitDTOs;
 import com.livic.property.service.interfaces.UnitService;
 import com.livic.property.service.interfaces.UnitQueryService;
+import com.livic.property.spi.UnitOccupancyProvider;
+import com.livic.property.spi.UnitOccupancyProvider.UnitOccupant;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +20,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Application Service to orchestrate cross-domain logic between
- * Property, Finance, and User modules for Unit Layouts.
+ * Application Service to orchestrate unit layouts with lease occupancy and user details.
+ * Occupancy comes through {@link UnitOccupancyProvider}, so property does not depend on finance.
  * This keeps the Controllers thin and Domain Services pure.
  */
 @Service
@@ -30,7 +30,7 @@ public class UnitLayoutOrchestrationService {
 
     private final UnitService unitService;
     private final UnitQueryService unitQueryService;
-    private final FinanceFacade financeFacade;
+    private final UnitOccupancyProvider unitOccupancyProvider;
     private final UserFacade userFacade;
 
     public List<UnitDTOs.UnitResponse> getFloorLayout(UUID propertyId, int floorNumber) {
@@ -44,11 +44,7 @@ public class UnitLayoutOrchestrationService {
     }
 
     public List<UnitDTOs.UnitResponse> getVacatingUnits(UUID propertyId) {
-        List<LeaseSummaryDTO> activeLeases = financeFacade.getActiveLeasesByPropertyId(propertyId);
-        Set<UUID> vacatingUnitIds = activeLeases.stream()
-                .filter(lease -> lease.moveOutDate() != null && lease.unitId() != null)
-                .map(LeaseSummaryDTO::unitId)
-                .collect(Collectors.toSet());
+        Set<UUID> vacatingUnitIds = unitOccupancyProvider.vacatingUnitIds(propertyId);
 
         List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId).stream()
                 .filter(unit -> vacatingUnitIds.contains(unit.getId()))
@@ -60,15 +56,15 @@ public class UnitLayoutOrchestrationService {
             UUID propertyId,
             int floorNumber,
             List<UnitDTOs.FloorLayoutUnitRequest> items) {
-        
+
         List<UnitTbl> existingUnits = unitQueryService.getUnitsByFloor(propertyId, floorNumber);
         Set<String> incomingNumbers = items.stream()
                 .map(UnitDTOs.FloorLayoutUnitRequest::unitNumber)
                 .collect(Collectors.toSet());
-        
+
         for (UnitTbl unit : existingUnits) {
             if (!incomingNumbers.contains(unit.getUnitNumber())) {
-                if (financeFacade.hasLeasesForUnit(unit.getId())) {
+                if (unitOccupancyProvider.hasLeasesForUnit(unit.getId())) {
                     throw new BusinessException(
                             HttpStatus.CONFLICT,
                             "Cannot remove unit " + unit.getUnitNumber() + " from the layout while leases reference it"
@@ -82,22 +78,22 @@ public class UnitLayoutOrchestrationService {
     }
 
     private List<UnitDTOs.UnitResponse> enrichUnits(List<UnitTbl> units) {
-        Map<UUID, List<LeaseSummaryDTO>> activeLeasesByUnitId = financeFacade.getActiveLeasesByUnitIds(
+        Map<UUID, List<UnitOccupant>> occupantsByUnitId = unitOccupancyProvider.activeOccupantsByUnitIds(
                 units.stream().map(UnitTbl::getId).collect(Collectors.toSet())
         );
         Map<UUID, UserSummaryDTO> usersById = userFacade.getUsersByIds(
-                activeLeasesByUnitId.values().stream()
+                occupantsByUnitId.values().stream()
                         .flatMap(List::stream)
-                        .map(LeaseSummaryDTO::userId)
+                        .map(UnitOccupant::userId)
                         .collect(Collectors.toSet())
         );
 
         return units.stream()
-                .map(unit -> toResponse(unit, activeLeasesByUnitId.getOrDefault(unit.getId(), List.of()), usersById))
+                .map(unit -> toResponse(unit, occupantsByUnitId.getOrDefault(unit.getId(), List.of()), usersById))
                 .collect(Collectors.toList());
     }
 
-    private UnitDTOs.UnitResponse toResponse(UnitTbl u, List<LeaseSummaryDTO> leases, Map<UUID, UserSummaryDTO> usersById) {
+    private UnitDTOs.UnitResponse toResponse(UnitTbl u, List<UnitOccupant> occupants, Map<UUID, UserSummaryDTO> usersById) {
         return new UnitDTOs.UnitResponse(
                 u.getId(),
                 u.getUnitNumber(),
@@ -109,21 +105,21 @@ public class UnitLayoutOrchestrationService {
                 u.getType(),
                 u.getCapacity(),
                 u.getFacing(),
-                toActiveLeaseSummaries(leases, usersById)
+                toActiveLeaseSummaries(occupants, usersById)
         );
     }
 
-    private List<UnitDTOs.ActiveLeaseSummary> toActiveLeaseSummaries(List<LeaseSummaryDTO> leases, Map<UUID, UserSummaryDTO> usersById) {
-        return leases.stream()
-                .map(l -> {
-                    UserSummaryDTO user = usersById.get(l.userId());
+    private List<UnitDTOs.ActiveLeaseSummary> toActiveLeaseSummaries(List<UnitOccupant> occupants, Map<UUID, UserSummaryDTO> usersById) {
+        return occupants.stream()
+                .map(o -> {
+                    UserSummaryDTO user = usersById.get(o.userId());
                     return new UnitDTOs.ActiveLeaseSummary(
-                            l.id(),
-                            l.userId(),
+                            o.leaseId(),
+                            o.userId(),
                             user != null ? user.fullName() : "Unknown User",
                             user != null ? user.phoneNumber() : "",
-                            l.rentAmount(),
-                            l.status() != null ? l.status() : "ACTIVE"
+                            o.rentAmount(),
+                            o.status() != null ? o.status() : "ACTIVE"
                     );
                 })
                 .collect(Collectors.toList());

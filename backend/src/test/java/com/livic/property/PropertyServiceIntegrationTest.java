@@ -9,6 +9,8 @@ import com.livic.common.domain.FacingDirection;
 import com.livic.common.domain.LeaseSplitStrategy;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.domain.UnitTbl;
+import com.livic.property.dto.UnitDTOs;
+import com.livic.property.service.impl.UnitLayoutOrchestrationService;
 import com.livic.property.repository.PropertyRepository;
 import com.livic.property.repository.UnitRepository;
 import com.livic.property.service.interfaces.PropertyService;
@@ -66,6 +68,9 @@ public class PropertyServiceIntegrationTest {
 
     @Autowired
     private TestEventListener testEventListener;
+
+    @Autowired
+    private UnitLayoutOrchestrationService unitLayoutOrchestrationService;
 
     private UserTbl landlord;
     private UserTbl tenant;
@@ -193,5 +198,43 @@ public class PropertyServiceIntegrationTest {
 
         // Assert: Memberships are cleaned up by the event listener (genuine side-effect)
         assertTrue(membershipRepository.findByPropertyId(property.getId()).isEmpty(), "Memberships should be deleted");
+    }
+
+    @Test
+    public void testFloorLayoutCannotRemoveLeasedUnit() {
+        leaseRepository.save(activeLease());
+
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> unitLayoutOrchestrationService.saveFloorLayout(property.getId(), 1, List.of()));
+
+        assertEquals(HttpStatus.CONFLICT, exception.getStatus());
+        assertTrue(unitRepository.existsById(unit.getId()), "Leased unit should not be removed");
+    }
+
+    @Test
+    public void testFloorLayoutShowsActiveTenantOnUnit() {
+        LeaseTbl lease = leaseRepository.save(activeLease());
+
+        List<UnitDTOs.UnitResponse> layout = unitLayoutOrchestrationService.getFloorLayout(property.getId(), 1);
+
+        UnitDTOs.UnitResponse leasedUnit = layout.stream()
+                .filter(u -> u.id().equals(unit.getId()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(1, leasedUnit.activeLeases().size());
+        assertEquals(lease.getId(), leasedUnit.activeLeases().get(0).leaseId());
+        assertEquals("Tenant User", leasedUnit.activeLeases().get(0).tenantName());
+    }
+
+    private LeaseTbl activeLease() {
+        return LeaseTbl.builder()
+                .userId(tenant.getId())
+                .unitId(unit.getId())
+                .status(LeaseStatus.ACTIVE)
+                .monthlyRentAmount(BigDecimal.valueOf(1000.00))
+                .moveInDate(LocalDate.now().minusDays(10))
+                .securityDeposit(BigDecimal.valueOf(30000))
+                .splitStrategy(LeaseSplitStrategy.FULL_UNIT)
+                .build();
     }
 }

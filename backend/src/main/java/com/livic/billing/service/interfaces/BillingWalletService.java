@@ -3,9 +3,9 @@ package com.livic.billing.service.interfaces;
 import com.livic.billing.domain.BillingWalletTbl;
 import com.livic.billing.domain.SaasSubscriptionTbl;
 import com.livic.billing.dto.BillingStatusResponse;
-import com.livic.billing.dto.PaymentIntentRequest;
-import com.livic.billing.dto.PaymentIntentResponse;
-import com.livic.billing.dto.SubscriptionRequest;
+import com.livic.payment.dto.PaymentIntentRequest;
+import com.livic.payment.dto.PaymentIntentResponse;
+import com.livic.payment.dto.SubscriptionRequest;
 import com.livic.payment.dto.PaymentInitiationResponse;
 
 import java.util.UUID;

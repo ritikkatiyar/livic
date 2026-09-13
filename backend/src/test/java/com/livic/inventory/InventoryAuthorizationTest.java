@@ -1,6 +1,7 @@
 package com.livic.inventory;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.auth.AuthorizationTestSupport;
+import com.livic.security.UserDetailsImpl;
 import com.livic.auth.service.impl.AuthorizationServiceImpl;
 import com.livic.auth.service.interfaces.MembershipCrudService;
 import com.livic.common.domain.UserRole;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,7 +39,6 @@ class InventoryAuthorizationTest {
     @Mock
     private InventoryFacade inventoryFacade;
 
-    @InjectMocks
     private AuthorizationServiceImpl authorizationService;
 
     private UUID propertyId;
@@ -49,6 +48,7 @@ class InventoryAuthorizationTest {
 
     @BeforeEach
     void setUp() {
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, null, inventoryFacade, null);
         propertyId = UUID.randomUUID();
         itemId = UUID.randomUUID();
         ownerUserId = UUID.randomUUID();
@@ -63,7 +63,7 @@ class InventoryAuthorizationTest {
                 "+919876543210",
                 UserRole.USER
         );
-        UserDetailsImpl userDetails = UserDetailsImpl.fromSummary(userSummary);
+        UserDetailsImpl userDetails = UserDetailsImpl.fromClaims(userSummary.id().toString(), userSummary.authUid(), userSummary.globalRole().name());
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 userDetails,
                 null,

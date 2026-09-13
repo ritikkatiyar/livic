@@ -1,10 +1,10 @@
 package com.livic.payment.service;
 
-import com.livic.billing.domain.PaymentGatewayType;
-import com.livic.billing.dto.PaymentIntentRequest;
-import com.livic.billing.dto.PaymentIntentResponse;
-import com.livic.billing.dto.SubscriptionRequest;
-import com.livic.billing.dto.SubscriptionResponse;
+import com.livic.payment.dto.PaymentGatewayType;
+import com.livic.payment.dto.PaymentIntentRequest;
+import com.livic.payment.dto.PaymentIntentResponse;
+import com.livic.payment.dto.SubscriptionRequest;
+import com.livic.payment.dto.SubscriptionResponse;
 
 public interface PaymentGatewayService {
     

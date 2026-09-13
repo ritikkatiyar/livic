@@ -1,6 +1,4 @@
-package com.livic.billing.dto;
-
-import com.livic.billing.domain.PaymentGatewayType;
+package com.livic.payment.dto;
 
 public record SubscriptionRequest(
     String userId,

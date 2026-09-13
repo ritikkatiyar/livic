@@ -1,6 +1,6 @@
 package com.livic.finance.controller;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.common.enums.ResourceType;
 import com.livic.common.response.ApiResponse;
 import com.livic.finance.domain.RentCycleStatus;

@@ -16,6 +16,9 @@ public interface UserFacade {
 
     Optional<UserSummaryDTO> getUserByEmail(String email);
 
+    /** For the auth module's login flow only. */
+    Optional<com.livic.user.dto.UserCredentialsDTO> findCredentialsByEmail(String email);
+
     Optional<UserSummaryDTO> findByPhoneNumber(String phoneNumber);
 
     Map<UUID, UserSummaryDTO> getUsersByIds(Collection<UUID> userIds);
@@ -35,6 +38,9 @@ public interface UserFacade {
     boolean isEmailVerified(UUID userId);
 
     void markEmailVerified(UUID userId);
+
+    /** Removes the password so the account can only be used through a verified sign-in method. */
+    void clearPassword(UUID userId);
 
     UserMode getActiveModeForUser(UUID userId);
 

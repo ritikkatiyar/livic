@@ -3,7 +3,7 @@ package com.livic.announcement.controller;
 import com.livic.announcement.dto.AnnouncementDTOs.CreateAnnouncementRequest;
 import com.livic.announcement.dto.AnnouncementDTOs.AnnouncementResponse;
 import com.livic.announcement.service.interfaces.AnnouncementService;
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

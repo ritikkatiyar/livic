@@ -1,8 +1,6 @@
-package com.livic.auth.security;
+package com.livic.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.auth.service.JwtService;
 import com.livic.common.exception.ApiError;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -24,7 +22,7 @@ import java.io.IOException;
 
 /**
  * Servlet filter: validates Bearer access JWT and populates the security context.
- * Depends on {@link JwtService} and {@link CustomUserDetailsService} but does not contain business rules.
+ * Depends only on {@link JwtVerifier}; contains no business rules.
  */
 @Component
 @RequiredArgsConstructor
@@ -32,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
 
-    private final JwtService jwtService;
+    private final JwtVerifier jwtVerifier;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -54,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            Claims claims = jwtService.parseAndValidate(token);
+            Claims claims = jwtVerifier.verify(token);
             String userId = claims.getSubject();
             if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 String email = claims.get("email", String.class);

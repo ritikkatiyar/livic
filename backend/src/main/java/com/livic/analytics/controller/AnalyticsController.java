@@ -5,7 +5,7 @@ import com.livic.analytics.dto.ExpensesBreakdownResponse;
 import com.livic.analytics.dto.PortfolioOccupancyResponse;
 import com.livic.analytics.dto.SummaryResponse;
 import com.livic.analytics.service.interfaces.AnalyticsService;
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

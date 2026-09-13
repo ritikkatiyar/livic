@@ -1,6 +1,6 @@
 package com.livic.billing.dto;
 
-import com.livic.billing.annotation.FeatureKey;
+import com.livic.common.subscription.FeatureKey;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

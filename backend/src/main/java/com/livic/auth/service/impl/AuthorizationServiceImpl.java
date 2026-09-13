@@ -1,18 +1,12 @@
 package com.livic.auth.service.impl;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.auth.service.interfaces.MembershipCrudService;
+import com.livic.auth.spi.ResourceScope;
 import com.livic.common.enums.AccessType;
 import com.livic.common.enums.OwnerModule;
 import com.livic.common.enums.ResourceType;
-import com.livic.finance.dto.ChargeConfigResponse;
-import com.livic.finance.dto.LeaseSummaryDTO;
-import com.livic.finance.facade.FinanceFacade;
-import com.livic.inventory.facade.InventoryFacade;
-import com.livic.property.dto.UnitSummaryDTO;
-import com.livic.property.facade.UnitFacade;
-import com.livic.storage.facade.StorageFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -20,7 +14,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -30,10 +23,7 @@ import java.util.UUID;
 public class AuthorizationServiceImpl implements AuthorizationService {
 
     private final MembershipCrudService membershipCrudService;
-    private final UnitFacade unitFacade;
-    private final FinanceFacade financeFacade;
-    private final InventoryFacade inventoryFacade;
-    private final StorageFacade storageFacade;
+    private final ResourceScopeRegistry resourceScopeRegistry;
 
     @Override
     @Transactional(readOnly = true)
@@ -96,35 +86,22 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         UUID userId = currentUser.getUuid();
 
         try {
-            return switch (resourceType) {
-                case PROPERTY -> checkPermission(resourceId, permissionCode);
-                case UNIT -> unitFacade.getUnitById(resourceId)
-                        .map(UnitSummaryDTO::propertyId)
-                        .map(propertyId -> checkPermission(propertyId, permissionCode))
-                        .orElse(false);
-                case LEASE -> financeFacade.getLeaseById(resourceId)
-                        .map(lease -> {
-                            if ("LEASE_VIEW_OWN".equals(permissionCode) && lease.userId() != null && lease.userId().equals(userId)) {
-                                return true;
+            if (resourceType == ResourceType.MEDIA_ASSET) {
+                return hasMediaAssetAccess(resourceId, permissionCode);
+            }
+            return resourceScopeRegistry.resolve(resourceType, resourceId)
+                    .map(scope -> switch (scope) {
+                        case ResourceScope.Property property -> {
+                            if (resourceType == ResourceType.LEASE && "LEASE_VIEW_OWN".equals(permissionCode)
+                                    && property.ownerUserId() != null && property.ownerUserId().equals(userId)) {
+                                yield true;
                             }
-                            return checkPermission(lease.propertyId(), permissionCode);
-                        })
-                        .orElse(false);
-                case RENT_CYCLE -> financeFacade.getPropertyIdByRentCycleId(resourceId)
-                        .map(propertyId -> checkPermission(propertyId, permissionCode))
-                        .orElse(false);
-                case CHARGE_CONFIG -> {
-                    ChargeConfigResponse chargeConfig = financeFacade.getChargeConfigById(resourceId);
-                    yield chargeConfig != null && checkPermission(chargeConfig.getPropertyId(), permissionCode);
-                }
-                case INVENTORY_ITEM -> inventoryFacade.getPropertyIdForInventoryItem(resourceId)
-                        .map(propertyId -> checkPermission(propertyId, permissionCode))
-                        .orElse(false);
-                case INVENTORY_ASSIGNMENT -> inventoryFacade.getLeaseIdForAssignment(resourceId)
-                        .map(leaseId -> hasPermission(ResourceType.LEASE, leaseId, permissionCode))
-                        .orElse(false);
-                case MEDIA_ASSET -> hasMediaAssetAccess(resourceId, permissionCode);
-            };
+                            yield checkPermission(property.propertyId(), permissionCode);
+                        }
+                        case ResourceScope.Delegated delegated ->
+                                hasPermission(delegated.parentType(), delegated.parentId(), permissionCode);
+                    })
+                    .orElse(false);
         } catch (Exception e) {
             log.error("Error evaluating permission {} on resource {} ({}): {}", permissionCode, resourceType, resourceId, e.getMessage(), e);
             return false;
@@ -147,8 +124,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Transactional(readOnly = true)
     public boolean hasFullAccess(ResourceType resourceType, UUID resourceId) {
         if (resourceType == null || resourceId == null) return false;
-        Optional<UUID> propertyIdOpt = resolvePropertyId(resourceType, resourceId);
-        return propertyIdOpt.map(this::hasFullAccess).orElse(false);
+        return resourceScopeRegistry.resolvePropertyId(resourceType, resourceId)
+                .map(this::hasFullAccess)
+                .orElse(false);
     }
 
     @Override
@@ -161,14 +139,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (currentUser == null) return false;
         if (isUserGloballyAuthorized(currentUser)) return true;
 
-        boolean isWrite = "WRITE".equalsIgnoreCase(action) || "DELETE".equalsIgnoreCase(action) || "EDIT".equalsIgnoreCase(action);
-
-        return switch (ownerModule) {
-            case PROPERTY -> isWrite ? checkPermission(referenceId, "PROPERTY_EDIT") : checkPermission(referenceId, "PROPERTY_VIEW");
-            case LEASE -> isWrite ? hasPermission(ResourceType.LEASE, referenceId, "LEASE_UPDATE")
-                    : (hasPermission(ResourceType.LEASE, referenceId, "LEASE_VIEW") || hasPermission(ResourceType.LEASE, referenceId, "LEASE_VIEW_OWN"));
-            case INVENTORY -> isWrite ? hasPermission(ResourceType.INVENTORY_ITEM, referenceId, "PROPERTY_EDIT") : hasPermission(ResourceType.INVENTORY_ITEM, referenceId, "PROPERTY_VIEW");
-        };
+        return hasMediaAccessOn(ResourceType.forOwnerModule(ownerModule), referenceId, action);
     }
 
     @Override
@@ -181,11 +152,14 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
         UUID userId = currentUser.getUuid();
         try {
-            return storageFacade.getAssetById(mediaAssetId).map(asset -> {
-                if (asset.uploadedByUserId() != null && asset.uploadedByUserId().equals(userId)) {
+            return resourceScopeRegistry.resolve(ResourceType.MEDIA_ASSET, mediaAssetId).map(scope -> {
+                if (!(scope instanceof ResourceScope.Delegated asset)) {
+                    return false;
+                }
+                if (asset.ownerUserId() != null && asset.ownerUserId().equals(userId)) {
                     return true;
                 }
-                return hasMediaAccess(asset.ownerModule(), asset.referenceId(), action);
+                return hasMediaAccessOn(asset.parentType(), asset.parentId(), action);
             }).orElse(false);
         } catch (Exception e) {
             log.error("Error checking permission for mediaAssetId {}: {}", mediaAssetId, e.getMessage(), e);
@@ -193,27 +167,19 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         }
     }
 
-    private Optional<UUID> resolvePropertyId(ResourceType resourceType, UUID resourceId) {
-        return switch (resourceType) {
-            case PROPERTY -> Optional.of(resourceId);
-            case UNIT -> unitFacade.getUnitById(resourceId).map(UnitSummaryDTO::propertyId);
-            case LEASE -> financeFacade.getLeaseById(resourceId).map(LeaseSummaryDTO::propertyId);
-            case RENT_CYCLE -> financeFacade.getPropertyIdByRentCycleId(resourceId);
-            case CHARGE_CONFIG -> Optional.ofNullable(financeFacade.getChargeConfigById(resourceId)).map(ChargeConfigResponse::getPropertyId);
-            case INVENTORY_ITEM -> inventoryFacade.getPropertyIdForInventoryItem(resourceId);
-            case INVENTORY_ASSIGNMENT -> inventoryFacade.getLeaseIdForAssignment(resourceId)
-                    .flatMap(leaseId -> financeFacade.getLeaseById(leaseId).map(LeaseSummaryDTO::propertyId));
-            case MEDIA_ASSET -> storageFacade.getAssetById(resourceId)
-                    .flatMap(asset -> resolvePropertyIdFromOwnerModule(asset.ownerModule(), asset.referenceId()));
-        };
-    }
+    private boolean hasMediaAccessOn(ResourceType parentType, UUID referenceId, String action) {
+        if (parentType == null || referenceId == null) {
+            return false;
+        }
 
-    private Optional<UUID> resolvePropertyIdFromOwnerModule(OwnerModule ownerModule, UUID referenceId) {
-        if (ownerModule == null || referenceId == null) return Optional.empty();
-        return switch (ownerModule) {
-            case PROPERTY -> Optional.of(referenceId);
-            case LEASE -> financeFacade.getLeaseById(referenceId).map(LeaseSummaryDTO::propertyId);
-            case INVENTORY -> inventoryFacade.getPropertyIdForInventoryItem(referenceId);
+        boolean isWrite = "WRITE".equalsIgnoreCase(action) || "DELETE".equalsIgnoreCase(action) || "EDIT".equalsIgnoreCase(action);
+
+        return switch (parentType) {
+            case PROPERTY -> isWrite ? checkPermission(referenceId, "PROPERTY_EDIT") : checkPermission(referenceId, "PROPERTY_VIEW");
+            case LEASE -> isWrite ? hasPermission(ResourceType.LEASE, referenceId, "LEASE_UPDATE")
+                    : (hasPermission(ResourceType.LEASE, referenceId, "LEASE_VIEW") || hasPermission(ResourceType.LEASE, referenceId, "LEASE_VIEW_OWN"));
+            case INVENTORY_ITEM -> isWrite ? hasPermission(ResourceType.INVENTORY_ITEM, referenceId, "PROPERTY_EDIT") : hasPermission(ResourceType.INVENTORY_ITEM, referenceId, "PROPERTY_VIEW");
+            default -> false;
         };
     }
 

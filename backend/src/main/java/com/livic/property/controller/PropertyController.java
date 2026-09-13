@@ -1,8 +1,8 @@
 package com.livic.property.controller;
 
-import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.billing.annotation.EnforceSubscription;
-import com.livic.billing.annotation.FeatureKey;
+import com.livic.security.UserDetailsImpl;
+import com.livic.common.subscription.EnforceSubscription;
+import com.livic.common.subscription.FeatureKey;
 import com.livic.common.response.ApiResponse;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.mapper.PropertyMapper;

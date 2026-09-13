@@ -1,8 +1,8 @@
 package com.livic.billing.aspect;
 
-import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.billing.annotation.EnforceSubscription;
-import com.livic.billing.annotation.FeatureKey;
+import com.livic.security.UserDetailsImpl;
+import com.livic.common.subscription.EnforceSubscription;
+import com.livic.common.subscription.FeatureKey;
 import com.livic.billing.dto.UserSubscriptionContext;
 import com.livic.billing.service.interfaces.SubscriptionCacheService;
 import com.livic.billing.validator.SubscriptionValidator;
@@ -31,7 +31,7 @@ public class SubscriptionEnforcementAspect {
     @Before("@annotation(enforceSubscription)")
     public void enforce(JoinPoint joinPoint, EnforceSubscription enforceSubscription) {
         FeatureKey feature = enforceSubscription.feature();
-        UUID ownerId = resolveOwnerId();
+        UUID ownerId = currentUserId();
 
         if (ownerId == null) {
             log.error("[SUBSCRIPTION ENFORCEMENT] Could not resolve owner ID for feature check: {}", feature);
@@ -52,15 +52,19 @@ public class SubscriptionEnforcementAspect {
                 ownerId, feature, context.getPlanKey(), allowed);
 
         if (!allowed) {
-            throw new BusinessException(
-                    HttpStatus.FORBIDDEN,
-                    String.format("Feature '%s' limit reached or not included in your '%s' plan. Please upgrade your subscription plan to access this capability.",
-                            feature.name(), context.getPlanKey())
-            );
+            throw limitReached(feature, context.getPlanKey());
         }
     }
 
-    private UUID resolveOwnerId() {
+    public static BusinessException limitReached(FeatureKey feature, String planKey) {
+        return new BusinessException(
+                HttpStatus.FORBIDDEN,
+                String.format("Feature '%s' limit reached or not included in your '%s' plan. Please upgrade your subscription plan to access this capability.",
+                        feature.name(), planKey)
+        );
+    }
+
+    public static UUID currentUserId() {
         try {
             Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             if (principal instanceof UserDetailsImpl) {

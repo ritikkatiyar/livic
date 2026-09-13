@@ -10,7 +10,7 @@ import com.livic.user.facade.UserFacade;
 import com.livic.auth.facade.AuthFacade;
 import com.livic.property.service.interfaces.UnitCrudService;
 import com.livic.common.event.PropertyDeletionEvent;
-import com.livic.finance.facade.FinanceFacade;
+import com.livic.property.spi.UnitOccupancyProvider;
 import com.livic.common.exception.BusinessException;
 import org.springframework.http.HttpStatus;
 
@@ -32,7 +32,7 @@ public class PropertyServiceImpl implements PropertyService {
     private final AuthFacade authFacade;
     private final UnitCrudService unitCrudService;
     private final ApplicationEventPublisher eventPublisher;
-    private final FinanceFacade financeFacade;
+    private final UnitOccupancyProvider unitOccupancyProvider;
 
     @Override
     public PropertyTbl createProperty(PropertyDTOs.CreatePropertyRequest request, UUID creatorId) {
@@ -59,7 +59,7 @@ public class PropertyServiceImpl implements PropertyService {
 
     @Override
     public void deleteProperty(UUID propertyId) {
-        if (financeFacade.hasLeasesForProperty(propertyId)) {
+        if (unitOccupancyProvider.hasLeasesForProperty(propertyId)) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot delete property because it has assigned tenants or leases.");
         }
 

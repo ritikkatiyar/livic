@@ -33,6 +33,12 @@ public final class PaymentConstants {
         private Status() {}
     }
 
+    public static final class Currency {
+        public static final String INR = "INR";
+
+        private Currency() {}
+    }
+
     public static final class Gateway {
         public static final String RAZORPAY = "RAZORPAY";
         public static final String CASH = "CASH";

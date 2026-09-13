@@ -1,6 +1,6 @@
 package com.livic.inventory.controller;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.common.enums.ResourceType;
 import com.livic.common.response.ApiResponse;
 import com.livic.inventory.dto.ApproveDeductionsRequest;

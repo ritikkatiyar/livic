@@ -1,4 +1,4 @@
-package com.livic.auth.security;
+package com.livic.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.livic.common.exception.ApiError;

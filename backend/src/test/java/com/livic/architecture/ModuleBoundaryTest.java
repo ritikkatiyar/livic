@@ -19,6 +19,7 @@ import java.util.Set;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 class ModuleBoundaryTest {
 
@@ -33,6 +34,32 @@ class ModuleBoundaryTest {
         classes = new ClassFileImporter()
                 .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
                 .importPackages("com.livic");
+    }
+
+    @Test
+    @DisplayName("Top-level modules must be free of dependency cycles")
+    void modulesAreFreeOfCycles() {
+        ArchRule rule = slices().matching("com.livic.(*)..").namingSlices("$1")
+                .should().beFreeOfCycles()
+                .because("cross-module callbacks go through an SPI owned by the upstream module or a synchronous event");
+
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("Auth must not depend on business modules")
+    void authDoesNotDependOnBusinessModules() {
+        // Business modules plug into authorization via com.livic.auth.spi.ResourceScopeResolver instead
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("com.livic.auth..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "com.livic.finance..", "com.livic.property..", "com.livic.inventory..",
+                        "com.livic.storage..", "com.livic.billing..", "com.livic.payment..",
+                        "com.livic.issue..", "com.livic.announcement..", "com.livic.analytics..",
+                        "com.livic.notification..")
+                .because("auth is a foundational module; business modules depend on it, not the other way round");
+
+        rule.check(classes);
     }
 
     @Test
@@ -86,12 +113,55 @@ class ModuleBoundaryTest {
     void strictUserServiceBoundaryEnforcement() {
         ArchRule rule = noClasses()
                 .that().resideOutsideOfPackage("com.livic.user..")
-                .and().doNotHaveFullyQualifiedName("com.livic.auth.service.CustomUserDetailsService")
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "com.livic.user.service.interfaces..",
                         "com.livic.user.service.impl.."
                 )
-                .because("Outside modules must access user capabilities strictly through com.livic.user.facade or DTOs (except CustomUserDetailsService)");
+                .because("Outside modules must access user capabilities strictly through com.livic.user.facade or DTOs");
+
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("Security kernel depends only on common")
+    void securityKernelDependsOnlyOnCommon() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("com.livic.security..")
+                .should().dependOnClassesThat(
+                        DescribedPredicate.describe("are Livic classes outside common/security", (JavaClass target) ->
+                                target.getPackageName().startsWith("com.livic.")
+                                        && !target.getPackageName().startsWith("com.livic.common")
+                                        && !target.getPackageName().startsWith("com.livic.security")))
+                .because("the security kernel will become a shared library used by every service");
+
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("User module must not depend on auth or business modules")
+    void userDoesNotDependOnAuthOrBusinessModules() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("com.livic.user..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "com.livic.auth..",
+                        "com.livic.finance..", "com.livic.property..", "com.livic.inventory..",
+                        "com.livic.storage..", "com.livic.billing..", "com.livic.payment..",
+                        "com.livic.issue..", "com.livic.announcement..", "com.livic.analytics..",
+                        "com.livic.notification..")
+                .because("user is upstream of auth; views combining user with memberships or leases belong in a downstream module");
+
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("Auth may use the user module only through its facade and DTOs")
+    void authUsesUserOnlyThroughFacade() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("com.livic.auth..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "com.livic.user.domain..", "com.livic.user.repository..",
+                        "com.livic.user.service..", "com.livic.user.controller..")
+                .because("auth reads user data via UserFacade (e.g. UserCredentialsDTO), never the entity");
 
         rule.check(classes);
     }

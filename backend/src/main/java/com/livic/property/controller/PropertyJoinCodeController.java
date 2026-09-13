@@ -1,6 +1,6 @@
 package com.livic.property.controller;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
 import com.livic.property.dto.PropertyJoinCodeDTOs;
 import com.livic.property.service.interfaces.PropertyJoinCodeService;

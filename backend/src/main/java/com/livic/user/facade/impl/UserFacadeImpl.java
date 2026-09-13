@@ -58,6 +58,12 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     @Override
+    public Optional<com.livic.user.dto.UserCredentialsDTO> findCredentialsByEmail(String email) {
+        return userQueryService.findByEmail(email)
+                .map(com.livic.user.dto.UserCredentialsDTO::from);
+    }
+
+    @Override
     public Optional<UserSummaryDTO> findByPhoneNumber(String phoneNumber) {
         return userQueryService.findByPhoneNumber(phoneNumber)
                 .map(UserSummaryDTO::from);
@@ -127,6 +133,17 @@ public class UserFacadeImpl implements UserFacade {
                 .filter(user -> !user.isEmailVerified())
                 .ifPresent(user -> {
                     user.setEmailVerified(true);
+                    userCrudService.save(user);
+                });
+    }
+
+    @Override
+    @Transactional
+    public void clearPassword(UUID userId) {
+        userCrudService.findById(userId)
+                .filter(user -> user.getPasswordHash() != null)
+                .ifPresent(user -> {
+                    user.setPasswordHash(null);
                     userCrudService.save(user);
                 });
     }

@@ -2,7 +2,7 @@ package com.livic.property.controller;
 
 import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.auth.facade.AuthFacade;
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.security.UserDetailsImpl;
 import com.livic.common.enums.AccessType;
 import com.livic.common.response.ApiResponse;
 import com.livic.user.dto.UserSummaryDTO;

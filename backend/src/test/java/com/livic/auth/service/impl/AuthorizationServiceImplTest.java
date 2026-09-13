@@ -1,6 +1,7 @@
 package com.livic.auth.service.impl;
 
-import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.auth.AuthorizationTestSupport;
+import com.livic.security.UserDetailsImpl;
 import com.livic.auth.service.interfaces.MembershipCrudService;
 import com.livic.common.domain.FacingDirection;
 import com.livic.common.domain.UnitType;
@@ -13,18 +14,19 @@ import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.facade.InventoryFacade;
 import com.livic.property.dto.UnitSummaryDTO;
 import com.livic.property.facade.UnitFacade;
+import com.livic.storage.dto.MediaDTOs;
 import com.livic.storage.facade.StorageFacade;
 import com.livic.user.dto.UserSummaryDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -50,7 +52,6 @@ class AuthorizationServiceImplTest {
     @Mock
     private StorageFacade storageFacade;
 
-    @InjectMocks
     private AuthorizationServiceImpl authorizationService;
 
     private UUID propertyId;
@@ -58,6 +59,7 @@ class AuthorizationServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, unitFacade, financeFacade, inventoryFacade, storageFacade);
         propertyId = UUID.randomUUID();
         userId = UUID.randomUUID();
     }
@@ -70,7 +72,7 @@ class AuthorizationServiceImplTest {
                 "+919876543210",
                 role
         );
-        UserDetailsImpl userDetails = UserDetailsImpl.fromSummary(userSummary);
+        UserDetailsImpl userDetails = UserDetailsImpl.fromClaims(userSummary.id().toString(), userSummary.authUid(), userSummary.globalRole().name());
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 userDetails,
                 null,
@@ -221,5 +223,56 @@ class AuthorizationServiceImplTest {
 
         assertThat(authorizationService.hasPermission(ResourceType.RENT_CYCLE, rentCycleId, "PROPERTY_VIEW")).isFalse();
         assertThat(authorizationService.hasPermission(ResourceType.RENT_CYCLE, rentCycleId, "PROPERTY_EDIT")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Lease ownership only grants LEASE_VIEW_OWN, not other lease permissions")
+    void leaseOwnershipDoesNotGrantOtherPermissions() {
+        authenticateUser(userId, UserRole.USER);
+        UUID leaseId = UUID.randomUUID();
+        LeaseSummaryDTO lease = new LeaseSummaryDTO(leaseId, UUID.randomUUID(), "101", 1, propertyId, "Property",
+                userId, "ACTIVE", null, null, null);
+
+        when(financeFacade.getLeaseById(leaseId)).thenReturn(Optional.of(lease));
+        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+                .thenReturn(false);
+        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
+                .thenReturn(Set.of());
+
+        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_VIEW_OWN")).isTrue();
+        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_UPDATE")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Full access on an inventory assignment resolves through its lease to the property")
+    void fullAccessResolvesInventoryAssignmentThroughLease() {
+        authenticateUser(userId, UserRole.USER);
+        UUID assignmentId = UUID.randomUUID();
+        UUID leaseId = UUID.randomUUID();
+        LeaseSummaryDTO lease = new LeaseSummaryDTO(leaseId, UUID.randomUUID(), "101", 1, propertyId, "Property",
+                UUID.randomUUID(), "ACTIVE", null, null, null);
+
+        when(inventoryFacade.getLeaseIdForAssignment(assignmentId)).thenReturn(Optional.of(leaseId));
+        when(financeFacade.getLeaseById(leaseId)).thenReturn(Optional.of(lease));
+        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+                .thenReturn(true);
+
+        assertThat(authorizationService.hasFullAccess(ResourceType.INVENTORY_ASSIGNMENT, assignmentId)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Media asset without an owner module is accessible only to its uploader")
+    void orphanMediaAssetOnlyAccessibleToUploader() {
+        UUID mediaAssetId = UUID.randomUUID();
+        MediaDTOs.MediaAssetDTO asset = new MediaDTOs.MediaAssetDTO(mediaAssetId, null, null, null, "ext", "url",
+                null, null, userId, Instant.now());
+        when(storageFacade.getAssetById(mediaAssetId)).thenReturn(Optional.of(asset));
+
+        authenticateUser(userId, UserRole.USER);
+        assertThat(authorizationService.hasMediaAssetAccess(mediaAssetId, "DELETE")).isTrue();
+
+        authenticateUser(UUID.randomUUID(), UserRole.USER);
+        assertThat(authorizationService.hasMediaAssetAccess(mediaAssetId, "READ")).isFalse();
+        assertThat(authorizationService.hasFullAccess(ResourceType.MEDIA_ASSET, mediaAssetId)).isFalse();
     }
 }

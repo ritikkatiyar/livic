@@ -2,6 +2,9 @@ package com.livic.property;
 
 import com.livic.auth.repository.MembershipRepository;
 import com.livic.auth.service.interfaces.MembershipService;
+import com.livic.billing.SubscriptionTestSupport;
+import com.livic.billing.repository.SaasSubscriptionRepository;
+import com.livic.billing.repository.SubscriptionPlanRepository;
 import com.livic.common.domain.UserRole;
 import com.livic.common.enums.AccessType;
 import com.livic.common.exception.BusinessException;
@@ -47,6 +50,12 @@ public class PropertyJoinCodeServiceIntegrationTest {
     private MembershipService membershipService;
 
     @Autowired
+    private SaasSubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private SubscriptionPlanRepository planRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     private UserTbl landlord;
@@ -89,6 +98,8 @@ public class PropertyJoinCodeServiceIntegrationTest {
                 .city("Faridabad")
                 .build();
         property = propertyRepository.save(property);
+
+        SubscriptionTestSupport.subscribe(subscriptionRepository, planRepository, landlord.getId(), SubscriptionTestSupport.ENTERPRISE_PLAN_ID);
 
         // Assign landlord as property owner
         membershipService.createOwnerMembership(property.getId(), landlord.getId());

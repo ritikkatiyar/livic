@@ -1,6 +1,6 @@
 package com.livic.billing.validator;
 
-import com.livic.billing.annotation.FeatureKey;
+import com.livic.common.subscription.FeatureKey;
 import com.livic.billing.dto.UserSubscriptionContext;
 import com.livic.property.dto.PropertySummaryDTO;
 import com.livic.property.facade.PropertyFacade;
@@ -26,6 +26,11 @@ public class UnitLimitValidator implements SubscriptionValidator {
 
     @Override
     public boolean validate(UUID userId, UserSubscriptionContext context) {
+        return canAddUnits(userId, context, 1);
+    }
+
+    /** True when the user's existing units plus {@code additionalUnits} stay within the plan limit. */
+    public boolean canAddUnits(UUID userId, UserSubscriptionContext context, int additionalUnits) {
         int maxUnits = context.getLimit(FeatureKey.MAX_UNITS);
         if (maxUnits == -1) {
             return true; // Unlimited
@@ -39,13 +44,14 @@ public class UnitLimitValidator implements SubscriptionValidator {
                 .setMessage("[UNIT LIMIT CHECK]")
                 .addKeyValue("userId", userId)
                 .addKeyValue("currentUnits", currentUnitCount)
+                .addKeyValue("additionalUnits", additionalUnits)
                 .addKeyValue("maxAllowed", maxUnits)
                 .addKeyValue("correlationId", MDC.get("correlationId"))
                 .addKeyValue("traceId", MDC.get("traceId"))
                 .addKeyValue("spanId", MDC.get("spanId"))
                 .log();
 
-        return currentUnitCount < maxUnits;
+        return currentUnitCount + additionalUnits <= maxUnits;
     }
 
     @Override

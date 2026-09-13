@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,7 +21,14 @@ public interface AuthFacade {
 
     Page<MembershipSummaryDTO> getMembershipsByPropertyId(UUID propertyId, Pageable pageable);
 
+    /** Active memberships only; inactive members do not occupy a seat. */
     long countMembershipsByPropertyId(UUID propertyId);
+
+    /**
+     * The property owner: the active Full Access membership titled "Owner" (most recently assigned, e.g. after a
+     * transfer), otherwise the earliest active Full Access member.
+     */
+    Optional<UUID> findPropertyOwnerId(UUID propertyId);
 
     void createOwnerMembership(UUID propertyId, UUID userId);
 

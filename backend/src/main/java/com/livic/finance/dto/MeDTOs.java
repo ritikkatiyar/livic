@@ -1,9 +1,8 @@
-package com.livic.user.dto;
+package com.livic.finance.dto;
 
 import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.common.domain.UserRole;
 import com.livic.common.enums.AccessType;
-import com.livic.finance.dto.LeaseSummaryDTO;
 
 import java.math.BigDecimal;
 import java.util.List;

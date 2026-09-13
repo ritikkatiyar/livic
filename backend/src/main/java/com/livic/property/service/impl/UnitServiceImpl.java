@@ -1,6 +1,7 @@
 package com.livic.property.service.impl;
 
 import com.livic.common.domain.FacingDirection;
+import com.livic.common.event.UnitsCreationRequestedEvent;
 import com.livic.common.exception.BusinessException;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.dto.PropertyDTOs;
@@ -13,6 +14,7 @@ import com.livic.property.service.interfaces.UnitService;
 import com.livic.property.service.interfaces.PropertyQueryService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,7 @@ public class UnitServiceImpl implements UnitService {
 
     private final UnitCrudService unitCrudService;
     private final PropertyQueryService propertyQueryService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public List<UnitTbl> saveAll(List<UnitTbl> units) {
@@ -65,6 +68,13 @@ public class UnitServiceImpl implements UnitService {
         List<UnitTbl> toRemove = onFloor.stream()
                 .filter(u -> !incomingNumbers.contains(u.getUnitNumber()))
                 .toList();
+
+        Set<String> onFloorNumbers = onFloor.stream().map(UnitTbl::getUnitNumber).collect(Collectors.toSet());
+        long newUnits = incomingNumbers.stream().filter(number -> !onFloorNumbers.contains(number)).count();
+        int netAdditionalUnits = (int) newUnits - toRemove.size();
+        if (netAdditionalUnits > 0) {
+            eventPublisher.publishEvent(new UnitsCreationRequestedEvent(this, propertyId, netAdditionalUnits));
+        }
 
         // Optimized: batch delete
         unitCrudService.deleteAll(toRemove);
@@ -163,6 +173,7 @@ public class UnitServiceImpl implements UnitService {
                 currentY += rowHeight;
             }
         }
+        eventPublisher.publishEvent(new UnitsCreationRequestedEvent(this, propertyId, generatedUnits.size()));
         return saveAll(generatedUnits);
     }
 }

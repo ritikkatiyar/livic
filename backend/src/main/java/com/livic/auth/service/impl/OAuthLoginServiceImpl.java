@@ -9,6 +9,7 @@ import com.livic.auth.service.TokenIssuer;
 import com.livic.auth.service.interfaces.AuthIdentityCrudService;
 import com.livic.auth.service.interfaces.EmailVerificationCrudService;
 import com.livic.auth.service.interfaces.OAuthLoginService;
+import com.livic.auth.service.interfaces.RefreshTokenCrudService;
 import com.livic.common.exception.BusinessException;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
@@ -32,17 +33,20 @@ public class OAuthLoginServiceImpl implements OAuthLoginService {
     private final EmailVerificationCrudService emailVerificationCrudService;
     private final UserFacade userFacade;
     private final TokenIssuer tokenIssuer;
+    private final RefreshTokenCrudService refreshTokenCrudService;
 
     public OAuthLoginServiceImpl(List<ExternalIdentityProvider> providers,
                                  AuthIdentityCrudService authIdentityCrudService,
                                  EmailVerificationCrudService emailVerificationCrudService,
                                  UserFacade userFacade,
-                                 TokenIssuer tokenIssuer) {
+                                 TokenIssuer tokenIssuer,
+                                 RefreshTokenCrudService refreshTokenCrudService) {
         providers.forEach(provider -> this.providers.put(provider.type(), provider));
         this.authIdentityCrudService = authIdentityCrudService;
         this.emailVerificationCrudService = emailVerificationCrudService;
         this.userFacade = userFacade;
         this.tokenIssuer = tokenIssuer;
+        this.refreshTokenCrudService = refreshTokenCrudService;
     }
 
     @Override
@@ -67,6 +71,14 @@ public class OAuthLoginServiceImpl implements OAuthLoginService {
 
         UserSummaryDTO user = userFacade.getUserByEmail(identity.email())
                 .orElseGet(() -> userFacade.createPasswordlessUser(identity.email(), displayName(identity)));
+
+        if (!userFacade.isEmailVerified(user.id())) {
+            // An unverified account may have been registered by someone who does not own this mailbox.
+            // Drop any password and sessions created before ownership was proven, so they cannot be reused.
+            userFacade.clearPassword(user.id());
+            refreshTokenCrudService.revokeAllForUser(user.id());
+            log.warn("unverified_account_claimed_via_provider userId={} provider={}", user.id(), type);
+        }
 
         // The provider has proven mailbox ownership, so any pending signup code is no longer needed.
         userFacade.markEmailVerified(user.id());

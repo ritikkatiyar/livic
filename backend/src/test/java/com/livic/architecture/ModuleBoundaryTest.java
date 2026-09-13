@@ -25,8 +25,11 @@ class ModuleBoundaryTest {
 
     private static JavaClasses classes;
 
+    /** Group-qualified module packages below com.livic (platform, services, features). */
     private static final String[] MODULES = {
-            "auth", "user", "property", "finance", "billing", "payment", "notification", "announcement", "analytics", "issue", "storage", "inventory"
+            "platform.auth", "platform.user", "platform.payment", "platform.notification", "platform.storage",
+            "services.property", "services.finance", "services.billing",
+            "features.announcement", "features.analytics", "features.issue", "features.inventory"
     };
 
     @BeforeAll
@@ -37,9 +40,9 @@ class ModuleBoundaryTest {
     }
 
     @Test
-    @DisplayName("Top-level modules must be free of dependency cycles")
+    @DisplayName("Modules must be free of dependency cycles")
     void modulesAreFreeOfCycles() {
-        ArchRule rule = slices().matching("com.livic.(*)..").namingSlices("$1")
+        ArchRule rule = slices().matching("com.livic.(*).(*)..").namingSlices("$1.$2")
                 .should().beFreeOfCycles()
                 .because("cross-module callbacks go through an SPI owned by the upstream module or a synchronous event");
 
@@ -47,16 +50,38 @@ class ModuleBoundaryTest {
     }
 
     @Test
+    @DisplayName("Platform must not depend on services or features")
+    void platformDoesNotDependOnServicesOrFeatures() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("com.livic.platform..")
+                .should().dependOnClassesThat().resideInAnyPackage("com.livic.services..", "com.livic.features..")
+                .because("dependencies flow features -> services -> platform");
+
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("Services must not depend on features")
+    void servicesDoNotDependOnFeatures() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("com.livic.services..")
+                .should().dependOnClassesThat().resideInAPackage("com.livic.features..")
+                .because("dependencies flow features -> services -> platform");
+
+        rule.check(classes);
+    }
+
+    @Test
     @DisplayName("Auth must not depend on business modules")
     void authDoesNotDependOnBusinessModules() {
-        // Business modules plug into authorization via com.livic.auth.spi.ResourceScopeResolver instead
+        // Business modules plug into authorization via com.livic.platform.auth.spi.ResourceScopeResolver instead
         ArchRule rule = noClasses()
-                .that().resideInAPackage("com.livic.auth..")
+                .that().resideInAPackage("com.livic.platform.auth..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.finance..", "com.livic.property..", "com.livic.inventory..",
-                        "com.livic.storage..", "com.livic.billing..", "com.livic.payment..",
-                        "com.livic.issue..", "com.livic.announcement..", "com.livic.analytics..",
-                        "com.livic.notification..")
+                        "com.livic.services.finance..", "com.livic.services.property..", "com.livic.features.inventory..",
+                        "com.livic.platform.storage..", "com.livic.services.billing..", "com.livic.platform.payment..",
+                        "com.livic.features.issue..", "com.livic.features.announcement..", "com.livic.features.analytics..",
+                        "com.livic.platform.notification..")
                 .because("auth is a foundational module; business modules depend on it, not the other way round");
 
         rule.check(classes);
@@ -82,14 +107,14 @@ class ModuleBoundaryTest {
     @DisplayName("Finance module internal services must not be accessed from outside finance module")
     void strictFinanceFacadeEnforcement() {
         ArchRule rule = noClasses()
-                .that().resideOutsideOfPackage("com.livic.finance..")
+                .that().resideOutsideOfPackage("com.livic.services.finance..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.finance.service.interfaces..",
-                        "com.livic.finance.service.impl..",
-                        "com.livic.finance.repository..",
-                        "com.livic.finance.domain.."
+                        "com.livic.services.finance.service.interfaces..",
+                        "com.livic.services.finance.service.impl..",
+                        "com.livic.services.finance.repository..",
+                        "com.livic.services.finance.domain.."
                 )
-                .because("Outside modules must access the finance module strictly through com.livic.finance.facade or DTOs");
+                .because("Outside modules must access the finance module strictly through com.livic.services.finance.facade or DTOs");
 
         rule.check(classes);
     }
@@ -98,12 +123,12 @@ class ModuleBoundaryTest {
     @DisplayName("Property module internal services must not be accessed from outside property module")
     void strictPropertyServiceBoundaryEnforcement() {
         ArchRule rule = noClasses()
-                .that().resideOutsideOfPackage("com.livic.property..")
+                .that().resideOutsideOfPackage("com.livic.services.property..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.property.service.interfaces..",
-                        "com.livic.property.service.impl.."
+                        "com.livic.services.property.service.interfaces..",
+                        "com.livic.services.property.service.impl.."
                 )
-                .because("Outside modules must access property capabilities strictly through com.livic.property.facade or DTOs");
+                .because("Outside modules must access property capabilities strictly through com.livic.services.property.facade or DTOs");
 
         rule.check(classes);
     }
@@ -112,12 +137,12 @@ class ModuleBoundaryTest {
     @DisplayName("User module internal services must not be accessed from outside user module")
     void strictUserServiceBoundaryEnforcement() {
         ArchRule rule = noClasses()
-                .that().resideOutsideOfPackage("com.livic.user..")
+                .that().resideOutsideOfPackage("com.livic.platform.user..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.user.service.interfaces..",
-                        "com.livic.user.service.impl.."
+                        "com.livic.platform.user.service.interfaces..",
+                        "com.livic.platform.user.service.impl.."
                 )
-                .because("Outside modules must access user capabilities strictly through com.livic.user.facade or DTOs");
+                .because("Outside modules must access user capabilities strictly through com.livic.platform.user.facade or DTOs");
 
         rule.check(classes);
     }
@@ -126,12 +151,12 @@ class ModuleBoundaryTest {
     @DisplayName("Security kernel depends only on common")
     void securityKernelDependsOnlyOnCommon() {
         ArchRule rule = noClasses()
-                .that().resideInAPackage("com.livic.security..")
+                .that().resideInAPackage("com.livic.platform.security..")
                 .should().dependOnClassesThat(
                         DescribedPredicate.describe("are Livic classes outside common/security", (JavaClass target) ->
                                 target.getPackageName().startsWith("com.livic.")
-                                        && !target.getPackageName().startsWith("com.livic.common")
-                                        && !target.getPackageName().startsWith("com.livic.security")))
+                                        && !target.getPackageName().startsWith("com.livic.platform.common")
+                                        && !target.getPackageName().startsWith("com.livic.platform.security")))
                 .because("the security kernel will become a shared library used by every service");
 
         rule.check(classes);
@@ -141,13 +166,13 @@ class ModuleBoundaryTest {
     @DisplayName("User module must not depend on auth or business modules")
     void userDoesNotDependOnAuthOrBusinessModules() {
         ArchRule rule = noClasses()
-                .that().resideInAPackage("com.livic.user..")
+                .that().resideInAPackage("com.livic.platform.user..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.auth..",
-                        "com.livic.finance..", "com.livic.property..", "com.livic.inventory..",
-                        "com.livic.storage..", "com.livic.billing..", "com.livic.payment..",
-                        "com.livic.issue..", "com.livic.announcement..", "com.livic.analytics..",
-                        "com.livic.notification..")
+                        "com.livic.platform.auth..",
+                        "com.livic.services.finance..", "com.livic.services.property..", "com.livic.features.inventory..",
+                        "com.livic.platform.storage..", "com.livic.services.billing..", "com.livic.platform.payment..",
+                        "com.livic.features.issue..", "com.livic.features.announcement..", "com.livic.features.analytics..",
+                        "com.livic.platform.notification..")
                 .because("user is upstream of auth; views combining user with memberships or leases belong in a downstream module");
 
         rule.check(classes);
@@ -157,10 +182,10 @@ class ModuleBoundaryTest {
     @DisplayName("Auth may use the user module only through its facade and DTOs")
     void authUsesUserOnlyThroughFacade() {
         ArchRule rule = noClasses()
-                .that().resideInAPackage("com.livic.auth..")
+                .that().resideInAPackage("com.livic.platform.auth..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.user.domain..", "com.livic.user.repository..",
-                        "com.livic.user.service..", "com.livic.user.controller..")
+                        "com.livic.platform.user.domain..", "com.livic.platform.user.repository..",
+                        "com.livic.platform.user.service..", "com.livic.platform.user.controller..")
                 .because("auth reads user data via UserFacade (e.g. UserCredentialsDTO), never the entity");
 
         rule.check(classes);
@@ -170,12 +195,12 @@ class ModuleBoundaryTest {
     @DisplayName("Payment module internal services must not be accessed from outside payment module")
     void strictPaymentServiceBoundaryEnforcement() {
         ArchRule rule = noClasses()
-                .that().resideOutsideOfPackage("com.livic.payment..")
+                .that().resideOutsideOfPackage("com.livic.platform.payment..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.payment.service.interfaces..",
-                        "com.livic.payment.service.impl.."
+                        "com.livic.platform.payment.service.interfaces..",
+                        "com.livic.platform.payment.service.impl.."
                 )
-                .because("Outside modules must access payment capabilities strictly through com.livic.payment.facade or DTOs");
+                .because("Outside modules must access payment capabilities strictly through com.livic.platform.payment.facade or DTOs");
 
         rule.check(classes);
     }
@@ -184,9 +209,9 @@ class ModuleBoundaryTest {
     @DisplayName("Auth module internal service implementations must not be accessed from outside auth module")
     void strictAuthServiceBoundaryEnforcement() {
         ArchRule rule = noClasses()
-                .that().resideOutsideOfPackage("com.livic.auth..")
-                .should().dependOnClassesThat().resideInAPackage("com.livic.auth.service.impl..")
-                .because("Outside modules must access auth capabilities strictly through com.livic.auth.facade, AuthorizationService, or DTOs");
+                .that().resideOutsideOfPackage("com.livic.platform.auth..")
+                .should().dependOnClassesThat().resideInAPackage("com.livic.platform.auth.service.impl..")
+                .because("Outside modules must access auth capabilities strictly through com.livic.platform.auth.facade, AuthorizationService, or DTOs");
 
         rule.check(classes);
     }
@@ -195,8 +220,8 @@ class ModuleBoundaryTest {
     @DisplayName("User facade package boundary check")
     void userFacadePackageStructure() {
         ArchRule rule = noClasses()
-                .that().resideInAPackage("com.livic.user.facade..")
-                .should().dependOnClassesThat().resideInAnyPackage("com.livic.finance..", "com.livic.property..");
+                .that().resideInAPackage("com.livic.platform.user.facade..")
+                .should().dependOnClassesThat().resideInAnyPackage("com.livic.services.finance..", "com.livic.services.property..");
 
         rule.check(classes);
     }
@@ -205,8 +230,8 @@ class ModuleBoundaryTest {
     @DisplayName("Property facade package boundary check")
     void propertyFacadePackageStructure() {
         ArchRule rule = noClasses()
-                .that().resideInAPackage("com.livic.property.facade..")
-                .should().dependOnClassesThat().resideInAnyPackage("com.livic.finance..", "com.livic.billing..");
+                .that().resideInAPackage("com.livic.services.property.facade..")
+                .should().dependOnClassesThat().resideInAnyPackage("com.livic.services.finance..", "com.livic.services.billing..");
 
         rule.check(classes);
     }
@@ -215,8 +240,8 @@ class ModuleBoundaryTest {
     @DisplayName("Auth facade package boundary check")
     void authFacadePackageStructure() {
         ArchRule rule = noClasses()
-                .that().resideInAPackage("com.livic.auth.facade..")
-                .should().dependOnClassesThat().resideInAnyPackage("com.livic.finance..", "com.livic.billing..");
+                .that().resideInAPackage("com.livic.platform.auth.facade..")
+                .should().dependOnClassesThat().resideInAnyPackage("com.livic.services.finance..", "com.livic.services.billing..");
 
         rule.check(classes);
     }
@@ -225,14 +250,14 @@ class ModuleBoundaryTest {
     @DisplayName("Storage module internal services must not be accessed from outside storage module")
     void strictStorageFacadeEnforcement() {
         ArchRule rule = noClasses()
-                .that().resideOutsideOfPackage("com.livic.storage..")
+                .that().resideOutsideOfPackage("com.livic.platform.storage..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.storage.service.interfaces..",
-                        "com.livic.storage.service.impl..",
-                        "com.livic.storage.repository..",
-                        "com.livic.storage.domain.."
+                        "com.livic.platform.storage.service.interfaces..",
+                        "com.livic.platform.storage.service.impl..",
+                        "com.livic.platform.storage.repository..",
+                        "com.livic.platform.storage.domain.."
                 )
-                .because("Outside modules must access the storage module strictly through com.livic.storage.facade or DTOs");
+                .because("Outside modules must access the storage module strictly through com.livic.platform.storage.facade or DTOs");
 
         rule.check(classes);
     }
@@ -241,14 +266,14 @@ class ModuleBoundaryTest {
     @DisplayName("Inventory module internal services must not be accessed from outside inventory module")
     void strictInventoryFacadeEnforcement() {
         ArchRule rule = noClasses()
-                .that().resideOutsideOfPackage("com.livic.inventory..")
+                .that().resideOutsideOfPackage("com.livic.features.inventory..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.inventory.service.interfaces..",
-                        "com.livic.inventory.service.impl..",
-                        "com.livic.inventory.repository..",
-                        "com.livic.inventory.domain.."
+                        "com.livic.features.inventory.service.interfaces..",
+                        "com.livic.features.inventory.service.impl..",
+                        "com.livic.features.inventory.repository..",
+                        "com.livic.features.inventory.domain.."
                 )
-                .because("Outside modules must access the inventory module strictly through com.livic.inventory.facade or DTOs");
+                .because("Outside modules must access the inventory module strictly through com.livic.features.inventory.facade or DTOs");
 
         rule.check(classes);
     }

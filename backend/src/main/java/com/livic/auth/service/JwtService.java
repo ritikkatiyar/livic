@@ -1,7 +1,7 @@
 package com.livic.auth.service;
 
 import com.livic.config.JwtProperties;
-import com.livic.user.domain.UserTbl;
+import com.livic.user.dto.UserSummaryDTO;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -22,13 +22,13 @@ public class JwtService {
 
     private final JwtProperties jwtProperties;
 
-    public String createAccessToken(UserTbl user) {
+    public String createAccessToken(UserSummaryDTO user) {
         Date now = new Date();
         Date exp = new Date(now.getTime() + jwtProperties.accessExpirationMs());
         return Jwts.builder()
-                .subject(user.getId().toString())
-                .claim("email", user.getAuthUid())
-                .claim("role", user.getGlobalRole() != null ? user.getGlobalRole().name() : "USER")
+                .subject(user.id().toString())
+                .claim("email", user.authUid())
+                .claim("role", user.globalRole() != null ? user.globalRole().name() : "USER")
                 .issuedAt(now)
                 .expiration(exp)
                 .signWith(signingKey())

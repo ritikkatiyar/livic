@@ -13,6 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { signup } from '@/src/features/auth/api/auth.api';
+import type { SignupResponse } from '@/src/types/auth';
 
 const ValidationIndicator = ({ label, isValid, theme, styles }: { label: string; isValid: boolean; theme: any; styles: any }) => (
   <View style={styles.requirementRow}>
@@ -28,7 +29,7 @@ const ValidationIndicator = ({ label, isValid, theme, styles }: { label: string;
 );
 
 interface SuperAdminSignupScreenProps {
-  onSignup?: (data: any) => void;
+  onSignup?: (data: SignupResponse) => void;
   onNavigateToLogin?: () => void;
 }
 

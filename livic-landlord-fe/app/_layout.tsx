@@ -247,8 +247,8 @@ export default function RootLayout() {
     }
   }, []);
 
-  const AUTH_OR_STANDALONE_ROUTES = ['/login', '/signup', '/onboarding', '/mode-selection', '/'];
-  const hideNavigation = pathname === '/login' || pathname === '/signup' || pathname === '/onboarding' || pathname === '/mode-selection';
+  const AUTH_OR_STANDALONE_ROUTES = ['/login', '/signup', '/verify-email', '/onboarding', '/mode-selection', '/'];
+  const hideNavigation = pathname === '/login' || pathname === '/signup' || pathname === '/verify-email' || pathname === '/onboarding' || pathname === '/mode-selection';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const showDesktop = isDesktop;
@@ -277,6 +277,7 @@ export default function RootLayout() {
                               <Stack.Screen name="index" />
                               <Stack.Screen name="login" />
                               <Stack.Screen name="signup" />
+                              <Stack.Screen name="verify-email" />
                               <Stack.Screen name="mode-selection" />
                               <Stack.Screen name="onboarding" />
                               <Stack.Screen name="command-center" />
@@ -323,6 +324,7 @@ export default function RootLayout() {
                               <Stack.Screen name="index" />
                               <Stack.Screen name="login" />
                               <Stack.Screen name="signup" />
+                              <Stack.Screen name="verify-email" />
                               <Stack.Screen name="mode-selection" />
                               <Stack.Screen name="onboarding" />
                               <Stack.Screen name="command-center" />

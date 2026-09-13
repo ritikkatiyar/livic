@@ -26,6 +26,16 @@ public interface UserFacade {
 
     UserSummaryDTO createUser(String email, String fullName, String phoneNumber, String password);
 
+    UserSummaryDTO createUnverifiedUser(String email, String fullName, String phoneNumber, String password);
+
+    UserSummaryDTO createPasswordlessUser(String email, String fullName);
+
+    UserSummaryDTO updateUnverifiedUser(UUID userId, String fullName, String phoneNumber, String password);
+
+    boolean isEmailVerified(UUID userId);
+
+    void markEmailVerified(UUID userId);
+
     UserMode getActiveModeForUser(UUID userId);
 
     void markOnboardingDone(UUID userId, UserMode defaultMode);

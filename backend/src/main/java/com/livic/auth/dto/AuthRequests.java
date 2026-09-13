@@ -43,4 +43,17 @@ public final class AuthRequests {
         public record ValidateRequest(
                         @NotBlank String accessToken
     ) {}
+
+        public record VerifyEmailRequest(
+                        @Email @NotBlank @Size(max = 255) String email,
+                        @NotBlank @Pattern(regexp = "^\\d{6}$", message = "Code must be 6 digits") String code
+    ) {}
+
+        public record ResendVerificationRequest(
+                        @Email @NotBlank @Size(max = 255) String email
+    ) {}
+
+        public record OAuthLoginRequest(
+                        @NotBlank @Size(max = 4096) String idToken
+    ) {}
 }

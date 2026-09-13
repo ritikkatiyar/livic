@@ -2,76 +2,98 @@ package com.livic.auth.controller;
 
 import com.livic.auth.dto.AuthRequests.LoginRequest;
 import com.livic.auth.dto.AuthRequests.LogoutRequest;
+import com.livic.auth.dto.AuthRequests.OAuthLoginRequest;
 import com.livic.auth.dto.AuthRequests.RefreshRequest;
+import com.livic.auth.dto.AuthRequests.ResendVerificationRequest;
 import com.livic.auth.dto.AuthRequests.SignupRequest;
+import com.livic.auth.dto.AuthRequests.VerifyEmailRequest;
+import com.livic.auth.dto.AuthResponses.SignupResponse;
 import com.livic.auth.dto.AuthResponses.TokenBundle;
 import com.livic.auth.service.interfaces.AuthService;
+import com.livic.auth.service.interfaces.EmailVerificationService;
+import com.livic.auth.service.interfaces.OAuthLoginService;
+import com.livic.common.response.ApiResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import com.livic.common.response.ApiResponse;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * HTTP API for JWT authentication (signup, login, refresh, validate, current user).
+ * HTTP API for authentication: signup with email verification, password login, external identity
+ * providers, token refresh, and logout.
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-    /**
-     * Authentication
-     * JWT signup, login, refresh, token validation, and sessionless API access
-     */
-
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
+    private final OAuthLoginService oAuthLoginService;
 
-    @PostMapping("/signup")
-        /**
-     * Register a new tenant account
-     * Creates a USER with normalized email in `auth_uid`. Returns access and refresh tokens.
+    /**
+     * Register a new account. No tokens are issued until the emailed code is verified.
      */
-
-    
-    public ResponseEntity<ApiResponse<TokenBundle>> signup(@Valid @RequestBody SignupRequest request) {
+    @PostMapping("/signup")
+    public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
         return ResponseEntity.ok(ApiResponse.success(authService.signup(request)));
     }
 
-    @PostMapping("/login")
-        /**
-     * Login with email and password
-     * Returns access and refresh tokens. Accounts without a stored password cannot use this endpoint.
+    /**
+     * Verify the 6-digit signup code and receive access and refresh tokens.
      */
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<TokenBundle>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(emailVerificationService.verify(request.email(), request.code())));
+    }
 
-    
+    /**
+     * Send a fresh verification code for a pending signup.
+     */
+    @PostMapping("/resend-verification")
+    public ResponseEntity<ApiResponse<Void>> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        emailVerificationService.resend(request.email());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    /**
+     * Login with email and password. Returns 403 if the email has not been verified yet.
+     */
+    @PostMapping("/login")
     public ResponseEntity<ApiResponse<TokenBundle>> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(ApiResponse.success(authService.login(request)));
     }
 
-    @PostMapping("/refresh")
-        /**
-     * Refresh tokens
-     * old refresh row is removed, new pair returned.
+    /**
+     * Sign in with an ID token from an external provider (e.g. google).
      */
-    
+    @PostMapping("/oauth/{provider}")
+    public ResponseEntity<ApiResponse<TokenBundle>> oauthLogin(@PathVariable String provider,
+                                                               @Valid @RequestBody OAuthLoginRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(oAuthLoginService.login(provider, request.idToken())));
+    }
+
+    /**
+     * Refresh tokens. The old refresh token is removed and a new pair is returned.
+     */
+    @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<TokenBundle>> refresh(@Valid @RequestBody RefreshRequest request) {
         return ResponseEntity.ok(ApiResponse.success(authService.refresh(request)));
     }
 
-    @PostMapping("/logout")
-        /**
-     * Logout current session
-     * Revokes the provided refresh token. The access token naturally expires.
+    /**
+     * Revoke the provided refresh token. The access token naturally expires.
      */
-
-    
+    @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody LogoutRequest request) {
         authService.logout(request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
-
 }

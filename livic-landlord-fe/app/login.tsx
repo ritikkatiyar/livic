@@ -37,6 +37,9 @@ export default function LoginRoute() {
           router.replace('/command-center');
         }
       }}
+      onUnverified={(email: string) => {
+        router.push({ pathname: '/verify-email', params: { email } });
+      }}
       onNavigateToSignup={() => router.push('/signup')}
     />
   );

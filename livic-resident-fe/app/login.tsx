@@ -23,6 +23,9 @@ export default function LoginRoute() {
         setContext(context);
         router.replace('/tenant-home');
       }}
+      onUnverified={(email: string) => {
+        router.push({ pathname: '/verify-email', params: { email } });
+      }}
       onNavigateToSignup={() => router.push('/signup')}
     />
   );

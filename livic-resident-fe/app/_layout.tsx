@@ -104,8 +104,8 @@ function MainAppLayout() {
     }
   }, [isDark]);
 
-  const AUTH_OR_STANDALONE_ROUTES = ['/login', '/signup', '/onboarding', '/'];
-  const hideNavigation = pathname === '/login' || pathname === '/signup' || pathname === '/onboarding';
+  const AUTH_OR_STANDALONE_ROUTES = ['/login', '/signup', '/verify-email', '/onboarding', '/'];
+  const hideNavigation = pathname === '/login' || pathname === '/signup' || pathname === '/verify-email' || pathname === '/onboarding';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const showDesktop = isDesktop;
@@ -131,6 +131,7 @@ function MainAppLayout() {
                       <Stack.Screen name="index" />
                       <Stack.Screen name="login" />
                       <Stack.Screen name="signup" />
+                      <Stack.Screen name="verify-email" />
                       <Stack.Screen name="onboarding" />
                       <Stack.Screen name="tenant-home" />
                       <Stack.Screen 

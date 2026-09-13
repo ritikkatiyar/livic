@@ -1,6 +1,7 @@
 package com.livic.notification.event;
 
 import com.livic.common.event.AnnouncementBroadcastEvent;
+import com.livic.common.event.EmailVerificationRequestedEvent;
 import com.livic.common.event.IssueCreatedEvent;
 import com.livic.common.event.IssueEscalatedEvent;
 import com.livic.notification.domain.NotificationChannel;
@@ -10,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Asynchronous event listener for all notification-triggering events in the system.
@@ -74,6 +77,24 @@ public class NotificationEventListener {
 
         notificationService.send(event.getRecipientUserId(), NotificationChannel.EMAIL, title, body);
         notificationService.send(event.getRecipientUserId(), NotificationChannel.WHATSAPP, title, body);
+    }
+
+    /**
+     * Fires after the signup/resend transaction commits, so the recipient row is guaranteed to exist.
+     */
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void onEmailVerificationRequested(EmailVerificationRequestedEvent event) {
+        log.info("[NotificationEventListener] EmailVerificationRequestedEvent received for userId={}", event.getRecipientUserId());
+
+        String title = "Your Livic verification code";
+        String body = String.format(
+                "Your Livic verification code is %s.\n\nIt expires in %d minutes. If you didn't try to sign up, you can ignore this email.",
+                event.getCode(),
+                event.getExpiresInMinutes()
+        );
+
+        notificationService.sendSensitive(event.getRecipientUserId(), NotificationChannel.EMAIL, title, body);
     }
 
     /**

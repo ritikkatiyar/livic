@@ -35,8 +35,19 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationLogCrudService notificationLogCrudService;
     private final UserFacade userFacade;
 
+    private static final String REDACTED_BODY = "[redacted]";
+
     @Override
     public void send(String recipientUserId, NotificationChannel channel, String title, String body) {
+        dispatch(recipientUserId, channel, title, body, body);
+    }
+
+    @Override
+    public void sendSensitive(String recipientUserId, NotificationChannel channel, String title, String body) {
+        dispatch(recipientUserId, channel, title, body, REDACTED_BODY);
+    }
+
+    private void dispatch(String recipientUserId, NotificationChannel channel, String title, String body, String loggedBody) {
         UserSummaryDTO recipient;
         try {
             recipient = userFacade.getUserById(UUID.fromString(recipientUserId)).orElse(null);
@@ -75,7 +86,7 @@ public class NotificationServiceImpl implements NotificationService {
                     .channel(channel)
                     .recipientAddress(address)
                     .title(title)
-                    .body(body)
+                    .body(loggedBody)
                     .status(NotificationStatus.PENDING)
                     .build();
             notificationLogCrudService.save(logEntry);

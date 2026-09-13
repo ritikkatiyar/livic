@@ -71,6 +71,11 @@ app:
     secret: ${APP_JWT_SECRET:dev-only-change-this-to-a-long-random-secret-32b-min}
     access-expiration-ms: ${APP_JWT_ACCESS_EXPIRATION_MS:${APP_JWT_ACCESS_MS:900000}}
     refresh-expiration-ms: ${APP_JWT_REFRESH_EXPIRATION_MS:${APP_JWT_REFRESH_MS:604800000}}
+  oauth:
+    google:
+      enabled: ${GOOGLE_OAUTH_ENABLED:false}
+      # Comma-separated web, iOS, and Android client IDs; any of them is accepted as the token audience.
+      client-ids: ${GOOGLE_OAUTH_CLIENT_IDS:}
   auth:
     max-failed-login-attempts: ${APP_AUTH_MAX_FAILED_LOGIN_ATTEMPTS:5}
     lockout-duration-ms: ${APP_AUTH_LOCKOUT_DURATION_MS:900000}

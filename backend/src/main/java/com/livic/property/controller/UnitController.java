@@ -15,8 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
-import com.livic.billing.annotation.EnforceSubscription;
-import com.livic.billing.annotation.FeatureKey;
 
 import com.livic.property.service.impl.UnitLayoutOrchestrationService;
 
@@ -67,7 +65,6 @@ public class UnitController {
 
     @PostMapping("/units/batch")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_EDIT')")
-    @EnforceSubscription(feature = FeatureKey.MAX_UNITS)
     public ResponseEntity<ApiResponse<List<UnitDTOs.UnitResponse>>> generateBatchUnits(
             @PathVariable UUID propertyId,
             @Valid @RequestBody PropertyDTOs.BatchUnitRequest request) {

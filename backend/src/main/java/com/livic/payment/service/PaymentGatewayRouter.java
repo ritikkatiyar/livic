@@ -1,6 +1,6 @@
 package com.livic.payment.service;
 
-import com.livic.billing.domain.PaymentGatewayType;
+import com.livic.payment.dto.PaymentGatewayType;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;

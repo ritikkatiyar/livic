@@ -3,11 +3,11 @@ package com.livic.payment.service;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.Subscription;
-import com.livic.billing.domain.PaymentGatewayType;
-import com.livic.billing.dto.PaymentIntentRequest;
-import com.livic.billing.dto.PaymentIntentResponse;
-import com.livic.billing.dto.SubscriptionRequest;
-import com.livic.billing.dto.SubscriptionResponse;
+import com.livic.payment.dto.PaymentGatewayType;
+import com.livic.payment.dto.PaymentIntentRequest;
+import com.livic.payment.dto.PaymentIntentResponse;
+import com.livic.payment.dto.SubscriptionRequest;
+import com.livic.payment.dto.SubscriptionResponse;
 import com.livic.payment.config.RazorpayProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +41,7 @@ public class RazorpayPaymentGatewayServiceImpl implements PaymentGatewayService 
                 JSONObject orderRequest = new JSONObject();
                 // Amount is already in INR, convert to paise (1 INR = 100 paise)
                 orderRequest.put("amount", (int) Math.round(request.amount() * 100));
-                orderRequest.put("currency", com.livic.billing.constant.BillingConstants.Currency.INR);
+                orderRequest.put("currency", com.livic.payment.constant.PaymentConstants.Currency.INR);
                 orderRequest.put("receipt", "rcpt_" + UUID.randomUUID().toString().substring(0, 8));
 
                 Order order = razorpay.orders.create(orderRequest);

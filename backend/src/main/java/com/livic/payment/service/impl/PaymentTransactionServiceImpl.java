@@ -4,16 +4,15 @@ import com.razorpay.Utils;
 import com.livic.common.exception.BusinessException;
 import com.livic.payment.config.RazorpayProperties;
 import com.livic.payment.constant.PaymentConstants;
-import com.livic.billing.constant.BillingConstants;
 import com.livic.payment.domain.PaymentTransactionTbl;
 import com.livic.payment.domain.PaymentWebhookEventTbl;
 import com.livic.payment.repository.PaymentTransactionRepository;
 import com.livic.payment.repository.PaymentWebhookEventRepository;
 import com.livic.payment.service.PaymentGatewayRouter;
 import com.livic.payment.service.interfaces.PaymentTransactionService;
-import com.livic.billing.domain.PaymentGatewayType;
-import com.livic.billing.dto.PaymentIntentRequest;
-import com.livic.billing.dto.PaymentIntentResponse;
+import com.livic.payment.dto.PaymentGatewayType;
+import com.livic.payment.dto.PaymentIntentRequest;
+import com.livic.payment.dto.PaymentIntentResponse;
 import com.livic.payment.event.PaymentCompletedEvent;
 
 import lombok.RequiredArgsConstructor;
@@ -52,7 +51,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         PaymentIntentRequest intentRequest = new PaymentIntentRequest(
                 payerUserId.toString(),
                 amount.doubleValue(),
-                BillingConstants.Currency.INR,
+                PaymentConstants.Currency.INR,
                 "Rent statement online payment",
                 "billing@tenantliving.com",
                 PaymentGatewayType.RAZORPAY

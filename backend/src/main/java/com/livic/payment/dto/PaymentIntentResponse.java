@@ -1,4 +1,4 @@
-package com.livic.billing.dto;
+package com.livic.payment.dto;
 
 public record PaymentIntentResponse(
     String transactionId,

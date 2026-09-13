@@ -1,4 +1,4 @@
-package com.livic.billing.domain;
+package com.livic.payment.dto;
 
 public enum PaymentGatewayType {
     RAZORPAY

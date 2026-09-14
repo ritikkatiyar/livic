@@ -1,10 +1,13 @@
 package com.livic.services.property.facade.impl;
 
+import com.livic.services.property.dto.UnitListingDTO;
 import com.livic.services.property.dto.UnitSummaryDTO;
 import com.livic.services.property.facade.UnitFacade;
 import com.livic.services.property.service.interfaces.UnitCrudService;
 import com.livic.services.property.service.interfaces.UnitQueryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,5 +80,34 @@ public class UnitFacadeImpl implements UnitFacade {
     @Override
     public List<UUID> getUnitIdsByUnitNumberSearch(String searchPattern) {
         return unitCrudService.findIdsByUnitNumberPattern(searchPattern);
+    }
+
+    @Override
+    public Optional<UnitListingDTO> getUnitListingById(UUID unitId) {
+        return unitCrudService.findById(unitId)
+                .map(UnitListingDTO::from);
+    }
+
+    @Override
+    public List<UnitListingDTO> getUnitListingsByPropertyId(UUID propertyId) {
+        return unitCrudService.findByPropertyId(propertyId).stream()
+                .map(UnitListingDTO::from)
+                .toList();
+    }
+
+    @Override
+    public Page<UnitListingDTO> getUnitListingsByPropertyId(UUID propertyId, boolean availableOnly, Pageable pageable) {
+        return unitCrudService.findListingUnits(propertyId, availableOnly, pageable)
+                .map(UnitListingDTO::from);
+    }
+
+    @Override
+    public Map<UUID, List<UnitListingDTO>> getUnitListingsByPropertyIds(Collection<UUID> propertyIds) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return Map.of();
+        }
+        return unitCrudService.findByPropertyIdIn(propertyIds).stream()
+                .map(UnitListingDTO::from)
+                .collect(Collectors.groupingBy(UnitListingDTO::propertyId));
     }
 }

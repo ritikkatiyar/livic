@@ -1,6 +1,8 @@
 package com.livic.services.property.facade;
 
+import com.livic.platform.common.domain.PropertyType;
 import com.livic.services.property.dto.PropertySummaryDTO;
+import com.livic.services.property.dto.PublicPropertyListingDTO;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,4 +31,12 @@ public interface PropertyFacade {
     record PropertyOccupancySummaryDTO(UUID propertyId, String propertyName, int totalUnits, int occupiedUnits) {}
 
     List<PropertyOccupancySummaryDTO> getOccupancyByProperty(List<UUID> propertyIds);
+
+    // Marketplace Read Methods (only publicly listed, active properties are exposed)
+    Page<PublicPropertyListingDTO> searchPublicListings(String city, PropertyType type, Pageable pageable);
+
+    Optional<PublicPropertyListingDTO> getPublicListing(UUID propertyId);
+
+    /** Returns the property's QR slug, generating and persisting one first if it has none. Empty if the property does not exist. */
+    Optional<String> getOrCreateQrSlug(UUID propertyId);
 }

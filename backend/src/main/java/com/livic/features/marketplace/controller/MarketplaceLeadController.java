@@ -36,10 +36,10 @@ public class MarketplaceLeadController {
     }
 
     @GetMapping("/leads/{leadId}")
-    public ResponseEntity<ApiResponse<MarketplaceLeadDTOs.LeadResponse>> getLeadStatus(
+    public ResponseEntity<ApiResponse<MarketplaceLeadDTOs.LeadStatusResponse>> getLeadStatus(
             @PathVariable UUID leadId
     ) {
-        MarketplaceLeadDTOs.LeadResponse response = leadService.getLeadStatus(leadId);
+        MarketplaceLeadDTOs.LeadStatusResponse response = leadService.getLeadStatus(leadId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

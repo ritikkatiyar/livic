@@ -3,6 +3,8 @@ package com.livic.features.marketplace.mapper;
 import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.features.marketplace.dto.MarketplaceLeadDTOs;
 
+import java.time.Instant;
+
 public final class MarketplaceLeadMapper {
 
     private MarketplaceLeadMapper() {}
@@ -14,8 +16,8 @@ public final class MarketplaceLeadMapper {
 
         return new MarketplaceLeadDTOs.LeadResponse(
                 lead.getId(),
-                lead.getProperty() != null ? lead.getProperty().getId() : null,
-                lead.getUnit() != null ? lead.getUnit().getId() : null,
+                lead.getPropertyId(),
+                lead.getUnitId(),
                 lead.getLeadType(),
                 lead.getStatus(),
                 lead.getProspectName(),
@@ -24,8 +26,27 @@ public final class MarketplaceLeadMapper {
                 lead.getPreferredSlot(),
                 lead.getExpectedMoveInDate(),
                 lead.getTokenAmount(),
-                lead.getPaymentTransaction() != null ? lead.getPaymentTransaction().getId() : null,
-                lead.getConvertedUnitBooking() != null ? lead.getConvertedUnitBooking().getId() : null,
+                lead.getPaymentTransactionId(),
+                lead.getConvertedUnitBookingId(),
+                lead.getCreatedAt()
+        );
+    }
+
+    public static MarketplaceLeadDTOs.LeadStatusResponse toStatusResponse(MarketplaceLeadTbl lead, Instant now) {
+        if (lead == null) {
+            return null;
+        }
+
+        return new MarketplaceLeadDTOs.LeadStatusResponse(
+                lead.getId(),
+                lead.getPropertyId(),
+                lead.getUnitId(),
+                lead.getLeadType(),
+                lead.effectiveStatus(now),
+                lead.getPreferredSlot(),
+                lead.getTokenAmount(),
+                lead.getPaymentTransactionId(),
+                lead.getConvertedUnitBookingId(),
                 lead.getCreatedAt()
         );
     }

@@ -4,6 +4,8 @@ import com.livic.platform.common.service.impl.AbstractCrudService;
 import com.livic.services.property.domain.UnitTbl;
 import com.livic.services.property.repository.UnitRepository;
 import com.livic.services.property.service.interfaces.UnitCrudService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,5 +68,10 @@ public class UnitCrudServiceImpl extends AbstractCrudService<UnitTbl, UUID, Unit
             return List.of();
         }
         return repository.findIdsByUnitNumberPattern(pattern.trim());
+    }
+
+    @Override
+    public Page<UnitTbl> findListingUnits(UUID propertyId, boolean availableOnly, Pageable pageable) {
+        return repository.findListingUnits(propertyId, availableOnly, pageable);
     }
 }

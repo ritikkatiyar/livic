@@ -1,5 +1,6 @@
 package com.livic.services.property.service.impl;
 
+import com.livic.platform.common.domain.PropertyType;
 import com.livic.platform.common.service.impl.AbstractCrudService;
 import com.livic.services.property.domain.PropertyTbl;
 import com.livic.services.property.repository.PropertyRepository;
@@ -44,5 +45,10 @@ public class PropertyCrudServiceImpl extends AbstractCrudService<PropertyTbl, UU
             return Page.empty(pageable);
         }
         return repository.findDistinctByIdInAndSearch(propertyIds, search, pageable);
+    }
+
+    @Override
+    public Page<PropertyTbl> searchPublicProperties(String city, PropertyType type, Pageable pageable) {
+        return repository.searchPublicProperties(city, type, pageable);
     }
 }

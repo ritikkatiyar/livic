@@ -43,6 +43,20 @@ public class MarketplaceLeadDTOs {
         LocalDateTime createdAt
     ) {}
 
+    /** Lead status without the prospect's name, phone or email (safe for the public lead-status endpoint). */
+    public record LeadStatusResponse(
+        UUID id,
+        UUID propertyId,
+        UUID unitId,
+        LeadType leadType,
+        LeadStatus status,
+        Instant preferredSlot,
+        BigDecimal tokenAmount,
+        UUID paymentTransactionId,
+        UUID convertedUnitBookingId,
+        LocalDateTime createdAt
+    ) {}
+
     public record TokenPaymentInitResponse(
         UUID leadId,
         UUID transactionId,

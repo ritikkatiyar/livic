@@ -1,4 +1,4 @@
-package com.livic.services.property.domain;
+package com.livic.platform.common.domain;
 
 public enum PropertyType {
     RENTAL,

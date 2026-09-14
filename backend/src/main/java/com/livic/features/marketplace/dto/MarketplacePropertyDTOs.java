@@ -1,6 +1,6 @@
 package com.livic.features.marketplace.dto;
 
-import com.livic.services.property.domain.PropertyType;
+import com.livic.platform.common.domain.PropertyType;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +33,8 @@ public class MarketplacePropertyDTOs {
         List<String> amenities,
         List<String> images,
         String qrSlug,
-        List<MarketplaceUnitDTOs.UnitSummaryResponse> units
+        String startingPrice,
+        int totalUnitsCount,
+        int availableUnitsCount
     ) {}
 }

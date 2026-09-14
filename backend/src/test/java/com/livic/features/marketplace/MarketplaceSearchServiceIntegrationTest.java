@@ -7,7 +7,7 @@ import com.livic.features.marketplace.dto.MarketplacePropertyDTOs;
 import com.livic.features.marketplace.dto.MarketplaceUnitDTOs;
 import com.livic.features.marketplace.service.interfaces.MarketplaceSearchService;
 import com.livic.services.property.domain.PropertyTbl;
-import com.livic.services.property.domain.PropertyType;
+import com.livic.platform.common.domain.PropertyType;
 import com.livic.services.property.domain.UnitTbl;
 import com.livic.services.property.repository.PropertyRepository;
 import com.livic.services.property.repository.UnitRepository;
@@ -108,10 +108,54 @@ public class MarketplaceSearchServiceIntegrationTest {
         assertEquals("Grand Luxury Residency", detail.name());
         assertEquals(4, detail.amenities().size());
         assertTrue(detail.amenities().contains("WiFi"));
-        assertEquals(1, detail.units().size());
+        assertEquals(1, detail.totalUnitsCount());
+        assertEquals(1, detail.availableUnitsCount());
+        assertEquals("₹15,000/mo", detail.startingPrice());
 
         // Private property should throw Not Found exception
         assertThrows(BusinessException.class, () -> searchService.getPropertyDetail(privateProperty.getId()));
+    }
+
+    @Test
+    @DisplayName("Get Property Units - Pages bookable units first, in numeric unit order, and filters by availability")
+    public void testGetPropertyUnitsPagination() {
+        // unit1 ("101-A", floor 1) is bookable; add 11 occupied units on floor 2, including "210" to check numeric ordering
+        for (int i = 1; i <= 11; i++) {
+            unitRepository.save(UnitTbl.builder()
+                    .property(publicProperty)
+                    .unitNumber(String.valueOf(200 + i))
+                    .floor(2)
+                    .capacity(1)
+                    .gridX(i)
+                    .gridY(1)
+                    .type(UnitType.STUDIO)
+                    .facing(FacingDirection.NORTH)
+                    .basePrice(new BigDecimal("12000.00"))
+                    .isBookable(false)
+                    .build());
+        }
+
+        Page<MarketplaceUnitDTOs.UnitSummaryResponse> firstPage =
+                searchService.getPropertyUnits(publicProperty.getId(), false, PageRequest.of(0, 10));
+        assertEquals(12, firstPage.getTotalElements());
+        assertEquals(2, firstPage.getTotalPages());
+        assertEquals(10, firstPage.getContent().size());
+        assertEquals("101-A", firstPage.getContent().get(0).unitNumber());
+        assertTrue(firstPage.getContent().get(0).isBookable());
+        assertEquals("201", firstPage.getContent().get(1).unitNumber());
+
+        Page<MarketplaceUnitDTOs.UnitSummaryResponse> secondPage =
+                searchService.getPropertyUnits(publicProperty.getId(), false, PageRequest.of(1, 10));
+        assertEquals(List.of("210", "211"),
+                secondPage.getContent().stream().map(MarketplaceUnitDTOs.UnitSummaryResponse::unitNumber).toList());
+
+        Page<MarketplaceUnitDTOs.UnitSummaryResponse> availableOnly =
+                searchService.getPropertyUnits(publicProperty.getId(), true, PageRequest.of(0, 10));
+        assertEquals(1, availableOnly.getTotalElements());
+        assertEquals(unit1.getId(), availableOnly.getContent().get(0).id());
+
+        assertThrows(BusinessException.class,
+                () -> searchService.getPropertyUnits(privateProperty.getId(), false, PageRequest.of(0, 10)));
     }
 
     @Test

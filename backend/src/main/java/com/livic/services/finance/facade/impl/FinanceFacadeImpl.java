@@ -3,11 +3,14 @@ package com.livic.services.finance.facade.impl;
 import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.services.finance.dto.ChargeConfigResponse;
 import com.livic.services.finance.dto.LeaseSummaryDTO;
+import com.livic.services.finance.dto.UnitBookingDTOs;
 import com.livic.services.finance.facade.FinanceFacade;
+import com.livic.services.finance.mapper.UnitBookingMapper;
 import com.livic.services.finance.service.ChargeConfigQueryService;
 import com.livic.services.finance.service.interfaces.LeaseCrudService;
 import com.livic.services.finance.service.interfaces.LeaseQueryService;
 import com.livic.services.finance.service.interfaces.RentCycleCrudService;
+import com.livic.services.finance.service.interfaces.UnitBookingCrudService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +34,7 @@ public class FinanceFacadeImpl implements FinanceFacade {
     private final LeaseCrudService leaseCrudService;
     private final RentCycleCrudService rentCycleCrudService;
     private final ChargeConfigQueryService chargeConfigQueryService;
+    private final UnitBookingCrudService unitBookingCrudService;
     private final com.livic.services.property.facade.UnitFacade unitFacade;
 
     public FinanceFacadeImpl(
@@ -38,11 +42,13 @@ public class FinanceFacadeImpl implements FinanceFacade {
             LeaseCrudService leaseCrudService,
             RentCycleCrudService rentCycleCrudService,
             ChargeConfigQueryService chargeConfigQueryService,
+            UnitBookingCrudService unitBookingCrudService,
             com.livic.services.property.facade.UnitFacade unitFacade) {
         this.leaseQueryService = leaseQueryService;
         this.leaseCrudService = leaseCrudService;
         this.rentCycleCrudService = rentCycleCrudService;
         this.chargeConfigQueryService = chargeConfigQueryService;
+        this.unitBookingCrudService = unitBookingCrudService;
         this.unitFacade = unitFacade;
     }
 
@@ -145,5 +151,14 @@ public class FinanceFacadeImpl implements FinanceFacade {
     @Override
     public Map<String, BigDecimal> getOperationalOverhead(List<UUID> propertyIds) {
         return Collections.emptyMap();
+    }
+
+    @Override
+    @Transactional
+    public UnitBookingDTOs.UnitBookingResponse createPaidBooking(UnitBookingDTOs.PaidBookingRequest request) {
+        String unitNumber = unitFacade.getUnitById(request.unitId())
+                .map(com.livic.services.property.dto.UnitSummaryDTO::unitNumber)
+                .orElse(null);
+        return UnitBookingMapper.toResponse(unitBookingCrudService.save(UnitBookingMapper.toEntity(request)), unitNumber);
     }
 }

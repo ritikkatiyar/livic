@@ -2,7 +2,7 @@ package com.livic.features.marketplace.mapper;
 
 import com.livic.features.marketplace.dto.MarketplacePropertyDTOs;
 import com.livic.features.marketplace.dto.MarketplaceUnitDTOs;
-import com.livic.services.property.domain.UnitTbl;
+import com.livic.services.property.dto.UnitListingDTO;
 
 import java.util.Collections;
 import java.util.List;
@@ -11,23 +11,23 @@ public final class MarketplaceUnitMapper {
 
     private MarketplaceUnitMapper() {}
 
-    public static MarketplaceUnitDTOs.UnitSummaryResponse toResponse(UnitTbl unit, List<String> imageUrls) {
+    public static MarketplaceUnitDTOs.UnitSummaryResponse toResponse(UnitListingDTO unit, List<String> imageUrls) {
         if (unit == null) {
             return null;
         }
 
         return new MarketplaceUnitDTOs.UnitSummaryResponse(
-                unit.getId(),
-                unit.getProperty() != null ? unit.getProperty().getId() : null,
-                unit.getUnitNumber(),
-                unit.getFloor(),
-                unit.getCapacity(),
-                unit.getType(),
-                unit.getFacing(),
-                unit.getBasePrice(),
-                unit.isBookable(),
-                unit.getDescription(),
-                MarketplacePropertyMapper.parseAmenities(unit.getAmenities()),
+                unit.id(),
+                unit.propertyId(),
+                unit.unitNumber(),
+                unit.floor(),
+                unit.capacity(),
+                unit.type(),
+                unit.facing(),
+                unit.basePrice(),
+                unit.bookable(),
+                unit.description(),
+                unit.amenities() != null ? unit.amenities() : Collections.emptyList(),
                 imageUrls != null ? imageUrls : Collections.emptyList()
         );
     }

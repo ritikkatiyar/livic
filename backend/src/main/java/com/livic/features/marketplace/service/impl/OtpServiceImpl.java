@@ -7,6 +7,7 @@ import com.livic.features.marketplace.repository.OtpVerificationRepository;
 import com.livic.features.marketplace.service.interfaces.OtpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,10 @@ public class OtpServiceImpl implements OtpService {
     private static final int MAX_REQUESTS_PER_HOUR = 5;
     private static final int MAX_ATTEMPTS = 5;
 
+    /** Fixed OTP used instead of a random code when set; configured only in the dev profile (no SMS provider locally). */
+    @Value("${app.marketplace.otp.dev-code:}")
+    private String devOtpCode;
+
     @Override
     @Transactional
     public OtpDTOs.OtpRequestResponse requestOtp(OtpDTOs.OtpRequestRequest request) {
@@ -53,8 +58,9 @@ public class OtpServiceImpl implements OtpService {
             throw new BusinessException("Maximum OTP requests exceeded for this hour. Please try again later.");
         }
 
-        // 3. Generate 6-digit OTP
-        String otpCode = String.format("%06d", secureRandom.nextInt(1_000_000));
+        // 3. Generate 6-digit OTP (fixed code when a dev code is configured)
+        boolean useDevCode = devOtpCode != null && devOtpCode.matches("^[0-9]{6}$");
+        String otpCode = useDevCode ? devOtpCode : String.format("%06d", secureRandom.nextInt(1_000_000));
         String hashedOtp = passwordEncoder.encode(otpCode);
 
         OtpVerificationTbl entity = OtpVerificationTbl.builder()
@@ -69,8 +75,11 @@ public class OtpServiceImpl implements OtpService {
         // Structured logging — NEVER log raw OTP code in production
         log.info("Generated OTP verification request for phone ending in {}", 
                 phone.length() > 4 ? phone.substring(phone.length() - 4) : "****");
+        if (useDevCode) {
+            log.warn("Marketplace OTP dev code is enabled (app.marketplace.otp.dev-code); no SMS was sent");
+        }
 
-        return new OtpDTOs.OtpRequestResponse(true, "OTP sent successfully", OTP_EXPIRY_MINUTES * 60);
+        return new OtpDTOs.OtpRequestResponse(true, "OTP sent successfully", OTP_EXPIRY_MINUTES * 60, COOLDOWN_SECONDS);
     }
 
     @Override
@@ -113,6 +122,16 @@ public class OtpServiceImpl implements OtpService {
     @Override
     @Transactional(readOnly = true)
     public void validateSessionToken(String sessionToken, String prospectPhone) {
+        String verifiedPhone = resolveVerifiedPhone(sessionToken);
+
+        if (prospectPhone != null && !prospectPhone.trim().equals(verifiedPhone)) {
+            throw new BusinessException("OTP session token phone mismatch");
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String resolveVerifiedPhone(String sessionToken) {
         if (sessionToken == null || sessionToken.isBlank()) {
             throw new BusinessException("Missing OTP verification session token header (X-Otp-Session-Token)");
         }
@@ -129,8 +148,6 @@ public class OtpServiceImpl implements OtpService {
             throw new BusinessException("OTP session token has expired. Please verify OTP again.");
         }
 
-        if (prospectPhone != null && !prospectPhone.trim().equals(entity.getPhone())) {
-            throw new BusinessException("OTP session token phone mismatch");
-        }
+        return entity.getPhone();
     }
 }

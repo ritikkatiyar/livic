@@ -13,7 +13,8 @@ public interface MarketplaceLeadService {
             String sessionToken
     );
 
-    MarketplaceLeadDTOs.LeadResponse getLeadStatus(UUID leadId);
+    /** Public status lookup by lead id; never includes the prospect's contact details. */
+    MarketplaceLeadDTOs.LeadStatusResponse getLeadStatus(UUID leadId);
 
     MarketplaceLeadDTOs.TokenPaymentInitResponse initiateTokenPayment(UUID leadId);
 }

@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -60,12 +61,42 @@ public class OtpServiceTest {
         assertTrue(response.success());
         assertEquals("OTP sent successfully", response.message());
         assertEquals(300, response.expiresSeconds());
+        assertEquals(60, response.resendAfterSeconds());
 
         ArgumentCaptor<OtpVerificationTbl> captor = ArgumentCaptor.forClass(OtpVerificationTbl.class);
         verify(otpRepository).save(captor.capture());
         assertEquals(TEST_PHONE, captor.getValue().getPhone());
         assertEquals(HASHED_CODE, captor.getValue().getOtpCodeHash());
         assertEquals(0, captor.getValue().getAttempts());
+    }
+
+    @Test
+    @DisplayName("Request OTP - Uses the configured dev code instead of a random one")
+    public void testRequestOtpUsesDevCode() {
+        ReflectionTestUtils.setField(otpService, "devOtpCode", "000000");
+        when(otpRepository.findByPhoneAndCreatedAtAfter(eq(TEST_PHONE), any(Instant.class)))
+                .thenReturn(Collections.emptyList());
+        when(passwordEncoder.encode("000000")).thenReturn(HASHED_CODE);
+
+        otpService.requestOtp(new OtpDTOs.OtpRequestRequest(TEST_PHONE));
+
+        verify(passwordEncoder).encode("000000");
+    }
+
+    @Test
+    @DisplayName("Request OTP - Ignores a malformed dev code and generates a random one")
+    public void testRequestOtpIgnoresMalformedDevCode() {
+        ReflectionTestUtils.setField(otpService, "devOtpCode", "1234");
+        when(otpRepository.findByPhoneAndCreatedAtAfter(eq(TEST_PHONE), any(Instant.class)))
+                .thenReturn(Collections.emptyList());
+        when(passwordEncoder.encode(any(String.class))).thenReturn(HASHED_CODE);
+
+        otpService.requestOtp(new OtpDTOs.OtpRequestRequest(TEST_PHONE));
+
+        ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
+        verify(passwordEncoder).encode(codeCaptor.capture());
+        assertTrue(codeCaptor.getValue().matches("^[0-9]{6}$"));
+        assertNotEquals("1234", codeCaptor.getValue());
     }
 
     @Test

@@ -14,7 +14,8 @@ public class OtpDTOs {
     public record OtpRequestResponse(
         boolean success,
         String message,
-        int expiresSeconds
+        int expiresSeconds,
+        int resendAfterSeconds
     ) {}
 
     public record OtpVerifyRequest(

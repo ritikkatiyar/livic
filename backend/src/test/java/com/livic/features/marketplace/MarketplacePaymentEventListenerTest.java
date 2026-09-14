@@ -1,18 +1,13 @@
 package com.livic.features.marketplace;
 
-import com.livic.platform.common.domain.FacingDirection;
 import com.livic.platform.common.domain.LeadStatus;
 import com.livic.platform.common.domain.LeadType;
-import com.livic.platform.common.domain.UnitType;
-import com.livic.services.finance.domain.UnitBookingTbl;
-import com.livic.services.finance.repository.UnitBookingRepository;
 import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.features.marketplace.listener.MarketplacePaymentEventListener;
 import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
-import com.livic.services.property.domain.PropertyTbl;
-import com.livic.services.property.domain.PropertyType;
-import com.livic.services.property.domain.UnitTbl;
+import com.livic.services.finance.dto.UnitBookingDTOs;
+import com.livic.services.finance.facade.FinanceFacade;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,7 +33,7 @@ public class MarketplacePaymentEventListenerTest {
     private MarketplaceLeadRepository leadRepository;
 
     @Mock
-    private UnitBookingRepository unitBookingRepository;
+    private FinanceFacade financeFacade;
 
     @InjectMocks
     private MarketplacePaymentEventListener eventListener;
@@ -52,33 +47,9 @@ public class MarketplacePaymentEventListenerTest {
         leadId = UUID.randomUUID();
         unitId = UUID.randomUUID();
 
-        PropertyTbl property = PropertyTbl.builder()
-                .name("Sunrise Apartments")
-                .address("123 Sunrise Way")
-                .city("Pune")
-                .totalFloors(3)
-                .propertyType(PropertyType.RENTAL)
-                .isActive(true)
-                .isPubliclyListed(true)
-                .build();
-
-        UnitTbl unit = UnitTbl.builder()
-                .property(property)
-                .unitNumber("301")
-                .floor(3)
-                .capacity(2)
-                .gridX(0)
-                .gridY(0)
-                .type(UnitType.STUDIO)
-                .facing(FacingDirection.WEST)
-                .basePrice(new BigDecimal("22000.00"))
-                .isBookable(true)
-                .build();
-        unit.setId(unitId);
-
         bookingLead = MarketplaceLeadTbl.builder()
-                .property(property)
-                .unit(unit)
+                .propertyId(UUID.randomUUID())
+                .unitId(unitId)
                 .leadType(LeadType.BOOKING)
                 .status(LeadStatus.NEW)
                 .prospectName("Alice Smith")
@@ -91,9 +62,10 @@ public class MarketplacePaymentEventListenerTest {
     }
 
     @Test
-    @DisplayName("PaymentCompletedEvent - Converts Lead & creates unit_booking_tbl entry")
+    @DisplayName("PaymentCompletedEvent - Converts Lead & creates unit booking through finance facade")
     public void testOnPaymentCompletedSuccess() {
         UUID txId = UUID.randomUUID();
+        UUID bookingId = UUID.randomUUID();
         PaymentCompletedEvent event = PaymentCompletedEvent.builder()
                 .transactionId(txId)
                 .referenceType("MARKETPLACE_LEAD")
@@ -105,29 +77,49 @@ public class MarketplacePaymentEventListenerTest {
                 .build();
 
         when(leadRepository.findById(leadId)).thenReturn(Optional.of(bookingLead));
-        when(unitBookingRepository.save(any(UnitBookingTbl.class))).thenAnswer(i -> {
-            UnitBookingTbl ub = i.getArgument(0);
-            ub.setId(UUID.randomUUID());
-            return ub;
+        when(financeFacade.createPaidBooking(any(UnitBookingDTOs.PaidBookingRequest.class))).thenAnswer(i -> {
+            UnitBookingDTOs.PaidBookingRequest req = i.getArgument(0);
+            return new UnitBookingDTOs.UnitBookingResponse(
+                    bookingId, req.unitId(), "301", null, req.prospectiveTenantName(), req.prospectiveTenantPhone(),
+                    req.prospectiveTenantEmail(), req.tokenAmount(), req.expectedMoveInDate(), "BOOKED",
+                    req.paymentTransactionId(), null, null, null);
         });
 
         eventListener.onPaymentCompleted(event);
 
         // Verify lead updated to CONVERTED
         assertEquals(LeadStatus.CONVERTED, bookingLead.getStatus());
-        assertNotNull(bookingLead.getConvertedUnitBooking());
+        assertEquals(bookingId, bookingLead.getConvertedUnitBookingId());
 
-        // Verify unit_booking_tbl created with correct data
-        ArgumentCaptor<UnitBookingTbl> captor = ArgumentCaptor.forClass(UnitBookingTbl.class);
-        verify(unitBookingRepository).save(captor.capture());
-        UnitBookingTbl booking = captor.getValue();
-        assertEquals(unitId, booking.getUnitId());
-        assertEquals("Alice Smith", booking.getProspectiveTenantName());
-        assertEquals("9988776655", booking.getProspectiveTenantPhone());
-        assertEquals(new BigDecimal("2000.00"), booking.getTokenAmount());
-        assertEquals("BOOKED", booking.getStatus());
-        assertEquals(txId, booking.getPaymentTransactionId());
+        // Verify booking requested with correct data
+        ArgumentCaptor<UnitBookingDTOs.PaidBookingRequest> captor = ArgumentCaptor.forClass(UnitBookingDTOs.PaidBookingRequest.class);
+        verify(financeFacade).createPaidBooking(captor.capture());
+        UnitBookingDTOs.PaidBookingRequest booking = captor.getValue();
+        assertEquals(unitId, booking.unitId());
+        assertEquals("Alice Smith", booking.prospectiveTenantName());
+        assertEquals("9988776655", booking.prospectiveTenantPhone());
+        assertEquals(new BigDecimal("2000.00"), booking.tokenAmount());
+        assertEquals(txId, booking.paymentTransactionId());
 
+        verify(leadRepository).save(bookingLead);
+    }
+
+    @Test
+    @DisplayName("PaymentCompletedEvent - Does not create a second booking for an already converted lead")
+    public void testOnPaymentCompletedAlreadyConverted() {
+        bookingLead.setConvertedUnitBookingId(UUID.randomUUID());
+        PaymentCompletedEvent event = PaymentCompletedEvent.builder()
+                .transactionId(UUID.randomUUID())
+                .referenceType("MARKETPLACE_LEAD")
+                .referenceId(leadId)
+                .amount(new BigDecimal("2000.00"))
+                .build();
+
+        when(leadRepository.findById(leadId)).thenReturn(Optional.of(bookingLead));
+
+        eventListener.onPaymentCompleted(event);
+
+        verify(financeFacade, never()).createPaidBooking(any());
         verify(leadRepository).save(bookingLead);
     }
 
@@ -142,6 +134,6 @@ public class MarketplacePaymentEventListenerTest {
         eventListener.onPaymentCompleted(event);
 
         verify(leadRepository, never()).findById(any());
-        verify(unitBookingRepository, never()).save(any());
+        verify(financeFacade, never()).createPaidBooking(any());
     }
 }

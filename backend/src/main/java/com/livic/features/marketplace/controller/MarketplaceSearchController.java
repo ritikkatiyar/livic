@@ -4,7 +4,7 @@ import com.livic.platform.common.response.ApiResponse;
 import com.livic.features.marketplace.dto.MarketplacePropertyDTOs;
 import com.livic.features.marketplace.dto.MarketplaceUnitDTOs;
 import com.livic.features.marketplace.service.interfaces.MarketplaceSearchService;
-import com.livic.services.property.domain.PropertyType;
+import com.livic.platform.common.domain.PropertyType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +44,16 @@ public class MarketplaceSearchController {
     ) {
         MarketplacePropertyDTOs.PropertyDetailResponse response = searchService.getPropertyDetail(propertyId);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/{propertyId}/units")
+    public ResponseEntity<ApiResponse<Page<MarketplaceUnitDTOs.UnitSummaryResponse>>> getPropertyUnits(
+            @PathVariable UUID propertyId,
+            @RequestParam(defaultValue = "false") boolean availableOnly,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        Page<MarketplaceUnitDTOs.UnitSummaryResponse> page = searchService.getPropertyUnits(propertyId, availableOnly, pageable);
+        return ResponseEntity.ok(ApiResponse.success(page));
     }
 
     @GetMapping("/{propertyId}/units/{unitId}")

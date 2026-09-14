@@ -29,7 +29,7 @@ class ModuleBoundaryTest {
     private static final String[] MODULES = {
             "platform.auth", "platform.user", "platform.payment", "platform.notification", "platform.storage",
             "services.property", "services.finance", "services.billing",
-            "features.announcement", "features.analytics", "features.issue", "features.inventory"
+            "features.announcement", "features.analytics", "features.issue", "features.inventory", "features.marketplace"
     };
 
     @BeforeAll

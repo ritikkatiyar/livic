@@ -2,11 +2,11 @@ package com.livic.features.marketplace.listener;
 
 import com.livic.platform.common.domain.LeadStatus;
 import com.livic.platform.common.domain.LeadType;
-import com.livic.services.finance.domain.UnitBookingTbl;
-import com.livic.services.finance.repository.UnitBookingRepository;
 import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
+import com.livic.services.finance.dto.UnitBookingDTOs;
+import com.livic.services.finance.facade.FinanceFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -21,7 +21,7 @@ import java.time.LocalDate;
 public class MarketplacePaymentEventListener {
 
     private final MarketplaceLeadRepository leadRepository;
-    private final UnitBookingRepository unitBookingRepository;
+    private final FinanceFacade financeFacade;
 
     @EventListener
     @Transactional
@@ -40,28 +40,26 @@ public class MarketplacePaymentEventListener {
 
         lead.setStatus(LeadStatus.CONFIRMED);
 
-        if (lead.getLeadType() == LeadType.BOOKING && lead.getConvertedUnitBooking() == null) {
-            LocalDate moveInDate = lead.getExpectedMoveInDate() != null 
-                    ? lead.getExpectedMoveInDate() 
+        if (lead.getLeadType() == LeadType.BOOKING && lead.getConvertedUnitBookingId() == null) {
+            LocalDate moveInDate = lead.getExpectedMoveInDate() != null
+                    ? lead.getExpectedMoveInDate()
                     : LocalDate.now().plusDays(7);
 
-            UnitBookingTbl booking = UnitBookingTbl.builder()
-                    .unitId(lead.getUnit().getId())
-                    .prospectiveTenantName(lead.getProspectName())
-                    .prospectiveTenantPhone(lead.getProspectPhone())
-                    .prospectiveTenantEmail(lead.getProspectEmail())
-                    .tokenAmount(event.getAmount())
-                    .expectedMoveInDate(moveInDate)
-                    .status("BOOKED")
-                    .paymentTransactionId(event.getTransactionId())
-                    .build();
+            UnitBookingDTOs.UnitBookingResponse booking = financeFacade.createPaidBooking(new UnitBookingDTOs.PaidBookingRequest(
+                    lead.getUnitId(),
+                    lead.getProspectName(),
+                    lead.getProspectPhone(),
+                    lead.getProspectEmail(),
+                    event.getAmount(),
+                    moveInDate,
+                    event.getTransactionId()
+            ));
 
-            unitBookingRepository.save(booking);
-            lead.setConvertedUnitBooking(booking);
+            lead.setConvertedUnitBookingId(booking.id());
             lead.setStatus(LeadStatus.CONVERTED);
 
-            log.info("[OBSERVER: MARKETPLACE] Spawning unit_booking_tbl entry: id={} for Marketplace Lead: {}", 
-                    booking.getId(), lead.getId());
+            log.info("[OBSERVER: MARKETPLACE] Spawning unit_booking_tbl entry: id={} for Marketplace Lead: {}",
+                    booking.id(), lead.getId());
         }
 
         leadRepository.save(lead);

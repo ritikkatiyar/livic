@@ -1,6 +1,9 @@
 package com.livic.services.property.facade;
 
+import com.livic.services.property.dto.UnitListingDTO;
 import com.livic.services.property.dto.UnitSummaryDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,4 +28,13 @@ public interface UnitFacade {
     Map<UUID, UnitSummaryDTO> getUnitsByIds(Collection<UUID> unitIds);
 
     List<UUID> getUnitIdsByUnitNumberSearch(String searchPattern);
+
+    // Marketplace Read Methods
+    Optional<UnitListingDTO> getUnitListingById(UUID unitId);
+
+    List<UnitListingDTO> getUnitListingsByPropertyId(UUID propertyId);
+
+    Page<UnitListingDTO> getUnitListingsByPropertyId(UUID propertyId, boolean availableOnly, Pageable pageable);
+
+    Map<UUID, List<UnitListingDTO>> getUnitListingsByPropertyIds(Collection<UUID> propertyIds);
 }

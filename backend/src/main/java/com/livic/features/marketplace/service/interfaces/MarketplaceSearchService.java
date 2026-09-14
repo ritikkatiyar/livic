@@ -2,7 +2,7 @@ package com.livic.features.marketplace.service.interfaces;
 
 import com.livic.features.marketplace.dto.MarketplacePropertyDTOs;
 import com.livic.features.marketplace.dto.MarketplaceUnitDTOs;
-import com.livic.services.property.domain.PropertyType;
+import com.livic.platform.common.domain.PropertyType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -17,6 +17,8 @@ public interface MarketplaceSearchService {
     );
 
     MarketplacePropertyDTOs.PropertyDetailResponse getPropertyDetail(UUID propertyId);
+
+    Page<MarketplaceUnitDTOs.UnitSummaryResponse> getPropertyUnits(UUID propertyId, boolean availableOnly, Pageable pageable);
 
     MarketplaceUnitDTOs.UnitDetailCompositeResponse getUnitDetailComposite(UUID propertyId, UUID unitId);
 

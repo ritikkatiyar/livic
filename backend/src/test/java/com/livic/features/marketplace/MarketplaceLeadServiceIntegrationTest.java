@@ -10,7 +10,7 @@ import com.livic.features.marketplace.dto.MarketplaceLeadDTOs;
 import com.livic.features.marketplace.repository.OtpVerificationRepository;
 import com.livic.features.marketplace.service.interfaces.MarketplaceLeadService;
 import com.livic.services.property.domain.PropertyTbl;
-import com.livic.services.property.domain.PropertyType;
+import com.livic.platform.common.domain.PropertyType;
 import com.livic.services.property.domain.UnitTbl;
 import com.livic.services.property.repository.PropertyRepository;
 import com.livic.services.property.repository.UnitRepository;

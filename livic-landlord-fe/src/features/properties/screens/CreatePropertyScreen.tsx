@@ -1,5 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -20,6 +20,7 @@ import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useCreateProperty } from '@/src/features/properties/hooks/useCreateProperty';
 import { MediaUploadGrid } from '@/src/components/common/display/MediaUploadGrid';
+import { ContextualStepGuideBar } from '@/src/features/onboarding/components/ContextualStepGuideBar';
 import { createStyles } from './CreatePropertyScreen.styles';
 
 const UNIT_TYPE_OPTIONS = [
@@ -111,8 +112,29 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
     extrapolate: 'clamp',
   });
 
+  const [guidedHint, setGuidedHint] = useState<string | undefined>(undefined);
+
+  const handleQuickAction = (key: string) => {
+    if (key === 'auto_fill') {
+      setName('Lumina Grand Heights');
+      setAddress('108 Horizon Tech Park, Outer Ring Road');
+      setCity('Bengaluru');
+      setLandmark('Near Metro Station');
+      setTotalFloors('4');
+      setGuidedHint('✓ Step 1 Complete: Property details filled! Next: Tap Step 2A (Uniform Units) or Step 2B (2D Canvas Editor).');
+    } else if (key === 'mode_global') {
+      setGlobalUnitsPerFloor('4');
+      setGlobalUnitType('TWO_BHK');
+      setGuidedHint('✓ Step 2A Selected: 4 units per floor (16 total). Ready! Click "BUILD PROPERTY" to complete Step 1. 🚀');
+    } else if (key === 'mode_custom') {
+      setGlobalUnitsPerFloor('');
+      setGuidedHint('✓ Step 2B Selected: Custom 2D Grid. Ready! Click "BUILD PROPERTY" to open the 2D Floor Canvas Editor. 🎨');
+    }
+  };
+
   const renderFormFieldsContent = (showSubmit = true) => (
     <>
+      <ContextualStepGuideBar stepId="CREATE_PROPERTY" customHint={guidedHint} onQuickAction={handleQuickAction} />
       <Text style={styles.description}>
         Enter the foundational details to begin configuring the spatial grid and floors for this property.
       </Text>

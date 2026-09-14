@@ -34,6 +34,11 @@ public class PropertyTbl extends BaseEntity {
     @Column(name = "auto_bill_time")
     private LocalTime autoBillTime;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "property_type", nullable = false)
+    @Builder.Default
+    private PropertyType propertyType = PropertyType.RENTAL;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean isActive = true;
@@ -47,4 +52,14 @@ public class PropertyTbl extends BaseEntity {
     @Column(name = "amenity")
     @Builder.Default
     private List<String> amenities = new ArrayList<>();
+
+    @Column(name = "is_publicly_listed", nullable = false)
+    @Builder.Default
+    private boolean isPubliclyListed = true;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "qr_slug", length = 64, unique = true)
+    private String qrSlug;
 }

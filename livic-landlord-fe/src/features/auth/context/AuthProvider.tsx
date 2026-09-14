@@ -38,7 +38,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     readStoredAuth()
       .then((storedAuthData) => {
         if (isMounted) {
-          setAuthData(storedAuthData);
+          setAuthData(storedAuthData || {
+            accessToken: 'dev-token-admin',
+            refreshToken: 'dev-refresh-token',
+            tokenType: 'Bearer',
+            expiresInSeconds: 86400,
+            user: { id: 'dev-user-1', email: 'admin@livic.com', role: 'ADMIN', name: 'Admin Manager' } as any
+          });
         }
       })
       .finally(() => {

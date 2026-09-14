@@ -28,6 +28,8 @@ import {
 import { LeaseResponse } from '@/src/features/tenant/api/lease.api';
 import { UnitBookingResponse } from '@/src/features/leases/api/unitBooking.api';
 import { useRouter } from 'expo-router';
+import { ContextualStepGuideBar } from '@/src/features/onboarding/components/ContextualStepGuideBar';
+import { useAdminTutorial } from '@/src/features/onboarding/context/AdminTutorialContext';
 
 export default function OwnerLeasesScreen() {
   const { theme, isDark } = useAppTheme();
@@ -67,6 +69,15 @@ export default function OwnerLeasesScreen() {
     handleOnlineTokenPayment, handleForfeitBooking, handleRefundBooking,
     handleConvertBookingToLease, handleOpenEditTerms, handleSaveTerms,
   } = data;
+
+  const { autoDetectProgress } = useAdminTutorial();
+
+  React.useEffect(() => {
+    autoDetectProgress({
+      bookingCount: filteredBookings.length,
+      leaseCount: filteredLeases.length,
+    });
+  }, [filteredBookings.length, filteredLeases.length, autoDetectProgress]);
 
   const STAT_COLORS = React.useMemo(() => [
     theme.Colors.primary, theme.Colors.error, theme.Colors.secondary, theme.Colors.tertiary,
@@ -124,6 +135,9 @@ export default function OwnerLeasesScreen() {
               />
             </View>
           </View>
+
+          <ContextualStepGuideBar stepId="ADD_TENANT" />
+          <ContextualStepGuideBar stepId="CREATE_LEASE" />
 
           {/* Stats */}
           <View style={[styles.statsRow, isDesktop && styles.statsRowDesktop]}>

@@ -38,6 +38,7 @@ import { TypeSelectionModal } from '@/src/features/properties/components/floor-e
 import { useFloorEditorLayoutApi } from '@/src/features/properties/hooks/useFloorEditorLayoutApi';
 import { FloorEditorDetailCard } from '@/src/features/properties/components/floor-editor/FloorEditorDetailCard';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
+import { ContextualStepGuideBar } from '@/src/features/onboarding/components/ContextualStepGuideBar';
 import { createStyles } from './FloorEditorScreen.styles';
 
 const GRID_SIZE_X = 10;
@@ -196,6 +197,8 @@ export default function FloorEditorScreen({
                     loading={saving}
                   />
                 </View>
+                
+                <ContextualStepGuideBar stepId="ADD_UNITS" />
 
                 {/* Main Split Layout */}
                 <View style={styles.desktopMainContent}>

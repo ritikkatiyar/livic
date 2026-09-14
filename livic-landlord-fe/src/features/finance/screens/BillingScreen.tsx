@@ -17,6 +17,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useBilling } from '@/src/features/finance/hooks/useBilling';
 import { SkeletonRow } from '@/src/components/common/feedback/Skeleton';
+import { ContextualStepGuideBar } from '@/src/features/onboarding/components/ContextualStepGuideBar';
 
 // Sub-components
 import { WalletCard } from '../components/billing/WalletCard';
@@ -167,12 +168,11 @@ export default function BillingScreen({ token }: BillingScreenProps) {
           },
         };
 
-        if (res.gatewayTransactionId && !res.gatewayTransactionId.startsWith('order_rzp_test_')) {
+        if (res.gatewayTransactionId && !res.gatewayTransactionId.startsWith('order_rzp_test_') && !res.gatewayTransactionId.startsWith('sub_rzp_test_')) {
           options.order_id = res.gatewayTransactionId;
         } else {
           options.amount = Math.round(finalAmount * 100);
           options.currency = 'INR';
-          options.order_id = res.gatewayTransactionId;
         }
 
         const rzp = new window.Razorpay(options);
@@ -235,12 +235,11 @@ export default function BillingScreen({ token }: BillingScreenProps) {
           },
         };
 
-        if (res.gatewayTransactionId && !res.gatewayTransactionId.startsWith('order_rzp_test_')) {
+        if (res.gatewayTransactionId && !res.gatewayTransactionId.startsWith('order_rzp_test_') && !res.gatewayTransactionId.startsWith('sub_rzp_test_')) {
           options.order_id = res.gatewayTransactionId;
         } else {
           options.amount = Math.round(amt * 100);
           options.currency = 'INR';
-          options.order_id = res.gatewayTransactionId;
         }
 
         const rzp = new window.Razorpay(options);
@@ -277,6 +276,9 @@ export default function BillingScreen({ token }: BillingScreenProps) {
                 <Text style={styles.subtitleDesktop}>Manage subscription plan tier, Razorpay gateway & prepaid AI credit wallet</Text>
               </View>
             )}
+
+            <ContextualStepGuideBar stepId="CONFIGURE_BILLING" />
+            <ContextualStepGuideBar stepId="RECORD_PAYMENT" />
           
             {/* 1. Wallet Status Card */}
             <WalletCard currentPlan={currentPlan} remainingCredits={remainingCredits} loading={isLoading} />

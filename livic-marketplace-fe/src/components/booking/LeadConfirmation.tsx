@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { CheckCircle2, ShieldCheck, PhoneCall, Building2 } from 'lucide-react';
 import { LeadResponse } from '@/types/lead';
 import { formatCurrency } from '@/utils/formatCurrency';
-import { formatDate } from '@/utils/formatDate';
+import { formatDate, formatDateTime } from '@/utils/formatDate';
 
 export function LeadConfirmation({ lead, propertyName }: { lead: LeadResponse; propertyName: string }) {
   const isBooking = lead.leadType === 'BOOKING';
@@ -37,6 +37,12 @@ export function LeadConfirmation({ lead, propertyName }: { lead: LeadResponse; p
           <span className="text-slate-600 dark:text-slate-400 font-medium">Lead Type</span>
           <span className="text-slate-900 dark:text-white font-semibold">{lead.leadType}</span>
         </div>
+        {!isBooking && lead.preferredSlot && (
+          <div className="flex justify-between items-center py-1">
+            <span className="text-slate-600 dark:text-slate-400 font-medium">Requested Visit</span>
+            <span className="text-slate-900 dark:text-white font-semibold">{formatDateTime(lead.preferredSlot)}</span>
+          </div>
+        )}
         {lead.tokenAmount && (
           <div className="flex justify-between items-center py-1">
             <span className="text-slate-600 dark:text-slate-400 font-medium">Token Paid</span>

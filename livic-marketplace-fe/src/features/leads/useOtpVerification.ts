@@ -4,11 +4,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { requestOtp, verifyOtp } from '@/api/marketplace';
 import { getErrorMessage } from '@/utils/errors';
 
+// Matches the backend cooldown; the server's resendAfterSeconds takes precedence when present
+const DEFAULT_RESEND_COOLDOWN_SECONDS = 60;
+
 export function useOtpVerification() {
   const [phone, setPhone] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpSessionToken, setOtpSessionToken] = useState<string | null>(null);
+  const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
@@ -21,42 +25,47 @@ export function useOtpVerification() {
     return () => clearTimeout(timer);
   }, [cooldown]);
 
-  const initiateOtp = useCallback(async (targetPhone: string) => {
+  /** Requests a code and opens the modal. Returns false (with `error` set) if the request failed. */
+  const initiateOtp = useCallback(async (targetPhone: string): Promise<boolean> => {
     setPhone(targetPhone);
+    setOtpCode('');
     setLoading(true);
     setError(null);
     try {
       const res = await requestOtp(targetPhone);
       if (res.success) {
         setIsModalOpen(true);
-        setCooldown(30);
-      } else {
-        setError(res.error?.message || 'Failed to request OTP');
+        setCooldown(res.data?.resendAfterSeconds ?? DEFAULT_RESEND_COOLDOWN_SECONDS);
+        return true;
       }
+      setError(res.error?.message || 'Failed to request OTP');
+      return false;
     } catch (err) {
       setError(getErrorMessage(err));
+      return false;
     } finally {
       setLoading(false);
     }
   }, []);
 
+  /** Verifies the code and returns the session token issued by the server, or null if verification failed. */
   const submitOtpCode = useCallback(
-    async (codeToVerify: string): Promise<boolean> => {
+    async (codeToVerify: string): Promise<string | null> => {
       setLoading(true);
       setError(null);
       try {
         const res = await verifyOtp(phone, codeToVerify);
         if (res.success && res.data?.otpSessionToken) {
           setOtpSessionToken(res.data.otpSessionToken);
+          setVerifiedPhone(phone);
           setIsModalOpen(false);
-          return true;
-        } else {
-          setError(res.error?.message || 'Invalid verification code');
-          return false;
+          return res.data.otpSessionToken;
         }
+        setError(res.error?.message || 'Invalid verification code');
+        return null;
       } catch (err) {
         setError(getErrorMessage(err));
-        return false;
+        return null;
       } finally {
         setLoading(false);
       }
@@ -74,6 +83,18 @@ export function useOtpVerification() {
     setError(null);
   }, []);
 
+  /** A token verified for `targetPhone`, which can be reused (e.g. to retry a failed submission) without a new OTP. */
+  const getSessionTokenFor = useCallback(
+    (targetPhone: string): string | null => (otpSessionToken && verifiedPhone === targetPhone ? otpSessionToken : null),
+    [otpSessionToken, verifiedPhone]
+  );
+
+  /** Forget the current session, e.g. after the server rejected it as expired. */
+  const clearSession = useCallback(() => {
+    setOtpSessionToken(null);
+    setVerifiedPhone(null);
+  }, []);
+
   return {
     phone,
     isModalOpen,
@@ -87,5 +108,7 @@ export function useOtpVerification() {
     submitOtpCode,
     resendOtp,
     closeModal,
+    getSessionTokenFor,
+    clearSession,
   };
 }

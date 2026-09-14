@@ -1,7 +1,22 @@
+import { PagedResult } from '@/types/api';
 import { PropertyDetail, PropertySearchFilters, PropertySummary } from '@/types/property';
 import { UnitSummary } from '@/types/unit';
 
-export const MOCK_PROPERTIES: PropertyDetail[] = [
+export type MockProperty = Omit<PropertyDetail, 'totalUnitsCount' | 'availableUnitsCount'> & {
+  units: UnitSummary[];
+};
+
+function toMockDetail({ units, ...property }: MockProperty): PropertyDetail {
+  return JSON.parse(
+    JSON.stringify({
+      ...property,
+      totalUnitsCount: units.length,
+      availableUnitsCount: units.filter((u) => u.isBookable).length,
+    })
+  );
+}
+
+export const MOCK_PROPERTIES: MockProperty[] = [
   {
     id: 'prop-101',
     name: 'Livic Horizon Luxury Residence',
@@ -220,7 +235,30 @@ export async function mockSearchProperties(
 export async function mockGetPropertyDetail(propertyId: string): Promise<PropertyDetail | null> {
   await new Promise((resolve) => setTimeout(resolve, 150));
   const found = MOCK_PROPERTIES.find((p) => p.id === propertyId);
-  return found ? JSON.parse(JSON.stringify(found)) : null;
+  return found ? toMockDetail(found) : null;
+}
+
+export async function mockGetPropertyUnits(
+  propertyId: string,
+  { page, pageSize, availableOnly }: { page: number; pageSize: number; availableOnly: boolean }
+): Promise<PagedResult<UnitSummary> | null> {
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  const found = MOCK_PROPERTIES.find((p) => p.id === propertyId);
+  if (!found) return null;
+
+  // Same ordering as the backend: bookable first, then unit number
+  const units = found.units
+    .filter((u) => !availableOnly || u.isBookable)
+    .sort((a, b) => Number(b.isBookable) - Number(a.isBookable) || a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true }));
+  const start = (page - 1) * pageSize;
+
+  return {
+    items: JSON.parse(JSON.stringify(units.slice(start, start + pageSize))),
+    page,
+    pageSize,
+    totalItems: units.length,
+    totalPages: Math.ceil(units.length / pageSize),
+  };
 }
 
 export async function mockGetUnitDetail(
@@ -233,7 +271,7 @@ export async function mockGetUnitDetail(
   const unit = prop.units.find((u) => u.id === unitId);
   if (!unit) return null;
   return {
-    property: JSON.parse(JSON.stringify(prop)),
+    property: toMockDetail(prop),
     unit: JSON.parse(JSON.stringify(unit)),
   };
 }

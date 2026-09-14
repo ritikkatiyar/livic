@@ -24,7 +24,8 @@ export function RoomConversionContainer({ property, unit }: Props) {
   const [selectedType, setSelectedType] = useState<LeadType>('TOUR_REQUEST');
   const [pendingLeadRequest, setPendingLeadRequest] = useState<CreateLeadRequest | null>(null);
   const [leadResponse, setLeadResponse] = useState<LeadResponse | null>(null);
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  // Lock the booking form only once a booking lead exists (it then waits for token payment)
+  const isBookingSubmitted = leadResponse?.leadType === 'BOOKING';
 
   const {
     phone,
@@ -35,6 +36,9 @@ export function RoomConversionContainer({ property, unit }: Props) {
     submitOtpCode,
     resendOtp,
     closeModal,
+    getSessionTokenFor,
+    clearSession,
+    otpSessionToken,
     loading: otpLoading,
     error: otpError,
     cooldown,
@@ -42,22 +46,37 @@ export function RoomConversionContainer({ property, unit }: Props) {
 
   const { submitLead, loading: leadLoading, error: leadError } = useCreateLead();
 
+  const createLeadWithToken = async (req: CreateLeadRequest, token: string) => {
+    const { lead, error } = await submitLead(property.id, unit.id, req, token);
+    if (lead) {
+      setLeadResponse(lead);
+    } else if (error && /otp session/i.test(error)) {
+      // Expired or rejected session: the next submit starts a fresh OTP verification
+      clearSession();
+    }
+  };
+
   const handleFormSubmit = async (req: CreateLeadRequest) => {
     setPendingLeadRequest(req);
+    // Retrying after a failed submission reuses the session already verified for this phone
+    const existingToken = getSessionTokenFor(req.prospectPhone);
+    if (existingToken) {
+      await createLeadWithToken(req, existingToken);
+      return;
+    }
     await initiateOtp(req.prospectPhone);
   };
 
   const handleOtpVerified = async (codeToVerify: string) => {
-    const verified = await submitOtpCode(codeToVerify);
-    if (verified && pendingLeadRequest) {
-      setIsPhoneVerified(true);
-      const token = `mock-otp-token-${pendingLeadRequest.prospectPhone}-${Date.now()}`;
-      const res = await submitLead(property.id, unit.id, pendingLeadRequest, token);
-      if (res) {
-        setLeadResponse(res);
-      }
+    const token = await submitOtpCode(codeToVerify);
+    if (token && pendingLeadRequest) {
+      await createLeadWithToken(pendingLeadRequest, token);
     }
   };
+
+  // OTP request errors (e.g. cooldown) happen before the modal opens, so show them under the form
+  const formError = leadError || (!isModalOpen ? otpError : null);
+  const verifiedPhone = otpSessionToken ? phone : null;
 
   if (leadResponse && (leadResponse.status === 'CONFIRMED' || leadResponse.leadType === 'TOUR_REQUEST')) {
     return <LeadConfirmation lead={leadResponse} propertyName={property.name} />;
@@ -82,19 +101,19 @@ export function RoomConversionContainer({ property, unit }: Props) {
           <TourRequestForm
             onSubmitLead={handleFormSubmit}
             loading={otpLoading || leadLoading}
-            isPhoneVerified={isPhoneVerified}
+            verifiedPhone={verifiedPhone}
           />
         ) : (
           <BookingForm
             tokenAmount={2000}
             onSubmitLead={handleFormSubmit}
             loading={otpLoading || leadLoading}
-            isPhoneVerified={isPhoneVerified}
+            isPhoneVerified={isBookingSubmitted}
           />
         )}
 
-        {leadError && (
-          <p className="text-xs text-rose-500 dark:text-rose-400 font-medium text-center">{leadError}</p>
+        {formError && (
+          <p className="text-xs text-rose-500 dark:text-rose-400 font-medium text-center" role="alert">{formError}</p>
         )}
       </div>
 

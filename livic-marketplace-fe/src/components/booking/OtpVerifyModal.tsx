@@ -3,6 +3,9 @@
 import React, { useEffect, useRef } from 'react';
 import { X, ShieldAlert, CheckCircle2, RotateCcw } from 'lucide-react';
 
+// The mock API and the backend dev profile both accept 000000; never advertise it in production builds
+const SHOW_DEV_OTP_HINT = process.env.NODE_ENV !== 'production';
+
 type Props = {
   isOpen: boolean;
   phone: string;
@@ -93,7 +96,12 @@ export function OtpVerifyModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="otp-code-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 text-center mb-2">
-              Verification Code (Use <span className="text-indigo-600 dark:text-amber-300 font-mono font-bold">000000</span> for Mock Test)
+              Verification Code
+              {SHOW_DEV_OTP_HINT && (
+                <>
+                  {' '}(Use <span className="text-indigo-600 dark:text-amber-300 font-mono font-bold">000000</span> in development)
+                </>
+              )}
             </label>
             <input
               ref={inputRef}

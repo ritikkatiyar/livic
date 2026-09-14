@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Copy, Check, Share2 } from 'lucide-react';
 
+const MARKETPLACE_BASE_URL = (process.env.NEXT_PUBLIC_MARKETPLACE_BASE_URL || 'https://livic.app/market-place').replace(/\/+$/, '');
+
 export function PropertyQrSection({ propertyId }: { propertyId: string; name?: string }) {
   const [copied, setCopied] = useState(false);
-  const shareUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/market-place/${propertyId}`
-      : `https://livic.app/market-place/${propertyId}`;
+  // Build the link from config, never from `window`, so the server-rendered QR code matches the client render
+  const shareUrl = `${MARKETPLACE_BASE_URL}/${propertyId}`;
 
   const handleCopy = () => {
     if (navigator.clipboard) {

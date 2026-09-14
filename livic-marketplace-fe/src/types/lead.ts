@@ -17,6 +17,7 @@ export type LeadResponse = {
   unitId: string;
   leadType: LeadType;
   status: LeadStatus;
+  preferredSlot?: string | null; // ISO datetime, only for TOUR_REQUEST
   tokenAmount?: number;
   paymentTransactionId?: string;
   createdAt: string;

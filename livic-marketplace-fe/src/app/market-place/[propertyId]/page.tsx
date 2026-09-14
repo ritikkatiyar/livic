@@ -1,18 +1,24 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { MapPin, Navigation, ArrowLeft, Building2 } from 'lucide-react';
-import { getPropertyDetail } from '@/api/marketplace';
+import { getPropertyDetail, getPropertyUnits, ROOMS_PAGE_SIZE } from '@/api/marketplace';
 import { PropertyGallery } from '@/components/property/PropertyGallery';
 import { PropertyAmenities } from '@/components/property/PropertyAmenities';
-import { RoomList } from '@/components/property/RoomList';
+import { buildRoomsHref, RoomList } from '@/components/property/RoomList';
 import { PropertyQrSection } from '@/components/property/PropertyQrSection';
 import { PropertyTypeBadge } from '@/components/ui/Badge';
 import { formatCurrency } from '@/utils/formatCurrency';
 
 type Props = {
   params: Promise<{ propertyId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
+
+function parsePage(value: string | string[] | undefined): number {
+  const parsed = Number.parseInt(Array.isArray(value) ? value[0] : value ?? '', 10);
+  return Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
@@ -38,13 +44,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function PropertyDetailPage({ params }: Props) {
-  const resolvedParams = await params;
-  const res = await getPropertyDetail(resolvedParams.propertyId);
-  const property = res.data;
+export default async function PropertyDetailPage({ params, searchParams }: Props) {
+  const [resolvedParams, query] = await Promise.all([params, searchParams]);
+  const page = parsePage(query.page);
+  const availableOnly = query.available === '1';
 
-  if (!property) {
+  const [res, unitsRes] = await Promise.all([
+    getPropertyDetail(resolvedParams.propertyId),
+    getPropertyUnits(resolvedParams.propertyId, { page, availableOnly }),
+  ]);
+  const property = res.data;
+  const units = unitsRes.data;
+
+  if (!property || !units) {
     notFound();
+  }
+
+  // Out-of-range page (e.g. a stale link): send the visitor to the last page instead of an empty list
+  if (units.totalPages > 0 && page > units.totalPages) {
+    redirect(buildRoomsHref(property.id, units.totalPages, availableOnly));
   }
 
   const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -124,7 +142,17 @@ export default async function PropertyDetailPage({ params }: Props) {
       <PropertyAmenities amenities={property.amenities} />
 
       {/* Room Listing Component */}
-      <RoomList propertyId={property.id} units={property.units} />
+      <RoomList
+        propertyId={property.id}
+        units={units.items}
+        page={units.page}
+        pageSize={units.pageSize || ROOMS_PAGE_SIZE}
+        totalPages={units.totalPages}
+        totalItems={units.totalItems}
+        totalUnitsCount={property.totalUnitsCount}
+        availableUnitsCount={property.availableUnitsCount}
+        availableOnly={availableOnly}
+      />
 
       {/* QR Code Section */}
       <PropertyQrSection propertyId={property.id} name={property.name} />

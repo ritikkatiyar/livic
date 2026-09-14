@@ -2,6 +2,14 @@
 
 @variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
+/* Horizontal scrollers (date strip, gallery thumbnails) without a visible scrollbar */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 :root {
   --bg-main: #0b0f19;
   --text-main: #f8fafc;

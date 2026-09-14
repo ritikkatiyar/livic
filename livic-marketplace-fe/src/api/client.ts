@@ -19,6 +19,38 @@ export type RequestOptions = RequestInit & {
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.livic.app/api/v1';
 
+type BackendErrorBody = {
+  message?: unknown;
+  code?: unknown;
+  error?: unknown;
+  fieldErrors?: { field?: string; message?: string }[];
+};
+
+/**
+ * Extracts a user-facing message from an error response. Handles the backend's
+ * `{ status, error, message, fieldErrors }` shape as well as `{ error: { code, message } }` / `{ error: "..." }`.
+ */
+export function parseErrorBody(parsed: unknown): { code?: string; message?: string } {
+  if (!parsed || typeof parsed !== 'object') return {};
+  const body = parsed as BackendErrorBody;
+
+  if (body.error && typeof body.error === 'object') {
+    const nested = body.error as { code?: unknown; message?: unknown };
+    return {
+      code: typeof nested.code === 'string' ? nested.code : undefined,
+      message: typeof nested.message === 'string' ? nested.message : undefined,
+    };
+  }
+
+  const fieldMessage = body.fieldErrors?.find((f) => f?.message)?.message;
+  const message =
+    fieldMessage ||
+    (typeof body.message === 'string' ? body.message : undefined) ||
+    (typeof body.error === 'string' ? body.error : undefined);
+
+  return { code: typeof body.code === 'string' ? body.code : undefined, message };
+}
+
 function generateCorrelationId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -56,8 +88,7 @@ export async function apiRequest<T>(
     if (!response.ok) {
       let errorBody: { code?: string; message?: string } = {};
       try {
-        const parsed = await response.json();
-        errorBody = parsed.error || parsed;
+        errorBody = parseErrorBody(await response.json());
       } catch {
         errorBody = { message: `HTTP Error ${response.status}: ${response.statusText}` };
       }

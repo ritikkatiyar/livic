@@ -1,5 +1,3 @@
-import { UnitSummary } from './unit';
-
 export type PropertyType = 'RENTAL' | 'HOSTEL' | 'SOCIETY' | 'MESS' | 'INDIVIDUAL';
 
 export type PropertySummary = {
@@ -18,7 +16,8 @@ export type PropertyDetail = PropertySummary & {
   description?: string;
   amenities: string[];
   images: string[];
-  units: UnitSummary[];
+  totalUnitsCount: number;
+  availableUnitsCount: number;
 };
 
 export type PropertySearchFilters = {

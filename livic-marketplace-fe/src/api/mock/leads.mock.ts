@@ -2,7 +2,9 @@ import { CreateLeadRequest, LeadResponse, RazorpayOrderPayload } from '@/types/l
 
 const MOCK_LEADS_DB: Record<string, LeadResponse> = {};
 
-export async function mockRequestOtp(phone: string): Promise<{ success: boolean; message: string }> {
+export async function mockRequestOtp(
+  phone: string
+): Promise<{ success: boolean; message: string; resendAfterSeconds: number }> {
   await new Promise((resolve) => setTimeout(resolve, 150));
   if (!phone || phone.length < 10) {
     throw new Error('Please enter a valid 10-digit mobile number');
@@ -10,6 +12,7 @@ export async function mockRequestOtp(phone: string): Promise<{ success: boolean;
   return {
     success: true,
     message: `OTP sent successfully to +91 ${phone}. Use 000000 for mock verification.`,
+    resendAfterSeconds: 60,
   };
 }
 
@@ -46,6 +49,7 @@ export async function mockCreateLead(
     unitId,
     leadType: req.leadType,
     status: req.leadType === 'TOUR_REQUEST' ? 'CONFIRMED' : 'NEW',
+    preferredSlot: req.preferredSlot ?? null,
     tokenAmount,
     createdAt: new Date().toISOString(),
   };

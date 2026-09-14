@@ -21,6 +21,8 @@ import FilterPill from '@/src/components/common/inputs/FilterPill';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { createStyles } from './OwnerLeasesScreen.styles';
 import { useOwnerLeases } from '../hooks/useOwnerLeases';
+import { useTourRequestSummary } from '../hooks/useTourRequests';
+import { TourRequestsPanel } from '../components/TourRequestsPanel';
 import {
   BookRoomModal, ServeNoticeModal, CashTokenModal,
   ConvertToLeaseModal, EditLeaseTermsModal,
@@ -71,6 +73,7 @@ export default function OwnerLeasesScreen() {
   } = data;
 
   const { autoDetectProgress } = useAdminTutorial();
+  const { data: tourSummary } = useTourRequestSummary(selectedPropertyId);
 
   React.useEffect(() => {
     autoDetectProgress({
@@ -101,6 +104,7 @@ export default function OwnerLeasesScreen() {
   const TABS = [
     { id: 'leases' as const, label: 'Active Leases', icon: 'description' as const, count: activeLeasesDisplayCount },
     { id: 'bookings' as const, label: 'Pending Bookings', icon: 'bookmark' as const, count: pendingBookingsCount },
+    { id: 'tours' as const, label: 'Tour Requests', icon: 'event' as const, count: tourSummary?.pending ?? 0 },
     { id: 'vacancies' as const, label: 'Vacating & Notices', icon: 'door-sliding' as const, count: vacatingUnits.length },
   ];
 
@@ -191,7 +195,9 @@ export default function OwnerLeasesScreen() {
 
           {/* Main Content Area */}
           <View style={styles.tabContentContainer}>
-            {isLoadingData && filteredLeases.length === 0 ? (
+            {activeTab === 'tours' ? (
+              <TourRequestsPanel propertyId={selectedPropertyId} isDesktop={isDesktop} searchQuery={searchQuery} />
+            ) : isLoadingData && filteredLeases.length === 0 ? (
               <View style={styles.loadingBox}>
                 <ActivityIndicator size="large" color={theme.Colors.primary} />
                 <Text style={styles.loadingText}>Syncing lease records...</Text>

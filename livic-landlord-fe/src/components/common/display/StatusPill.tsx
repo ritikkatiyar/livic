@@ -19,6 +19,8 @@ export function StatusPill({ status, style }: StatusPillProps) {
       case 'PAID':
       case 'OCCUPIED':
       case 'SUCCESS':
+      case 'APPROVED':
+      case 'COMPLETED':
         return {
           bg: theme.Colors.successContainer,
           text: theme.Colors.success,
@@ -29,6 +31,7 @@ export function StatusPill({ status, style }: StatusPillProps) {
       case 'VACANT':
       case 'CANCELLED':
       case 'FAILED':
+      case 'REJECTED':
         return {
           bg: theme.Colors.errorContainer,
           text: theme.Colors.error,

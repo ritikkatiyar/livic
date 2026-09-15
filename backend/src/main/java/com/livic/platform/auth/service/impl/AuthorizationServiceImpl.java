@@ -178,7 +178,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             case PROPERTY -> isWrite ? checkPermission(referenceId, "PROPERTY_EDIT") : checkPermission(referenceId, "PROPERTY_VIEW");
             case LEASE -> isWrite ? hasPermission(ResourceType.LEASE, referenceId, "LEASE_UPDATE")
                     : (hasPermission(ResourceType.LEASE, referenceId, "LEASE_VIEW") || hasPermission(ResourceType.LEASE, referenceId, "LEASE_VIEW_OWN"));
-            case INVENTORY_ITEM -> isWrite ? hasPermission(ResourceType.INVENTORY_ITEM, referenceId, "PROPERTY_EDIT") : hasPermission(ResourceType.INVENTORY_ITEM, referenceId, "PROPERTY_VIEW");
+            case INVENTORY_ITEM -> isWrite ? hasPermission(ResourceType.INVENTORY_ITEM, referenceId, "INVENTORY_MANAGE") : hasPermission(ResourceType.INVENTORY_ITEM, referenceId, "INVENTORY_VIEW");
             default -> false;
         };
     }

@@ -2,6 +2,7 @@ package com.livic.services.property.service.impl;
 
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
+import com.livic.platform.common.constant.StaffPermission;
 import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.services.property.domain.PropertyJoinCodeTbl;
@@ -66,6 +67,10 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
         Set<String> effectivePermissionCodes = (AccessType.CUSTOM_ACCESS.equals(effectiveAccessType) && permissionCodes != null)
                 ? new HashSet<>(permissionCodes)
                 : new HashSet<>();
+        List<String> unknownCodes = effectivePermissionCodes.stream().filter(c -> !StaffPermission.isValid(c)).sorted().toList();
+        if (!unknownCodes.isEmpty()) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Unknown permission codes: " + String.join(", ", unknownCodes));
+        }
 
         String code = generateRandomCode(property.getName(), effectiveTitle);
         while (propertyJoinCodeCrudService.findByCode(code).isPresent()) {

@@ -25,7 +25,7 @@ public class BillingWorksheetController {
     }
 
     @GetMapping
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'BILLING_WORKSHEET_VIEW')")
     public ResponseEntity<ApiResponse<List<WorksheetEntryResponse>>> getOrCreateWorksheet(
             @RequestParam UUID propertyId,
             @RequestParam UUID chargeConfigId,
@@ -35,7 +35,7 @@ public class BillingWorksheetController {
     }
 
     @PostMapping("/batch-save")
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'BILLING_WORKSHEET_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> saveWorksheet(@Valid @RequestBody WorksheetSaveRequest request) {
         worksheetService.saveWorksheet(request);
         return ResponseEntity.ok(ApiResponse.success(null));

@@ -45,7 +45,7 @@ public class MembershipController {
     private final UserFacade userFacade;
 
     @GetMapping
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'STAFF_VIEW')")
     public ResponseEntity<ApiResponse<Page<MembershipResponse>>> listMemberships(
             @PathVariable UUID propertyId,
             @PageableDefault(size = 20) Pageable pageable) {

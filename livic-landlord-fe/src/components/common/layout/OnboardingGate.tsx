@@ -4,7 +4,9 @@ import { usePathname, useRouter } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { getUserPreference } from '@/src/features/user/api/userPreference.api';
 import { getMyContext } from '@/src/features/auth/api/me.api';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { canAccessRoute, routeRequirement } from '@/src/features/auth/permissions';
 import { logger } from '@/src/utils/logger';
 
 function getLocalOnboardingStatus(token: string | null): boolean | null {
@@ -117,5 +119,36 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  // The permission guard overlays the screen instead of replacing it: unmounting the navigator changes the
+  // pathname, which flips the guard off and remounts it, looping until React aborts ("Maximum update depth").
+  const isGatedRoute = isAuthenticated && !isAuthRoute && !isOnboardingRoute && routeRequirement(pathname) !== null;
+  const guardState = !isGatedRoute ? null : !context ? 'loading' : canAccessRoute(context, pathname) ? null : 'denied';
+
+  return (
+    <View style={{ flex: 1 }}>
+      {children}
+      {guardState && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { justifyContent: 'center', alignItems: 'center', padding: theme.Spacing.lg, gap: theme.Spacing.sm, backgroundColor: theme.Colors.background },
+          ]}
+        >
+          {guardState === 'loading' ? (
+            <ActivityIndicator size="large" color={theme.Colors.primary} />
+          ) : (
+            <>
+              <MaterialIcons name="lock-outline" size={40} color={theme.Colors.onSurfaceVariant} />
+              <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onSurface }}>
+                No access
+              </Text>
+              <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center' }}>
+                You don&apos;t have permission to view this section. Ask the property owner to update your access.
+              </Text>
+            </>
+          )}
+        </View>
+      )}
+    </View>
+  );
 }

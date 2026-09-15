@@ -27,7 +27,7 @@ public class LedgerController {
     private final LedgerService ledgerService;
 
     @GetMapping
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'LEDGER_VIEW')")
     public ResponseEntity<ApiResponse<Page<LedgerEntryResponse>>> getLedgerForProperty(
             @RequestParam UUID propertyId,
             @RequestParam(required = false) String search,

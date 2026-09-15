@@ -18,6 +18,7 @@ import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { createStyles } from './SettingsMenuScreen.styles';
 import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
+import { usePermissions } from '@/src/features/auth/hooks/usePermissions';
 
 export default function SettingsMenuScreen() {
   const { theme, isDark } = useAppTheme();
@@ -56,10 +57,11 @@ export default function SettingsMenuScreen() {
   }, []);
 
   const querySuffix = propertyId ? `?propertyId=${propertyId}` : '';
+  const { canRoute } = usePermissions();
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const menuItems = [
     {
-      step: 1,
       id: 'charge-config',
       title: 'Charge Configuration',
       description: 'Set up rents, utilities & billing logic',
@@ -70,7 +72,17 @@ export default function SettingsMenuScreen() {
       bg: 'rgba(0, 104, 117, 0.1)',
     },
     {
-      step: 2,
+      id: 'meter-readings',
+      title: 'Meter Readings',
+      description: 'Record monthly utility meter readings',
+      icon: 'speed',
+      // Placeholder segment keeps the route matchable for permissions; navigation requires a selected property.
+      route: `/properties/${propertyId || 'select'}/meter-readings`,
+      gradientColors: [theme.Colors.tertiary, '#f59e0b'] as const,
+      accentColor: theme.Colors.tertiary,
+      bg: 'rgba(245, 158, 11, 0.1)',
+    },
+    {
       id: 'worksheets',
       title: 'Billing Worksheets',
       description: 'Input meter readings & variable charges',
@@ -81,7 +93,6 @@ export default function SettingsMenuScreen() {
       bg: 'rgba(79, 70, 229, 0.1)',
     },
     {
-      step: 3,
       id: 'rent-roll',
       title: 'Generate Rent Roll',
       description: 'Publish monthly invoices to tenants',
@@ -92,7 +103,6 @@ export default function SettingsMenuScreen() {
       bg: 'rgba(5, 150, 105, 0.1)',
     },
     {
-      step: 4,
       id: 'ledger',
       title: 'Finance Ledger',
       description: 'Audit trail of all transactions',
@@ -102,7 +112,22 @@ export default function SettingsMenuScreen() {
       accentColor: '#0d9488',
       bg: 'rgba(13, 148, 136, 0.1)',
     },
-  ];
+  ]
+    .filter((item) => canRoute(item.route))
+    .map((item, index) => ({ ...item, step: index + 1 }));
+
+  const openMenuItem = (route: string) => {
+    if (properties.length === 0) {
+      showToast('Please create a property first to access finance features.', 'error');
+      router.push('/properties/create');
+      return;
+    }
+    if (route.includes('/select/')) {
+      showToast('Select a property first.', 'error');
+      return;
+    }
+    router.push(route as any);
+  };
 
   const renderMobileContent = () => (
     <Animated.View style={{ opacity: fadeAnim }}>
@@ -130,14 +155,7 @@ export default function SettingsMenuScreen() {
           >
             <TouchableOpacity
               activeOpacity={0.75}
-              onPress={() => {
-                if (properties.length === 0) {
-                  showToast('Please create a property first to access finance features.', 'error');
-                  router.push('/properties/create');
-                  return;
-                }
-                router.push(item.route as any);
-              }}
+              onPress={() => openMenuItem(item.route)}
               style={[styles.listItem, properties.length === 0 && { opacity: 0.6 }]}
             >
               <View style={styles.menuCard}>
@@ -184,12 +202,14 @@ export default function SettingsMenuScreen() {
       </View>
 
       {/* Bottom note */}
-      <View style={styles.tipCard}>
-        <MaterialIcons name="lightbulb-outline" size={16} color={theme.Colors.primary} />
-        <Text style={styles.tipText}>
-          Follow steps 1 → 4 for a complete billing cycle each month.
-        </Text>
-      </View>
+      {menuItems.length > 1 && (
+        <View style={styles.tipCard}>
+          <MaterialIcons name="lightbulb-outline" size={16} color={theme.Colors.primary} />
+          <Text style={styles.tipText}>
+            Follow steps 1 → {menuItems.length} for a complete billing cycle each month.
+          </Text>
+        </View>
+      )}
     </Animated.View>
   );
 
@@ -217,24 +237,19 @@ export default function SettingsMenuScreen() {
           properties={properties}
           selectedPropertyId={propertyId}
           onSelectProperty={setSelectedPropertyId}
+          onClose={() => setBannerDismissed(true)}
           style={{ marginBottom: theme.Spacing.lg }}
         />
       )}
 
-      {isDesktop ? (
+      {/* Finance tools are property-scoped: keep them hidden while the property picker is showing. */}
+      {!propertyId && !bannerDismissed ? null : isDesktop ? (
         <View style={styles.gridContainer}>
           {menuItems.map((item) => (
             <TouchableOpacity
               key={item.id}
               activeOpacity={0.75}
-              onPress={() => {
-                if (properties.length === 0) {
-                  showToast('Please create a property first to access finance features.', 'error');
-                  router.push('/properties/create');
-                  return;
-                }
-                router.push(item.route as any);
-              }}
+              onPress={() => openMenuItem(item.route)}
               style={[styles.gridItem, properties.length === 0 && { opacity: 0.6 }]}
             >
               <GlassCard style={{ padding: 20 }}>

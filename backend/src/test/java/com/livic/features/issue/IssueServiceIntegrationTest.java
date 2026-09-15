@@ -155,7 +155,7 @@ public class IssueServiceIntegrationTest {
                 caretaker.getId(),
                 "Caretaker",
                 com.livic.platform.common.enums.AccessType.CUSTOM_ACCESS,
-                java.util.Set.of("PROPERTY_VIEW", "ANNOUNCEMENT_CREATE"),
+                java.util.Set.of("PROPERTY_VIEW", "ANNOUNCEMENT_CREATE", "ISSUE_VIEW", "ISSUE_MANAGE"),
                 landlord.getId()
         );
     }

@@ -47,4 +47,10 @@ public interface AuthFacade {
     Set<String> getMembershipPermissions(UUID membershipId);
 
     Map<UUID, Set<String>> getPermissionsByMembershipIds(Collection<UUID> membershipIds);
+
+    /**
+     * Effective staff permission codes per property for the user's active memberships. FULL_ACCESS memberships
+     * resolve to every {@link com.livic.platform.common.constant.StaffPermission} code.
+     */
+    Map<UUID, Set<String>> getEffectivePermissionCodes(UUID userId);
 }

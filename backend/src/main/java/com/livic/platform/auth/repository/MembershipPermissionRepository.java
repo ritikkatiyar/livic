@@ -16,7 +16,9 @@ public interface MembershipPermissionRepository extends JpaRepository<Membership
 
     List<MembershipPermissionTbl> findByMembershipId(UUID membershipId);
 
-    List<MembershipPermissionTbl> findByMembershipIdIn(Collection<UUID> membershipIds);
+    // Fetch joins so callers outside a transaction (e.g. the memberships list endpoint) can read codes without a session.
+    @Query("SELECT mp FROM MembershipPermissionTbl mp JOIN FETCH mp.membership JOIN FETCH mp.permission WHERE mp.membership.id IN :membershipIds")
+    List<MembershipPermissionTbl> findByMembershipIdIn(@Param("membershipIds") Collection<UUID> membershipIds);
 
     @Query("SELECT mp.permission.code FROM MembershipPermissionTbl mp WHERE mp.membership.id = :membershipId")
     Set<String> findPermissionCodesByMembershipId(@Param("membershipId") UUID membershipId);

@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, usePathname, Href, useLocalSearchParams } from 'expo-router';
 import Animated, { useAnimatedStyle, withSpring, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { usePermissions } from '@/src/features/auth/hooks/usePermissions';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
 export default function SidebarNavigation() {
@@ -31,8 +32,10 @@ export default function SidebarNavigation() {
   const pathname = usePathname();
   const { signOut, context } = useAuth();
   const { view } = useLocalSearchParams();
+  const { canRoute } = usePermissions();
 
   const renderSidebarLink = (icon: keyof typeof MaterialIcons.glyphMap, label: string, route: Href) => {
+    if (typeof route === 'string' && !canRoute(route)) return null;
     let isActive = false;
     if (typeof route === 'string') {
       if (route.includes('view=reports')) {
@@ -93,7 +96,7 @@ export default function SidebarNavigation() {
       </ScrollView>
 
       <View style={[styles.sidebarFooter, isCollapsed && styles.sidebarFooterCollapsed]}>
-        {!isCollapsed ? (
+        {!canRoute('/billing') ? null : !isCollapsed ? (
           <TouchableOpacity style={styles.upgradeButton} onPress={() => router.push('/billing')} activeOpacity={0.85}>
             <View style={[styles.upgradeGradient, { backgroundColor: theme.Colors.primary }]}>
               <Text style={styles.upgradeText}>UPGRADE PLAN</Text>

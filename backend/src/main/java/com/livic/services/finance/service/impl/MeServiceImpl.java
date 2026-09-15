@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -31,11 +33,12 @@ public class MeServiceImpl implements MeService {
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
 
         List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(userId);
+        Map<UUID, Set<String>> permissionCodes = authFacade.getEffectivePermissionCodes(userId);
 
         List<MeDTOs.MembershipSummary> managedProperties = memberships.stream()
                 .filter(MembershipSummaryDTO::isActive)
                 .filter(m -> m.propertyId() != null)
-                .map(MeDTOs.MembershipSummary::from)
+                .map(m -> MeDTOs.MembershipSummary.from(m, permissionCodes.getOrDefault(m.propertyId(), Set.of())))
                 .toList();
 
         List<MeDTOs.MembershipSummary> tenantProperties = List.of();

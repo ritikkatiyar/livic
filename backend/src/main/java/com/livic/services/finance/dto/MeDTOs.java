@@ -6,6 +6,7 @@ import com.livic.platform.common.enums.AccessType;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class MeDTOs {
@@ -39,14 +40,16 @@ public class MeDTOs {
             UUID propertyId,
             String propertyName,
             String title,
-            AccessType accessType
+            AccessType accessType,
+            Set<String> permissionCodes
     ) {
-        public static MembershipSummary from(MembershipSummaryDTO membership) {
+        public static MembershipSummary from(MembershipSummaryDTO membership, Set<String> permissionCodes) {
             return new MembershipSummary(
                     membership.propertyId(),
                     membership.propertyName(),
                     membership.title(),
-                    membership.accessType()
+                    membership.accessType(),
+                    permissionCodes
             );
         }
     }

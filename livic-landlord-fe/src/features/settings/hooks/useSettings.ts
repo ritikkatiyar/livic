@@ -151,22 +151,6 @@ export function useSettings(paramPropertyId: string | null) {
     }
   };
 
-  const handleTogglePermission = (code: string) => {
-    if (editingPermissions.includes(code)) {
-      setEditingPermissions(editingPermissions.filter((p) => p !== code));
-    } else {
-      setEditingPermissions([...editingPermissions, code]);
-    }
-  };
-
-  const handleToggleInvitePerm = (code: string) => {
-    if (invitePerms.includes(code)) {
-      setInvitePerms(invitePerms.filter((p) => p !== code));
-    } else {
-      setInvitePerms([...invitePerms, code]);
-    }
-  };
-
   const handleSavePermissions = async () => {
     if (!selectedMember) return;
     try {
@@ -266,8 +250,7 @@ export function useSettings(paramPropertyId: string | null) {
     handleOpenEditPermissions,
     handleOpenEditDetails,
     handleSaveMemberDetails,
-    handleTogglePermission,
-    handleToggleInvitePerm,
+    setEditingPermissions,
     handleSavePermissions,
     handleRemoveMember,
     handleGenerateInvite,

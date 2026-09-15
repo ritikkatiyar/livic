@@ -20,7 +20,7 @@ public class MeterReadingController {
     private final MeterReadingService meterReadingService;
 
     @GetMapping("/worksheet")
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'METER_READING_VIEW')")
     public ResponseEntity<ApiResponse<List<MeterReadingResponse>>> getWorksheet(
             @RequestParam UUID propertyId,
             @RequestParam UUID chargeConfigId,
@@ -31,7 +31,7 @@ public class MeterReadingController {
     }
 
     @PostMapping("/batch-save")
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'METER_READING_CREATE')")
     public ResponseEntity<ApiResponse<Void>> batchSaveReadings(@RequestBody MeterReadingRequest request) {
         meterReadingService.batchSaveReadings(request);
         return ResponseEntity.ok(ApiResponse.success(null));

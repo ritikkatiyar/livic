@@ -15,6 +15,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, usePathname, Href } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { usePermissions } from '@/src/features/auth/hooks/usePermissions';
 import { Theme } from '@/src/theme/Theme';
 
 interface MobileDrawerProps {
@@ -30,6 +31,7 @@ export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { signOut, context, user } = useAuth();
+  const { canRoute } = usePermissions();
 
   const slideAnim = useRef(new Animated.Value(-actualWidth)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -98,6 +100,7 @@ export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
   };
 
   const renderDrawerLink = (icon: keyof typeof MaterialIcons.glyphMap, label: string, route: Href) => {
+    if (typeof route === 'string' && !canRoute(route)) return null;
     const isActive = pathname === route || pathname.startsWith(route + '/');
 
     return (

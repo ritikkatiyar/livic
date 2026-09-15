@@ -6,8 +6,8 @@ import com.livic.features.analytics.dto.PortfolioOccupancyResponse;
 import com.livic.features.analytics.dto.SummaryResponse;
 import com.livic.features.analytics.mapper.AnalyticsMapper;
 import com.livic.features.analytics.service.interfaces.AnalyticsService;
-import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
+import com.livic.platform.common.constant.StaffPermission;
 import com.livic.services.finance.facade.FinanceFacade;
 import com.livic.services.property.facade.PropertyFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
@@ -43,12 +43,10 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private final AuthFacade authFacade;
 
     private List<UUID> getLandlordPropertyIds(UUID landlordId) {
-        List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(landlordId);
-        return memberships.stream()
-                .filter(MembershipSummaryDTO::isActive)
-                .filter(m -> m.propertyId() != null)
-                .map(MembershipSummaryDTO::propertyId)
-                .distinct()
+        return authFacade.getEffectivePermissionCodes(landlordId).entrySet().stream()
+                .filter(e -> e.getValue().contains(StaffPermission.ANALYTICS_VIEW.name()))
+                .map(Map.Entry::getKey)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 

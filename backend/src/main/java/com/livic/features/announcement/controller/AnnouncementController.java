@@ -38,6 +38,7 @@ public class AnnouncementController {
     }
 
     @GetMapping
+    @PreAuthorize("#propertyId == null or @authorizationService.hasAnyPermission(#propertyId, 'ANNOUNCEMENT_VIEW', 'ANNOUNCEMENT_CREATE')")
     public ResponseEntity<ApiResponse<Page<AnnouncementResponse>>> getAnnouncements(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) UUID propertyId,

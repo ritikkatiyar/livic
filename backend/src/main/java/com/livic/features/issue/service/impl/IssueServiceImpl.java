@@ -2,6 +2,8 @@ package com.livic.features.issue.service.impl;
 
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
+import com.livic.platform.common.constant.StaffPermission;
+import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.common.event.IssueCreatedEvent;
 import com.livic.platform.common.event.IssueEscalatedEvent;
 import com.livic.platform.common.exception.BusinessException;
@@ -72,7 +74,7 @@ public class IssueServiceImpl implements IssueService {
         UUID leaseId = request.leaseId();
         UUID unitId = request.unitId();
 
-        boolean isStaff = isPropertyStaff(callerUserId, propertyId);
+        boolean isStaff = hasStaffPermission(callerUserId, propertyId, StaffPermission.ISSUE_MANAGE);
         
         if (!isStaff) {
             // Must be a tenant, resolve and verify active lease
@@ -144,12 +146,9 @@ public class IssueServiceImpl implements IssueService {
     @Override
     @Transactional(readOnly = true)
     public Page<IssueResponse> listIssues(UUID callerUserId, Pageable pageable) {
-        List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(callerUserId);
-        
-        List<UUID> staffPropertyIds = memberships.stream()
-                .filter(MembershipSummaryDTO::isActive)
-                .map(MembershipSummaryDTO::propertyId)
-                .filter(Objects::nonNull)
+        List<UUID> staffPropertyIds = authFacade.getEffectivePermissionCodes(callerUserId).entrySet().stream()
+                .filter(e -> e.getValue().contains(StaffPermission.ISSUE_VIEW.name()))
+                .map(Map.Entry::getKey)
                 .toList();
 
         Page<IssueTbl> issuesPage;
@@ -191,7 +190,7 @@ public class IssueServiceImpl implements IssueService {
         IssueTbl issue = issueCrudService.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
-        checkIssueAccess(issue, callerUserId);
+        checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_VIEW);
         return getIssueResponse(issue);
     }
 
@@ -201,7 +200,7 @@ public class IssueServiceImpl implements IssueService {
         IssueTbl issue = issueCrudService.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
-        checkIssueAccess(issue, callerUserId);
+        checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_VIEW);
 
         IssueTimelineTbl commentTimeline = IssueTimelineTbl.builder()
                 .issue(issue)
@@ -220,7 +219,7 @@ public class IssueServiceImpl implements IssueService {
         IssueTbl issue = issueCrudService.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
-        checkIssueAccess(issue, callerUserId);
+        checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_MANAGE);
 
         IssueStatus oldStatus = issue.getStatus();
         issue.setStatus(request.status());
@@ -248,7 +247,7 @@ public class IssueServiceImpl implements IssueService {
         IssueTbl issue = issueCrudService.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
-        checkIssueAccess(issue, callerUserId);
+        checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_MANAGE);
 
         issue.setEscalationStatus(IssueEscalationStatus.ESCALATED);
         issue.setEscalationLevel(issue.getEscalationLevel() + 1);
@@ -307,9 +306,16 @@ public class IssueServiceImpl implements IssueService {
     }
 
     private void publishCreatedNotifications(IssueTbl issue, String propName, String unitNumber, String creatorName) {
-        List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByPropertyId(issue.getPropertyId());
-        List<String> staffUserIds = memberships.stream()
+        List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByPropertyId(issue.getPropertyId()).stream()
                 .filter(MembershipSummaryDTO::isActive)
+                .toList();
+        Map<UUID, Set<String>> customCodes = authFacade.getPermissionsByMembershipIds(memberships.stream()
+                .filter(m -> !AccessType.FULL_ACCESS.equals(m.accessType()))
+                .map(MembershipSummaryDTO::id)
+                .toList());
+        List<String> staffUserIds = memberships.stream()
+                .filter(m -> AccessType.FULL_ACCESS.equals(m.accessType())
+                        || customCodes.getOrDefault(m.id(), Set.of()).contains(StaffPermission.ISSUE_VIEW.name()))
                 .map(m -> m.userId().toString())
                 .distinct()
                 .toList();
@@ -332,7 +338,7 @@ public class IssueServiceImpl implements IssueService {
     private void publishEscalationNotifications(IssueTbl issue, String propName, String unitNumber, String reason) {
         List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByPropertyId(issue.getPropertyId());
         List<String> escalationUserIds = memberships.stream()
-                .filter(m -> com.livic.platform.common.enums.AccessType.FULL_ACCESS.equals(m.accessType()))
+                .filter(m -> AccessType.FULL_ACCESS.equals(m.accessType()))
                 .map(m -> m.userId().toString())
                 .distinct()
                 .toList();
@@ -365,8 +371,8 @@ public class IssueServiceImpl implements IssueService {
         return IssueMapper.toResponse(issue, timeline, authorNamesMap);
     }
 
-    private void checkIssueAccess(IssueTbl issue, UUID userId) {
-        if (isPropertyStaff(userId, issue.getPropertyId())) {
+    private void checkIssueAccess(IssueTbl issue, UUID userId, StaffPermission staffPermission) {
+        if (hasStaffPermission(userId, issue.getPropertyId(), staffPermission)) {
             return;
         }
         Optional<LeaseSummaryDTO> leaseOpt = financeFacade.getActiveLeaseForUser(userId);
@@ -376,9 +382,9 @@ public class IssueServiceImpl implements IssueService {
         throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
     }
 
-    private boolean isPropertyStaff(UUID userId, UUID propertyId) {
-        List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(userId);
-        return memberships.stream()
-                .anyMatch(m -> propertyId.equals(m.propertyId()) && m.isActive());
+    private boolean hasStaffPermission(UUID userId, UUID propertyId, StaffPermission permission) {
+        return authFacade.getEffectivePermissionCodes(userId)
+                .getOrDefault(propertyId, Set.of())
+                .contains(permission.name());
     }
 }

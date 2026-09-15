@@ -8,6 +8,7 @@ import com.livic.platform.auth.mapper.MembershipMapper;
 import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.platform.auth.service.interfaces.MembershipPermissionCrudService;
 import com.livic.platform.auth.service.interfaces.MembershipService;
+import com.livic.platform.common.constant.StaffPermission;
 import com.livic.platform.common.enums.AccessType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Component;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -128,5 +131,29 @@ public class AuthFacadeImpl implements AuthFacade {
                         mp -> mp.getMembership().getId(),
                         Collectors.mapping(mp -> mp.getPermission().getCode(), Collectors.toSet())
                 ));
+    }
+
+    @Override
+    public Map<UUID, Set<String>> getEffectivePermissionCodes(UUID userId) {
+        List<MembershipTbl> active = membershipCrudService.findByUserId(userId).stream()
+                .filter(MembershipTbl::isActive)
+                .toList();
+        Map<UUID, Set<String>> customCodes = getPermissionsByMembershipIds(active.stream()
+                .filter(m -> !m.isFullAccess())
+                .map(MembershipTbl::getId)
+                .toList());
+
+        Map<UUID, Set<String>> result = new HashMap<>();
+        for (MembershipTbl m : active) {
+            Set<String> codes = m.isFullAccess()
+                    ? StaffPermission.allCodes()
+                    : customCodes.getOrDefault(m.getId(), Set.of());
+            result.merge(m.getPropertyId(), codes, (a, b) -> {
+                Set<String> merged = new HashSet<>(a);
+                merged.addAll(b);
+                return merged;
+            });
+        }
+        return result;
     }
 }

@@ -12,20 +12,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { MembershipResponse } from '@/src/features/properties/api/membership.api';
-
-export const ALL_PERMISSIONS = [
-  { code: 'PROPERTY_VIEW', name: 'View Property', description: 'Can view property details and announcements', category: 'Property' },
-  { code: 'PROPERTY_EDIT', name: 'Edit Property', description: 'Can edit property details, structures, and layouts', category: 'Property' },
-  { code: 'PROPERTY_DELETE', name: 'Delete Property', description: 'Can permanently delete the property', category: 'Property' },
-  { code: 'LEASE_CREATE', name: 'Create Leases', description: 'Can create and configure leases for units', category: 'Leases' },
-  { code: 'LEASE_UPDATE', name: 'Update Leases', description: 'Can update, renew, or terminate active leases', category: 'Leases' },
-  { code: 'LEASE_VIEW', name: 'View Leases', description: 'Can view all tenant leases on the property', category: 'Leases' },
-  { code: 'EXPENSE_CREATE', name: 'Create Expenses', description: 'Can record property expenses and utility splits', category: 'Expenses' },
-  { code: 'EXPENSE_APPROVE', name: 'Approve Expenses', description: 'Can approve and publish expenses to tenants', category: 'Expenses' },
-  { code: 'PAYMENT_VIEW', name: 'View Payments', description: 'Can view rent and invoice payment history', category: 'Payments' },
-  { code: 'ANNOUNCEMENT_CREATE', name: 'Broadcast Notices', description: 'Can post notice board announcements to tenants', category: 'Announcements' },
-  { code: 'MANAGE_STAFF', name: 'Manage Staff', description: 'Can manage other staff access and invite codes', category: 'Staff' },
-];
+import { PermissionPicker } from './PermissionPicker';
 
 type ThemeLike = any;
 type StylesLike = Record<string, any>;
@@ -34,9 +21,9 @@ type PermissionsMatrixModalProps = {
   editingPermissions: string[];
   savingPermissions: boolean;
   selectedMember: MembershipResponse | null;
-  canDelegatePermission: (permissionCode: string) => boolean;
+  canEditPermissions: boolean;
   handleSavePermissions: () => void;
-  handleTogglePermission: (code: string) => void;
+  setEditingPermissions: (codes: string[]) => void;
   setSelectedMember: (member: MembershipResponse | null) => void;
   styles: StylesLike;
   theme: ThemeLike;
@@ -46,9 +33,9 @@ export function PermissionsMatrixModal({
   editingPermissions,
   savingPermissions,
   selectedMember,
-  canDelegatePermission,
+  canEditPermissions,
   handleSavePermissions,
-  handleTogglePermission,
+  setEditingPermissions,
   setSelectedMember,
   styles,
   theme,
@@ -68,53 +55,11 @@ export function PermissionsMatrixModal({
           </View>
 
           <ScrollView contentContainerStyle={styles.modalBody}>
-            {Object.entries(
-              ALL_PERMISSIONS.reduce((acc, curr) => {
-                if (!acc[curr.category]) acc[curr.category] = [];
-                acc[curr.category].push(curr);
-                return acc;
-              }, {} as Record<string, typeof ALL_PERMISSIONS>)
-            ).map(([category, items]) => (
-              <View key={category} style={styles.categoryBlock}>
-                <Text style={styles.categoryHeading}>{category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()}</Text>
-                {items.map((item) => {
-                  const isChecked = editingPermissions.includes(item.code);
-                  const isDelegatable = canDelegatePermission(item.code);
-
-                  return (
-                    <TouchableOpacity
-                      key={item.code}
-                      style={[styles.permCheckRow, !isDelegatable && styles.permCheckRowDisabled]}
-                      onPress={() => handleTogglePermission(item.code)}
-                      disabled={!isDelegatable}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.permCheckInfo}>
-                        <Text style={[styles.permCheckName, !isDelegatable && styles.permCheckNameDisabled]}>
-                          {item.name}
-                        </Text>
-                        <Text style={styles.permCheckDesc}>{item.description}</Text>
-                      </View>
-                      <View
-                        style={[
-                          styles.permCheckbox,
-                          isChecked && styles.permCheckboxChecked,
-                          !isDelegatable && styles.permCheckboxDisabled,
-                        ]}
-                      >
-                        {isChecked && (
-                          <MaterialIcons
-                            name="check"
-                            size={16}
-                            color={theme.Colors.surfaceContainerLowest}
-                          />
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ))}
+            <PermissionPicker
+              selected={editingPermissions}
+              onChange={setEditingPermissions}
+              disabled={!canEditPermissions}
+            />
           </ScrollView>
 
           <View style={styles.modalFooter}>
@@ -248,7 +193,7 @@ type GenerateInviteCodeModalProps = {
   inviteMaxUses: string;
   inviteModalVisible: boolean;
   handleGenerateInvite: () => void;
-  handleToggleInvitePerm: (permCode: string) => void;
+  setInvitePerms: (codes: string[]) => void;
   setInviteTitle: (title: string) => void;
   setInviteAccessType: (accessType: 'FULL_ACCESS' | 'CUSTOM_ACCESS') => void;
   setInviteMaxUses: (maxUses: string) => void;
@@ -265,7 +210,7 @@ export function GenerateInviteCodeModal({
   inviteMaxUses,
   inviteModalVisible,
   handleGenerateInvite,
-  handleToggleInvitePerm,
+  setInvitePerms,
   setInviteTitle,
   setInviteAccessType,
   setInviteMaxUses,
@@ -320,26 +265,8 @@ export function GenerateInviteCodeModal({
             {inviteAccessType === 'CUSTOM_ACCESS' && (
               <>
                 <Text style={[styles.inputLabel, { marginTop: 16 }]}>ATTACH PERMISSIONS</Text>
-                <View style={{ gap: 8, marginTop: 6 }}>
-                  {ALL_PERMISSIONS.map((p) => {
-                    const isChecked = invitePerms.includes(p.code);
-                    return (
-                      <TouchableOpacity
-                        key={p.code}
-                        style={styles.permCheckRow}
-                        onPress={() => handleToggleInvitePerm(p.code)}
-                        activeOpacity={0.7}
-                      >
-                        <View style={styles.permCheckInfo}>
-                          <Text style={styles.permCheckName}>{p.name}</Text>
-                          <Text style={styles.permCheckDesc}>{p.description}</Text>
-                        </View>
-                        <View style={[styles.permCheckbox, isChecked && styles.permCheckboxChecked]}>
-                          {isChecked && <MaterialIcons name="check" size={16} color={theme.Colors.surfaceContainerLowest} />}
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
+                <View style={{ marginTop: 6 }}>
+                  <PermissionPicker selected={invitePerms} onChange={setInvitePerms} />
                 </View>
               </>
             )}

@@ -212,7 +212,7 @@ class MediaAuthorizationTest {
 
         when(inventoryFacade.getPropertyIdForInventoryItem(itemId)).thenReturn(Optional.of(propertyId));
         when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
-                .thenReturn(Set.of("PROPERTY_EDIT", "PROPERTY_VIEW"));
+                .thenReturn(Set.of("INVENTORY_MANAGE", "INVENTORY_VIEW"));
 
         assertThat(authorizationService.hasMediaAccess(OwnerModule.INVENTORY, itemId, "READ")).isTrue();
         assertThat(authorizationService.hasMediaAccess(OwnerModule.INVENTORY, itemId, "WRITE")).isTrue();

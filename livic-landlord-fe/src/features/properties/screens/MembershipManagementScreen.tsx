@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Alert, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Alert, Modal, TextInput, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -15,6 +15,7 @@ import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { ConfirmDialog } from '@/src/components/common/feedback/ConfirmDialog';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+import { PermissionPicker } from '@/src/features/settings/components/PermissionPicker';
 
 interface Props {
   propertyId: string;
@@ -35,6 +36,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
   const [inviteTitle, setInviteTitle] = useState('');
   const [inviteAccessType, setInviteAccessType] = useState<'FULL_ACCESS' | 'CUSTOM_ACCESS'>('CUSTOM_ACCESS');
+  const [invitePerms, setInvitePerms] = useState<string[]>([]);
   const [inviteMaxUses, setInviteMaxUses] = useState('1');
   const [generatingInvite, setGeneratingInvite] = useState(false);
 
@@ -72,11 +74,13 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
       const res = await generateJoinCode(accessToken, propertyId, {
         title: inviteTitle.trim(),
         accessType: inviteAccessType,
+        permissionCodes: inviteAccessType === 'FULL_ACCESS' ? [] : invitePerms,
         maxUses,
       });
       setInviteModalVisible(false);
       setInviteTitle('');
       setInviteAccessType('CUSTOM_ACCESS');
+      setInvitePerms([]);
       setInviteMaxUses('1');
       Alert.alert('Join Code Generated', `Share this code with your team member: ${res.code}`);
     } catch (err: any) {
@@ -264,6 +268,15 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
               </TouchableOpacity>
             </View>
 
+            {inviteAccessType === 'CUSTOM_ACCESS' && (
+              <>
+                <Text style={[styles.label, { marginTop: theme.Spacing.md }]}>Modules & Features</Text>
+                <ScrollView style={styles.permissionsScroll}>
+                  <PermissionPicker selected={invitePerms} onChange={setInvitePerms} />
+                </ScrollView>
+              </>
+            )}
+
             <Text style={[styles.label, { marginTop: theme.Spacing.md }]}>Max Uses</Text>
             <TextInput
               style={styles.searchInput}
@@ -373,5 +386,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   roleOptionTextActive: { color: theme.Colors.primary },
   assignBtn: {
     marginTop: theme.Spacing.lg,
+  },
+  permissionsScroll: {
+    maxHeight: 320,
   },
 });

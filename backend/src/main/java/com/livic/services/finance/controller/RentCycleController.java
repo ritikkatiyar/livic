@@ -39,7 +39,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/batch-generate")
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'RENT_ROLL_MANAGE')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.BatchGenerateResult>> batchGenerate(
             @Valid @RequestBody RentCycleDTOs.BatchGenerateRentCycleRequest request
     ) {
@@ -48,7 +48,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/{id}/publish")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #id, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #id, 'RENT_ROLL_MANAGE')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> publish(
             @PathVariable UUID id
     ) {
@@ -56,7 +56,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/{id}/unpublish")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #id, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #id, 'RENT_ROLL_MANAGE')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> unpublish(
             @PathVariable UUID id
     ) {
@@ -64,7 +64,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/batch-publish")
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'RENT_ROLL_MANAGE')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.BatchPublishResult>> batchPublish(
             @Valid @RequestBody RentCycleDTOs.RentCyclePropertyBillingMonthRequest request
     ) {
@@ -72,7 +72,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/batch-unpublish")
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'RENT_ROLL_MANAGE')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.BatchUnpublishResult>> batchUnpublish(
             @Valid @RequestBody RentCycleDTOs.RentCyclePropertyBillingMonthRequest request
     ) {
@@ -80,7 +80,7 @@ public class RentCycleController {
     }
 
     @GetMapping({"/pre-flight", "/preflight"})
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'RENT_ROLL_VIEW')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.PreFlightChecklistResponse>> getPreFlightChecklist(
             @RequestParam UUID propertyId,
             @RequestParam String billingMonth
@@ -103,7 +103,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/{id}/mark-paid")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #id, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #id, 'RENT_ROLL_MANAGE')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> markPaid(
             @PathVariable UUID id
     ) {

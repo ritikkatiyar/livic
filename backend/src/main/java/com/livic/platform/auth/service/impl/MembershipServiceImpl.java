@@ -7,6 +7,7 @@ import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.platform.auth.service.interfaces.MembershipPermissionCrudService;
 import com.livic.platform.auth.service.interfaces.MembershipService;
 import com.livic.platform.auth.service.interfaces.PermissionCrudService;
+import com.livic.platform.common.constant.StaffPermission;
 import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.common.event.MemberSeatRequestedEvent;
 import com.livic.platform.common.exception.BusinessException;
@@ -79,6 +80,8 @@ public class MembershipServiceImpl implements MembershipService {
             }
         }
 
+        validatePermissionCodes(permissionCodes);
+
         eventPublisher.publishEvent(new MemberSeatRequestedEvent(this, propertyId));
 
         MembershipTbl membership = MembershipTbl.builder()
@@ -119,6 +122,8 @@ public class MembershipServiceImpl implements MembershipService {
         if (!actorHasFullAccess) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Only Full Access members can update membership permissions and access.");
         }
+
+        validatePermissionCodes(permissionCodes);
 
         if (title != null && !title.isBlank()) {
             membership.setTitle(title.trim());
@@ -219,6 +224,14 @@ public class MembershipServiceImpl implements MembershipService {
                     .assignedBy(currentOwnerId)
                     .build();
             membershipCrudService.save(newMembership);
+        }
+    }
+
+    private void validatePermissionCodes(Set<String> permissionCodes) {
+        if (permissionCodes == null) return;
+        List<String> unknown = permissionCodes.stream().filter(code -> !StaffPermission.isValid(code)).sorted().toList();
+        if (!unknown.isEmpty()) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Unknown permission codes: " + String.join(", ", unknown));
         }
     }
 

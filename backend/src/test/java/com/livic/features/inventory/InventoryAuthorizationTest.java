@@ -79,10 +79,10 @@ class InventoryAuthorizationTest {
 
         when(inventoryFacade.getPropertyIdForInventoryItem(itemId)).thenReturn(Optional.of(propertyId));
         when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
-                .thenReturn(Set.of("PROPERTY_EDIT", "PROPERTY_VIEW"));
+                .thenReturn(Set.of("INVENTORY_MANAGE", "INVENTORY_VIEW"));
 
-        assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ITEM, itemId, "PROPERTY_EDIT")).isTrue();
-        assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ITEM, itemId, "PROPERTY_VIEW")).isTrue();
+        assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ITEM, itemId, "INVENTORY_MANAGE")).isTrue();
+        assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ITEM, itemId, "INVENTORY_VIEW")).isTrue();
     }
 
     @Test
@@ -94,8 +94,8 @@ class InventoryAuthorizationTest {
         when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(unrelatedUserId, propertyId))
                 .thenReturn(Set.of());
 
-        assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ITEM, itemId, "PROPERTY_EDIT")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ITEM, itemId, "PROPERTY_VIEW")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ITEM, itemId, "INVENTORY_MANAGE")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ITEM, itemId, "INVENTORY_VIEW")).isFalse();
     }
 
     @Test
@@ -106,22 +106,22 @@ class InventoryAuthorizationTest {
         Method updateItem = clazz.getMethod("updateItem", UUID.class, UpdateInventoryItemRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthUpdate = updateItem.getAnnotation(PreAuthorize.class);
         assertThat(preAuthUpdate).isNotNull();
-        assertThat(preAuthUpdate.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'PROPERTY_EDIT')");
+        assertThat(preAuthUpdate.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'INVENTORY_MANAGE')");
 
         Method getItem = clazz.getMethod("getItem", UUID.class);
         PreAuthorize preAuthGet = getItem.getAnnotation(PreAuthorize.class);
         assertThat(preAuthGet).isNotNull();
-        assertThat(preAuthGet.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'PROPERTY_VIEW')");
+        assertThat(preAuthGet.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'INVENTORY_VIEW')");
 
         Method recordExpense = clazz.getMethod("recordServiceExpense", UUID.class, ServiceExpenseRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthExpense = recordExpense.getAnnotation(PreAuthorize.class);
         assertThat(preAuthExpense).isNotNull();
-        assertThat(preAuthExpense.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'PROPERTY_EDIT')");
+        assertThat(preAuthExpense.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'INVENTORY_MANAGE')");
 
         Method listExpenses = clazz.getMethod("listServiceExpenses", UUID.class);
         PreAuthorize preAuthList = listExpenses.getAnnotation(PreAuthorize.class);
         assertThat(preAuthList).isNotNull();
-        assertThat(preAuthList.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'PROPERTY_VIEW')");
+        assertThat(preAuthList.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'INVENTORY_VIEW')");
 
         Method getTenantVisible = clazz.getMethod("getTenantVisibleItems", UUID.class, UserDetailsImpl.class);
         PreAuthorize preAuthTenantVisible = getTenantVisible.getAnnotation(PreAuthorize.class);

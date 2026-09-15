@@ -14,6 +14,7 @@ import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { usePermissions } from '@/src/features/auth/hooks/usePermissions';
 import { Theme } from '@/src/theme/Theme';
 
 interface MobileMoreSheetProps {
@@ -33,10 +34,11 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut } = useAuth();
+  const { canRoute } = usePermissions();
   const { theme, isDark, toggleTheme } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const MENU_ITEMS: MenuItem[] = React.useMemo(() => [
+  const MENU_ITEMS: MenuItem[] = React.useMemo(() => ([
     { title: 'Portfolio', subtitle: 'Properties & Units', route: '/command-center', icon: 'apartment', color: theme.Colors.primary },
     { title: 'Leases', subtitle: 'Tenant Contracts', route: '/leases', icon: 'receipt-long', color: theme.Colors.secondary },
     { title: 'Finance', subtitle: 'Expenses & Income', route: '/expenses', icon: 'payments', color: theme.Colors.tertiary },
@@ -46,7 +48,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
     { title: 'Announcements', subtitle: 'Broadcast Messages', route: '/announcements', icon: 'campaign', color: theme.Colors.primary },
     { title: 'Escalations', subtitle: 'Issues & Repairs', route: '/escalations', icon: 'report-problem', color: theme.Colors.error },
     { title: 'Settings', subtitle: 'Profile & App Config', route: '/settings', icon: 'settings', color: theme.Colors.onSurfaceVariant },
-  ], [theme]);
+  ] satisfies MenuItem[]).filter((item) => canRoute(item.route)), [theme, canRoute]);
   
   const translateY = useRef(new Animated.Value(300)).current;
 
@@ -156,7 +158,8 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
             </View>
 
             {/* Subscription Upgrade Plan Banner */}
-            <TouchableOpacity 
+            {canRoute('/billing') && (
+            <TouchableOpacity
               style={styles.upgradeBannerWrapper} 
               activeOpacity={0.85}
               onPress={() => handleNavigate('/billing')}
@@ -174,6 +177,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
                 </View>
               </View>
             </TouchableOpacity>
+            )}
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.gridContainer}>

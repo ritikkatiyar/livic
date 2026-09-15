@@ -9,6 +9,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { usePermissions } from '@/src/features/auth/hooks/usePermissions';
 
 interface BottomNavigationProps {
   onMorePress: () => void;
@@ -28,12 +29,13 @@ export default function BottomNavigation({ onMorePress }: BottomNavigationProps)
   const pathname = usePathname();
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const { canRoute } = usePermissions();
 
   if (pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') {
     return null;
   }
 
-  const navItems: NavTabItem[] = [
+  const navItems: NavTabItem[] = ([
     {
       id: 'home',
       label: 'Home',
@@ -52,7 +54,7 @@ export default function BottomNavigation({ onMorePress }: BottomNavigationProps)
       id: 'finance',
       label: 'Finance',
       icon: 'payments',
-      route: '/expenses/rent-roll',
+      route: canRoute('/expenses/rent-roll') ? '/expenses/rent-roll' : '/expenses',
       isActive: (path) => path.startsWith('/expenses') || path === '/billing',
     },
     {
@@ -62,7 +64,7 @@ export default function BottomNavigation({ onMorePress }: BottomNavigationProps)
       route: '/escalations',
       isActive: (path) => path === '/escalations' || path.startsWith('/escalations'),
     },
-  ];
+  ] satisfies NavTabItem[]).filter((item) => canRoute(item.route));
 
   return (
     <>

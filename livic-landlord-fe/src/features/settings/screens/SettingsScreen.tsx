@@ -34,6 +34,9 @@ export default function SettingsScreen() {
   };
 
   const isOwner = Boolean(settings.propertyId) && settings.currentMember?.accessType === 'FULL_ACCESS';
+  const [pickerDismissed, setPickerDismissed] = React.useState(false);
+  const needsProperty = !settings.propertyId && settings.activeTab !== 'preferences';
+  const showPropertyPicker = needsProperty && !pickerDismissed;
 
   return (
     <PageShell
@@ -50,25 +53,28 @@ export default function SettingsScreen() {
         theme={theme}
       />
 
-      {/* Hub Grid Selector */}
-      <SettingsHubGrid
-        activeTab={settings.activeTab}
-        membersCount={settings.members.length}
-        invitesCount={settings.invites.length}
-        onTabChange={settings.setActiveTab}
-        onBillingPress={handleBillingPress}
-        styles={styles}
-        theme={theme}
-      />
+      {/* Hub Grid Selector — hidden while the property picker is showing; closing the picker brings it back. */}
+      {!showPropertyPicker && (
+        <SettingsHubGrid
+          activeTab={settings.activeTab}
+          membersCount={settings.members.length}
+          invitesCount={settings.invites.length}
+          onTabChange={settings.setActiveTab}
+          onBillingPress={handleBillingPress}
+          styles={styles}
+          theme={theme}
+        />
+      )}
 
       {/* Main Tab Content */}
-      {!settings.propertyId && settings.activeTab !== 'preferences' ? (
+      {needsProperty ? (
         <PropertyRequiredBanner
           title="Select Property for Staff & Permissions"
           description="Manage property team members, manager roles, custom access permissions, and join codes by selecting a property below."
           icon="admin-panel-settings"
           properties={settings.properties}
           selectedPropertyId={settings.propertyId}
+          onClose={() => setPickerDismissed(true)}
         />
       ) : (
         <SettingsTabContent
@@ -94,9 +100,9 @@ export default function SettingsScreen() {
         editingPermissions={settings.editingPermissions}
         savingPermissions={settings.savingPermissions}
         selectedMember={settings.selectedMember}
-        canDelegatePermission={settings.canDelegatePermission}
+        canEditPermissions={settings.canDelegatePermission('')}
         handleSavePermissions={settings.handleSavePermissions}
-        handleTogglePermission={settings.handleTogglePermission}
+        setEditingPermissions={settings.setEditingPermissions}
         setSelectedMember={settings.setSelectedMember}
         styles={styles}
         theme={theme}
@@ -123,7 +129,7 @@ export default function SettingsScreen() {
         inviteMaxUses={settings.inviteMaxUses}
         inviteModalVisible={settings.inviteModalVisible}
         handleGenerateInvite={settings.handleGenerateInvite}
-        handleToggleInvitePerm={settings.handleToggleInvitePerm}
+        setInvitePerms={settings.setInvitePerms}
         setInviteTitle={settings.setInviteTitle}
         setInviteAccessType={settings.setInviteAccessType}
         setInviteMaxUses={settings.setInviteMaxUses}

@@ -5,6 +5,8 @@ export interface MembershipSummary {
   propertyName: string;
   title: string;
   accessType?: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
+  /** Effective staff permission codes on this property; FULL_ACCESS members receive every code. */
+  permissionCodes?: string[];
 }
 
 export interface ActiveLeaseSummary {

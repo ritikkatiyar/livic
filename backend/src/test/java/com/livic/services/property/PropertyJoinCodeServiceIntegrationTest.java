@@ -1,6 +1,14 @@
 package com.livic.services.property;
 
+import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.auth.repository.MembershipRepository;
+import com.livic.platform.auth.service.interfaces.AuthorizationService;
+import com.livic.platform.common.constant.StaffPermission;
+import com.livic.platform.security.UserDetailsImpl;
+import com.livic.services.finance.dto.MeDTOs;
+import com.livic.services.finance.service.interfaces.MeService;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.livic.platform.auth.service.interfaces.MembershipService;
 import com.livic.services.billing.SubscriptionTestSupport;
 import com.livic.services.billing.repository.SaasSubscriptionRepository;
@@ -57,6 +65,15 @@ public class PropertyJoinCodeServiceIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AuthFacade authFacade;
+
+    @Autowired
+    private AuthorizationService authorizationService;
+
+    @Autowired
+    private MeService meService;
 
     private UserTbl landlord;
     private UserTbl manager;
@@ -150,6 +167,57 @@ public class PropertyJoinCodeServiceIntegrationTest {
         PropertyJoinCodeTbl updatedCode = propertyJoinCodeRepository.findById(joinCode.id()).orElseThrow();
         assertEquals(1, updatedCode.getUsesCount());
         assertFalse(updatedCode.isActive(), "Single use code should be deactivated after use");
+    }
+
+    @Test
+    public void customJoinCodeGrantsOnlySelectedFeatures() {
+        Set<String> caretakerCodes = Set.of("METER_READING_VIEW", "METER_READING_CREATE", "ISSUE_VIEW");
+
+        PropertyJoinCodeDTOs.JoinCodeResponse joinCode = propertyJoinCodeService.generateJoinCode(
+                property.getId(), "Caretaker", AccessType.CUSTOM_ACCESS, caretakerCodes, 1, landlord.getId());
+        PropertyJoinCodeDTOs.JoinCodeResultResponse result =
+                propertyJoinCodeService.validateAndApplyJoinCode(joinCode.code(), newStaff.getId());
+
+        assertEquals(caretakerCodes, authFacade.getPermissionsByMembershipIds(Set.of(result.membershipId())).get(result.membershipId()));
+
+        MeDTOs.MembershipSummary caretakerContext = meService.getUserContext(newStaff.getId()).managedProperties().stream()
+                .filter(m -> m.propertyId().equals(property.getId()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(caretakerCodes, caretakerContext.permissionCodes());
+
+        MeDTOs.MembershipSummary ownerContext = meService.getUserContext(landlord.getId()).managedProperties().stream()
+                .filter(m -> m.propertyId().equals(property.getId()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(StaffPermission.allCodes(), ownerContext.permissionCodes());
+
+        authenticate(newStaff);
+        try {
+            assertTrue(authorizationService.hasPermission(property.getId(), "METER_READING_CREATE"));
+            assertTrue(authorizationService.hasPermission(property.getId(), "ISSUE_VIEW"));
+            assertFalse(authorizationService.hasPermission(property.getId(), "LEDGER_VIEW"));
+            assertFalse(authorizationService.hasPermission(property.getId(), "INVENTORY_VIEW"));
+            assertFalse(authorizationService.hasPermission(property.getId(), "CHARGE_CONFIG_MANAGE"));
+            assertFalse(authorizationService.hasPermission(property.getId(), "ANALYTICS_VIEW"));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    @Test
+    public void joinCodeRejectsUnknownPermissionCodes() {
+        BusinessException exception = assertThrows(BusinessException.class, () -> propertyJoinCodeService.generateJoinCode(
+                property.getId(), "Caretaker", AccessType.CUSTOM_ACCESS, Set.of("METER_READING_VIEW", "PAYMENT_VIEW"), 1, landlord.getId()));
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertTrue(exception.getMessage().contains("PAYMENT_VIEW"));
+    }
+
+    private void authenticate(UserTbl user) {
+        UserDetailsImpl userDetails = UserDetailsImpl.fromClaims(user.getId().toString(), user.getAuthUid(), user.getGlobalRole().name());
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
     }
 
     @Test

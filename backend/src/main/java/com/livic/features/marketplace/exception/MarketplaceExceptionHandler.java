@@ -49,22 +49,22 @@ public class MarketplaceExceptionHandler {
         ));
     }
 
-    @ExceptionHandler(DeclinedTourSlotException.class)
-    public ResponseEntity<TourRequestDTOs.DeclinedTourSlotError> handleDeclinedTourSlot(
-            DeclinedTourSlotException exception,
+    @ExceptionHandler(TourSlotUnavailableException.class)
+    public ResponseEntity<TourRequestDTOs.TourSlotUnavailableError> handleTourSlotUnavailable(
+            TourSlotUnavailableException exception,
             HttpServletRequest request
     ) {
-        log.warn("[DECLINED_TOUR_SLOT] uri={} slot={}", request.getRequestURI(), exception.getDeclinedSlot());
+        log.warn("[TOUR_SLOT_UNAVAILABLE] uri={} reason={} slot={}", request.getRequestURI(), exception.getReason(), exception.getSlot());
 
         HttpStatus status = HttpStatus.CONFLICT;
-        return ResponseEntity.status(status).body(new TourRequestDTOs.DeclinedTourSlotError(
+        return ResponseEntity.status(status).body(new TourRequestDTOs.TourSlotUnavailableError(
                 Instant.now(),
                 status.value(),
                 status.getReasonPhrase(),
                 exception.getMessage(),
                 request.getRequestURI(),
-                DeclinedTourSlotException.CODE,
-                exception.getDeclinedSlot()
+                exception.getReason().code(),
+                exception.getSlot()
         ));
     }
 

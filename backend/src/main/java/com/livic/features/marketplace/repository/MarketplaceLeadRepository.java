@@ -48,6 +48,13 @@ public interface MarketplaceLeadRepository extends JpaRepository<MarketplaceLead
     List<Instant> findUpcomingRejectedTourSlots(@Param("propertyId") UUID propertyId, @Param("phone") String phone,
                                                 @Param("now") Instant now);
 
+    /** Visit times of pending and approved tours at a property in [from, to), for slot capacity. */
+    @Query("SELECT l.preferredSlot FROM MarketplaceLeadTbl l WHERE l.propertyId = :propertyId " +
+           "AND l.leadType = com.livic.platform.common.domain.LeadType.TOUR_REQUEST " +
+           "AND l.status IN (com.livic.platform.common.domain.LeadStatus.NEW, com.livic.platform.common.domain.LeadStatus.APPROVED) " +
+           "AND l.preferredSlot >= :from AND l.preferredSlot < :to")
+    List<Instant> findActiveTourSlotsBetween(@Param("propertyId") UUID propertyId, @Param("from") Instant from, @Param("to") Instant to);
+
     /** All tour requests made from one phone, for the prospect's "My Requests" view. */
     Page<MarketplaceLeadTbl> findByProspectPhoneAndLeadType(String prospectPhone, LeadType leadType, Pageable pageable);
 

@@ -33,7 +33,9 @@ public class TourRequestDTOs {
         LeadStatus status,
         String decisionNote,
         Instant decidedAt,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        /** True for a pending or upcoming request whose visit no longer falls inside the property's visiting hours. */
+        boolean outsideVisitingHours
     ) {}
 
     public record TourRequestSummaryResponse(
@@ -81,15 +83,15 @@ public class TourRequestDTOs {
         ExistingTourRequestSummary existingRequest
     ) {}
 
-    /** 409 body when the requested slot was already declined for this phone: the standard error fields plus a code and the slot. */
-    public record DeclinedTourSlotError(
+    /** 409 body when the requested visit time can't be booked: the standard error fields plus a code (TOUR_SLOT_*) and the slot. */
+    public record TourSlotUnavailableError(
         Instant timestamp,
         int status,
         String error,
         String message,
         String path,
         String code,
-        Instant declinedSlot
+        Instant slot
     ) {}
 
     /** Upcoming slots the prospect can't request again at a property because the landlord declined them. */

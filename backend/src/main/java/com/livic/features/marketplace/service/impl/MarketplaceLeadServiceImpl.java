@@ -6,12 +6,12 @@ import com.livic.platform.common.exception.BusinessException;
 import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.features.marketplace.dto.MarketplaceLeadDTOs;
 import com.livic.features.marketplace.dto.TourRequestDTOs;
-import com.livic.features.marketplace.exception.DeclinedTourSlotException;
 import com.livic.features.marketplace.exception.DuplicateTourRequestException;
 import com.livic.features.marketplace.mapper.MarketplaceLeadMapper;
 import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.features.marketplace.service.interfaces.MarketplaceLeadService;
 import com.livic.features.marketplace.service.interfaces.OtpService;
+import com.livic.features.marketplace.service.interfaces.TourAvailabilityService;
 import com.livic.platform.payment.dto.PaymentTransactionResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.services.property.dto.UnitListingDTO;
@@ -27,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,6 +40,7 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
     private final UnitFacade unitFacade;
     private final OtpService otpService;
     private final PaymentFacade paymentFacade;
+    private final TourAvailabilityService tourAvailabilityService;
 
     @Value("${app.razorpay.key-id:rzp_test_livic_key}")
     private String razorpayKeyId;
@@ -85,11 +85,9 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
             if (request.preferredSlot() == null) {
                 throw new BusinessException("Preferred slot timestamp is required for tour requests");
             }
-            if (request.preferredSlot().isBefore(Instant.now())) {
-                throw new BusinessException("Preferred slot timestamp must be in the future");
-            }
             ensureNoActiveTour(propertyId, request.prospectPhone().trim());
-            ensureSlotNotDeclined(propertyId, request.prospectPhone().trim(), request.preferredSlot());
+            // One of the property's visiting slots, not past/blocked/full, and not declined for this phone
+            tourAvailabilityService.requireBookableSlot(propertyId, request.prospectPhone().trim(), request.preferredSlot());
         }
 
         // 5. Build and save Lead entity
@@ -147,17 +145,6 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
                 throw new DuplicateTourRequestException(new TourRequestDTOs.ExistingTourRequestSummary(
                         tour.getId(), tour.getUnitId(), unitNumber, tour.getStatus(), tour.getPreferredSlot()));
             }
-        }
-    }
-
-    /**
-     * A slot the landlord declined can't be requested again by the same phone at the same property; other slots can.
-     * Matched by the minute so a request can't slip past the rule with a few extra seconds.
-     */
-    private void ensureSlotNotDeclined(UUID propertyId, String phone, Instant slot) {
-        Instant from = slot.truncatedTo(ChronoUnit.MINUTES);
-        if (leadRepository.existsRejectedTourInSlot(propertyId, phone, from, from.plus(1, ChronoUnit.MINUTES))) {
-            throw new DeclinedTourSlotException(from);
         }
     }
 

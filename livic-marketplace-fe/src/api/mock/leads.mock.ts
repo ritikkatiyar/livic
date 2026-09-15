@@ -94,7 +94,7 @@ export async function mockCreateLead(
         TOUR_SLOT_DECLINED_CODE,
         undefined,
         409,
-        { code: TOUR_SLOT_DECLINED_CODE, declinedSlot: declined }
+        { code: TOUR_SLOT_DECLINED_CODE, slot: declined }
       );
     }
   }

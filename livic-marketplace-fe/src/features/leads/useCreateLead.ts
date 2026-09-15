@@ -16,9 +16,11 @@ export type SubmitLeadResult = {
   declinedSlot: string | null;
 };
 
+const TOUR_SLOT_ERROR_PREFIX = 'TOUR_SLOT_';
+
 function readDeclinedSlot(err: ApiError, fallback: string | undefined): string | null {
-  const details = err.details as { declinedSlot?: unknown } | undefined;
-  return typeof details?.declinedSlot === 'string' ? details.declinedSlot : fallback ?? null;
+  const details = err.details as { slot?: unknown } | undefined;
+  return typeof details?.slot === 'string' ? details.slot : fallback ?? null;
 }
 
 export function useCreateLead() {
@@ -50,6 +52,11 @@ export function useCreateLead() {
         if (err.code === TOUR_SLOT_DECLINED_CODE) {
           setError(err.message);
           return { lead: null, error: err.message, duplicate: null, declinedSlot: readDeclinedSlot(err, req.preferredSlot) };
+        }
+        if (err.code.startsWith(TOUR_SLOT_ERROR_PREFIX)) {
+          // Full, blocked or outside the property's visiting hours: explain it under the form
+          setError(err.message);
+          return { lead: null, error: err.message, duplicate: null, declinedSlot: null };
         }
         // Shown as a dedicated notice with the existing request instead of a plain error line
         const dup = { existingRequest: toExistingTourRequest(err.details) };

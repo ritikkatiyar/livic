@@ -4,7 +4,9 @@ import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.features.marketplace.dto.TourRequestDTOs;
 import com.livic.features.marketplace.mapper.TourRequestMapper;
 import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
+import com.livic.features.marketplace.service.interfaces.TourAvailabilityService;
 import com.livic.features.marketplace.service.interfaces.TourRequestManagementService;
+import com.livic.features.marketplace.slots.TourSchedule;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
 import com.livic.platform.common.domain.LeadStatus;
 import com.livic.platform.common.exception.BusinessException;
@@ -35,6 +37,7 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
     private final MarketplaceLeadRepository leadRepository;
     private final UnitFacade unitFacade;
     private final AuthorizationService authorizationService;
+    private final TourAvailabilityService tourAvailabilityService;
 
     @Override
     @Transactional(readOnly = true)
@@ -55,8 +58,9 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
 
         Set<UUID> unitIds = leads.getContent().stream().map(MarketplaceLeadTbl::getUnitId).collect(Collectors.toSet());
         Map<UUID, UnitSummaryDTO> units = unitFacade.getUnitsByIds(unitIds);
+        TourSchedule visitingHours = tourAvailabilityService.getSchedule(propertyId);
 
-        return leads.map(lead -> TourRequestMapper.toLandlordResponse(lead, unitNumberOf(units, lead.getUnitId()), now));
+        return leads.map(lead -> TourRequestMapper.toLandlordResponse(lead, unitNumberOf(units, lead.getUnitId()), visitingHours, now));
     }
 
     @Override
@@ -109,7 +113,7 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
 
     private TourRequestDTOs.LandlordTourRequestResponse toResponse(MarketplaceLeadTbl lead, Instant now) {
         String unitNumber = unitFacade.getUnitById(lead.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse(null);
-        return TourRequestMapper.toLandlordResponse(lead, unitNumber, now);
+        return TourRequestMapper.toLandlordResponse(lead, unitNumber, tourAvailabilityService.getSchedule(lead.getPropertyId()), now);
     }
 
     private static String unitNumberOf(Map<UUID, UnitSummaryDTO> units, UUID unitId) {

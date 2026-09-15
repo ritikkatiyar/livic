@@ -302,7 +302,7 @@ describe('RoomConversionContainer tour request flow', () => {
     mockedApi.createLead.mockImplementation(async (_p, _u, req) => {
       throw new ApiError('The property manager declined a visit at this time. Please pick another date or time.', 'TOUR_SLOT_DECLINED', undefined, 409, {
         code: 'TOUR_SLOT_DECLINED',
-        declinedSlot: req.preferredSlot,
+        slot: req.preferredSlot,
       });
     });
 

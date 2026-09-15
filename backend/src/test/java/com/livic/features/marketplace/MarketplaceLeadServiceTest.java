@@ -8,8 +8,9 @@ import com.livic.platform.common.domain.UnitType;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.features.marketplace.dto.MarketplaceLeadDTOs;
-import com.livic.features.marketplace.exception.DeclinedTourSlotException;
 import com.livic.features.marketplace.exception.DuplicateTourRequestException;
+import com.livic.features.marketplace.exception.TourSlotUnavailableException;
+import com.livic.features.marketplace.service.interfaces.TourAvailabilityService;
 import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.features.marketplace.service.impl.MarketplaceLeadServiceImpl;
 import com.livic.features.marketplace.service.interfaces.OtpService;
@@ -59,6 +60,9 @@ public class MarketplaceLeadServiceTest {
 
     @Mock
     private PaymentFacade paymentFacade;
+
+    @Mock
+    private TourAvailabilityService tourAvailabilityService;
 
     @InjectMocks
     private MarketplaceLeadServiceImpl leadService;
@@ -277,22 +281,20 @@ public class MarketplaceLeadServiceTest {
     }
 
     @Test
-    @DisplayName("Create Tour - A slot the landlord declined for this phone can't be requested again (matched by the minute)")
-    public void testCreateTourBlockedForDeclinedSlot() {
+    @DisplayName("Create Tour - The visit time must be a bookable slot; a refused slot creates nothing")
+    public void testCreateTourRequiresBookableSlot() {
         stubValidTourContext();
-        Instant declined = Instant.now().plus(2, ChronoUnit.DAYS).truncatedTo(ChronoUnit.HOURS);
+        MarketplaceLeadDTOs.CreateLeadRequest request = tourRequest();
         when(leadRepository.findByPropertyIdAndProspectPhoneAndLeadTypeAndStatusIn(any(), any(), any(), anyCollection()))
                 .thenReturn(List.of());
-        when(leadRepository.existsRejectedTourInSlot(propId, prospectPhone, declined, declined.plus(1, ChronoUnit.MINUTES)))
-                .thenReturn(true);
-        MarketplaceLeadDTOs.CreateLeadRequest sameSlotWithSeconds = new MarketplaceLeadDTOs.CreateLeadRequest(
-                LeadType.TOUR_REQUEST, "Jane Doe", prospectPhone, null, declined.plusSeconds(30), null, null, "MARKETPLACE");
+        doThrow(new TourSlotUnavailableException(TourSlotUnavailableException.Reason.FULL, request.preferredSlot()))
+                .when(tourAvailabilityService).requireBookableSlot(propId, prospectPhone, request.preferredSlot());
 
-        DeclinedTourSlotException ex = assertThrows(DeclinedTourSlotException.class, () ->
-                leadService.createLead(propId, unitId, sameSlotWithSeconds, sessionToken));
+        TourSlotUnavailableException ex = assertThrows(TourSlotUnavailableException.class, () ->
+                leadService.createLead(propId, unitId, request, sessionToken));
 
         assertEquals(HttpStatus.CONFLICT, ex.getStatus());
-        assertEquals(declined, ex.getDeclinedSlot());
+        assertEquals("TOUR_SLOT_FULL", ex.getReason().code());
         verify(leadRepository, never()).saveAndFlush(any());
     }
 

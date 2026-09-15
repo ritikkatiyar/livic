@@ -6,6 +6,8 @@ import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.features.marketplace.service.impl.MyTourRequestServiceImpl;
 import com.livic.features.marketplace.service.impl.TourRequestManagementServiceImpl;
 import com.livic.features.marketplace.service.interfaces.OtpService;
+import com.livic.features.marketplace.service.interfaces.TourAvailabilityService;
+import com.livic.features.marketplace.slots.TourSchedule;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
 import com.livic.platform.common.domain.LeadStatus;
 import com.livic.platform.common.domain.LeadType;
@@ -30,6 +32,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +76,7 @@ class TourRequestServicesTest {
         @Mock private MarketplaceLeadRepository leadRepository;
         @Mock private UnitFacade unitFacade;
         @Mock private AuthorizationService authorizationService;
+        @Mock private TourAvailabilityService tourAvailabilityService;
         @InjectMocks private TourRequestManagementServiceImpl service;
 
         private UUID propertyId;
@@ -83,6 +87,25 @@ class TourRequestServicesTest {
         void setUp() {
             propertyId = UUID.randomUUID();
             unitId = UUID.randomUUID();
+            lenient().when(tourAvailabilityService.getSchedule(any())).thenReturn(TourSchedule.defaults(List.of()));
+        }
+
+        @Test
+        @DisplayName("Flags a pending request whose visit is outside the current visiting hours")
+        void flagsRequestsOutsideVisitingHours() {
+            // 11:00 IST tomorrow is inside the default hours; the same request against a schedule closed every day is not
+            Instant visit = LocalDate.now(TourSchedule.DEFAULT_ZONE).plusDays(1).atTime(11, 0).atZone(TourSchedule.DEFAULT_ZONE).toInstant();
+            MarketplaceLeadTbl pending = tour(propertyId, unitId, LeadStatus.NEW, visit);
+            when(leadRepository.findUpcomingTours(eq(propertyId), eq(LeadStatus.NEW), any(Instant.class), any(Pageable.class)))
+                    .thenReturn(new PageImpl<>(List.of(pending)));
+            TourSchedule closed = new TourSchedule(true, TourSchedule.DEFAULT_ZONE, 60, 60, 14, null, Map.of(), List.of());
+
+            assertFalse(service.listTourRequests(propertyId, TourRequestDTOs.TourRequestFilter.PENDING, PageRequest.of(0, 20))
+                    .getContent().get(0).outsideVisitingHours());
+
+            when(tourAvailabilityService.getSchedule(propertyId)).thenReturn(closed);
+            assertTrue(service.listTourRequests(propertyId, TourRequestDTOs.TourRequestFilter.PENDING, PageRequest.of(0, 20))
+                    .getContent().get(0).outsideVisitingHours());
         }
 
         @Test

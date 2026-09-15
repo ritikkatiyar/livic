@@ -1,7 +1,9 @@
 import { apiRequest } from './client';
 import {
+  mockCancelMyTourRequest,
   mockCreateLead,
   mockGetLeadStatus,
+  mockGetMyTourRequests,
   mockInitiateTokenPayment,
   mockRequestOtp,
   mockVerifyOtp,
@@ -12,9 +14,16 @@ import {
   mockGetUnitDetail,
   mockSearchProperties,
 } from './mock/properties.mock';
-import { toPropertyDetail, toPropertySummaries, toRazorpayOrder, toUnitDetail, toUnitPage } from './adapters';
+import {
+  toMyTourRequestPage,
+  toPropertyDetail,
+  toPropertySummaries,
+  toRazorpayOrder,
+  toUnitDetail,
+  toUnitPage,
+} from './adapters';
 import { ApiResponse, PagedResult } from '@/types/api';
-import { CreateLeadRequest, LeadResponse, RazorpayOrderPayload } from '@/types/lead';
+import { CreateLeadRequest, LeadResponse, MyTourRequest, RazorpayOrderPayload } from '@/types/lead';
 import { PropertyDetail, PropertySearchFilters, PropertySummary } from '@/types/property';
 import { UnitSummary } from '@/types/unit';
 
@@ -106,20 +115,61 @@ export async function requestOtp(phone: string): Promise<ApiResponse<OtpRequestR
   });
 }
 
+export type OtpVerifyResult = { otpSessionToken: string; expiresAt?: string | null };
+
 export async function verifyOtp(
   phone: string,
   code: string
-): Promise<ApiResponse<{ otpSessionToken: string }>> {
+): Promise<ApiResponse<OtpVerifyResult>> {
   if (USE_MOCK) {
     const data = await mockVerifyOtp(phone, code);
     return { success: true, data };
   }
 
-  const res = await apiRequest<{ sessionToken: string }>('/marketplace/otp/verify', {
+  const res = await apiRequest<{ sessionToken: string; expiresAt?: string }>('/marketplace/otp/verify', {
     method: 'POST',
     body: JSON.stringify({ phone, code }),
   });
-  return { ...res, data: res.data ? { otpSessionToken: res.data.sessionToken } : null };
+  return {
+    ...res,
+    data: res.data ? { otpSessionToken: res.data.sessionToken, expiresAt: res.data.expiresAt ?? null } : null,
+  };
+}
+
+export const MY_REQUESTS_PAGE_SIZE = 10;
+
+/** Tour requests for the phone behind the OTP session, newest first. `page` is 1-based. */
+export async function getMyTourRequests(
+  otpSessionToken: string,
+  page: number
+): Promise<ApiResponse<PagedResult<MyTourRequest>>> {
+  if (USE_MOCK) {
+    const data = await mockGetMyTourRequests(otpSessionToken, page, MY_REQUESTS_PAGE_SIZE);
+    return { success: true, data };
+  }
+
+  const queryParams = new URLSearchParams({ page: String(page - 1), size: String(MY_REQUESTS_PAGE_SIZE) });
+  const res = await apiRequest<Parameters<typeof toMyTourRequestPage>[0]>(
+    `/marketplace/my/tour-requests?${queryParams.toString()}`,
+    { otpSessionToken }
+  );
+  return { ...res, data: toMyTourRequestPage(res.data) };
+}
+
+export async function cancelMyTourRequest(
+  otpSessionToken: string,
+  leadId: string
+): Promise<ApiResponse<MyTourRequest>> {
+  if (USE_MOCK) {
+    const data = await mockCancelMyTourRequest(otpSessionToken, leadId);
+    return { success: true, data };
+  }
+
+  const res = await apiRequest<MyTourRequest>(`/marketplace/my/tour-requests/${leadId}/cancel`, {
+    method: 'POST',
+    otpSessionToken,
+  });
+  return res.data ? { ...res, data: toMyTourRequestPage({ content: [res.data], number: 0, size: 1, totalElements: 1, totalPages: 1 }).items[0] } : res;
 }
 
 export async function createLead(

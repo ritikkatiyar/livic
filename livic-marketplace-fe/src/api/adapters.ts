@@ -1,5 +1,5 @@
 import { PagedResult } from '@/types/api';
-import { RazorpayOrderPayload } from '@/types/lead';
+import { ExistingTourRequest, MyTourRequest, RazorpayOrderPayload } from '@/types/lead';
 import { PropertyDetail, PropertySummary, PropertyType } from '@/types/property';
 import { UnitSummary } from '@/types/unit';
 
@@ -116,6 +116,44 @@ export function toUnitDetail(
   if (!data) return null;
   const property = toPropertyDetail(data.property);
   return property ? { property, unit: toUnit(data.unit) } : null;
+}
+
+type BackendMyTourRequest = MyTourRequest;
+
+export function toMyTourRequestPage(data: BackendPage<BackendMyTourRequest> | null): PagedResult<MyTourRequest> {
+  if (!data) {
+    return { items: [], page: 1, pageSize: 0, totalItems: 0, totalPages: 0 };
+  }
+  return {
+    items: data.content.map((r) => ({
+      ...r,
+      propertyName: r.propertyName ?? null,
+      propertyAddress: r.propertyAddress ?? null,
+      propertyCity: r.propertyCity ?? null,
+      unitNumber: r.unitNumber ?? null,
+      decisionNote: r.decisionNote ?? null,
+      decidedAt: r.decidedAt ?? null,
+      cancellable: Boolean(r.cancellable),
+    })),
+    page: data.number + 1,
+    pageSize: data.size,
+    totalItems: data.totalElements,
+    totalPages: data.totalPages,
+  };
+}
+
+/** Reads the blocking request from a duplicate-tour 409 body; null if the body doesn't carry one. */
+export function toExistingTourRequest(errorBody: unknown): ExistingTourRequest | null {
+  if (!errorBody || typeof errorBody !== 'object') return null;
+  const existing = (errorBody as { existingRequest?: Partial<ExistingTourRequest> | null }).existingRequest;
+  if (!existing || !existing.leadId || !existing.preferredSlot || !existing.status) return null;
+  return {
+    leadId: existing.leadId,
+    unitId: existing.unitId ?? '',
+    unitNumber: existing.unitNumber ?? null,
+    status: existing.status,
+    preferredSlot: existing.preferredSlot,
+  };
 }
 
 export function toRazorpayOrder(data: BackendTokenPayment): RazorpayOrderPayload {

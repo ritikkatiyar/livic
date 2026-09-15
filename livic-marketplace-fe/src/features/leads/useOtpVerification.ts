@@ -1,21 +1,36 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { requestOtp, verifyOtp } from '@/api/marketplace';
 import { getErrorMessage } from '@/utils/errors';
+import {
+  clearOtpSession,
+  getOtpSessionSnapshot,
+  getServerOtpSessionSnapshot,
+  saveOtpSession,
+  subscribeOtpSession,
+} from './otpSessionStorage';
 
 // Matches the backend cooldown; the server's resendAfterSeconds takes precedence when present
 const DEFAULT_RESEND_COOLDOWN_SECONDS = 60;
 
+const noopSubscribe = () => () => {};
+
 export function useOtpVerification() {
-  const [phone, setPhone] = useState('');
+  const [otpTargetPhone, setOtpTargetPhone] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [otpCode, setOtpCode] = useState('');
-  const [otpSessionToken, setOtpSessionToken] = useState<string | null>(null);
-  const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+
+  // A phone verified earlier in this tab (e.g. on the room page) is reused so the prospect isn't asked again
+  const stored = useSyncExternalStore(subscribeOtpSession, getOtpSessionSnapshot, getServerOtpSessionSnapshot);
+  /** True on the client after hydration, once any session remembered in this tab can be read. */
+  const isSessionRestored = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const otpSessionToken = stored?.token ?? null;
+  const verifiedPhone = stored?.phone ?? null;
+  const phone = otpTargetPhone || verifiedPhone || '';
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -27,7 +42,7 @@ export function useOtpVerification() {
 
   /** Requests a code and opens the modal. Returns false (with `error` set) if the request failed. */
   const initiateOtp = useCallback(async (targetPhone: string): Promise<boolean> => {
-    setPhone(targetPhone);
+    setOtpTargetPhone(targetPhone);
     setOtpCode('');
     setLoading(true);
     setError(null);
@@ -56,8 +71,8 @@ export function useOtpVerification() {
       try {
         const res = await verifyOtp(phone, codeToVerify);
         if (res.success && res.data?.otpSessionToken) {
-          setOtpSessionToken(res.data.otpSessionToken);
-          setVerifiedPhone(phone);
+          // Notifies every subscriber, so the new token/phone are picked up without local state
+          saveOtpSession(res.data.otpSessionToken, phone, res.data.expiresAt);
           setIsModalOpen(false);
           return res.data.otpSessionToken;
         }
@@ -91,8 +106,7 @@ export function useOtpVerification() {
 
   /** Forget the current session, e.g. after the server rejected it as expired. */
   const clearSession = useCallback(() => {
-    setOtpSessionToken(null);
-    setVerifiedPhone(null);
+    clearOtpSession();
   }, []);
 
   return {
@@ -101,6 +115,8 @@ export function useOtpVerification() {
     otpCode,
     setOtpCode,
     otpSessionToken,
+    verifiedPhone,
+    isSessionRestored,
     loading,
     error,
     cooldown,

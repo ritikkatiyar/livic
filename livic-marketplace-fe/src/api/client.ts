@@ -3,12 +3,18 @@ import { ApiResponse } from '@/types/api';
 export class ApiError extends Error {
   code: string;
   correlationId?: string;
+  /** HTTP status, when the server answered. */
+  status?: number;
+  /** Parsed error body, for callers that need extra fields (e.g. `existingRequest` on a 409). */
+  details?: unknown;
 
-  constructor(message: string, code: string = 'API_ERROR', correlationId?: string) {
+  constructor(message: string, code: string = 'API_ERROR', correlationId?: string, status?: number, details?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.code = code;
     this.correlationId = correlationId;
+    this.status = status;
+    this.details = details;
   }
 }
 
@@ -87,8 +93,10 @@ export async function apiRequest<T>(
 
     if (!response.ok) {
       let errorBody: { code?: string; message?: string } = {};
+      let rawBody: unknown;
       try {
-        errorBody = parseErrorBody(await response.json());
+        rawBody = await response.json();
+        errorBody = parseErrorBody(rawBody);
       } catch {
         errorBody = { message: `HTTP Error ${response.status}: ${response.statusText}` };
       }
@@ -96,7 +104,9 @@ export async function apiRequest<T>(
       throw new ApiError(
         errorBody.message || 'An unexpected error occurred',
         errorBody.code || `HTTP_${response.status}`,
-        correlationId
+        correlationId,
+        response.status,
+        rawBody
       );
     }
 

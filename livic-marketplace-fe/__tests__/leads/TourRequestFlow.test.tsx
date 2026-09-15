@@ -4,7 +4,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { RoomConversionContainer } from '@/components/booking/RoomConversionContainer';
 import { TourRequestForm } from '@/components/booking/TourRequestForm';
 import { toLocalSlot } from '@/utils/visitSlots';
-import { parseErrorBody } from '@/api/client';
+import { ApiError, parseErrorBody } from '@/api/client';
+import { saveOtpSession } from '@/features/leads/otpSessionStorage';
 import * as api from '@/api/marketplace';
 import { PropertyDetail } from '@/types/property';
 import { UnitSummary } from '@/types/unit';
@@ -136,6 +137,8 @@ describe('TourRequestForm', () => {
 describe('RoomConversionContainer tour request flow', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    // The verified session is remembered per tab; start every test unverified
+    window.sessionStorage.clear();
     mockedApi.requestOtp.mockResolvedValue({ success: true, data: { success: true, message: 'sent', resendAfterSeconds: 60 } });
     mockedApi.verifyOtp.mockResolvedValue({ success: true, data: { otpSessionToken: 'server-session-token' } });
   });
@@ -167,8 +170,10 @@ describe('RoomConversionContainer tour request flow', () => {
     render(<RoomConversionContainer property={property} unit={unit} />);
     await verifyWithOtp();
 
-    expect(await screen.findByText(/Visit Slot Requested!/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Awaiting landlord approval/i)).toBeInTheDocument();
     expect(screen.getByText(/Requested Visit/i)).toBeInTheDocument();
+    expect(screen.getByText('Pending approval')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Track this request/i })).toHaveAttribute('href', '/market-place/my-requests');
     expect(mockedApi.verifyOtp).toHaveBeenCalledWith('9876543210', '000000');
     expect(mockedApi.createLead).toHaveBeenCalledWith(
       'prop-1',
@@ -196,7 +201,7 @@ describe('RoomConversionContainer tour request flow', () => {
     expect(screen.getByLabelText(/Full Name/i)).not.toBeDisabled();
     fireEvent.click(submit);
 
-    expect(await screen.findByText(/Visit Slot Requested!/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Awaiting landlord approval/i)).toBeInTheDocument();
     expect(mockedApi.requestOtp).toHaveBeenCalledTimes(1);
     expect(mockedApi.createLead).toHaveBeenLastCalledWith('prop-1', 'unit-1', expect.anything(), 'server-session-token');
   });
@@ -210,6 +215,56 @@ describe('RoomConversionContainer tour request flow', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Please wait before requesting another OTP code');
     expect(screen.queryByText(/Verify Mobile Number/i)).not.toBeInTheDocument();
+  });
+
+  it('reuses a phone verified earlier in this tab without asking for a new OTP', async () => {
+    saveOtpSession('stored-session-token', '9876543210');
+    mockedApi.createLead.mockResolvedValue({
+      success: true,
+      data: { id: 'lead-3', propertyId: 'prop-1', unitId: 'unit-1', leadType: 'TOUR_REQUEST', status: 'NEW', createdAt: new Date().toISOString() },
+    });
+
+    render(<RoomConversionContainer property={property} unit={unit} />);
+    await fillTourForm();
+    fireEvent.click(await screen.findByRole('button', { name: /Submit Tour Request/i }));
+
+    expect(await screen.findByText(/Awaiting landlord approval/i)).toBeInTheDocument();
+    expect(mockedApi.requestOtp).not.toHaveBeenCalled();
+    expect(mockedApi.createLead).toHaveBeenCalledWith('prop-1', 'unit-1', expect.anything(), 'stored-session-token');
+  });
+
+  it('shows the existing request instead of an error when the phone already has an active tour here', async () => {
+    saveOtpSession('stored-session-token', '9876543210');
+    mockedApi.createLead.mockRejectedValue(
+      new ApiError('You already have an active tour request for this property', 'CONFLICT', undefined, 409, {
+        existingRequest: { leadId: 'lead-old', unitId: 'unit-1', unitNumber: '101', status: 'APPROVED', preferredSlot: '2099-01-15T05:30:00Z' },
+      })
+    );
+
+    render(<RoomConversionContainer property={property} unit={unit} />);
+    await fillTourForm();
+    fireEvent.click(await screen.findByRole('button', { name: /Submit Tour Request/i }));
+
+    expect(await screen.findByText(/You already have a visit request at this property/i)).toBeInTheDocument();
+    expect(screen.getByText(/Unit 101/)).toBeInTheDocument();
+    expect(screen.getByText('Approved')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /View my requests/i })).toHaveAttribute('href', '/market-place/my-requests');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Change details/i }));
+    expect(screen.queryByText(/You already have a visit request at this property/i)).not.toBeInTheDocument();
+  });
+
+  it('forgets an expired session so the next submit verifies the phone again', async () => {
+    saveOtpSession('expired-token', '9876543210');
+    mockedApi.createLead.mockRejectedValue(new Error('OTP session has expired. Please verify again.'));
+
+    render(<RoomConversionContainer property={property} unit={unit} />);
+    await fillTourForm();
+    fireEvent.click(await screen.findByRole('button', { name: /Submit Tour Request/i }));
+
+    expect(await screen.findByRole('button', { name: /Continue to OTP Verification/i })).toBeInTheDocument();
+    expect(window.sessionStorage.length).toBe(0);
   });
 });
 

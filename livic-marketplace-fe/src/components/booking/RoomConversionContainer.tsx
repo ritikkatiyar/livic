@@ -13,6 +13,8 @@ import { BookingForm } from './BookingForm';
 import { OtpVerifyModal } from './OtpVerifyModal';
 import { TokenPaymentButton } from './TokenPaymentButton';
 import { LeadConfirmation } from './LeadConfirmation';
+import { ExistingTourRequestNotice } from './ExistingTourRequestNotice';
+import { isOtpSessionError } from '@/features/leads/otpSessionStorage';
 
 type Props = {
   property: PropertyDetail;
@@ -38,19 +40,19 @@ export function RoomConversionContainer({ property, unit }: Props) {
     closeModal,
     getSessionTokenFor,
     clearSession,
-    otpSessionToken,
+    verifiedPhone,
     loading: otpLoading,
     error: otpError,
     cooldown,
   } = useOtpVerification();
 
-  const { submitLead, loading: leadLoading, error: leadError } = useCreateLead();
+  const { submitLead, loading: leadLoading, error: leadError, duplicate, clearDuplicate } = useCreateLead();
 
   const createLeadWithToken = async (req: CreateLeadRequest, token: string) => {
     const { lead, error } = await submitLead(property.id, unit.id, req, token);
     if (lead) {
       setLeadResponse(lead);
-    } else if (error && /otp session/i.test(error)) {
+    } else if (isOtpSessionError(error)) {
       // Expired or rejected session: the next submit starts a fresh OTP verification
       clearSession();
     }
@@ -76,7 +78,6 @@ export function RoomConversionContainer({ property, unit }: Props) {
 
   // OTP request errors (e.g. cooldown) happen before the modal opens, so show them under the form
   const formError = leadError || (!isModalOpen ? otpError : null);
-  const verifiedPhone = otpSessionToken ? phone : null;
 
   if (leadResponse && (leadResponse.status === 'CONFIRMED' || leadResponse.leadType === 'TOUR_REQUEST')) {
     return <LeadConfirmation lead={leadResponse} propertyName={property.name} />;
@@ -110,6 +111,10 @@ export function RoomConversionContainer({ property, unit }: Props) {
             loading={otpLoading || leadLoading}
             isPhoneVerified={isBookingSubmitted}
           />
+        )}
+
+        {duplicate && selectedType === 'TOUR_REQUEST' && (
+          <ExistingTourRequestNotice existingRequest={duplicate.existingRequest} onDismiss={clearDuplicate} />
         )}
 
         {formError && (

@@ -1,9 +1,11 @@
 import React from 'react';
 import { PropertyType } from '@/types/property';
 
+export type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'indigo' | 'purple' | 'outline';
+
 type BadgeProps = {
   children: React.ReactNode;
-  variant?: 'default' | 'success' | 'warning' | 'indigo' | 'purple' | 'outline';
+  variant?: BadgeVariant;
   className?: string;
 };
 
@@ -12,6 +14,7 @@ export function Badge({ children, variant = 'default', className = '' }: BadgePr
     default: 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700',
     success: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-semibold',
     warning: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold',
+    danger: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 font-semibold',
     indigo: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30 font-semibold',
     purple: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30 font-semibold',
     outline: 'bg-transparent text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600',

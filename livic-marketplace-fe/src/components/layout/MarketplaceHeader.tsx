@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2, Search, Sparkles } from 'lucide-react';
+import { Building2, ClipboardList, Search, Sparkles } from 'lucide-react';
 import { ThemeToggle } from '../theme/ThemeToggle';
 
 export function MarketplaceHeader() {
@@ -37,7 +37,17 @@ export function MarketplaceHeader() {
             <Search className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
             Explore Properties
           </Link>
-          
+
+          <Link
+            href="/market-place/my-requests"
+            className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/50"
+            id="header-my-requests-link"
+          >
+            <ClipboardList className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+            <span className="hidden sm:inline">My Requests</span>
+            <span className="sr-only sm:hidden">My Requests</span>
+          </Link>
+
           <div className="hidden xs:flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400/90 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-full font-medium">
             <Sparkles className="h-3.5 w-3.5" />
             <span>Zero Brokerage</span>

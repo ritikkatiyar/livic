@@ -1,11 +1,14 @@
 import Link from 'next/link';
-import { CheckCircle2, ShieldCheck, PhoneCall, Building2 } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, PhoneCall, Building2, ClipboardList } from 'lucide-react';
 import { LeadResponse } from '@/types/lead';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate, formatDateTime } from '@/utils/formatDate';
+import { Badge } from '@/components/ui/Badge';
+import { getTourStatusPresentation, MY_REQUESTS_PATH } from '@/features/leads/tourStatus';
 
 export function LeadConfirmation({ lead, propertyName }: { lead: LeadResponse; propertyName: string }) {
   const isBooking = lead.leadType === 'BOOKING';
+  const tourStatus = getTourStatusPresentation(lead.status);
 
   return (
     <div className="glass-panel rounded-2xl p-8 border border-emerald-500/30 text-center space-y-6 animate-fade-in" id="lead-confirmation-card">
@@ -15,16 +18,21 @@ export function LeadConfirmation({ lead, propertyName }: { lead: LeadResponse; p
 
       <div className="space-y-2">
         <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
-          {isBooking ? 'Token Booking Confirmed' : 'Tour Request Submitted'}
+          {isBooking ? 'Token Booking Confirmed' : 'Tour Request Sent'}
         </span>
         <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          {isBooking ? 'Unit Reserved Successfully!' : 'Visit Slot Requested!'}
+          {isBooking ? 'Unit Reserved Successfully!' : 'Awaiting landlord approval'}
         </h2>
         <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 max-w-md mx-auto leading-relaxed">
           {isBooking
             ? `Your token payment has been received for ${propertyName}. The property manager will reach out to schedule your final agreement & keys handoff.`
-            : `Your tour request for ${propertyName} has been recorded. The property manager will confirm your visit slot shortly.`}
+            : `Your visit request for ${propertyName} has been sent. The property manager will approve or decline it — check its status anytime under My Requests.`}
         </p>
+        {!isBooking && (
+          <div className="flex justify-center pt-1">
+            <Badge variant={tourStatus.variant}>{tourStatus.label}</Badge>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Reference Box */}
@@ -63,6 +71,16 @@ export function LeadConfirmation({ lead, propertyName }: { lead: LeadResponse; p
       )}
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        {!isBooking && (
+          <Link
+            href={MY_REQUESTS_PATH}
+            id="track-request-btn"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm shadow-indigo-600/25"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Track this request
+          </Link>
+        )}
         <Link
           href="/market-place"
           id="back-to-explore-btn"

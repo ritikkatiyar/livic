@@ -49,6 +49,25 @@ public class MarketplaceExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(DeclinedTourSlotException.class)
+    public ResponseEntity<TourRequestDTOs.DeclinedTourSlotError> handleDeclinedTourSlot(
+            DeclinedTourSlotException exception,
+            HttpServletRequest request
+    ) {
+        log.warn("[DECLINED_TOUR_SLOT] uri={} slot={}", request.getRequestURI(), exception.getDeclinedSlot());
+
+        HttpStatus status = HttpStatus.CONFLICT;
+        return ResponseEntity.status(status).body(new TourRequestDTOs.DeclinedTourSlotError(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI(),
+                DeclinedTourSlotException.CODE,
+                exception.getDeclinedSlot()
+        ));
+    }
+
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ApiError> handleConcurrentUpdate(
             ObjectOptimisticLockingFailureException exception,

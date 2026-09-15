@@ -4,6 +4,7 @@ import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.features.marketplace.domain.OtpVerificationTbl;
 import com.livic.features.marketplace.dto.MarketplaceLeadDTOs;
 import com.livic.features.marketplace.dto.TourRequestDTOs;
+import com.livic.features.marketplace.exception.DeclinedTourSlotException;
 import com.livic.features.marketplace.exception.DuplicateTourRequestException;
 import com.livic.features.marketplace.job.TourRequestLifecycleJob;
 import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
@@ -153,6 +154,27 @@ class TourRequestLifecycleIntegrationTest {
 
         // Approved tours are still active and keep blocking
         assertThrows(DuplicateTourRequestException.class, () -> requestTour(property, unitB, 5));
+    }
+
+    private MarketplaceLeadDTOs.LeadResponse requestTourAt(UnitTbl u, Instant slot) {
+        return leadService.createLead(property.getId(), u.getId(), new MarketplaceLeadDTOs.CreateLeadRequest(
+                LeadType.TOUR_REQUEST, "Tour Tester", PHONE, null, slot, null, null, "MARKETPLACE"), sessionToken);
+    }
+
+    @Test
+    @DisplayName("After a rejection the same slot is refused (even for another unit) but a different slot is accepted")
+    void declinedSlotCannotBeRequestedAgain() {
+        Instant slot = Instant.now().plus(3, ChronoUnit.DAYS).truncatedTo(ChronoUnit.HOURS);
+        MarketplaceLeadDTOs.LeadResponse first = requestTourAt(unitA, slot);
+        managementService.reject(first.id(), UUID.randomUUID(), "Not available at that time");
+
+        DeclinedTourSlotException declined = assertThrows(DeclinedTourSlotException.class, () -> requestTourAt(unitB, slot));
+        assertEquals(slot, declined.getDeclinedSlot());
+
+        assertEquals(List.of(slot), myTourRequestService.listDeclinedSlots(sessionToken, property.getId()).slots());
+        assertTrue(myTourRequestService.listDeclinedSlots(sessionToken, otherProperty.getId()).slots().isEmpty());
+
+        assertNotNull(requestTourAt(unitA, slot.plus(1, ChronoUnit.HOURS)).id());
     }
 
     @Test

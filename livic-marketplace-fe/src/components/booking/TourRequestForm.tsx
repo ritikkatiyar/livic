@@ -9,7 +9,7 @@ import { CreateLeadRequest } from '@/types/lead';
 import { DateStrip } from '@/components/ui/DateStrip';
 import { TimeSlotPicker } from '@/components/ui/TimeSlotPicker';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { getAvailableSlots, getVisitDates, toLocalIsoDate, toLocalSlot, TOUR_TIME_SLOTS } from '@/utils/visitSlots';
+import { getAvailableSlots, getBlockedSlots, getVisitDates, toLocalIsoDate, toLocalSlot, TOUR_TIME_SLOTS } from '@/utils/visitSlots';
 
 const DEFAULT_VISIT_TIME = '11:00';
 
@@ -35,9 +35,13 @@ type Props = {
   loading: boolean;
   /** Phone number already verified via OTP in this session; submitting with it skips the OTP step. */
   verifiedPhone?: string | null;
+  /** Slots (ISO instants) the landlord declined for `verifiedPhone` at this property; they can't be picked with that phone. */
+  declinedSlots?: readonly string[];
 };
 
-export function TourRequestForm({ onSubmitLead, loading, verifiedPhone = null }: Props) {
+const NO_SLOTS: readonly string[] = [];
+
+export function TourRequestForm({ onSubmitLead, loading, verifiedPhone = null, declinedSlots = NO_SLOTS }: Props) {
   const {
     register,
     control,
@@ -74,6 +78,21 @@ export function TourRequestForm({ onSubmitLead, loading, verifiedPhone = null }:
   }, [now, visitDates, getValues, setValue]);
 
   const phoneIsVerified = Boolean(verifiedPhone) && watch('prospectPhone') === verifiedPhone;
+  // Declined slots belong to the verified phone; another number may still request them
+  const blockedSlots = phoneIsVerified ? declinedSlots : NO_SLOTS;
+
+  // When declined slots arrive (or the phone changes) move a selection that is no longer open to the first open slot
+  useEffect(() => {
+    const date = getValues('preferredDate');
+    const time = getValues('preferredTime');
+    if (!now || !date || !time) return;
+    const open = getAvailableSlots(date, now, blockedSlots);
+    if (!open.includes(time)) {
+      setValue('preferredTime', open[0] ?? '', { shouldValidate: isSubmitted });
+    }
+  }, [now, blockedSlots, getValues, setValue, isSubmitted]);
+
+  const declinedOnSelectedDate = selectedDate ? getBlockedSlots(selectedDate, blockedSlots) : [];
 
   const onFormSubmit = (data: TourFormData) => {
     onSubmitLead({
@@ -170,7 +189,7 @@ export function TourRequestForm({ onSubmitLead, loading, verifiedPhone = null }:
                 onChange={(date) => {
                   field.onChange(date);
                   // Keep the chosen time if it is still open on the new date, otherwise take the first open slot
-                  const open = getAvailableSlots(date, now);
+                  const open = getAvailableSlots(date, now, blockedSlots);
                   if (!open.includes(getValues('preferredTime'))) {
                     setValue('preferredTime', open[0] ?? '', { shouldValidate: isSubmitted });
                   }
@@ -204,7 +223,8 @@ export function TourRequestForm({ onSubmitLead, loading, verifiedPhone = null }:
                 id="preferred-time"
                 label="Preferred Time"
                 slots={TOUR_TIME_SLOTS}
-                availableSlots={selectedDate ? getAvailableSlots(selectedDate, now) : []}
+                availableSlots={selectedDate ? getAvailableSlots(selectedDate, now, blockedSlots) : []}
+                declinedSlots={declinedOnSelectedDate}
                 value={field.value}
                 onChange={field.onChange}
               />
@@ -219,6 +239,11 @@ export function TourRequestForm({ onSubmitLead, loading, verifiedPhone = null }:
         )}
         {errors.preferredTime && (
           <span className="text-[11px] text-rose-500 dark:text-rose-400 mt-1 block">{errors.preferredTime.message}</span>
+        )}
+        {now && declinedOnSelectedDate.length > 0 && (
+          <span className="text-[11px] text-slate-600 dark:text-slate-400 mt-1.5 block">
+            Times marked &ldquo;Declined&rdquo; were turned down by the property manager for your earlier request. Please pick another time.
+          </span>
         )}
       </div>
 

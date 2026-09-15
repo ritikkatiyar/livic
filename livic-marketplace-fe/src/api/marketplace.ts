@@ -2,6 +2,7 @@ import { apiRequest } from './client';
 import {
   mockCancelMyTourRequest,
   mockCreateLead,
+  mockGetDeclinedTourSlots,
   mockGetLeadStatus,
   mockGetMyTourRequests,
   mockInitiateTokenPayment,
@@ -170,6 +171,21 @@ export async function cancelMyTourRequest(
     otpSessionToken,
   });
   return res.data ? { ...res, data: toMyTourRequestPage({ content: [res.data], number: 0, size: 1, totalElements: 1, totalPages: 1 }).items[0] } : res;
+}
+
+/** Upcoming slots (ISO instants) the landlord declined for the verified phone at this property; they can't be requested again. */
+export async function getDeclinedTourSlots(otpSessionToken: string, propertyId: string): Promise<ApiResponse<string[]>> {
+  if (USE_MOCK) {
+    const data = await mockGetDeclinedTourSlots(otpSessionToken, propertyId);
+    return { success: true, data };
+  }
+
+  const queryParams = new URLSearchParams({ propertyId });
+  const res = await apiRequest<{ propertyId: string; slots: string[] | null }>(
+    `/marketplace/my/tour-requests/declined-slots?${queryParams.toString()}`,
+    { otpSessionToken }
+  );
+  return { ...res, data: res.data?.slots ?? [] };
 }
 
 export async function createLead(

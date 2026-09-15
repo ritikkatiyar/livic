@@ -9,6 +9,8 @@ type TimeSlotPickerProps = {
   slots: string[];
   /** Slots that can currently be chosen; the rest render disabled. */
   availableSlots: string[];
+  /** Disabled slots the landlord declined for this visitor, marked as such instead of just greyed out. */
+  declinedSlots?: string[];
   value: string;
   onChange: (slot: string) => void;
   label: string;
@@ -21,7 +23,7 @@ const PERIOD_ICONS: Record<SlotPeriod, React.ComponentType<{ className?: string 
   Evening: Sunset,
 };
 
-export function TimeSlotPicker({ slots, availableSlots, value, onChange, label, id }: TimeSlotPickerProps) {
+export function TimeSlotPicker({ slots, availableSlots, declinedSlots = [], value, onChange, label, id }: TimeSlotPickerProps) {
   const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const periods = (['Morning', 'Afternoon', 'Evening'] as SlotPeriod[])
@@ -49,7 +51,7 @@ export function TimeSlotPicker({ slots, availableSlots, value, onChange, label, 
     }
   };
 
-  if (availableSlots.length === 0) {
+  if (availableSlots.length === 0 && declinedSlots.length === 0) {
     return (
       <p className="text-xs text-slate-600 dark:text-slate-400 py-3 text-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
         No visit slots left on this day. Please pick another date.
@@ -69,6 +71,7 @@ export function TimeSlotPicker({ slots, availableSlots, value, onChange, label, 
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {periodSlots.map((slot) => {
                 const available = availableSlots.includes(slot);
+                const declined = !available && declinedSlots.includes(slot);
                 const selected = available && slot === value;
                 return (
                   <button
@@ -80,6 +83,7 @@ export function TimeSlotPicker({ slots, availableSlots, value, onChange, label, 
                     role="radio"
                     aria-checked={selected}
                     aria-disabled={!available}
+                    aria-label={declined ? `${formatSlotLabel(slot)}, declined by the property manager` : undefined}
                     disabled={!available}
                     tabIndex={slot === focusable ? 0 : -1}
                     onClick={() => onChange(slot)}
@@ -89,10 +93,13 @@ export function TimeSlotPicker({ slots, availableSlots, value, onChange, label, 
                         ? 'bg-gradient-to-r from-indigo-600 to-purple-600 border-transparent text-white shadow-lg shadow-indigo-600/30'
                         : available
                           ? 'glass-card border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-500/50 hover:text-indigo-600 dark:hover:text-indigo-300'
-                          : 'border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-600 line-through cursor-not-allowed'
+                          : declined
+                            ? 'border-rose-500/30 bg-rose-500/5 dark:bg-rose-500/10 text-rose-600/80 dark:text-rose-400/80 cursor-not-allowed'
+                            : 'border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-600 line-through cursor-not-allowed'
                     }`}
                   >
                     {formatSlotLabel(slot)}
+                    {declined && <span className="block text-[10px] font-medium leading-tight">Declined</span>}
                   </button>
                 );
               })}

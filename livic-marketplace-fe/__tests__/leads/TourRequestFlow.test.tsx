@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { RoomConversionContainer } from '@/components/booking/RoomConversionContainer';
 import { TourRequestForm } from '@/components/booking/TourRequestForm';
-import { toLocalSlot } from '@/utils/visitSlots';
+import { toLocalIsoDate, toLocalSlot } from '@/utils/visitSlots';
 import { ApiError, parseErrorBody } from '@/api/client';
 import { saveOtpSession } from '@/features/leads/otpSessionStorage';
 import * as api from '@/api/marketplace';
@@ -14,6 +14,7 @@ jest.mock('@/api/marketplace', () => ({
   requestOtp: jest.fn(),
   verifyOtp: jest.fn(),
   createLead: jest.fn(),
+  getDeclinedTourSlots: jest.fn(),
   initiateTokenPayment: jest.fn(),
 }));
 
@@ -122,6 +123,31 @@ describe('TourRequestForm date & time pickers', () => {
     expect(dateOption(2026, 8, 16)).toHaveAttribute('aria-checked', 'true');
     expect(dateOption(2026, 8, 16)).toHaveFocus();
   });
+
+  it('marks slots declined for the verified phone and moves the selection off them', async () => {
+    const declined = [toLocalSlot('2026-09-15', '11:00').toISOString(), toLocalSlot('2026-09-15', '12:00').toISOString()];
+    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} verifiedPhone="9876543210" declinedSlots={declined} />);
+    await fillTourForm();
+
+    const declinedOption = screen.getByRole('radio', { name: '11:00 AM, declined by the property manager' });
+    expect(declinedOption).toBeDisabled();
+    expect(screen.getByRole('radio', { name: '12:00 PM, declined by the property manager' })).toBeDisabled();
+    expect(timeOption('9:00 AM')).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText(/turned down by the property manager/i)).toBeInTheDocument();
+
+    // Declined slots are for that date only
+    fireEvent.click(dateOption(2026, 8, 16));
+    expect(timeOption('11:00 AM')).toBeEnabled();
+  });
+
+  it('ignores declined slots when a different phone number is entered', async () => {
+    const declined = [toLocalSlot('2026-09-15', '11:00').toISOString()];
+    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} verifiedPhone="9876543210" declinedSlots={declined} />);
+    await fillTourForm({ phone: '9123456789' });
+
+    expect(timeOption('11:00 AM')).toBeEnabled();
+    expect(timeOption('11:00 AM')).toHaveAttribute('aria-checked', 'true');
+  });
 });
 
 describe('TourRequestForm', () => {
@@ -139,6 +165,7 @@ describe('RoomConversionContainer tour request flow', () => {
     jest.resetAllMocks();
     // The verified session is remembered per tab; start every test unverified
     window.sessionStorage.clear();
+    mockedApi.getDeclinedTourSlots.mockResolvedValue({ success: true, data: [] });
     mockedApi.requestOtp.mockResolvedValue({ success: true, data: { success: true, message: 'sent', resendAfterSeconds: 60 } });
     mockedApi.verifyOtp.mockResolvedValue({ success: true, data: { otpSessionToken: 'server-session-token' } });
   });
@@ -252,6 +279,39 @@ describe('RoomConversionContainer tour request flow', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Change details/i }));
+    expect(screen.queryByText(/You already have a visit request at this property/i)).not.toBeInTheDocument();
+  });
+
+  it('loads the slots declined for the verified phone and disables them', async () => {
+    saveOtpSession('stored-session-token', '9876543210');
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const declinedSlot = toLocalSlot(toLocalIsoDate(tomorrow), '11:00').toISOString();
+    mockedApi.getDeclinedTourSlots.mockResolvedValue({ success: true, data: [declinedSlot] });
+
+    render(<RoomConversionContainer property={property} unit={unit} />);
+    await fillTourForm();
+
+    expect(await screen.findByRole('radio', { name: '11:00 AM, declined by the property manager' })).toBeDisabled();
+    expect(mockedApi.getDeclinedTourSlots).toHaveBeenCalledWith('stored-session-token', 'prop-1');
+    await waitFor(() => expect(screen.getByRole('radio', { name: '9:00 AM' })).toHaveAttribute('aria-checked', 'true'));
+  });
+
+  it('explains a refused declined slot and blocks it without showing the duplicate notice', async () => {
+    saveOtpSession('stored-session-token', '9876543210');
+    mockedApi.createLead.mockImplementation(async (_p, _u, req) => {
+      throw new ApiError('The property manager declined a visit at this time. Please pick another date or time.', 'TOUR_SLOT_DECLINED', undefined, 409, {
+        code: 'TOUR_SLOT_DECLINED',
+        declinedSlot: req.preferredSlot,
+      });
+    });
+
+    render(<RoomConversionContainer property={property} unit={unit} />);
+    await fillTourForm();
+    fireEvent.click(await screen.findByRole('button', { name: /Submit Tour Request/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/declined a visit at this time/i);
+    expect(await screen.findByRole('radio', { name: '11:00 AM, declined by the property manager' })).toBeDisabled();
     expect(screen.queryByText(/You already have a visit request at this property/i)).not.toBeInTheDocument();
   });
 

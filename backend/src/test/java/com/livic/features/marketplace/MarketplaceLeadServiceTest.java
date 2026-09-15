@@ -8,6 +8,7 @@ import com.livic.platform.common.domain.UnitType;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.features.marketplace.dto.MarketplaceLeadDTOs;
+import com.livic.features.marketplace.exception.DeclinedTourSlotException;
 import com.livic.features.marketplace.exception.DuplicateTourRequestException;
 import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.features.marketplace.service.impl.MarketplaceLeadServiceImpl;
@@ -273,6 +274,26 @@ public class MarketplaceLeadServiceTest {
         assertEquals(LeadType.TOUR_REQUEST, response.leadType());
         assertEquals(LeadStatus.NEW, response.status());
         verify(leadRepository, times(2)).saveAndFlush(any(MarketplaceLeadTbl.class));
+    }
+
+    @Test
+    @DisplayName("Create Tour - A slot the landlord declined for this phone can't be requested again (matched by the minute)")
+    public void testCreateTourBlockedForDeclinedSlot() {
+        stubValidTourContext();
+        Instant declined = Instant.now().plus(2, ChronoUnit.DAYS).truncatedTo(ChronoUnit.HOURS);
+        when(leadRepository.findByPropertyIdAndProspectPhoneAndLeadTypeAndStatusIn(any(), any(), any(), anyCollection()))
+                .thenReturn(List.of());
+        when(leadRepository.existsRejectedTourInSlot(propId, prospectPhone, declined, declined.plus(1, ChronoUnit.MINUTES)))
+                .thenReturn(true);
+        MarketplaceLeadDTOs.CreateLeadRequest sameSlotWithSeconds = new MarketplaceLeadDTOs.CreateLeadRequest(
+                LeadType.TOUR_REQUEST, "Jane Doe", prospectPhone, null, declined.plusSeconds(30), null, null, "MARKETPLACE");
+
+        DeclinedTourSlotException ex = assertThrows(DeclinedTourSlotException.class, () ->
+                leadService.createLead(propId, unitId, sameSlotWithSeconds, sessionToken));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
+        assertEquals(declined, ex.getDeclinedSlot());
+        verify(leadRepository, never()).saveAndFlush(any());
     }
 
     @Test

@@ -15,6 +15,9 @@ export type LeadStatus =
   | 'COMPLETED'
   | 'EXPIRED';
 
+/** Error code of the 409 returned when a phone re-requests a visit slot the landlord already declined. */
+export const TOUR_SLOT_DECLINED_CODE = 'TOUR_SLOT_DECLINED';
+
 export type CreateLeadRequest = {
   leadType: LeadType;
   prospectName: string;

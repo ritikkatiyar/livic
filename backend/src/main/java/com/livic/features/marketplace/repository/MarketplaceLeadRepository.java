@@ -32,6 +32,22 @@ public interface MarketplaceLeadRepository extends JpaRepository<MarketplaceLead
     List<MarketplaceLeadTbl> findByPropertyIdAndProspectPhoneAndLeadTypeAndStatusIn(
             UUID propertyId, String prospectPhone, LeadType leadType, Collection<LeadStatus> statuses);
 
+    /** Whether the landlord already rejected this phone's tour at this property for a slot in [from, to). */
+    @Query("SELECT COUNT(l) > 0 FROM MarketplaceLeadTbl l WHERE l.propertyId = :propertyId AND l.prospectPhone = :phone " +
+           "AND l.leadType = com.livic.platform.common.domain.LeadType.TOUR_REQUEST " +
+           "AND l.status = com.livic.platform.common.domain.LeadStatus.REJECTED " +
+           "AND l.preferredSlot >= :from AND l.preferredSlot < :to")
+    boolean existsRejectedTourInSlot(@Param("propertyId") UUID propertyId, @Param("phone") String phone,
+                                     @Param("from") Instant from, @Param("to") Instant to);
+
+    /** Upcoming slots the landlord rejected for this phone at this property, soonest first. */
+    @Query("SELECT DISTINCT l.preferredSlot FROM MarketplaceLeadTbl l WHERE l.propertyId = :propertyId AND l.prospectPhone = :phone " +
+           "AND l.leadType = com.livic.platform.common.domain.LeadType.TOUR_REQUEST " +
+           "AND l.status = com.livic.platform.common.domain.LeadStatus.REJECTED " +
+           "AND l.preferredSlot > :now ORDER BY l.preferredSlot ASC")
+    List<Instant> findUpcomingRejectedTourSlots(@Param("propertyId") UUID propertyId, @Param("phone") String phone,
+                                                @Param("now") Instant now);
+
     /** All tour requests made from one phone, for the prospect's "My Requests" view. */
     Page<MarketplaceLeadTbl> findByProspectPhoneAndLeadType(String prospectPhone, LeadType leadType, Pageable pageable);
 

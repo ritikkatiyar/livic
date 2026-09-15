@@ -36,9 +36,23 @@ export function getSlotPeriod(time: string): SlotPeriod {
   return 'Evening';
 }
 
-/** Slots on `date` that are still in the future relative to `now`. */
-export function getAvailableSlots(date: string, now: Date): string[] {
-  return TOUR_TIME_SLOTS.filter((slot) => toLocalSlot(date, slot) > now);
+/** A slot instant reduced to whole minutes, so slots from the server and the picker compare reliably. */
+export function toSlotMinute(slot: string | Date): number {
+  const ms = typeof slot === 'string' ? Date.parse(slot) : slot.getTime();
+  return Math.floor(ms / 60_000);
+}
+
+/** The `HH:mm` picker slots on `date` that match one of the `blockedSlots` instants (ISO strings). */
+export function getBlockedSlots(date: string, blockedSlots: readonly string[]): string[] {
+  if (blockedSlots.length === 0) return [];
+  const blocked = new Set(blockedSlots.map(toSlotMinute));
+  return TOUR_TIME_SLOTS.filter((slot) => blocked.has(toSlotMinute(toLocalSlot(date, slot))));
+}
+
+/** Slots on `date` that are still in the future relative to `now` and not blocked (e.g. declined by the landlord). */
+export function getAvailableSlots(date: string, now: Date, blockedSlots: readonly string[] = []): string[] {
+  const blocked = getBlockedSlots(date, blockedSlots);
+  return TOUR_TIME_SLOTS.filter((slot) => toLocalSlot(date, slot) > now && !blocked.includes(slot));
 }
 
 /** Bookable visit dates starting today; today is skipped once all of its slots have passed. */

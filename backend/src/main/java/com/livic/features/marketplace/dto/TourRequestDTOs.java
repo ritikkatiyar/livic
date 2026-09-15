@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class TourRequestDTOs {
@@ -78,5 +79,22 @@ public class TourRequestDTOs {
         String message,
         String path,
         ExistingTourRequestSummary existingRequest
+    ) {}
+
+    /** 409 body when the requested slot was already declined for this phone: the standard error fields plus a code and the slot. */
+    public record DeclinedTourSlotError(
+        Instant timestamp,
+        int status,
+        String error,
+        String message,
+        String path,
+        String code,
+        Instant declinedSlot
+    ) {}
+
+    /** Upcoming slots the prospect can't request again at a property because the landlord declined them. */
+    public record DeclinedTourSlotsResponse(
+        UUID propertyId,
+        List<Instant> slots
     ) {}
 }

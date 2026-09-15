@@ -1,6 +1,7 @@
 import {
   formatSlotLabel,
   getAvailableSlots,
+  getBlockedSlots,
   getSlotPeriod,
   getVisitDates,
   toLocalIsoDate,
@@ -26,6 +27,16 @@ describe('visitSlots', () => {
   it('only offers future slots', () => {
     expect(getAvailableSlots('2026-09-14', afternoon)).toEqual(['16:00', '17:00', '18:00', '19:00']);
     expect(getAvailableSlots('2026-09-15', afternoon)).toEqual(TOUR_TIME_SLOTS);
+  });
+
+  it('excludes blocked slots, matched by the minute and only on their own date', () => {
+    const blocked = [
+      new Date(2026, 8, 15, 11, 0, 30).toISOString(), // seconds are ignored
+      new Date(2026, 8, 16, 9, 0).toISOString(),
+    ];
+    expect(getBlockedSlots('2026-09-15', blocked)).toEqual(['11:00']);
+    expect(getAvailableSlots('2026-09-15', afternoon, blocked)).toEqual(TOUR_TIME_SLOTS.filter((s) => s !== '11:00'));
+    expect(getBlockedSlots('2026-09-17', blocked)).toEqual([]);
   });
 
   it('builds a 14-day window starting today', () => {

@@ -1,6 +1,7 @@
 import { ApiError } from '../client';
 import { PagedResult } from '@/types/api';
-import { CreateLeadRequest, LeadResponse, MyTourRequest, RazorpayOrderPayload } from '@/types/lead';
+import { CreateLeadRequest, LeadResponse, MyTourRequest, RazorpayOrderPayload, TOUR_SLOT_DECLINED_CODE } from '@/types/lead';
+import { toSlotMinute } from '@/utils/visitSlots';
 import { MOCK_PROPERTIES } from './properties.mock';
 
 const MOCK_LEADS_DB: Record<string, LeadResponse> = {};
@@ -18,6 +19,18 @@ function phoneFromMockToken(otpSessionToken: string): string {
 
 function isActiveMockTour(tour: MyTourRequest, now = Date.now()): boolean {
   return (tour.status === 'NEW' || tour.status === 'APPROVED') && Date.parse(tour.preferredSlot) > now;
+}
+
+function findDeclinedMockSlots(phone: string, propertyId: string, now = Date.now()): string[] {
+  return Object.values(MOCK_TOURS_DB)
+    .filter((t) => t.phone === phone && t.propertyId === propertyId && t.status === 'REJECTED' && Date.parse(t.preferredSlot) > now)
+    .map((t) => t.preferredSlot)
+    .sort();
+}
+
+export async function mockGetDeclinedTourSlots(otpSessionToken: string, propertyId: string): Promise<string[]> {
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  return findDeclinedMockSlots(phoneFromMockToken(otpSessionToken), propertyId);
 }
 
 export async function mockRequestOtp(
@@ -73,6 +86,16 @@ export async function mockCreateLead(
           preferredSlot: active.preferredSlot,
         },
       });
+    }
+    const declined = req.preferredSlot && findDeclinedMockSlots(phone, propertyId).find((slot) => toSlotMinute(slot) === toSlotMinute(req.preferredSlot!));
+    if (declined) {
+      throw new ApiError(
+        'The property manager declined a visit at this time. Please pick another date or time.',
+        TOUR_SLOT_DECLINED_CODE,
+        undefined,
+        409,
+        { code: TOUR_SLOT_DECLINED_CODE, declinedSlot: declined }
+      );
     }
   }
 

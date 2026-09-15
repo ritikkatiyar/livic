@@ -240,5 +240,19 @@ class TourRequestServicesTest {
             assertThrows(BusinessException.class, () -> service.listMyTourRequests(TOKEN, PageRequest.of(0, 20)));
             verifyNoInteractions(leadRepository);
         }
+
+        @Test
+        @DisplayName("Declined slots are looked up for the verified phone only")
+        void declinedSlotsForVerifiedPhone() {
+            UUID propertyId = UUID.randomUUID();
+            Instant slot = Instant.now().plus(2, ChronoUnit.DAYS).truncatedTo(ChronoUnit.HOURS);
+            when(otpService.resolveVerifiedPhone(TOKEN)).thenReturn(PHONE);
+            when(leadRepository.findUpcomingRejectedTourSlots(eq(propertyId), eq(PHONE), any(Instant.class))).thenReturn(List.of(slot));
+
+            TourRequestDTOs.DeclinedTourSlotsResponse response = service.listDeclinedSlots(TOKEN, propertyId);
+
+            assertEquals(propertyId, response.propertyId());
+            assertEquals(List.of(slot), response.slots());
+        }
     }
 }

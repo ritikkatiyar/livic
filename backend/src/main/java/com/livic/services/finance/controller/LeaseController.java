@@ -28,6 +28,7 @@ public class LeaseController {
     private final LeaseOrchestrationService leaseOrchestrationService;
 
     @GetMapping
+    @PreAuthorize("#propertyId == null or @authorizationService.hasPermission(#propertyId, 'LEASE_VIEW')")
     public ResponseEntity<ApiResponse<Page<LeaseDTOs.LeaseResponse>>> getActiveLeasesByProperty(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) UUID propertyId,

@@ -10,6 +10,7 @@ import { useTourRequests } from '../hooks/useTourRequests';
 import { RejectTourModal } from './LeaseModals';
 import { formatVisitSlot, TourRequestCard } from './TourRequestCard';
 import { createTourRequestStyles } from './TourRequestsPanel.styles';
+import { VisitingHoursBanner } from './visiting-hours/VisitingHoursBanner';
 
 type TourRequestsPanelProps = {
   propertyId: string | null;
@@ -73,6 +74,8 @@ export function TourRequestsPanel({ propertyId, isDesktop, searchQuery }: TourRe
 
   return (
     <View style={styles.panel}>
+      <VisitingHoursBanner propertyId={propertyId} isDesktop={isDesktop} />
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
         {filters.map((f) => (
           <FilterPill

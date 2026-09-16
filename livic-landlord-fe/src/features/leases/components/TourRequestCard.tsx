@@ -95,6 +95,15 @@ export function TourRequestCard({ tour, isDesktop, onApprove, onReject, isApprov
         </View>
       </View>
 
+      {tour.outsideVisitingHours ? (
+        <View style={styles.warningBox} accessibilityRole="alert">
+          <MaterialIcons name="schedule" size={theme.IconSizes.sm} color={theme.Colors.onTertiaryContainer} />
+          <Text style={styles.warningText}>
+            Outside your current visiting hours. Approve it if the visit still works for you, or decline with a note.
+          </Text>
+        </View>
+      ) : null}
+
       {tour.status === 'REJECTED' && tour.decisionNote ? (
         <View style={styles.noteBox}>
           <MaterialIcons name="sticky-note-2" size={theme.IconSizes.sm} color={theme.Colors.onErrorContainer} />

@@ -19,6 +19,8 @@ export interface TourRequestResponse {
   decisionNote: string | null;
   decidedAt: string | null;
   createdAt: string;
+  /** A pending or upcoming visit that no longer falls inside the property's visiting hours. */
+  outsideVisitingHours?: boolean;
 }
 
 export interface TourRequestSummary {

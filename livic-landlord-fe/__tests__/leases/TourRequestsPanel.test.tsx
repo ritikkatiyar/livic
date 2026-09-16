@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TourRequestsPanel, matchesTourSearch } from '../../src/features/leases/components/TourRequestsPanel';
 import * as tourApi from '../../src/features/leases/api/tourRequest.api';
+import * as tourAvailabilityApi from '../../src/features/leases/api/tourAvailability.api';
 import { ApiError } from '../../src/utils/errors';
 
 const mockShowToast = jest.fn();
@@ -21,6 +22,11 @@ jest.mock('expo-blur', () => {
   return { BlurView: View };
 });
 
+jest.mock('../../src/features/leases/api/tourAvailability.api', () => ({
+  ...jest.requireActual('../../src/features/leases/api/tourAvailability.api'),
+  getTourAvailability: jest.fn(),
+}));
+
 jest.mock('../../src/features/leases/api/tourRequest.api', () => ({
   ...jest.requireActual('../../src/features/leases/api/tourRequest.api'),
   listTourRequests: jest.fn(),
@@ -30,6 +36,22 @@ jest.mock('../../src/features/leases/api/tourRequest.api', () => ({
 }));
 
 const api = tourApi as jest.Mocked<typeof tourApi>;
+const availabilityApi = tourAvailabilityApi as jest.Mocked<typeof tourAvailabilityApi>;
+
+const defaultAvailability: tourAvailabilityApi.TourAvailability = {
+  propertyId: 'prop-1',
+  customized: false,
+  timezone: 'Asia/Kolkata',
+  slotMinutes: 60,
+  minNoticeMinutes: 60,
+  bookingWindowDays: 14,
+  maxVisitorsPerSlot: null,
+  weeklyHours: tourAvailabilityApi.DAYS_OF_WEEK.map((dayOfWeek) => ({
+    dayOfWeek,
+    windows: [{ start: '09:00', end: '20:00' }],
+  })),
+  blackouts: [],
+};
 
 const pendingTour: tourApi.TourRequestResponse = {
   id: 'lead-1',
@@ -73,6 +95,38 @@ describe('TourRequestsPanel', () => {
     jest.clearAllMocks();
     api.getTourRequestSummary.mockResolvedValue({ pending: 2, upcoming: 1 });
     api.listTourRequests.mockResolvedValue(page([pendingTour, secondTour]));
+    availabilityApi.getTourAvailability.mockResolvedValue(defaultAvailability);
+  });
+
+  it('nudges the landlord to set visiting hours while the defaults are in use', async () => {
+    await renderPanel();
+
+    expect(await screen.findByText('Set your visiting hours', {}, { timeout: 5000 })).toBeTruthy();
+    expect(screen.getByText(/any day from 9 AM to 8 PM/)).toBeTruthy();
+  });
+
+  it('summarises customized visiting hours in the banner', async () => {
+    availabilityApi.getTourAvailability.mockResolvedValue({
+      ...defaultAvailability,
+      customized: true,
+      slotMinutes: 30,
+      weeklyHours: tourAvailabilityApi.DAYS_OF_WEEK.map((dayOfWeek) => ({
+        dayOfWeek,
+        windows: dayOfWeek === 'SUNDAY' ? [] : [{ start: '10:00', end: '13:00' }],
+      })),
+      blackouts: [{ id: 'bo-1', date: '2026-09-20', startTime: null, endTime: null, reason: 'Festival' }],
+    });
+    await renderPanel();
+
+    expect(await screen.findByText('Visiting hours', {}, { timeout: 5000 })).toBeTruthy();
+    expect(screen.getByText('Mon–Sat 10:00 AM–1:00 PM · Sun closed · 30-min visits · 1 blocked date')).toBeTruthy();
+  });
+
+  it('flags a pending request that falls outside the visiting hours', async () => {
+    api.listTourRequests.mockResolvedValue(page([{ ...pendingTour, outsideVisitingHours: true }]));
+    await renderPanel();
+
+    expect(await screen.findByText(/Outside your current visiting hours/, {}, { timeout: 5000 })).toBeTruthy();
   });
 
   it('lists pending requests with prospect contact details, unit and status', async () => {

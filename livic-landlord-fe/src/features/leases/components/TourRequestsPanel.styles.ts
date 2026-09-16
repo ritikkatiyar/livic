@@ -113,6 +113,20 @@ export const createTourRequestStyles = (theme: AppTheme) => StyleSheet.create({
     borderRadius: theme.Rounded.md,
     backgroundColor: theme.Colors.errorContainer,
   },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.Spacing.sm,
+    marginTop: theme.Spacing.md,
+    padding: theme.Spacing.sm,
+    borderRadius: theme.Rounded.md,
+    backgroundColor: theme.Colors.tertiaryContainer,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: theme.Typography.bodySmall.fontSize,
+    color: theme.Colors.onTertiaryContainer,
+  },
   noteText: {
     flex: 1,
     fontSize: theme.Typography.bodySmall.fontSize,

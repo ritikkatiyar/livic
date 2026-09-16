@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ApiError } from '@/api/client';
 import { toExistingTourRequest } from '@/api/adapters';
 import { createLead } from '@/api/marketplace';
-import { CreateLeadRequest, ExistingTourRequest, LeadResponse, TOUR_SLOT_DECLINED_CODE } from '@/types/lead';
+import { CreateLeadRequest, ExistingTourRequest, LeadResponse, TOUR_SLOT_ERROR_PREFIX } from '@/types/lead';
 import { getErrorMessage } from '@/utils/errors';
 
 export type SubmitLeadResult = {
@@ -12,16 +12,9 @@ export type SubmitLeadResult = {
   error: string | null;
   /** Set when the phone already has an active tour at this property (409). */
   duplicate: { existingRequest: ExistingTourRequest | null } | null;
-  /** The slot (ISO instant) the landlord already declined for this phone, when that is why the request was refused. */
-  declinedSlot: string | null;
+  /** The chosen visit time was refused (declined, full, or no longer offered), so the slots should be reloaded. */
+  slotRefused: boolean;
 };
-
-const TOUR_SLOT_ERROR_PREFIX = 'TOUR_SLOT_';
-
-function readDeclinedSlot(err: ApiError, fallback: string | undefined): string | null {
-  const details = err.details as { slot?: unknown } | undefined;
-  return typeof details?.slot === 'string' ? details.slot : fallback ?? null;
-}
 
 export function useCreateLead() {
   const [loading, setLoading] = useState(false);
@@ -42,30 +35,26 @@ export function useCreateLead() {
       const res = await createLead(propertyId, unitId, req, otpSessionToken);
       if (res.success && res.data) {
         setCreatedLead(res.data);
-        return { lead: res.data, error: null, duplicate: null, declinedSlot: null };
+        return { lead: res.data, error: null, duplicate: null, slotRefused: false };
       }
       const message = res.error?.message || 'Failed to submit request';
       setError(message);
-      return { lead: null, error: message, duplicate: null, declinedSlot: null };
+      return { lead: null, error: message, duplicate: null, slotRefused: false };
     } catch (err) {
       if (err instanceof ApiError && err.status === 409 && req.leadType === 'TOUR_REQUEST') {
-        if (err.code === TOUR_SLOT_DECLINED_CODE) {
-          setError(err.message);
-          return { lead: null, error: err.message, duplicate: null, declinedSlot: readDeclinedSlot(err, req.preferredSlot) };
-        }
         if (err.code.startsWith(TOUR_SLOT_ERROR_PREFIX)) {
-          // Full, blocked or outside the property's visiting hours: explain it under the form
+          // Declined, full or outside the property's visiting hours: the server's reason goes under the form
           setError(err.message);
-          return { lead: null, error: err.message, duplicate: null, declinedSlot: null };
+          return { lead: null, error: err.message, duplicate: null, slotRefused: true };
         }
         // Shown as a dedicated notice with the existing request instead of a plain error line
         const dup = { existingRequest: toExistingTourRequest(err.details) };
         setDuplicate(dup);
-        return { lead: null, error: null, duplicate: dup, declinedSlot: null };
+        return { lead: null, error: null, duplicate: dup, slotRefused: false };
       }
       const message = getErrorMessage(err);
       setError(message);
-      return { lead: null, error: message, duplicate: null, declinedSlot: null };
+      return { lead: null, error: message, duplicate: null, slotRefused: false };
     } finally {
       setLoading(false);
     }

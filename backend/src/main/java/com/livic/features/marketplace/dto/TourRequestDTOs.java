@@ -94,9 +94,4 @@ public class TourRequestDTOs {
         Instant slot
     ) {}
 
-    /** Upcoming slots the prospect can't request again at a property because the landlord declined them. */
-    public record DeclinedTourSlotsResponse(
-        UUID propertyId,
-        List<Instant> slots
-    ) {}
 }

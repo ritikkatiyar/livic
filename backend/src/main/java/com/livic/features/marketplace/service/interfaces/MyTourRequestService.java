@@ -13,6 +13,4 @@ public interface MyTourRequestService {
 
     TourRequestDTOs.MyTourRequestResponse cancelMyTourRequest(String sessionToken, UUID leadId);
 
-    /** Upcoming slots at a property that the landlord declined for the verified phone (they can't be requested again). */
-    TourRequestDTOs.DeclinedTourSlotsResponse listDeclinedSlots(String sessionToken, UUID propertyId);
 }

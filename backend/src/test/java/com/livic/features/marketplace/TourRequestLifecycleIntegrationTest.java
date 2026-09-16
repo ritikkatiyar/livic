@@ -284,9 +284,6 @@ class TourRequestLifecycleIntegrationTest {
         assertEquals(TourSlotUnavailableException.Reason.DECLINED, declined.getReason());
         assertEquals(slot, declined.getSlot());
 
-        assertEquals(List.of(slot), myTourRequestService.listDeclinedSlots(sessionToken, property.getId()).slots());
-        assertTrue(myTourRequestService.listDeclinedSlots(sessionToken, otherProperty.getId()).slots().isEmpty());
-
         // The public slot list marks it for this phone only
         assertTrue(availabilityService.getTourSlots(property.getId(), sessionToken).days().stream()
                 .flatMap(d -> d.slots().stream())

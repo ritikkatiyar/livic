@@ -13,13 +13,15 @@ type DateStripProps = {
   id?: string;
   /** Used to label "Today" / "Tomorrow"; defaults to the current date. */
   today?: Date;
+  /** Dates the property offers no visits on; shown as closed and not selectable. */
+  closedDates?: string[];
 };
 
 const weekdayFormat = new Intl.DateTimeFormat('en-IN', { weekday: 'short' });
 const monthFormat = new Intl.DateTimeFormat('en-IN', { month: 'short' });
 const fullFormat = new Intl.DateTimeFormat('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-export function DateStrip({ dates, value, onChange, label, id, today = new Date() }: DateStripProps) {
+export function DateStrip({ dates, value, onChange, label, id, today = new Date(), closedDates = [] }: DateStripProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -27,8 +29,14 @@ export function DateStrip({ dates, value, onChange, label, id, today = new Date(
   const tomorrowIso = toLocalIsoDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1));
   const selectedIndex = Math.max(0, dates.indexOf(value));
 
-  const select = (index: number) => {
-    const next = Math.min(Math.max(index, 0), dates.length - 1);
+  /** Keyboard navigation skips closed days, which can't be selected. */
+  const select = (index: number, step: 1 | -1 = 1) => {
+    let next = Math.min(Math.max(index, 0), dates.length - 1);
+    while (closedDates.includes(dates[next])) {
+      const candidate = next + step;
+      if (candidate < 0 || candidate > dates.length - 1) return;
+      next = candidate;
+    }
     onChange(dates[next]);
     const option = optionRefs.current[next];
     option?.focus();
@@ -39,13 +47,14 @@ export function DateStrip({ dates, value, onChange, label, id, today = new Date(
     const keyMoves: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
     if (e.key in keyMoves) {
       e.preventDefault();
-      select(index + keyMoves[e.key]);
+      const step = keyMoves[e.key] as 1 | -1;
+      select(index + step, step);
     } else if (e.key === 'Home') {
       e.preventDefault();
-      select(0);
+      select(0, 1);
     } else if (e.key === 'End') {
       e.preventDefault();
-      select(dates.length - 1);
+      select(dates.length - 1, -1);
     }
   };
 
@@ -74,7 +83,8 @@ export function DateStrip({ dates, value, onChange, label, id, today = new Date(
       >
         {dates.map((date, index) => {
           const d = parseLocalIsoDate(date);
-          const selected = date === value;
+          const closed = closedDates.includes(date);
+          const selected = date === value && !closed;
           const relative = date === todayIso ? 'Today' : date === tomorrowIso ? 'Tomorrow' : weekdayFormat.format(d);
 
           return (
@@ -86,14 +96,18 @@ export function DateStrip({ dates, value, onChange, label, id, today = new Date(
               type="button"
               role="radio"
               aria-checked={selected}
-              aria-label={fullFormat.format(d)}
+              aria-disabled={closed}
+              aria-label={closed ? `${fullFormat.format(d)}, closed` : fullFormat.format(d)}
+              disabled={closed}
               tabIndex={index === selectedIndex ? 0 : -1}
               onClick={() => onChange(date)}
               onKeyDown={(e) => handleKeyDown(e, index)}
               className={`snap-start shrink-0 w-[4.75rem] rounded-xl border px-1 py-2.5 flex flex-col items-center gap-0.5 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                 selected
                   ? 'bg-gradient-to-b from-indigo-600 to-purple-600 border-transparent text-white shadow-lg shadow-indigo-600/30'
-                  : 'glass-card border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-500/50 hover:text-indigo-600 dark:hover:text-indigo-300'
+                  : closed
+                    ? 'border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                    : 'glass-card border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-500/50 hover:text-indigo-600 dark:hover:text-indigo-300'
               }`}
             >
               <span className={`text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap ${selected ? 'text-indigo-100' : 'text-slate-500 dark:text-slate-400'}`}>
@@ -101,7 +115,7 @@ export function DateStrip({ dates, value, onChange, label, id, today = new Date(
               </span>
               <span className="text-lg font-extrabold leading-none">{d.getDate()}</span>
               <span className={`text-[11px] font-medium ${selected ? 'text-indigo-100' : 'text-slate-500 dark:text-slate-400'}`}>
-                {monthFormat.format(d)}
+                {closed ? 'Closed' : monthFormat.format(d)}
               </span>
             </button>
           );

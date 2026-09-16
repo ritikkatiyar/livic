@@ -1,9 +1,10 @@
-import React from 'react';
+﻿import React from 'react';
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { RoomConversionContainer } from '@/components/booking/RoomConversionContainer';
 import { TourRequestForm } from '@/components/booking/TourRequestForm';
-import { toLocalIsoDate, toLocalSlot } from '@/utils/visitSlots';
+import { parseLocalIsoDate, toLocalIsoDate, toLocalSlot } from '@/utils/visitSlots';
+import { TourSlots, TourSlotStatus } from '@/types/tourSlot';
 import { ApiError, parseErrorBody } from '@/api/client';
 import { saveOtpSession } from '@/features/leads/otpSessionStorage';
 import * as api from '@/api/marketplace';
@@ -14,7 +15,7 @@ jest.mock('@/api/marketplace', () => ({
   requestOtp: jest.fn(),
   verifyOtp: jest.fn(),
   createLead: jest.fn(),
-  getDeclinedTourSlots: jest.fn(),
+  getTourSlots: jest.fn(),
   initiateTokenPayment: jest.fn(),
 }));
 
@@ -43,17 +44,40 @@ const unit: UnitSummary = {
 };
 
 const fullDate = new Intl.DateTimeFormat('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-const dateOption = (year: number, monthIndex: number, day: number) =>
-  screen.getByRole('radio', { name: fullDate.format(new Date(year, monthIndex, day)) });
+const dateOption = (date: string, suffix = '') =>
+  screen.getByRole('radio', { name: `${fullDate.format(parseLocalIsoDate(date))}${suffix}` });
 const timeOption = (label: string) => screen.getByRole('radio', { name: label });
 
-/** Fake only `Date`; real timers keep react-hook-form and waitFor working. */
-function pinClock(now: Date) {
-  jest.useFakeTimers({
-    now,
-    doNotFake: ['nextTick', 'setImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask'],
-  });
+/** `YYYY-MM-DD` a few days out, so fixtures never depend on the current date. */
+function dateIn(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return toLocalIsoDate(d);
 }
+
+type SlotSpec = string | { time: string; status: TourSlotStatus };
+
+/** Builds the slot payload the backend would return, with starts in the test machine's timezone. */
+function slotsFixture(
+  days: { date: string; closed?: boolean; slots?: SlotSpec[] }[],
+  timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+): TourSlots {
+  return {
+    propertyId: 'prop-1',
+    timezone,
+    slotMinutes: 60,
+    days: days.map((day) => ({
+      date: day.date,
+      closed: Boolean(day.closed),
+      slots: (day.slots ?? []).map((spec) => {
+        const { time, status } = typeof spec === 'string' ? { time: spec, status: 'AVAILABLE' as TourSlotStatus } : spec;
+        return { start: toLocalSlot(day.date, time).toISOString(), localTime: time, status };
+      }),
+    })),
+  };
+}
+
+const WORKING_DAY: SlotSpec[] = ['09:00', '10:00', '11:00', '15:00', '16:00', '17:00'];
 
 async function fillTourForm({ phone = '9876543210' } = {}) {
   fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: 'Test Visitor' } });
@@ -62,23 +86,35 @@ async function fillTourForm({ phone = '9876543210' } = {}) {
 }
 
 describe('TourRequestForm date & time pickers', () => {
-  beforeEach(() => pinClock(new Date(2026, 8, 14, 15, 30))); // Mon 14 Sep 2026, 3:30 PM local
-  afterEach(() => jest.useRealTimers());
+  const today = dateIn(0);
+  const tomorrow = dateIn(1);
+  const dayAfter = dateIn(2);
 
-  it('preselects tomorrow at 11:00 AM', async () => {
-    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} />);
-    await screen.findByRole('radiogroup', { name: 'Preferred Visit Date' });
+  it('shows a skeleton until the property slots arrive', () => {
+    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} slots={null} isLoadingSlots />);
 
-    expect(dateOption(2026, 8, 15)).toHaveAttribute('aria-checked', 'true');
-    expect(timeOption('11:00 AM')).toHaveAttribute('aria-checked', 'true');
+    expect(screen.queryByRole('radiogroup', { name: 'Preferred Visit Date' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Continue to OTP Verification/i })).toBeDisabled();
   });
 
-  it('sends the chosen date and time as a local-time ISO slot', async () => {
+  it('preselects the first bookable slot the property offers', async () => {
+    const slots = slotsFixture([
+      { date: today, slots: [{ time: '09:00', status: 'UNAVAILABLE' }, { time: '16:00', status: 'UNAVAILABLE' }] },
+      { date: tomorrow, slots: WORKING_DAY },
+    ]);
+    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} slots={slots} isLoadingSlots={false} />);
+
+    await waitFor(() => expect(dateOption(tomorrow)).toHaveAttribute('aria-checked', 'true'));
+    expect(timeOption('9:00 AM')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('submits the exact slot instant the backend generated', async () => {
     const onSubmitLead = jest.fn();
-    render(<TourRequestForm onSubmitLead={onSubmitLead} loading={false} />);
+    const slots = slotsFixture([{ date: tomorrow, slots: WORKING_DAY }, { date: dayAfter, slots: WORKING_DAY }]);
+    render(<TourRequestForm onSubmitLead={onSubmitLead} loading={false} slots={slots} isLoadingSlots={false} />);
     await fillTourForm();
 
-    fireEvent.click(dateOption(2026, 8, 16));
+    fireEvent.click(dateOption(dayAfter));
     fireEvent.click(timeOption('4:00 PM'));
     fireEvent.click(screen.getByRole('button', { name: /Continue to OTP Verification/i }));
 
@@ -87,76 +123,73 @@ describe('TourRequestForm date & time pickers', () => {
       leadType: 'TOUR_REQUEST',
       prospectName: 'Test Visitor',
       prospectPhone: '9876543210',
-      preferredSlot: toLocalSlot('2026-09-16', '16:00').toISOString(),
+      preferredSlot: toLocalSlot(dayAfter, '16:00').toISOString(),
     });
   });
 
-  it('disables slots that have passed today and moves the selection to the next open one', async () => {
-    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} />);
-    await screen.findByRole('radiogroup', { name: 'Preferred Visit Date' });
-
-    fireEvent.click(dateOption(2026, 8, 14));
-
-    expect(timeOption('3:00 PM')).toBeDisabled();
-    expect(timeOption('4:00 PM')).toBeEnabled();
-    expect(timeOption('4:00 PM')).toHaveAttribute('aria-checked', 'true');
-    expect(timeOption('11:00 AM')).toHaveAttribute('aria-checked', 'false');
-  });
-
-  it('hides today once all of its slots have passed', async () => {
-    jest.useRealTimers();
-    pinClock(new Date(2026, 8, 14, 19, 30));
-    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} />);
-    await screen.findByRole('radiogroup', { name: 'Preferred Visit Date' });
-
-    expect(screen.queryByText('Today')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('radio', { name: /2026$/ })).toHaveLength(14);
-    expect(dateOption(2026, 8, 15)).toHaveAttribute('aria-checked', 'true');
-  });
-
-  it('moves the date selection with the arrow keys', async () => {
-    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} />);
-    await screen.findByRole('radiogroup', { name: 'Preferred Visit Date' });
-
-    fireEvent.keyDown(dateOption(2026, 8, 15), { key: 'ArrowRight' });
-
-    expect(dateOption(2026, 8, 16)).toHaveAttribute('aria-checked', 'true');
-    expect(dateOption(2026, 8, 16)).toHaveFocus();
-  });
-
-  it('marks slots declined for the verified phone and moves the selection off them', async () => {
-    const declined = [toLocalSlot('2026-09-15', '11:00').toISOString(), toLocalSlot('2026-09-15', '12:00').toISOString()];
-    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} verifiedPhone="9876543210" declinedSlots={declined} />);
+  it('marks declined, full and unavailable slots and keeps them unselectable', async () => {
+    const slots = slotsFixture([
+      {
+        date: tomorrow,
+        slots: [
+          { time: '09:00', status: 'UNAVAILABLE' },
+          { time: '10:00', status: 'DECLINED' },
+          { time: '11:00', status: 'FULL' },
+          '15:00',
+        ],
+      },
+    ]);
+    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} slots={slots} isLoadingSlots={false} />);
     await fillTourForm();
 
-    const declinedOption = screen.getByRole('radio', { name: '11:00 AM, declined by the property manager' });
-    expect(declinedOption).toBeDisabled();
-    expect(screen.getByRole('radio', { name: '12:00 PM, declined by the property manager' })).toBeDisabled();
-    expect(timeOption('9:00 AM')).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByText(/turned down by the property manager/i)).toBeInTheDocument();
-
-    // Declined slots are for that date only
-    fireEvent.click(dateOption(2026, 8, 16));
-    expect(timeOption('11:00 AM')).toBeEnabled();
+    expect(screen.getByRole('radio', { name: '9:00 AM, not available' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: '10:00 AM, declined by the property manager' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: '11:00 AM, fully booked' })).toBeDisabled();
+    // The only bookable slot is preselected
+    await waitFor(() => expect(timeOption('3:00 PM')).toHaveAttribute('aria-checked', 'true'));
   });
 
-  it('ignores declined slots when a different phone number is entered', async () => {
-    const declined = [toLocalSlot('2026-09-15', '11:00').toISOString()];
-    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} verifiedPhone="9876543210" declinedSlots={declined} />);
-    await fillTourForm({ phone: '9123456789' });
+  it('shows closed days as closed and skips them with the arrow keys', async () => {
+    const slots = slotsFixture([
+      { date: tomorrow, slots: WORKING_DAY },
+      { date: dayAfter, closed: true },
+      { date: dateIn(3), slots: WORKING_DAY },
+    ]);
+    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} slots={slots} isLoadingSlots={false} />);
+    await fillTourForm();
 
-    expect(timeOption('11:00 AM')).toBeEnabled();
-    expect(timeOption('11:00 AM')).toHaveAttribute('aria-checked', 'true');
+    expect(dateOption(dayAfter, ', closed')).toBeDisabled();
+    expect(screen.getByText('Closed')).toBeInTheDocument();
+
+    fireEvent.keyDown(dateOption(tomorrow), { key: 'ArrowRight' });
+
+    expect(dateOption(dateIn(3))).toHaveAttribute('aria-checked', 'true');
   });
-});
 
-describe('TourRequestForm', () => {
-  it('skips the OTP wording for an already verified phone', () => {
-    render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} verifiedPhone="9876543210" />);
-    fireEvent.change(screen.getByLabelText(/Mobile Number/i), { target: { value: '9876543210' } });
+  it('moves the selection when the property stops offering the chosen slot', async () => {
+    const slots = slotsFixture([{ date: tomorrow, slots: WORKING_DAY }]);
+    const { rerender } = render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} slots={slots} isLoadingSlots={false} />);
+    await waitFor(() => expect(timeOption('9:00 AM')).toHaveAttribute('aria-checked', 'true'));
 
-    expect(screen.getByRole('button', { name: /Submit Tour Request/i })).toBeInTheDocument();
-    expect(screen.getByText(/Phone verified/i)).toBeInTheDocument();
+    const reloaded = slotsFixture([
+      { date: tomorrow, slots: [{ time: '09:00', status: 'FULL' }, '10:00', '11:00', '15:00', '16:00', '17:00'] },
+    ]);
+    rerender(<TourRequestForm onSubmitLead={jest.fn()} loading={false} slots={reloaded} isLoadingSlots={false} />);
+
+    await waitFor(() => expect(timeOption('10:00 AM')).toHaveAttribute('aria-checked', 'true'));
+    expect(screen.getByRole('radio', { name: '9:00 AM, fully booked' })).toBeDisabled();
+  });
+
+  it('explains the timezone only when it differs from the visitor"s', async () => {
+    const sameZone = slotsFixture([{ date: tomorrow, slots: WORKING_DAY }]);
+    const { rerender } = render(<TourRequestForm onSubmitLead={jest.fn()} loading={false} slots={sameZone} isLoadingSlots={false} />);
+    await fillTourForm();
+    expect(screen.queryByText(/property's local time/i)).not.toBeInTheDocument();
+
+    const otherZone = slotsFixture([{ date: tomorrow, slots: WORKING_DAY }], 'America/New_York');
+    rerender(<TourRequestForm onSubmitLead={jest.fn()} loading={false} slots={otherZone} isLoadingSlots={false} />);
+
+    expect(await screen.findByText(/property's local time/i)).toHaveTextContent('America/New_York');
   });
 });
 
@@ -165,7 +198,7 @@ describe('RoomConversionContainer tour request flow', () => {
     jest.resetAllMocks();
     // The verified session is remembered per tab; start every test unverified
     window.sessionStorage.clear();
-    mockedApi.getDeclinedTourSlots.mockResolvedValue({ success: true, data: [] });
+    mockedApi.getTourSlots.mockResolvedValue({ success: true, data: slotsFixture([{ date: dateIn(1), slots: WORKING_DAY }, { date: dateIn(2), slots: WORKING_DAY }]) });
     mockedApi.requestOtp.mockResolvedValue({ success: true, data: { success: true, message: 'sent', resendAfterSeconds: 60 } });
     mockedApi.verifyOtp.mockResolvedValue({ success: true, data: { otpSessionToken: 'server-session-token' } });
   });
@@ -282,37 +315,41 @@ describe('RoomConversionContainer tour request flow', () => {
     expect(screen.queryByText(/You already have a visit request at this property/i)).not.toBeInTheDocument();
   });
 
-  it('loads the slots declined for the verified phone and disables them', async () => {
+  it('asks the backend for the slots, marking those declined for the verified phone', async () => {
     saveOtpSession('stored-session-token', '9876543210');
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const declinedSlot = toLocalSlot(toLocalIsoDate(tomorrow), '11:00').toISOString();
-    mockedApi.getDeclinedTourSlots.mockResolvedValue({ success: true, data: [declinedSlot] });
+    mockedApi.getTourSlots.mockResolvedValue({
+      success: true,
+      data: slotsFixture([{ date: dateIn(1), slots: [{ time: '09:00', status: 'DECLINED' }, '10:00'] }]),
+    });
 
     render(<RoomConversionContainer property={property} unit={unit} />);
     await fillTourForm();
 
-    expect(await screen.findByRole('radio', { name: '11:00 AM, declined by the property manager' })).toBeDisabled();
-    expect(mockedApi.getDeclinedTourSlots).toHaveBeenCalledWith('stored-session-token', 'prop-1');
-    await waitFor(() => expect(screen.getByRole('radio', { name: '9:00 AM' })).toHaveAttribute('aria-checked', 'true'));
+    expect(await screen.findByRole('radio', { name: '9:00 AM, declined by the property manager' })).toBeDisabled();
+    expect(mockedApi.getTourSlots).toHaveBeenCalledWith('prop-1', 'stored-session-token');
+    await waitFor(() => expect(screen.getByRole('radio', { name: '10:00 AM' })).toHaveAttribute('aria-checked', 'true'));
   });
 
-  it('explains a refused declined slot and blocks it without showing the duplicate notice', async () => {
+  it('reloads the slots when the server refuses the chosen time', async () => {
     saveOtpSession('stored-session-token', '9876543210');
-    mockedApi.createLead.mockImplementation(async (_p, _u, req) => {
-      throw new ApiError('The property manager declined a visit at this time. Please pick another date or time.', 'TOUR_SLOT_DECLINED', undefined, 409, {
-        code: 'TOUR_SLOT_DECLINED',
-        slot: req.preferredSlot,
+    mockedApi.getTourSlots
+      .mockResolvedValueOnce({ success: true, data: slotsFixture([{ date: dateIn(1), slots: ['09:00', '10:00'] }]) })
+      .mockResolvedValue({
+        success: true,
+        data: slotsFixture([{ date: dateIn(1), slots: [{ time: '09:00', status: 'FULL' }, '10:00'] }]),
       });
-    });
+    mockedApi.createLead.mockRejectedValue(
+      new ApiError('This visit time is fully booked. Please pick another time.', 'TOUR_SLOT_FULL', undefined, 409, { code: 'TOUR_SLOT_FULL' })
+    );
 
     render(<RoomConversionContainer property={property} unit={unit} />);
     await fillTourForm();
     fireEvent.click(await screen.findByRole('button', { name: /Submit Tour Request/i }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/declined a visit at this time/i);
-    expect(await screen.findByRole('radio', { name: '11:00 AM, declined by the property manager' })).toBeDisabled();
+    expect(await screen.findByRole('alert')).toHaveTextContent(/fully booked/i);
+    expect(await screen.findByRole('radio', { name: '9:00 AM, fully booked' })).toBeDisabled();
     expect(screen.queryByText(/You already have a visit request at this property/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(mockedApi.getTourSlots).toHaveBeenCalledTimes(2));
   });
 
   it('forgets an expired session so the next submit verifies the phone again', async () => {
@@ -347,3 +384,4 @@ describe('parseErrorBody', () => {
     expect(parseErrorBody({ error: { code: 'OTP_EXPIRED', message: 'OTP expired' } })).toEqual({ code: 'OTP_EXPIRED', message: 'OTP expired' });
   });
 });
+

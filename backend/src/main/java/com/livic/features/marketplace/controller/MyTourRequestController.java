@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -32,14 +31,6 @@ public class MyTourRequestController {
             @PageableDefault(size = 20) Pageable pageable
     ) {
         return ResponseEntity.ok(ApiResponse.success(myTourRequestService.listMyTourRequests(sessionToken, pageable)));
-    }
-
-    @GetMapping("/declined-slots")
-    public ResponseEntity<ApiResponse<TourRequestDTOs.DeclinedTourSlotsResponse>> listDeclinedSlots(
-            @RequestParam UUID propertyId,
-            @RequestHeader(name = "X-Otp-Session-Token", required = false) String sessionToken
-    ) {
-        return ResponseEntity.ok(ApiResponse.success(myTourRequestService.listDeclinedSlots(sessionToken, propertyId)));
     }
 
     @PostMapping("/{leadId}/cancel")

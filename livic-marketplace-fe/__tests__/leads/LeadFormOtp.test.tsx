@@ -4,11 +4,29 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TourRequestForm } from '@/components/booking/TourRequestForm';
 import { BookingForm } from '@/components/booking/BookingForm';
 import { OtpVerifyModal } from '@/components/booking/OtpVerifyModal';
+import { TourSlots } from '@/types/tourSlot';
+import { toLocalIsoDate, toLocalSlot } from '@/utils/visitSlots';
+
+/** One bookable slot tomorrow, as the backend would return it. */
+const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+const tomorrowIso = toLocalIsoDate(tomorrow);
+const slots: TourSlots = {
+  propertyId: 'prop-1',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  slotMinutes: 60,
+  days: [
+    {
+      date: tomorrowIso,
+      closed: false,
+      slots: [{ start: toLocalSlot(tomorrowIso, '11:00').toISOString(), localTime: '11:00', status: 'AVAILABLE' }],
+    },
+  ],
+};
 
 describe('Lead Creation Form & OTP Verification', () => {
   it('validates required fields on TourRequestForm', async () => {
     const handleSubmit = jest.fn();
-    render(<TourRequestForm onSubmitLead={handleSubmit} loading={false} />);
+    render(<TourRequestForm onSubmitLead={handleSubmit} loading={false} slots={slots} isLoadingSlots={false} />);
 
     const submitBtn = screen.getByRole('button', { name: /Continue to OTP Verification/i });
     fireEvent.click(submitBtn);

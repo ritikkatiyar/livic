@@ -1,16 +1,43 @@
+import { TourSlots } from '@/types/tourSlot';
 import {
+  findFirstBookableSlot,
+  findSlot,
   formatSlotLabel,
-  getAvailableSlots,
-  getBlockedSlots,
+  formatTimezone,
   getSlotPeriod,
-  getVisitDates,
+  isVisitorTimezone,
   toLocalIsoDate,
-  TOUR_TIME_SLOTS,
+  toLocalSlot,
+  toSlotMinute,
 } from '@/utils/visitSlots';
 
-describe('visitSlots', () => {
-  const afternoon = new Date(2026, 8, 14, 15, 30); // 14 Sep 2026, 3:30 PM local
+const slots: TourSlots = {
+  propertyId: 'prop-1',
+  timezone: 'Asia/Kolkata',
+  slotMinutes: 60,
+  days: [
+    {
+      date: '2026-09-14',
+      closed: false,
+      slots: [
+        { start: '2026-09-14T03:30:00Z', localTime: '09:00', status: 'UNAVAILABLE' },
+        { start: '2026-09-14T04:30:00Z', localTime: '10:00', status: 'FULL' },
+      ],
+    },
+    { date: '2026-09-15', closed: true, slots: [] },
+    {
+      date: '2026-09-16',
+      closed: false,
+      slots: [
+        { start: '2026-09-16T04:30:00Z', localTime: '10:00', status: 'DECLINED' },
+        { start: '2026-09-16T05:30:00Z', localTime: '11:00', status: 'AVAILABLE' },
+        { start: '2026-09-16T06:30:00Z', localTime: '12:00', status: 'AVAILABLE' },
+      ],
+    },
+  ],
+};
 
+describe('visitSlots', () => {
   it('formats slot labels in 12-hour time', () => {
     expect(formatSlotLabel('09:00')).toBe('9:00 AM');
     expect(formatSlotLabel('12:00')).toBe('12:00 PM');
@@ -24,35 +51,39 @@ describe('visitSlots', () => {
     expect(getSlotPeriod('17:00')).toBe('Evening');
   });
 
-  it('only offers future slots', () => {
-    expect(getAvailableSlots('2026-09-14', afternoon)).toEqual(['16:00', '17:00', '18:00', '19:00']);
-    expect(getAvailableSlots('2026-09-15', afternoon)).toEqual(TOUR_TIME_SLOTS);
+  it('finds a slot by date and time, whatever its status', () => {
+    expect(findSlot(slots, '2026-09-14', '10:00')?.status).toBe('FULL');
+    expect(findSlot(slots, '2026-09-16', '11:00')?.start).toBe('2026-09-16T05:30:00Z');
+    expect(findSlot(slots, '2026-09-16', '13:00')).toBeNull();
+    expect(findSlot(slots, '2026-09-15', '11:00')).toBeNull();
+    expect(findSlot(slots, '', '')).toBeNull();
   });
 
-  it('excludes blocked slots, matched by the minute and only on their own date', () => {
-    const blocked = [
-      new Date(2026, 8, 15, 11, 0, 30).toISOString(), // seconds are ignored
-      new Date(2026, 8, 16, 9, 0).toISOString(),
-    ];
-    expect(getBlockedSlots('2026-09-15', blocked)).toEqual(['11:00']);
-    expect(getAvailableSlots('2026-09-15', afternoon, blocked)).toEqual(TOUR_TIME_SLOTS.filter((s) => s !== '11:00'));
-    expect(getBlockedSlots('2026-09-17', blocked)).toEqual([]);
+  it('picks the first bookable slot, preferring a given date', () => {
+    expect(findFirstBookableSlot(slots)).toMatchObject({ date: '2026-09-16', slot: { localTime: '11:00' } });
+    // A day with nothing bookable falls through to the next day that has something
+    expect(findFirstBookableSlot(slots, '2026-09-14')).toMatchObject({ date: '2026-09-16', slot: { localTime: '11:00' } });
+    expect(findFirstBookableSlot({ ...slots, days: [slots.days[0], slots.days[1]] })).toBeNull();
   });
 
-  it('builds a 14-day window starting today', () => {
-    const dates = getVisitDates(afternoon);
-    expect(dates).toHaveLength(14);
-    expect(dates[0]).toBe('2026-09-14');
-    expect(dates[13]).toBe('2026-09-27');
+  it('compares slot instants by the minute', () => {
+    expect(toSlotMinute('2026-09-16T05:30:20Z')).toBe(toSlotMinute('2026-09-16T05:30:00Z'));
+    expect(toSlotMinute(new Date('2026-09-16T05:31:00Z'))).not.toBe(toSlotMinute('2026-09-16T05:30:00Z'));
   });
 
-  it('starts tomorrow once every slot today has passed', () => {
-    const dates = getVisitDates(new Date(2026, 8, 14, 19, 30));
-    expect(dates).toHaveLength(14);
-    expect(dates[0]).toBe('2026-09-15');
+  it('only calls a timezone the visitor"s when it matches their own', () => {
+    const visitorZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    expect(isVisitorTimezone(visitorZone)).toBe(true);
+    expect(isVisitorTimezone(visitorZone === 'Asia/Kolkata' ? 'America/New_York' : 'Asia/Kolkata')).toBe(false);
   });
 
-  it('formats local ISO dates across month boundaries', () => {
+  it('labels a timezone with its short name when there is one', () => {
+    expect(formatTimezone('Asia/Kolkata', new Date('2026-09-16T05:30:00Z'))).toContain('Asia/Kolkata');
+    expect(formatTimezone('Not/AZone')).toBe('Not/AZone');
+  });
+
+  it('builds local dates and slot instants', () => {
     expect(toLocalIsoDate(new Date(2026, 8, 30 + 1))).toBe('2026-10-01');
+    expect(toLocalSlot('2026-09-16', '11:00').getHours()).toBe(11);
   });
 });

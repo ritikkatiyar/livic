@@ -1,6 +1,7 @@
 import { ApiError } from '../client';
 import { PagedResult } from '@/types/api';
 import { CreateLeadRequest, LeadResponse, MyTourRequest, RazorpayOrderPayload, TOUR_SLOT_DECLINED_CODE } from '@/types/lead';
+import { TourSlot, TourSlotDay, TourSlots, TourSlotStatus } from '@/types/tourSlot';
 import { toSlotMinute } from '@/utils/visitSlots';
 import { MOCK_PROPERTIES } from './properties.mock';
 
@@ -28,9 +29,47 @@ function findDeclinedMockSlots(phone: string, propertyId: string, now = Date.now
     .sort();
 }
 
-export async function mockGetDeclinedTourSlots(otpSessionToken: string, propertyId: string): Promise<string[]> {
+/** Mirrors the backend defaults: every day 09:00-20:00, hourly, 1 hour notice, 14 days, property time. */
+const MOCK_SLOT_HOURS = { first: 9, lastStart: 19 };
+const MOCK_SLOT_MINUTES = 60;
+const MOCK_BOOKING_WINDOW_DAYS = 14;
+const MOCK_NOTICE_MS = 60 * 60 * 1000;
+
+export async function mockGetTourSlots(propertyId: string, otpSessionToken?: string | null): Promise<TourSlots> {
   await new Promise((resolve) => setTimeout(resolve, 150));
-  return findDeclinedMockSlots(phoneFromMockToken(otpSessionToken), propertyId);
+  const now = Date.now();
+  const declined = new Set(
+    (otpSessionToken?.startsWith(MOCK_TOKEN_PREFIX) ? findDeclinedMockSlots(phoneFromMockToken(otpSessionToken), propertyId, now) : [])
+      .map(toSlotMinute)
+  );
+  const activeSlots = Object.values(MOCK_TOURS_DB)
+    .filter((t) => t.propertyId === propertyId && isActiveMockTour(t, now))
+    .map((t) => toSlotMinute(t.preferredSlot));
+
+  const today = new Date();
+  const days: TourSlotDay[] = Array.from({ length: MOCK_BOOKING_WINDOW_DAYS }, (_, offset) => {
+    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
+    const slots: TourSlot[] = [];
+    for (let hour = MOCK_SLOT_HOURS.first; hour <= MOCK_SLOT_HOURS.lastStart; hour++) {
+      const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour);
+      const minute = toSlotMinute(start);
+      const status: TourSlotStatus = start.getTime() < now + MOCK_NOTICE_MS
+        ? 'UNAVAILABLE'
+        : declined.has(minute)
+          ? 'DECLINED'
+          : activeSlots.includes(minute)
+            ? 'FULL'
+            : 'AVAILABLE';
+      slots.push({ start: start.toISOString(), localTime: `${String(hour).padStart(2, '0')}:00`, status });
+    }
+    return {
+      date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+      closed: false,
+      slots,
+    };
+  });
+
+  return { propertyId, timezone: 'Asia/Kolkata', slotMinutes: MOCK_SLOT_MINUTES, days };
 }
 
 export async function mockRequestOtp(

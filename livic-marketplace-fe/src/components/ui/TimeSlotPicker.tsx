@@ -2,17 +2,15 @@
 
 import React, { useRef } from 'react';
 import { Sunrise, Sun, Sunset } from 'lucide-react';
+import { TourSlot, TourSlotStatus } from '@/types/tourSlot';
 import { formatSlotLabel, getSlotPeriod, SlotPeriod } from '@/utils/visitSlots';
 
 type TimeSlotPickerProps = {
-  /** All slots as `HH:mm`, in order. */
-  slots: string[];
-  /** Slots that can currently be chosen; the rest render disabled. */
-  availableSlots: string[];
-  /** Disabled slots the landlord declined for this visitor, marked as such instead of just greyed out. */
-  declinedSlots?: string[];
+  /** The property's slots for the chosen date, in order. */
+  slots: TourSlot[];
+  /** `HH:mm` of the selected slot. */
   value: string;
-  onChange: (slot: string) => void;
+  onChange: (localTime: string) => void;
   label: string;
   id?: string;
 };
@@ -23,38 +21,51 @@ const PERIOD_ICONS: Record<SlotPeriod, React.ComponentType<{ className?: string 
   Evening: Sunset,
 };
 
-export function TimeSlotPicker({ slots, availableSlots, declinedSlots = [], value, onChange, label, id }: TimeSlotPickerProps) {
+/** Short reason shown under a slot that can't be picked. */
+const STATUS_NOTE: Partial<Record<TourSlotStatus, string>> = {
+  DECLINED: 'Declined',
+  FULL: 'Full',
+};
+
+const STATUS_DESCRIPTION: Partial<Record<TourSlotStatus, string>> = {
+  DECLINED: 'declined by the property manager',
+  FULL: 'fully booked',
+  UNAVAILABLE: 'not available',
+};
+
+export function TimeSlotPicker({ slots, value, onChange, label, id }: TimeSlotPickerProps) {
   const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const periods = (['Morning', 'Afternoon', 'Evening'] as SlotPeriod[])
-    .map((period) => ({ period, slots: slots.filter((s) => getSlotPeriod(s) === period) }))
+    .map((period) => ({ period, slots: slots.filter((s) => getSlotPeriod(s.localTime) === period) }))
     .filter((group) => group.slots.length > 0);
 
-  const focusable = availableSlots.includes(value) ? value : availableSlots[0];
+  const bookable = slots.filter((s) => s.status === 'AVAILABLE').map((s) => s.localTime);
+  const focusable = bookable.includes(value) ? value : bookable[0];
 
   const move = (from: string, step: number) => {
-    const index = availableSlots.indexOf(from);
-    const next = availableSlots[Math.min(Math.max(index + step, 0), availableSlots.length - 1)];
+    const index = bookable.indexOf(from);
+    const next = bookable[Math.min(Math.max(index + step, 0), bookable.length - 1)];
     if (next) {
       onChange(next);
       optionRefs.current[next]?.focus();
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, slot: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, localTime: string) => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       e.preventDefault();
-      move(slot, 1);
+      move(localTime, 1);
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       e.preventDefault();
-      move(slot, -1);
+      move(localTime, -1);
     }
   };
 
-  if (availableSlots.length === 0 && declinedSlots.length === 0) {
+  if (slots.length === 0) {
     return (
       <p className="text-xs text-slate-600 dark:text-slate-400 py-3 text-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
-        No visit slots left on this day. Please pick another date.
+        No visit times on this day. Please pick another date.
       </p>
     );
   }
@@ -70,36 +81,37 @@ export function TimeSlotPicker({ slots, availableSlots, declinedSlots = [], valu
             </span>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {periodSlots.map((slot) => {
-                const available = availableSlots.includes(slot);
-                const declined = !available && declinedSlots.includes(slot);
-                const selected = available && slot === value;
+                const available = slot.status === 'AVAILABLE';
+                const selected = available && slot.localTime === value;
+                const note = STATUS_NOTE[slot.status];
+                const timeLabel = formatSlotLabel(slot.localTime);
                 return (
                   <button
-                    key={slot}
+                    key={slot.start}
                     ref={(el) => {
-                      optionRefs.current[slot] = el;
+                      optionRefs.current[slot.localTime] = el;
                     }}
                     type="button"
                     role="radio"
                     aria-checked={selected}
                     aria-disabled={!available}
-                    aria-label={declined ? `${formatSlotLabel(slot)}, declined by the property manager` : undefined}
+                    aria-label={available ? undefined : `${timeLabel}, ${STATUS_DESCRIPTION[slot.status]}`}
                     disabled={!available}
-                    tabIndex={slot === focusable ? 0 : -1}
-                    onClick={() => onChange(slot)}
-                    onKeyDown={(e) => handleKeyDown(e, slot)}
+                    tabIndex={slot.localTime === focusable ? 0 : -1}
+                    onClick={() => onChange(slot.localTime)}
+                    onKeyDown={(e) => handleKeyDown(e, slot.localTime)}
                     className={`rounded-lg border py-2 text-xs font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                       selected
                         ? 'bg-gradient-to-r from-indigo-600 to-purple-600 border-transparent text-white shadow-lg shadow-indigo-600/30'
                         : available
                           ? 'glass-card border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-500/50 hover:text-indigo-600 dark:hover:text-indigo-300'
-                          : declined
+                          : note
                             ? 'border-rose-500/30 bg-rose-500/5 dark:bg-rose-500/10 text-rose-600/80 dark:text-rose-400/80 cursor-not-allowed'
                             : 'border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-600 line-through cursor-not-allowed'
                     }`}
                   >
-                    {formatSlotLabel(slot)}
-                    {declined && <span className="block text-[10px] font-medium leading-tight">Declined</span>}
+                    {timeLabel}
+                    {note && <span className="block text-[10px] font-medium leading-tight">{note}</span>}
                   </button>
                 );
               })}

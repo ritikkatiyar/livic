@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { getDeclinedTourSlots } from '@/api/marketplace';
+import { useState } from 'react';
+import { useTourSlots } from '@/features/leads/useTourSlots';
 import { PropertyDetail } from '@/types/property';
 import { UnitSummary } from '@/types/unit';
 import { CreateLeadRequest, LeadResponse, LeadType } from '@/types/lead';
@@ -50,41 +50,16 @@ export function RoomConversionContainer({ property, unit }: Props) {
 
   const { submitLead, loading: leadLoading, error: leadError, duplicate, clearDuplicate } = useCreateLead();
 
-  // Slots the landlord declined for the verified phone: loaded once per session, plus any refused on submit
-  const declinedKey = otpSessionToken ? `${otpSessionToken}:${property.id}` : null;
-  const [loadedDeclined, setLoadedDeclined] = useState<{ key: string; slots: string[] } | null>(null);
-  const [refusedSlots, setRefusedSlots] = useState<{ phone: string; slot: string }[]>([]);
-
-  useEffect(() => {
-    if (!otpSessionToken || !declinedKey) return;
-    let active = true;
-    getDeclinedTourSlots(otpSessionToken, property.id).then(
-      (res) => {
-        if (active) setLoadedDeclined({ key: declinedKey, slots: res.data ?? [] });
-      },
-      () => {
-        // Not critical: the server still refuses a declined slot when the request is submitted
-      }
-    );
-    return () => {
-      active = false;
-    };
-  }, [otpSessionToken, property.id, declinedKey]);
-
-  const declinedSlots = useMemo(
-    () => [
-      ...(loadedDeclined && loadedDeclined.key === declinedKey ? loadedDeclined.slots : []),
-      ...refusedSlots.filter((r) => r.phone === verifiedPhone).map((r) => r.slot),
-    ],
-    [loadedDeclined, declinedKey, refusedSlots, verifiedPhone]
-  );
+  // The property's visit slots; reloaded once a phone is verified (to mark declined slots) and after a refusal
+  const { slots, isLoading: isLoadingSlots, reload: reloadSlots } = useTourSlots(property.id, otpSessionToken);
 
   const createLeadWithToken = async (req: CreateLeadRequest, token: string) => {
-    const { lead, error, declinedSlot } = await submitLead(property.id, unit.id, req, token);
+    const { lead, error, slotRefused } = await submitLead(property.id, unit.id, req, token);
     if (lead) {
       setLeadResponse(lead);
-    } else if (declinedSlot) {
-      setRefusedSlots((prev) => [...prev, { phone: req.prospectPhone, slot: declinedSlot }]);
+    } else if (slotRefused) {
+      // The slot was taken, declined or withdrawn since the form loaded: show the current ones
+      reloadSlots();
     } else if (isOtpSessionError(error)) {
       // Expired or rejected session: the next submit starts a fresh OTP verification
       clearSession();
@@ -136,7 +111,8 @@ export function RoomConversionContainer({ property, unit }: Props) {
             onSubmitLead={handleFormSubmit}
             loading={otpLoading || leadLoading}
             verifiedPhone={verifiedPhone}
-            declinedSlots={declinedSlots}
+            slots={slots}
+            isLoadingSlots={isLoadingSlots}
           />
         ) : (
           <BookingForm

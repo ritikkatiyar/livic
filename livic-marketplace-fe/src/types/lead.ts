@@ -17,6 +17,8 @@ export type LeadStatus =
 
 /** Error code of the 409 returned when a phone re-requests a visit slot the landlord already declined. */
 export const TOUR_SLOT_DECLINED_CODE = 'TOUR_SLOT_DECLINED';
+/** Prefix of every 409 code meaning the chosen visit time can't be booked (declined, full, or not offered). */
+export const TOUR_SLOT_ERROR_PREFIX = 'TOUR_SLOT_';
 
 export type CreateLeadRequest = {
   leadType: LeadType;

@@ -2,10 +2,10 @@ import { apiRequest } from './client';
 import {
   mockCancelMyTourRequest,
   mockCreateLead,
-  mockGetDeclinedTourSlots,
   mockGetLeadStatus,
   mockGetMyTourRequests,
   mockInitiateTokenPayment,
+  mockGetTourSlots,
   mockRequestOtp,
   mockVerifyOtp,
 } from './mock/leads.mock';
@@ -26,6 +26,7 @@ import {
 import { ApiResponse, PagedResult } from '@/types/api';
 import { CreateLeadRequest, LeadResponse, MyTourRequest, RazorpayOrderPayload } from '@/types/lead';
 import { PropertyDetail, PropertySearchFilters, PropertySummary } from '@/types/property';
+import { TourSlots } from '@/types/tourSlot';
 import { UnitSummary } from '@/types/unit';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API !== 'false';
@@ -173,19 +174,19 @@ export async function cancelMyTourRequest(
   return res.data ? { ...res, data: toMyTourRequestPage({ content: [res.data], number: 0, size: 1, totalElements: 1, totalPages: 1 }).items[0] } : res;
 }
 
-/** Upcoming slots (ISO instants) the landlord declined for the verified phone at this property; they can't be requested again. */
-export async function getDeclinedTourSlots(otpSessionToken: string, propertyId: string): Promise<ApiResponse<string[]>> {
+/**
+ * The visit slots this property currently offers, generated from the landlord's visiting hours.
+ * With a verified phone session, slots the landlord declined for that phone are marked.
+ */
+export async function getTourSlots(propertyId: string, otpSessionToken?: string | null): Promise<ApiResponse<TourSlots>> {
   if (USE_MOCK) {
-    const data = await mockGetDeclinedTourSlots(otpSessionToken, propertyId);
+    const data = await mockGetTourSlots(propertyId, otpSessionToken);
     return { success: true, data };
   }
 
-  const queryParams = new URLSearchParams({ propertyId });
-  const res = await apiRequest<{ propertyId: string; slots: string[] | null }>(
-    `/marketplace/my/tour-requests/declined-slots?${queryParams.toString()}`,
-    { otpSessionToken }
-  );
-  return { ...res, data: res.data?.slots ?? [] };
+  return apiRequest<TourSlots>(`/marketplace/properties/${propertyId}/tour-slots`, {
+    otpSessionToken: otpSessionToken ?? undefined,
+  });
 }
 
 export async function createLead(

@@ -1,8 +1,4 @@
-/** Visit slots offered to prospects (local time, 24h). */
-export const TOUR_TIME_SLOTS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
-
-/** How many days ahead a visit can be booked. */
-export const TOUR_BOOKING_WINDOW_DAYS = 14;
+import { TourSlot, TourSlots } from '@/types/tourSlot';
 
 export type SlotPeriod = 'Morning' | 'Afternoon' | 'Evening';
 
@@ -24,6 +20,7 @@ export function toLocalSlot(date: string, time: string): Date {
   return new Date(`${date}T${time}:00`);
 }
 
+/** `16:00` → `4:00 PM`. */
 export function formatSlotLabel(time: string): string {
   const [h, m] = time.split(':').map(Number);
   return `${h % 12 || 12}:${pad(m)} ${h >= 12 ? 'PM' : 'AM'}`;
@@ -42,28 +39,42 @@ export function toSlotMinute(slot: string | Date): number {
   return Math.floor(ms / 60_000);
 }
 
-/** The `HH:mm` picker slots on `date` that match one of the `blockedSlots` instants (ISO strings). */
-export function getBlockedSlots(date: string, blockedSlots: readonly string[]): string[] {
-  if (blockedSlots.length === 0) return [];
-  const blocked = new Set(blockedSlots.map(toSlotMinute));
-  return TOUR_TIME_SLOTS.filter((slot) => blocked.has(toSlotMinute(toLocalSlot(date, slot))));
+/** The slot at `localTime` on `date`, whatever its status; null when the property doesn't offer it. */
+export function findSlot(slots: TourSlots, date: string, localTime: string): TourSlot | null {
+  if (!date || !localTime) return null;
+  const day = slots.days.find((d) => d.date === date);
+  return day?.slots.find((slot) => slot.localTime === localTime) ?? null;
 }
 
-/** Slots on `date` that are still in the future relative to `now` and not blocked (e.g. declined by the landlord). */
-export function getAvailableSlots(date: string, now: Date, blockedSlots: readonly string[] = []): string[] {
-  const blocked = getBlockedSlots(date, blockedSlots);
-  return TOUR_TIME_SLOTS.filter((slot) => toLocalSlot(date, slot) > now && !blocked.includes(slot));
-}
-
-/** Bookable visit dates starting today; today is skipped once all of its slots have passed. */
-export function getVisitDates(now: Date, days: number = TOUR_BOOKING_WINDOW_DAYS): string[] {
-  const dates: string[] = [];
-  for (let offset = 0; dates.length < days; offset++) {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
-    const iso = toLocalIsoDate(d);
-    if (offset > 0 || getAvailableSlots(iso, now).length > 0) {
-      dates.push(iso);
-    }
+/** The first bookable slot, preferring `preferredDate` and otherwise the soonest day that has one. */
+export function findFirstBookableSlot(slots: TourSlots, preferredDate?: string): { date: string; slot: TourSlot } | null {
+  const days = preferredDate
+    ? [...slots.days.filter((d) => d.date === preferredDate), ...slots.days.filter((d) => d.date !== preferredDate)]
+    : slots.days;
+  for (const day of days) {
+    const slot = day.slots.find((s) => s.status === 'AVAILABLE');
+    if (slot) return { date: day.date, slot };
   }
-  return dates;
+  return null;
+}
+
+/** Whether the property's timezone is the visitor's own, so times need no explanation. */
+export function isVisitorTimezone(timezone: string): boolean {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone === timezone;
+  } catch {
+    return true;
+  }
+}
+
+/** `Asia/Kolkata` → `Asia/Kolkata (IST)` when the short name is known. */
+export function formatTimezone(timezone: string, now: Date = new Date()): string {
+  try {
+    const short = new Intl.DateTimeFormat('en-IN', { timeZone: timezone, timeZoneName: 'short' })
+      .formatToParts(now)
+      .find((part) => part.type === 'timeZoneName')?.value;
+    return short && short !== timezone ? `${timezone} · ${short}` : timezone;
+  } catch {
+    return timezone;
+  }
 }

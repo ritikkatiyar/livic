@@ -85,11 +85,4 @@ public class MyTourRequestServiceImpl implements MyTourRequestService {
         return TourRequestMapper.toMyResponse(lead, property, unitNumber, now);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public TourRequestDTOs.DeclinedTourSlotsResponse listDeclinedSlots(String sessionToken, UUID propertyId) {
-        String phone = otpService.resolveVerifiedPhone(sessionToken);
-        List<Instant> slots = leadRepository.findUpcomingRejectedTourSlots(propertyId, phone, Instant.now());
-        return new TourRequestDTOs.DeclinedTourSlotsResponse(propertyId, slots);
-    }
 }

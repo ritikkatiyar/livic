@@ -1,4 +1,4 @@
--- Flyway Migration V14: Create Marketplace Schema for public rental listings, leads, OTP verification & QR links
+﻿-- Flyway Migration V19: Create Marketplace Schema for public rental listings, leads, OTP verification & QR links
 -- Property amenities live in property_amenities_tbl (V10); unit amenities are stored as JSON on unit_tbl.
 
 ALTER TABLE property_tbl

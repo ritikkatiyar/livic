@@ -56,6 +56,8 @@ export default function DesktopNavBar({
 
   const query = searchQuery !== undefined ? searchQuery : localSearch;
   const selectedProp = properties.find(p => p.id === selectedPropertyId);
+  /** The popover that lists properties only exists when the search box is rendered with properties to choose from. */
+  const canSelectProperty = Boolean(properties.length > 0 && onPropertyChange && (showSearch || onSearchChange) && showPopoverList);
 
   const filteredProperties = (properties || []).filter(p =>
     !query || p.name.toLowerCase().includes(query.toLowerCase())
@@ -80,13 +82,33 @@ export default function DesktopNavBar({
           </TouchableOpacity>
         ) : null}
 
-        {/* Current Selected Property Badge (Read-only, NOT a dropdown) */}
-        <View style={styles.propertyScopeBadge}>
-          <MaterialIcons name="apartment" size={16} color={theme.Colors.primary} />
-          <Text style={styles.propertyScopeBadgeText} numberOfLines={1}>
-            {selectedProp ? selectedProp.name : 'All Properties'}
-          </Text>
-        </View>
+        {/* Current property scope. Opens the same list as the search popover, which is where the choice is made. */}
+        {canSelectProperty ? (
+          <TouchableOpacity
+            style={styles.propertyScopeBadge}
+            onPress={() => setIsSearchFocused(prev => !prev)}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel={`Select property, currently ${selectedProp ? selectedProp.name : 'All Properties'}`}
+          >
+            <MaterialIcons name="apartment" size={16} color={theme.Colors.primary} />
+            <Text style={styles.propertyScopeBadgeText} numberOfLines={1}>
+              {selectedProp ? selectedProp.name : 'All Properties'}
+            </Text>
+            <MaterialIcons
+              name={isSearchFocused ? 'arrow-drop-up' : 'arrow-drop-down'}
+              size={18}
+              color={theme.Colors.onSurfaceVariant}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.propertyScopeBadge}>
+            <MaterialIcons name="apartment" size={16} color={theme.Colors.primary} />
+            <Text style={styles.propertyScopeBadgeText} numberOfLines={1}>
+              {selectedProp ? selectedProp.name : 'All Properties'}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Right Area: Search + Actions */}
@@ -399,7 +421,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.outlineVariant,
     backgroundColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 12,

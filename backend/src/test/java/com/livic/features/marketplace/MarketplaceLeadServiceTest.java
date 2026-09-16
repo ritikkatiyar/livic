@@ -41,6 +41,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -196,7 +197,8 @@ public class MarketplaceLeadServiceTest {
                 txId, leadId, "ONLINE", "MARKETPLACE_LEAD", leadId, "RAZORPAY", "order_razorpay_123",
                 new BigDecimal("2000.00"), "PENDING", null, null, null, null, null);
 
-        when(paymentFacade.initiateOnlinePaymentTransaction(eq(leadId), eq("MARKETPLACE_LEAD"), eq(leadId), eq(new BigDecimal("2000.00"))))
+        // The prospect has no account, so the transaction is created without a payer
+        when(paymentFacade.initiateOnlinePaymentTransaction(isNull(), eq("MARKETPLACE_LEAD"), eq(leadId), eq(new BigDecimal("2000.00"))))
                 .thenReturn(tx);
 
         MarketplaceLeadDTOs.TokenPaymentInitResponse response = leadService.initiateTokenPayment(leadId);

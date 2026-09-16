@@ -167,11 +167,11 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
         }
 
         BigDecimal amount = lead.getTokenAmount() != null ? lead.getTokenAmount() : DEFAULT_TOKEN_AMOUNT;
-        UUID pseudoPayerId = lead.getId();
 
-        // Delegate online payment initiation to the payment module
+        // Delegate online payment initiation to the payment module. The prospect has no account yet, so the
+        // transaction has no payer and is identified by the lead it belongs to.
         PaymentTransactionResponse transaction = paymentFacade.initiateOnlinePaymentTransaction(
-                pseudoPayerId,
+                null,
                 "MARKETPLACE_LEAD",
                 lead.getId(),
                 amount

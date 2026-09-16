@@ -47,9 +47,10 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Reference ID cannot be null for payment initiation");
         }
 
-        // 1. Request Razorpay order from the gateway
+        // 1. Request Razorpay order from the gateway. A payer without an account (e.g. a marketplace
+        // prospect paying a booking token) is identified to the gateway by what the payment is for.
         PaymentIntentRequest intentRequest = new PaymentIntentRequest(
-                payerUserId.toString(),
+                payerUserId != null ? payerUserId.toString() : referenceType + ":" + referenceId,
                 amount.doubleValue(),
                 PaymentConstants.Currency.INR,
                 "Rent statement online payment",

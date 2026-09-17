@@ -96,6 +96,7 @@ const queryClient = new QueryClient({
 });
 
 import { PropertySelectionProvider, useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
+import { AdminTutorialProvider } from '@/src/features/onboarding/context/AdminTutorialContext';
 
 type LinearGradientWithWebProps = LinearGradientProps & {
   dataSet?: Record<string, string | number | boolean | undefined>;
@@ -262,8 +263,9 @@ export default function RootLayout() {
             <QueryClientProvider client={queryClient}>
               <ToastProvider>
                 <AuthProvider>
-                  <PropertySelectionProvider>
-                    <ScrollProvider>
+                  <AdminTutorialProvider>
+                    <PropertySelectionProvider>
+                      <ScrollProvider>
                     {showDesktop && !hideNavigation ? (
                       <DesktopLayoutShell>
                         <ScreenWrapper isAuth={hideNavigation}>
@@ -373,7 +375,8 @@ export default function RootLayout() {
                     )}
                     </ScrollProvider>
                   </PropertySelectionProvider>
-                </AuthProvider>
+                </AdminTutorialProvider>
+              </AuthProvider>
           </ToastProvider>
           <StatusBar style="auto" translucent backgroundColor="transparent" />
         </QueryClientProvider>

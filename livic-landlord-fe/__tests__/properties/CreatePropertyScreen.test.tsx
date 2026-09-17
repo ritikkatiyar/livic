@@ -12,6 +12,11 @@ jest.mock('expo-blur', () => {
   return { BlurView: View };
 });
 
+// The admin setup tutorial bar needs its provider and isn't what this test covers
+jest.mock('../../src/features/onboarding/components/ContextualStepGuideBar', () => ({
+  ContextualStepGuideBar: () => null,
+}));
+
 jest.mock('expo-router', () => ({
   useRouter: () => ({
     push: jest.fn(),

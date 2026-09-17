@@ -2,6 +2,8 @@ package com.livic.services.property.service.interfaces;
 
 import com.livic.platform.common.service.interfaces.CrudService;
 import com.livic.services.property.domain.UnitTbl;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,4 +18,5 @@ public interface UnitCrudService extends CrudService<UnitTbl, UUID> {
     long countByPropertyIdIn(List<UUID> propertyIds);
     void deleteByPropertyId(UUID propertyId);
     List<UUID> findIdsByUnitNumberPattern(String pattern);
+    Page<UnitTbl> findListingUnits(UUID propertyId, boolean availableOnly, Pageable pageable);
 }

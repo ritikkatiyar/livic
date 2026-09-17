@@ -21,6 +21,8 @@ import FilterPill from '@/src/components/common/inputs/FilterPill';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { createStyles } from './OwnerLeasesScreen.styles';
 import { useOwnerLeases } from '../hooks/useOwnerLeases';
+import { useTourRequestSummary } from '../hooks/useTourRequests';
+import { TourRequestsPanel } from '../components/TourRequestsPanel';
 import {
   BookRoomModal, ServeNoticeModal, CashTokenModal,
   ConvertToLeaseModal, EditLeaseTermsModal,
@@ -28,6 +30,8 @@ import {
 import { LeaseResponse } from '@/src/features/tenant/api/lease.api';
 import { UnitBookingResponse } from '@/src/features/leases/api/unitBooking.api';
 import { useRouter } from 'expo-router';
+import { ContextualStepGuideBar } from '@/src/features/onboarding/components/ContextualStepGuideBar';
+import { useAdminTutorial } from '@/src/features/onboarding/context/AdminTutorialContext';
 
 export default function OwnerLeasesScreen() {
   const { theme, isDark } = useAppTheme();
@@ -68,6 +72,16 @@ export default function OwnerLeasesScreen() {
     handleConvertBookingToLease, handleOpenEditTerms, handleSaveTerms,
   } = data;
 
+  const { autoDetectProgress } = useAdminTutorial();
+  const { data: tourSummary } = useTourRequestSummary(selectedPropertyId);
+
+  React.useEffect(() => {
+    autoDetectProgress({
+      bookingCount: filteredBookings.length,
+      leaseCount: filteredLeases.length,
+    });
+  }, [filteredBookings.length, filteredLeases.length, autoDetectProgress]);
+
   const STAT_COLORS = React.useMemo(() => [
     theme.Colors.primary, theme.Colors.error, theme.Colors.secondary, theme.Colors.tertiary,
   ], [theme]);
@@ -90,6 +104,7 @@ export default function OwnerLeasesScreen() {
   const TABS = [
     { id: 'leases' as const, label: 'Active Leases', icon: 'description' as const, count: activeLeasesDisplayCount },
     { id: 'bookings' as const, label: 'Pending Bookings', icon: 'bookmark' as const, count: pendingBookingsCount },
+    { id: 'tours' as const, label: 'Tour Requests', icon: 'event' as const, count: tourSummary?.pending ?? 0 },
     { id: 'vacancies' as const, label: 'Vacating & Notices', icon: 'door-sliding' as const, count: vacatingUnits.length },
   ];
 
@@ -124,6 +139,9 @@ export default function OwnerLeasesScreen() {
               />
             </View>
           </View>
+
+          <ContextualStepGuideBar stepId="ADD_TENANT" />
+          <ContextualStepGuideBar stepId="CREATE_LEASE" />
 
           {/* Stats */}
           <View style={[styles.statsRow, isDesktop && styles.statsRowDesktop]}>
@@ -177,7 +195,9 @@ export default function OwnerLeasesScreen() {
 
           {/* Main Content Area */}
           <View style={styles.tabContentContainer}>
-            {isLoadingData && filteredLeases.length === 0 ? (
+            {activeTab === 'tours' ? (
+              <TourRequestsPanel propertyId={selectedPropertyId} isDesktop={isDesktop} searchQuery={searchQuery} />
+            ) : isLoadingData && filteredLeases.length === 0 ? (
               <View style={styles.loadingBox}>
                 <ActivityIndicator size="large" color={theme.Colors.primary} />
                 <Text style={styles.loadingText}>Syncing lease records...</Text>

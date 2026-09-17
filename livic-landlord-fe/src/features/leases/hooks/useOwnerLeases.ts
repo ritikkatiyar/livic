@@ -21,6 +21,10 @@ import {
   UnitBookingResponse,
 } from '@/src/features/leases/api/unitBooking.api';
 import { getAllFloorsLayout, UnitResponse } from '@/src/features/properties/api/unit.api';
+import { useLocalSearchParams } from 'expo-router';
+
+export type LeasesTab = 'leases' | 'bookings' | 'tours' | 'vacancies';
+const LEASES_TABS: LeasesTab[] = ['leases', 'bookings', 'tours', 'vacancies'];
 
 export function useOwnerLeases() {
   const { accessToken } = useAuth();
@@ -28,7 +32,11 @@ export function useOwnerLeases() {
   const { showToast } = useToast();
 
   const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
-  const [activeTab, setActiveTab] = useState<'leases' | 'bookings' | 'vacancies'>('leases');
+  // Deep links (e.g. /leases?tab=tours from a notification) open the requested tab
+  const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
+  const [activeTab, setActiveTab] = useState<LeasesTab>(
+    LEASES_TABS.includes(tabParam as LeasesTab) ? (tabParam as LeasesTab) : 'leases'
+  );
   const [searchQuery, setSearchQuery] = useState('');
 
   const [leases, setLeases] = useState<LeaseResponse[]>([]);

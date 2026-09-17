@@ -1,8 +1,11 @@
 package com.livic.services.property.facade.impl;
 
 import com.livic.platform.common.domain.LeaseStatus;
+import com.livic.platform.common.domain.PropertyType;
 import com.livic.services.property.dto.PropertySummaryDTO;
+import com.livic.services.property.dto.PublicPropertyListingDTO;
 import com.livic.services.property.facade.PropertyFacade;
+import com.livic.services.property.service.interfaces.PropertyCrudService;
 import com.livic.services.property.service.interfaces.PropertyQueryService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -27,6 +30,7 @@ public class PropertyFacadeImpl implements PropertyFacade {
     private EntityManager entityManager;
 
     private final PropertyQueryService propertyQueryService;
+    private final PropertyCrudService propertyCrudService;
 
     @Override
     public Optional<PropertySummaryDTO> getPropertyById(UUID propertyId) {
@@ -99,5 +103,30 @@ public class PropertyFacadeImpl implements PropertyFacade {
             result.add(new PropertyOccupancySummaryDTO(propId, propName, totalUnits, occupiedUnits));
         }
         return result;
+    }
+
+    @Override
+    public Page<PublicPropertyListingDTO> searchPublicListings(String city, PropertyType type, Pageable pageable) {
+        return propertyCrudService.searchPublicProperties(city, type, pageable)
+                .map(PublicPropertyListingDTO::from);
+    }
+
+    @Override
+    public Optional<PublicPropertyListingDTO> getPublicListing(UUID propertyId) {
+        return propertyCrudService.findById(propertyId)
+                .filter(p -> p.isPubliclyListed() && p.isActive())
+                .map(PublicPropertyListingDTO::from);
+    }
+
+    @Override
+    @Transactional
+    public Optional<String> getOrCreateQrSlug(UUID propertyId) {
+        return propertyCrudService.findById(propertyId).map(property -> {
+            if (property.getQrSlug() == null || property.getQrSlug().isBlank()) {
+                property.setQrSlug("qr_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12));
+                propertyCrudService.save(property);
+            }
+            return property.getQrSlug();
+        });
     }
 }

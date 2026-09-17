@@ -31,6 +31,9 @@ import { useCommandCenter } from '@/src/features/properties/hooks/useCommandCent
 import { PropertyCard } from '@/src/features/properties/components/PropertyCard';
 import { BroadcastComposerModal } from '@/src/features/properties/components/BroadcastComposerModal';
 import { CommandCenterEmptyState } from '@/src/features/properties/components/CommandCenterEmptyState';
+import { useAdminTutorial } from '@/src/features/onboarding/context/AdminTutorialContext';
+import { AdminTutorialBanner } from '@/src/features/onboarding/components/AdminTutorialBanner';
+import { AdminTutorialModal } from '@/src/features/onboarding/components/AdminTutorialModal';
 import { createStyles } from './CommandCenterScreen.styles';
 
 
@@ -82,6 +85,14 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
 
   // Issues hook for alerts count
   const { metrics: issueMetrics } = useIssues(accessToken);
+
+  const { autoDetectProgress } = useAdminTutorial();
+
+  useEffect(() => {
+    if (!isLoading) {
+      autoDetectProgress({ propertyCount: properties.length });
+    }
+  }, [properties.length, isLoading, autoDetectProgress]);
 
   useEffect(() => {
     async function loadMetrics() {
@@ -197,6 +208,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
 
   const ListHeader = () => (
     <Animated.View style={[styles.titleContainer, !isDesktop && { opacity: largeTitleOpacity }]}>
+      <AdminTutorialBanner />
       {isDesktop ? (
         <>
           <View style={styles.desktopTitleRow}>
@@ -388,6 +400,9 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
           }}
         />
       )}
+
+      {/* Admin Setup Checklist Tutorial Modal */}
+      <AdminTutorialModal />
     </>
   );
 }

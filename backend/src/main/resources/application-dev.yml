@@ -18,6 +18,11 @@ spring:
       hibernate:
         show_sql: false
         format_sql: false
+app:
+  marketplace:
+    otp:
+      # Dev only: every marketplace OTP is this fixed code (no SMS provider locally). Never set this outside dev.
+      dev-code: ${MARKETPLACE_DEV_OTP_CODE:000000}
 logging:
   level:
     com.livic: DEBUG

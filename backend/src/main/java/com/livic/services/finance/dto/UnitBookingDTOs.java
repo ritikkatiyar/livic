@@ -21,6 +21,17 @@ package com.livic.services.finance.dto;
                @NotNull LocalDate expectedMoveInDate
        ) {}
 
+       /** A booking whose token amount has already been paid, e.g. through a marketplace lead. */
+       public record PaidBookingRequest(
+               @NotNull UUID unitId,
+               @NotBlank String prospectiveTenantName,
+               @NotBlank String prospectiveTenantPhone,
+               String prospectiveTenantEmail,
+               @NotNull @Positive BigDecimal tokenAmount,
+               @NotNull LocalDate expectedMoveInDate,
+               @NotNull UUID paymentTransactionId
+       ) {}
+
        public record UnitBookingResponse(
                UUID id,
                UUID unitId,

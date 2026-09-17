@@ -2,6 +2,7 @@ package com.livic.services.finance.facade;
 
 import com.livic.services.finance.dto.ChargeConfigResponse;
 import com.livic.services.finance.dto.LeaseSummaryDTO;
+import com.livic.services.finance.dto.UnitBookingDTOs;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -49,4 +50,7 @@ public interface FinanceFacade {
     BigDecimal getTotalExpenses(List<UUID> propertyIds);
 
     Map<String, BigDecimal> getOperationalOverhead(List<UUID> propertyIds);
+
+    // Booking Write Methods
+    UnitBookingDTOs.UnitBookingResponse createPaidBooking(UnitBookingDTOs.PaidBookingRequest request);
 }

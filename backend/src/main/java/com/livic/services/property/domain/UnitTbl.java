@@ -6,6 +6,8 @@ import com.livic.platform.common.domain.UnitType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "unit_tbl", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"property_id", "unit_number"})
@@ -50,4 +52,17 @@ public class UnitTbl extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private FacingDirection facing;
+
+    @Column(name = "base_price", precision = 12, scale = 2)
+    private BigDecimal basePrice;
+
+    @Column(name = "is_bookable", nullable = false)
+    @Builder.Default
+    private boolean isBookable = false;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(columnDefinition = "JSON")
+    private String amenities;
 }

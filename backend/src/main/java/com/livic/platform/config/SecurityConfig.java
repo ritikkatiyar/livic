@@ -61,7 +61,8 @@ public class SecurityConfig {
                                 "/api/v1/billing/plans",
                                 "/api/v1/billing/webhooks/**",
                                 "/api/v1/payments/webhooks/**",
-                                "/api/v1/finance/rent-cycles/*/invoice"
+                                "/api/v1/finance/rent-cycles/*/invoice",
+                                "/api/v1/marketplace/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

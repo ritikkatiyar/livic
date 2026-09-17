@@ -262,6 +262,82 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
   );
 }
 
+// ── 6. Reject Tour Request Modal ─────────────────────────────────────────────
+export const TOUR_REJECTION_NOTE_MAX = 500;
+
+export function RejectTourModal({ visible, onClose, prospectName, visitLabel, onSubmit, isSubmitting }: {
+  visible: boolean; onClose: () => void;
+  prospectName: string; visitLabel: string;
+  onSubmit: (note: string | null) => void; isSubmitting: boolean;
+}) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const [note, setNote] = React.useState('');
+
+  // Every rejection starts with an empty note
+  React.useEffect(() => {
+    if (visible) setNote('');
+  }, [visible]);
+
+  return (
+    <ModalShell visible={visible} onClose={onClose}>
+      <View style={[styles.card, { maxWidth: 480 }]}>
+        <View style={styles.header}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.kicker, { color: theme.Colors.error }]}>TOUR REQUEST</Text>
+            <Text style={[styles.title, { color: theme.Colors.onSurface }]}>Decline visit request</Text>
+            <Text style={[styles.subtitle, { color: theme.Colors.onSurfaceVariant }]}>
+              {prospectName} · {visitLabel}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={onClose} style={styles.closeBtn} accessibilityLabel="Close">
+            <MaterialIcons name="close" size={theme.IconSizes.md} color={theme.Colors.onSurfaceVariant} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.body}>
+          <Text style={[styles.label, { color: theme.Colors.onSurface }]}>Note for the prospect (optional)</Text>
+          <TextInput
+            value={note}
+            onChangeText={setNote}
+            placeholder="e.g. That room is booked for the week — please pick another date."
+            placeholderTextColor={theme.Colors.onSurfaceVariant}
+            maxLength={TOUR_REJECTION_NOTE_MAX}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+            style={[styles.input, styles.multilineInput]}
+            accessibilityLabel="Rejection note"
+          />
+          <Text style={[styles.helperText, { color: theme.Colors.onSurfaceVariant }]}>
+            {note.length}/{TOUR_REJECTION_NOTE_MAX} · Shown to the prospect on their request status.
+          </Text>
+        </View>
+        <View style={styles.footer}>
+          <TouchableOpacity onPress={onClose} style={styles.cancelBtn} disabled={isSubmitting}>
+            <Text style={[styles.cancelBtnText, { color: theme.Colors.onSurface }]}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => onSubmit(note.trim() ? note.trim() : null)}
+            disabled={isSubmitting}
+            style={styles.submitBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Reject request"
+          >
+            <View style={[styles.submitBtnInner, { backgroundColor: theme.Colors.error }]}>
+              {isSubmitting ? <ActivityIndicator size="small" color={theme.Colors.onError} /> : (
+                <>
+                  <MaterialIcons name="close" size={theme.IconSizes.md} color={theme.Colors.onError} />
+                  <Text style={[styles.submitBtnText, { color: theme.Colors.onError }]}>Reject Request</Text>
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ModalShell>
+  );
+}
+
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   overlay: {
     flex: 1,
@@ -282,6 +358,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: 20, paddingBottom: 12 },
   kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 0.2, marginBottom: 2 },
   title: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '600' },
+  subtitle: { fontSize: theme.Typography.bodySmall.fontSize, marginTop: theme.Spacing.xs },
   closeBtn: { padding: theme.Spacing.xs },
   body: { paddingHorizontal: 20, paddingBottom: theme.Spacing.sm, maxHeight: 420 },
   label: { fontSize: theme.Typography.labelMedium.fontSize, fontWeight: '600', marginBottom: 6, letterSpacing: 0.2 },
@@ -297,6 +374,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : theme.Colors.outlineVariant,
     color: theme.Colors.onSurface,
   },
+  multilineInput: { minHeight: 104, fontWeight: '400', marginBottom: theme.Spacing.xs },
+  helperText: { fontSize: theme.Typography.labelSmall.fontSize, marginBottom: theme.Spacing.sm },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

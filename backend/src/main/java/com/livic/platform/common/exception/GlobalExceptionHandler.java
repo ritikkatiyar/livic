@@ -6,9 +6,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Comparator;
@@ -41,6 +44,57 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.badRequest().body(apiError);
+    }
+
+    /** A body that isn't readable as JSON is the caller's mistake, not a server fault. */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleUnreadableBody(
+            HttpMessageNotReadableException exception,
+            HttpServletRequest request
+    ) {
+        // The parser message can quote the payload, so it is logged but never returned
+        log.warn("[MALFORMED_REQUEST_BODY] uri={} reason={}", request.getRequestURI(), exception.getMostSpecificCause().getMessage());
+
+        return ResponseEntity.badRequest().body(ApiError.of(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Request body is missing or is not valid JSON",
+                request.getRequestURI()
+        ));
+    }
+
+    /** A path variable or query parameter of the wrong type, e.g. an id that isn't a UUID. */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleTypeMismatch(
+            MethodArgumentTypeMismatchException exception,
+            HttpServletRequest request
+    ) {
+        log.warn("[INVALID_REQUEST_PARAMETER] uri={} name={}", request.getRequestURI(), exception.getName());
+
+        return ResponseEntity.badRequest().body(ApiError.withFieldErrors(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Invalid request parameter",
+                request.getRequestURI(),
+                List.of(new FieldErrorDetail(exception.getName(), "Invalid value"))
+        ));
+    }
+
+    /** A required query parameter that was not sent. */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiError> handleMissingParameter(
+            MissingServletRequestParameterException exception,
+            HttpServletRequest request
+    ) {
+        log.warn("[MISSING_REQUEST_PARAMETER] uri={} name={}", request.getRequestURI(), exception.getParameterName());
+
+        return ResponseEntity.badRequest().body(ApiError.withFieldErrors(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Missing request parameter",
+                request.getRequestURI(),
+                List.of(new FieldErrorDetail(exception.getParameterName(), "This parameter is required"))
+        ));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

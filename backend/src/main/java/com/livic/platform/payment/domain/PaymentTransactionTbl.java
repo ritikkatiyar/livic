@@ -17,7 +17,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class PaymentTransactionTbl extends BaseEntity {
 
-    @Column(name = "payer_user_id", nullable = false)
+    /** Null when the payer has no account yet, e.g. a marketplace prospect paying a booking token. */
+    @Column(name = "payer_user_id")
     private UUID payerUserId;
 
     @Column(name = "payment_method", nullable = false, length = 32)

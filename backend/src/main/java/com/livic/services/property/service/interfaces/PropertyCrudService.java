@@ -1,5 +1,6 @@
 package com.livic.services.property.service.interfaces;
 
+import com.livic.platform.common.domain.PropertyType;
 import com.livic.platform.common.service.interfaces.CrudService;
 import com.livic.services.property.domain.PropertyTbl;
 
@@ -15,4 +16,5 @@ public interface PropertyCrudService extends CrudService<PropertyTbl, UUID> {
     List<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds);
     Page<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds, Pageable pageable);
     Page<PropertyTbl> findDistinctByIdInAndSearch(Collection<UUID> propertyIds, String search, Pageable pageable);
+    Page<PropertyTbl> searchPublicProperties(String city, PropertyType type, Pageable pageable);
 }

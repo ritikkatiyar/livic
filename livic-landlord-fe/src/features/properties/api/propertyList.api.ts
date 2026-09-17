@@ -10,12 +10,17 @@ export interface PropertyListResponse {
 }
 
 export async function getMyProperties(token: string, search?: string): Promise<PropertyResponse[]> {
-  const url = search
-    ? `/api/v1/properties?size=20&search=${encodeURIComponent(search)}`
-    : `/api/v1/properties?size=20`;
-  const response = await apiRequest<PropertyListResponse>(url, {
-    method: 'GET',
-    token,
-  });
-  return response?.content || [];
+  try {
+    const url = search
+      ? `/api/v1/properties?size=20&search=${encodeURIComponent(search)}`
+      : `/api/v1/properties?size=20`;
+    const response = await apiRequest<PropertyListResponse>(url, {
+      method: 'GET',
+      token,
+    });
+    return response?.content || [];
+  } catch (err) {
+    console.warn('[getMyProperties] Backend offline or unreachable, returning empty list.', err);
+    return [];
+  }
 }

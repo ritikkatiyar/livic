@@ -3,6 +3,7 @@ package com.livic.services.finance.mapper;
 import com.livic.platform.common.domain.UnitBookingStatus;
 import com.livic.services.finance.domain.UnitBookingTbl;
 import com.livic.services.finance.dto.UnitBookingDTOs.CreateBookingRequest;
+import com.livic.services.finance.dto.UnitBookingDTOs.PaidBookingRequest;
 import com.livic.services.finance.dto.UnitBookingDTOs.UnitBookingResponse;
 
 import java.util.UUID;
@@ -10,6 +11,19 @@ import java.util.UUID;
 public final class UnitBookingMapper {
 
     private UnitBookingMapper() {
+    }
+
+    public static UnitBookingTbl toEntity(PaidBookingRequest request) {
+        return UnitBookingTbl.builder()
+                .unitId(request.unitId())
+                .prospectiveTenantName(request.prospectiveTenantName())
+                .prospectiveTenantPhone(request.prospectiveTenantPhone())
+                .prospectiveTenantEmail(request.prospectiveTenantEmail())
+                .tokenAmount(request.tokenAmount())
+                .expectedMoveInDate(request.expectedMoveInDate())
+                .status(UnitBookingStatus.BOOKED.name())
+                .paymentTransactionId(request.paymentTransactionId())
+                .build();
     }
 
     public static UnitBookingTbl toEntity(CreateBookingRequest request, UUID unitId) {

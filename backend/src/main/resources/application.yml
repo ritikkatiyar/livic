@@ -84,7 +84,7 @@ app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:8081}
     allowed-methods: ${APP_CORS_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}
-    allowed-headers: ${APP_CORS_ALLOWED_HEADERS:Authorization,Content-Type,Accept,Origin,X-Correlation-Id}
+    allowed-headers: ${APP_CORS_ALLOWED_HEADERS:Authorization,Content-Type,Accept,Origin,X-Correlation-Id,X-Otp-Session-Token}
     allow-credentials: ${APP_CORS_ALLOW_CREDENTIALS:true}
 
 razorpay:

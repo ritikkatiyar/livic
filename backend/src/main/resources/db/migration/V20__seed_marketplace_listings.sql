@@ -1,4 +1,4 @@
-﻿-- Flyway Migration V20: Marketplace listing seed data (prices, bookability, descriptions and photos)
+-- Flyway Migration V20: Marketplace listing seed data (prices, bookability, descriptions and photos)
 -- Targets only the demo properties created by V2 (matched by name), so it is a no-op on databases without them.
 
 -- 1. Property descriptions
@@ -11,7 +11,7 @@ SET description = CONCAT(name, ' offers comfortable twin-sharing rooms with home
 WHERE name LIKE 'mom''s pg %' AND description IS NULL;
 
 -- 2. Unit pricing, bookability, descriptions and amenities
--- Livic Residency: single units priced by floor (â‚¹13,000 - â‚¹17,000); the second unit on each floor is open for instant booking
+-- Livic Residency: single units priced by floor (₹13,000 - ₹17,000); the second unit on each floor is open for instant booking
 UPDATE unit_tbl u
 JOIN property_tbl p ON p.id = u.property_id
 SET u.base_price  = 12000 + (u.floor * 1000),
@@ -20,7 +20,7 @@ SET u.base_price  = 12000 + (u.floor * 1000),
     u.amenities   = JSON_ARRAY('Attached Bathroom', 'Air Conditioning', 'Study Desk', 'Wardrobe')
 WHERE p.name = 'Livic Residency' AND u.base_price IS NULL;
 
--- mom's pg N: twin-sharing units priced by PG number and floor (â‚¹5,900 - â‚¹8,500); every fifth unit is open for instant booking
+-- mom's pg N: twin-sharing units priced by PG number and floor (₹5,900 - ₹8,500); every fifth unit is open for instant booking
 UPDATE unit_tbl u
 JOIN property_tbl p ON p.id = u.property_id
 SET u.base_price  = 5500 + (CAST(SUBSTRING_INDEX(p.name, ' ', -1) AS UNSIGNED) * 250) + (u.floor * 150),

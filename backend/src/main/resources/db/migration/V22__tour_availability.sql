@@ -1,4 +1,4 @@
-﻿-- Flyway Migration V22: landlord-defined visiting hours for marketplace tour requests.
+-- Flyway Migration V22: landlord-defined visiting hours for marketplace tour requests.
 -- A property without a settings row uses the defaults (every day 09:00-20:00, 60-minute slots, Asia/Kolkata),
 -- so existing listings keep accepting visits exactly as before.
 

@@ -1,4 +1,4 @@
-﻿-- Flyway Migration V21: Tour request lifecycle (landlord approve/reject, prospect cancel) and one active tour per phone per property
+-- Flyway Migration V21: Tour request lifecycle (landlord approve/reject, prospect cancel) and one active tour per phone per property
 
 ALTER TABLE marketplace_lead_tbl
     ADD COLUMN decision_note VARCHAR(500) DEFAULT NULL,

@@ -1,7 +1,8 @@
 package com.livic.features.marketplace.mapper;
 
 import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
-import com.livic.features.marketplace.dto.TourRequestDTOs;
+import com.livic.features.marketplace.dto.TourRequestDTOs.LandlordTourRequestResponse;
+import com.livic.features.marketplace.dto.TourRequestDTOs.MyTourRequestResponse;
 import com.livic.features.marketplace.slots.TourSchedule;
 import com.livic.features.marketplace.slots.TourSlotCalculator;
 import com.livic.services.property.dto.PropertySummaryDTO;
@@ -16,11 +17,11 @@ public final class TourRequestMapper {
      * @param visitingHours the property's current schedule; an active request outside it is flagged so the landlord
      *                      can decide what to do (requests are never cancelled automatically when hours change)
      */
-    public static TourRequestDTOs.LandlordTourRequestResponse toLandlordResponse(
+    public static LandlordTourRequestResponse toLandlordResponse(
             MarketplaceLeadTbl lead, String unitNumber, TourSchedule visitingHours, Instant now) {
         boolean outsideVisitingHours = lead.isActiveTour(now)
                 && !TourSlotCalculator.isWithinVisitingHours(visitingHours, lead.getPreferredSlot());
-        return new TourRequestDTOs.LandlordTourRequestResponse(
+        return new LandlordTourRequestResponse(
                 lead.getId(),
                 lead.getPropertyId(),
                 lead.getUnitId(),
@@ -37,13 +38,13 @@ public final class TourRequestMapper {
         );
     }
 
-    public static TourRequestDTOs.MyTourRequestResponse toMyResponse(
+    public static MyTourRequestResponse toMyResponse(
             MarketplaceLeadTbl lead,
             PropertySummaryDTO property,
             String unitNumber,
             Instant now
     ) {
-        return new TourRequestDTOs.MyTourRequestResponse(
+        return new MyTourRequestResponse(
                 lead.getId(),
                 lead.getPropertyId(),
                 property != null ? property.name() : null,

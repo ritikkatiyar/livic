@@ -3,7 +3,15 @@ package com.livic.features.marketplace.service.impl;
 import com.livic.features.marketplace.domain.TourAvailabilitySettingsTbl;
 import com.livic.features.marketplace.domain.TourAvailabilityWindowTbl;
 import com.livic.features.marketplace.domain.TourBlackoutTbl;
-import com.livic.features.marketplace.dto.TourAvailabilityDTOs;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.BlackoutResponse;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.CreateBlackoutRequest;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.DayHours;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.TimeWindow;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.TourAvailabilityResponse;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.TourSlot;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.TourSlotDay;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.TourSlotsResponse;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.UpdateTourAvailabilityRequest;
 import com.livic.features.marketplace.exception.TourSlotUnavailableException;
 import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.features.marketplace.repository.TourAvailabilitySettingsRepository;
@@ -62,22 +70,22 @@ public class TourAvailabilityServiceImpl implements TourAvailabilityService {
 
     @Override
     @Transactional(readOnly = true)
-    public TourAvailabilityDTOs.TourAvailabilityResponse getAvailability(UUID propertyId) {
+    public TourAvailabilityResponse getAvailability(UUID propertyId) {
         TourSchedule schedule = getSchedule(propertyId);
         LocalDate today = LocalDate.now(schedule.zone());
-        List<TourAvailabilityDTOs.BlackoutResponse> blackouts = blackoutRepository
+        List<BlackoutResponse> blackouts = blackoutRepository
                 .findByPropertyIdAndBlackoutDateGreaterThanEqualOrderByBlackoutDateAscStartTimeAsc(propertyId, today)
                 .stream()
                 .map(TourAvailabilityServiceImpl::toBlackoutResponse)
                 .toList();
 
-        List<TourAvailabilityDTOs.DayHours> weeklyHours = Arrays.stream(DayOfWeek.values())
-                .map(day -> new TourAvailabilityDTOs.DayHours(day, schedule.hoursOn(day).stream()
-                        .map(range -> new TourAvailabilityDTOs.TimeWindow(range.start(), range.end()))
+        List<DayHours> weeklyHours = Arrays.stream(DayOfWeek.values())
+                .map(day -> new DayHours(day, schedule.hoursOn(day).stream()
+                        .map(range -> new TimeWindow(range.start(), range.end()))
                         .toList()))
                 .toList();
 
-        return new TourAvailabilityDTOs.TourAvailabilityResponse(
+        return new TourAvailabilityResponse(
                 propertyId,
                 schedule.customized(),
                 schedule.zone().getId(),
@@ -92,12 +100,12 @@ public class TourAvailabilityServiceImpl implements TourAvailabilityService {
 
     @Override
     @Transactional
-    public TourAvailabilityDTOs.TourAvailabilityResponse updateAvailability(
-            UUID propertyId, TourAvailabilityDTOs.UpdateTourAvailabilityRequest request, UUID userId) {
+    public TourAvailabilityResponse updateAvailability(
+            UUID propertyId, UpdateTourAvailabilityRequest request, UUID userId) {
         if (!SLOT_LENGTHS.contains(request.slotMinutes())) {
             throw new BusinessException("Slot length must be 30 or 60 minutes");
         }
-        Map<DayOfWeek, List<TourAvailabilityDTOs.TimeWindow>> weeklyHours = validateWeeklyHours(request.weeklyHours(), request.slotMinutes());
+        Map<DayOfWeek, List<TimeWindow>> weeklyHours = validateWeeklyHours(request.weeklyHours(), request.slotMinutes());
 
         // Replace the windows first: the bulk delete clears the persistence context
         windowRepository.deleteByPropertyId(propertyId);
@@ -130,7 +138,7 @@ public class TourAvailabilityServiceImpl implements TourAvailabilityService {
 
     @Override
     @Transactional
-    public TourAvailabilityDTOs.BlackoutResponse addBlackout(UUID propertyId, TourAvailabilityDTOs.CreateBlackoutRequest request, UUID userId) {
+    public BlackoutResponse addBlackout(UUID propertyId, CreateBlackoutRequest request, UUID userId) {
         ZoneId zone = zoneOf(settingsRepository.findByPropertyId(propertyId));
         LocalDate today = LocalDate.now(zone);
         if (request.date().isBefore(today)) {
@@ -178,7 +186,7 @@ public class TourAvailabilityServiceImpl implements TourAvailabilityService {
 
     @Override
     @Transactional(readOnly = true)
-    public TourAvailabilityDTOs.TourSlotsResponse getTourSlots(UUID propertyId, String otpSessionToken) {
+    public TourSlotsResponse getTourSlots(UUID propertyId, String otpSessionToken) {
         if (propertyFacade.getPublicListing(propertyId).isEmpty()) {
             throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found or not publicly listed: " + propertyId);
         }
@@ -195,12 +203,12 @@ public class TourAvailabilityServiceImpl implements TourAvailabilityService {
                 .map(phone -> leadRepository.findUpcomingRejectedTourSlots(propertyId, phone, now))
                 .orElse(List.of());
 
-        List<TourAvailabilityDTOs.TourSlotDay> days = TourSlotCalculator.calculate(schedule, now, activeTours, declined).stream()
-                .map(day -> new TourAvailabilityDTOs.TourSlotDay(day.date(), day.dayOfWeek(), day.closed(), day.slots().stream()
-                        .map(slot -> new TourAvailabilityDTOs.TourSlot(slot.start(), slot.localTime(), slot.status()))
+        List<TourSlotDay> days = TourSlotCalculator.calculate(schedule, now, activeTours, declined).stream()
+                .map(day -> new TourSlotDay(day.date(), day.dayOfWeek(), day.closed(), day.slots().stream()
+                        .map(slot -> new TourSlot(slot.start(), slot.localTime(), slot.status()))
                         .toList()))
                 .toList();
-        return new TourAvailabilityDTOs.TourSlotsResponse(propertyId, schedule.zone().getId(), schedule.slotMinutes(), days);
+        return new TourSlotsResponse(propertyId, schedule.zone().getId(), schedule.slotMinutes(), days);
     }
 
     @Override
@@ -276,19 +284,19 @@ public class TourAvailabilityServiceImpl implements TourAvailabilityService {
         }
     }
 
-    private static Map<DayOfWeek, List<TourAvailabilityDTOs.TimeWindow>> validateWeeklyHours(
-            List<TourAvailabilityDTOs.DayHours> weeklyHours, int slotMinutes) {
-        Map<DayOfWeek, List<TourAvailabilityDTOs.TimeWindow>> byDay = new EnumMap<>(DayOfWeek.class);
+    private static Map<DayOfWeek, List<TimeWindow>> validateWeeklyHours(
+            List<DayHours> weeklyHours, int slotMinutes) {
+        Map<DayOfWeek, List<TimeWindow>> byDay = new EnumMap<>(DayOfWeek.class);
         Set<DayOfWeek> seen = EnumSet.noneOf(DayOfWeek.class);
-        for (TourAvailabilityDTOs.DayHours day : weeklyHours) {
+        for (DayHours day : weeklyHours) {
             if (!seen.add(day.dayOfWeek())) {
                 throw new BusinessException(day.dayOfWeek() + " is listed more than once");
             }
-            List<TourAvailabilityDTOs.TimeWindow> windows = day.windows().stream()
-                    .sorted(Comparator.comparing(TourAvailabilityDTOs.TimeWindow::start))
+            List<TimeWindow> windows = day.windows().stream()
+                    .sorted(Comparator.comparing(TimeWindow::start))
                     .toList();
             LocalTime previousEnd = null;
-            for (TourAvailabilityDTOs.TimeWindow window : windows) {
+            for (TimeWindow window : windows) {
                 requireOnTimeStep(window.start());
                 requireOnTimeStep(window.end());
                 if (!window.start().isBefore(window.end())) {
@@ -328,8 +336,8 @@ public class TourAvailabilityServiceImpl implements TourAvailabilityService {
         return day.name().charAt(0) + day.name().substring(1).toLowerCase();
     }
 
-    private static TourAvailabilityDTOs.BlackoutResponse toBlackoutResponse(TourBlackoutTbl blackout) {
-        return new TourAvailabilityDTOs.BlackoutResponse(blackout.getId(), blackout.getBlackoutDate(),
+    private static BlackoutResponse toBlackoutResponse(TourBlackoutTbl blackout) {
+        return new BlackoutResponse(blackout.getId(), blackout.getBlackoutDate(),
                 blackout.getStartTime(), blackout.getEndTime(), blackout.getReason());
     }
 }

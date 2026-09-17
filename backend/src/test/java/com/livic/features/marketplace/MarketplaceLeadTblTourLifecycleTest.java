@@ -103,9 +103,10 @@ class MarketplaceLeadTblTourLifecycleTest {
         assertEquals(HttpStatus.CONFLICT, visitPassed.getStatus());
         assertTrue(visitPassed.getMessage().contains("EXPIRED"));
 
+        // Services never pass a booking here, so it is a programming error rather than a client error
         MarketplaceLeadTbl booking = tour(LeadStatus.NEW, tomorrow());
         booking.setLeadType(LeadType.BOOKING);
-        assertEquals(HttpStatus.BAD_REQUEST, assertThrows(BusinessException.class, () -> booking.approve(landlordId, now)).getStatus());
+        assertThrows(IllegalStateException.class, () -> booking.approve(landlordId, now));
     }
 
     @Test

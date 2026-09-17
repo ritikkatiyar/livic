@@ -1,6 +1,9 @@
 package com.livic.features.marketplace.controller;
 
-import com.livic.features.marketplace.dto.TourRequestDTOs;
+import com.livic.features.marketplace.dto.TourRequestDTOs.LandlordTourRequestResponse;
+import com.livic.features.marketplace.dto.TourRequestDTOs.RejectTourRequest;
+import com.livic.features.marketplace.dto.TourRequestDTOs.TourRequestFilter;
+import com.livic.features.marketplace.dto.TourRequestDTOs.TourRequestSummaryResponse;
 import com.livic.features.marketplace.service.interfaces.TourRequestManagementService;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.platform.security.UserDetailsImpl;
@@ -26,7 +29,7 @@ import java.util.UUID;
 /** Landlord / property staff management of marketplace tour requests. */
 @Slf4j
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/marketplace")
 @RequiredArgsConstructor
 public class TourRequestManagementController {
 
@@ -34,9 +37,9 @@ public class TourRequestManagementController {
 
     @GetMapping("/properties/{propertyId}/tour-requests")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'LEASE_VIEW')")
-    public ResponseEntity<ApiResponse<Page<TourRequestDTOs.LandlordTourRequestResponse>>> listTourRequests(
+    public ResponseEntity<ApiResponse<Page<LandlordTourRequestResponse>>> listTourRequests(
             @PathVariable UUID propertyId,
-            @RequestParam(defaultValue = "PENDING") TourRequestDTOs.TourRequestFilter filter,
+            @RequestParam(defaultValue = "PENDING") TourRequestFilter filter,
             @PageableDefault(size = 20) Pageable pageable
     ) {
         return ResponseEntity.ok(ApiResponse.success(tourRequestService.listTourRequests(propertyId, filter, pageable)));
@@ -44,29 +47,25 @@ public class TourRequestManagementController {
 
     @GetMapping("/properties/{propertyId}/tour-requests/summary")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'LEASE_VIEW')")
-    public ResponseEntity<ApiResponse<TourRequestDTOs.TourRequestSummaryResponse>> getSummary(@PathVariable UUID propertyId) {
+    public ResponseEntity<ApiResponse<TourRequestSummaryResponse>> getSummary(@PathVariable UUID propertyId) {
         return ResponseEntity.ok(ApiResponse.success(tourRequestService.getSummary(propertyId)));
     }
 
     @PostMapping("/tour-requests/{leadId}/approve")
-    public ResponseEntity<ApiResponse<TourRequestDTOs.LandlordTourRequestResponse>> approve(
+    public ResponseEntity<ApiResponse<LandlordTourRequestResponse>> approve(
             @PathVariable UUID leadId,
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {
-        return ResponseEntity.ok(ApiResponse.success(tourRequestService.approve(leadId, callerUserId(currentUser))));
+        return ResponseEntity.ok(ApiResponse.success(tourRequestService.approve(leadId, currentUser.getUuid())));
     }
 
     @PostMapping("/tour-requests/{leadId}/reject")
-    public ResponseEntity<ApiResponse<TourRequestDTOs.LandlordTourRequestResponse>> reject(
+    public ResponseEntity<ApiResponse<LandlordTourRequestResponse>> reject(
             @PathVariable UUID leadId,
-            @Valid @RequestBody(required = false) TourRequestDTOs.RejectTourRequest request,
+            @Valid @RequestBody(required = false) RejectTourRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {
         String note = request != null ? request.note() : null;
-        return ResponseEntity.ok(ApiResponse.success(tourRequestService.reject(leadId, callerUserId(currentUser), note)));
-    }
-
-    private UUID callerUserId(UserDetailsImpl userDetails) {
-        return userDetails != null ? UUID.fromString(userDetails.getId()) : null;
+        return ResponseEntity.ok(ApiResponse.success(tourRequestService.reject(leadId, currentUser.getUuid(), note)));
     }
 }

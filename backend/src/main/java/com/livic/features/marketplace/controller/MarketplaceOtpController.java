@@ -1,8 +1,11 @@
 package com.livic.features.marketplace.controller;
 
-import com.livic.platform.common.response.ApiResponse;
-import com.livic.features.marketplace.dto.OtpDTOs;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpRequestRequest;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpRequestResponse;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpVerifyRequest;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpVerifyResponse;
 import com.livic.features.marketplace.service.interfaces.OtpService;
+import com.livic.platform.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,18 +22,18 @@ public class MarketplaceOtpController {
     private final OtpService otpService;
 
     @PostMapping("/request")
-    public ResponseEntity<ApiResponse<OtpDTOs.OtpRequestResponse>> requestOtp(
-            @Valid @RequestBody OtpDTOs.OtpRequestRequest request
+    public ResponseEntity<ApiResponse<OtpRequestResponse>> requestOtp(
+            @Valid @RequestBody OtpRequestRequest request
     ) {
-        OtpDTOs.OtpRequestResponse response = otpService.requestOtp(request);
+        OtpRequestResponse response = otpService.requestOtp(request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<ApiResponse<OtpDTOs.OtpVerifyResponse>> verifyOtp(
-            @Valid @RequestBody OtpDTOs.OtpVerifyRequest request
+    public ResponseEntity<ApiResponse<OtpVerifyResponse>> verifyOtp(
+            @Valid @RequestBody OtpVerifyRequest request
     ) {
-        OtpDTOs.OtpVerifyResponse response = otpService.verifyOtp(request);
+        OtpVerifyResponse response = otpService.verifyOtp(request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

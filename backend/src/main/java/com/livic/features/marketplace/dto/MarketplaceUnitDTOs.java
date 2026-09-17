@@ -1,5 +1,6 @@
 package com.livic.features.marketplace.dto;
 
+import com.livic.features.marketplace.dto.MarketplacePropertyDTOs.PropertySummaryResponse;
 import com.livic.platform.common.domain.FacingDirection;
 import com.livic.platform.common.domain.UnitType;
 
@@ -25,7 +26,7 @@ public class MarketplaceUnitDTOs {
     ) {}
 
     public record UnitDetailCompositeResponse(
-        MarketplacePropertyDTOs.PropertySummaryResponse property,
+        PropertySummaryResponse property,
         UnitSummaryResponse unit
     ) {}
 }

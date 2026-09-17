@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -84,7 +84,7 @@ export const ContextualStepGuideBar: React.FC<ContextualStepGuideBarProps> = ({
 
           <View style={styles.textContainer}>
             <View style={styles.labelRow}>
-              <Text style={styles.kicker}>INTERACTIVE GUIDE Â· STEP {step.stepNumber} OF 6</Text>
+              <Text style={styles.kicker}>INTERACTIVE GUIDE · STEP {step.stepNumber} OF 6</Text>
               <Text style={styles.title}>{step.title}</Text>
             </View>
             <Text style={styles.hintText}>{hintText}</Text>
@@ -299,9 +299,9 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isSmallMo
       marginTop: 2,
     },
     subStepBadgeText: {
-      fontSize: 10,
+      fontSize: theme.Typography.labelSmall.fontSize,
       fontWeight: '600',
-      color: theme.Colors.onPrimary || '#ffffff',
+      color: theme.Colors.onPrimary,
     },
     subStepHeaderRow: {
       flexDirection: 'row',

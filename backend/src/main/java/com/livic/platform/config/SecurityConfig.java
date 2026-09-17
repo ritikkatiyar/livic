@@ -52,6 +52,16 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jsonAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
+                        // Landlord tour management lives under the marketplace prefix but is never public;
+                        // these must be matched before the public marketplace rule below
+                        .requestMatchers(
+                                "/api/v1/marketplace/properties/*/tour-requests",
+                                "/api/v1/marketplace/properties/*/tour-requests/**",
+                                "/api/v1/marketplace/tour-requests/**",
+                                "/api/v1/marketplace/properties/*/tour-availability",
+                                "/api/v1/marketplace/properties/*/tour-blackouts",
+                                "/api/v1/marketplace/tour-blackouts/**"
+                        ).authenticated()
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/health",

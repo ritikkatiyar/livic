@@ -1,10 +1,13 @@
 package com.livic.features.marketplace.service.impl;
 
-import com.livic.platform.common.exception.BusinessException;
 import com.livic.features.marketplace.domain.OtpVerificationTbl;
-import com.livic.features.marketplace.dto.OtpDTOs;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpRequestRequest;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpRequestResponse;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpVerifyRequest;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpVerifyResponse;
 import com.livic.features.marketplace.repository.OtpVerificationRepository;
 import com.livic.features.marketplace.service.interfaces.OtpService;
+import com.livic.platform.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +43,7 @@ public class OtpServiceImpl implements OtpService {
 
     @Override
     @Transactional
-    public OtpDTOs.OtpRequestResponse requestOtp(OtpDTOs.OtpRequestRequest request) {
+    public OtpRequestResponse requestOtp(OtpRequestRequest request) {
         String phone = request.phone().trim();
         Instant now = Instant.now();
 
@@ -79,12 +82,12 @@ public class OtpServiceImpl implements OtpService {
             log.warn("Marketplace OTP dev code is enabled (app.marketplace.otp.dev-code); no SMS was sent");
         }
 
-        return new OtpDTOs.OtpRequestResponse(true, "OTP sent successfully", OTP_EXPIRY_MINUTES * 60, COOLDOWN_SECONDS);
+        return new OtpRequestResponse(OTP_EXPIRY_MINUTES * 60, COOLDOWN_SECONDS);
     }
 
     @Override
     @Transactional
-    public OtpDTOs.OtpVerifyResponse verifyOtp(OtpDTOs.OtpVerifyRequest request) {
+    public OtpVerifyResponse verifyOtp(OtpVerifyRequest request) {
         String phone = request.phone().trim();
         String code = request.code().trim();
         Instant now = Instant.now();
@@ -116,7 +119,7 @@ public class OtpServiceImpl implements OtpService {
         entity.setVerifiedAt(now);
         otpRepository.save(entity);
 
-        return new OtpDTOs.OtpVerifyResponse(sessionToken, tokenExpiresAt);
+        return new OtpVerifyResponse(sessionToken, tokenExpiresAt);
     }
 
     @Override

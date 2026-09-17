@@ -1,6 +1,6 @@
 package com.livic.features.marketplace.controller;
 
-import com.livic.features.marketplace.dto.TourRequestDTOs;
+import com.livic.features.marketplace.dto.TourRequestDTOs.MyTourRequestResponse;
 import com.livic.features.marketplace.service.interfaces.MyTourRequestService;
 import com.livic.platform.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class MyTourRequestController {
     private final MyTourRequestService myTourRequestService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<TourRequestDTOs.MyTourRequestResponse>>> listMyTourRequests(
+    public ResponseEntity<ApiResponse<Page<MyTourRequestResponse>>> listMyTourRequests(
             @RequestHeader(name = "X-Otp-Session-Token", required = false) String sessionToken,
             @PageableDefault(size = 20) Pageable pageable
     ) {
@@ -34,7 +34,7 @@ public class MyTourRequestController {
     }
 
     @PostMapping("/{leadId}/cancel")
-    public ResponseEntity<ApiResponse<TourRequestDTOs.MyTourRequestResponse>> cancelMyTourRequest(
+    public ResponseEntity<ApiResponse<MyTourRequestResponse>> cancelMyTourRequest(
             @PathVariable UUID leadId,
             @RequestHeader(name = "X-Otp-Session-Token", required = false) String sessionToken
     ) {

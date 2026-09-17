@@ -1,7 +1,7 @@
 package com.livic.features.marketplace.service.impl;
 
 import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
-import com.livic.features.marketplace.dto.TourRequestDTOs;
+import com.livic.features.marketplace.dto.TourRequestDTOs.MyTourRequestResponse;
 import com.livic.features.marketplace.mapper.TourRequestMapper;
 import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.features.marketplace.service.interfaces.MyTourRequestService;
@@ -43,7 +43,7 @@ public class MyTourRequestServiceImpl implements MyTourRequestService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TourRequestDTOs.MyTourRequestResponse> listMyTourRequests(String sessionToken, Pageable pageable) {
+    public Page<MyTourRequestResponse> listMyTourRequests(String sessionToken, Pageable pageable) {
         // The phone always comes from the verified OTP session, never from the request
         String phone = otpService.resolveVerifiedPhone(sessionToken);
         Instant now = Instant.now();
@@ -66,7 +66,7 @@ public class MyTourRequestServiceImpl implements MyTourRequestService {
 
     @Override
     @Transactional
-    public TourRequestDTOs.MyTourRequestResponse cancelMyTourRequest(String sessionToken, UUID leadId) {
+    public MyTourRequestResponse cancelMyTourRequest(String sessionToken, UUID leadId) {
         String phone = otpService.resolveVerifiedPhone(sessionToken);
         Instant now = Instant.now();
 

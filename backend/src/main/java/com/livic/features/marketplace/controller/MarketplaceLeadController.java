@@ -1,8 +1,11 @@
 package com.livic.features.marketplace.controller;
 
-import com.livic.platform.common.response.ApiResponse;
-import com.livic.features.marketplace.dto.MarketplaceLeadDTOs;
+import com.livic.features.marketplace.dto.MarketplaceLeadDTOs.CreateLeadRequest;
+import com.livic.features.marketplace.dto.MarketplaceLeadDTOs.LeadResponse;
+import com.livic.features.marketplace.dto.MarketplaceLeadDTOs.LeadStatusResponse;
+import com.livic.features.marketplace.dto.MarketplaceLeadDTOs.TokenPaymentInitResponse;
 import com.livic.features.marketplace.service.interfaces.MarketplaceLeadService;
+import com.livic.platform.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,29 +28,29 @@ public class MarketplaceLeadController {
     private final MarketplaceLeadService leadService;
 
     @PostMapping("/properties/{propertyId}/units/{unitId}/leads")
-    public ResponseEntity<ApiResponse<MarketplaceLeadDTOs.LeadResponse>> createLead(
+    public ResponseEntity<ApiResponse<LeadResponse>> createLead(
             @PathVariable UUID propertyId,
             @PathVariable UUID unitId,
             @RequestHeader(name = "X-Otp-Session-Token", required = false) String sessionToken,
-            @Valid @RequestBody MarketplaceLeadDTOs.CreateLeadRequest request
+            @Valid @RequestBody CreateLeadRequest request
     ) {
-        MarketplaceLeadDTOs.LeadResponse response = leadService.createLead(propertyId, unitId, request, sessionToken);
+        LeadResponse response = leadService.createLead(propertyId, unitId, request, sessionToken);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
     @GetMapping("/leads/{leadId}")
-    public ResponseEntity<ApiResponse<MarketplaceLeadDTOs.LeadStatusResponse>> getLeadStatus(
+    public ResponseEntity<ApiResponse<LeadStatusResponse>> getLeadStatus(
             @PathVariable UUID leadId
     ) {
-        MarketplaceLeadDTOs.LeadStatusResponse response = leadService.getLeadStatus(leadId);
+        LeadStatusResponse response = leadService.getLeadStatus(leadId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping("/leads/{leadId}/token-payment/online")
-    public ResponseEntity<ApiResponse<MarketplaceLeadDTOs.TokenPaymentInitResponse>> initiateTokenPayment(
+    public ResponseEntity<ApiResponse<TokenPaymentInitResponse>> initiateTokenPayment(
             @PathVariable UUID leadId
     ) {
-        MarketplaceLeadDTOs.TokenPaymentInitResponse response = leadService.initiateTokenPayment(leadId);
+        TokenPaymentInitResponse response = leadService.initiateTokenPayment(leadId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

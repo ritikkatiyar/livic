@@ -1,17 +1,20 @@
 package com.livic.features.marketplace.service.impl;
 
-import com.livic.platform.common.domain.LeadStatus;
-import com.livic.platform.common.domain.LeadType;
-import com.livic.platform.common.exception.BusinessException;
 import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
-import com.livic.features.marketplace.dto.MarketplaceLeadDTOs;
-import com.livic.features.marketplace.dto.TourRequestDTOs;
+import com.livic.features.marketplace.dto.MarketplaceLeadDTOs.CreateLeadRequest;
+import com.livic.features.marketplace.dto.MarketplaceLeadDTOs.LeadResponse;
+import com.livic.features.marketplace.dto.MarketplaceLeadDTOs.LeadStatusResponse;
+import com.livic.features.marketplace.dto.MarketplaceLeadDTOs.TokenPaymentInitResponse;
+import com.livic.features.marketplace.dto.TourRequestDTOs.ExistingTourRequestSummary;
 import com.livic.features.marketplace.exception.DuplicateTourRequestException;
 import com.livic.features.marketplace.mapper.MarketplaceLeadMapper;
 import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.features.marketplace.service.interfaces.MarketplaceLeadService;
 import com.livic.features.marketplace.service.interfaces.OtpService;
 import com.livic.features.marketplace.service.interfaces.TourAvailabilityService;
+import com.livic.platform.common.domain.LeadStatus;
+import com.livic.platform.common.domain.LeadType;
+import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.payment.dto.PaymentTransactionResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.services.property.dto.UnitListingDTO;
@@ -50,10 +53,10 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
 
     @Override
     @Transactional
-    public MarketplaceLeadDTOs.LeadResponse createLead(
+    public LeadResponse createLead(
             UUID propertyId,
             UUID unitId,
-            MarketplaceLeadDTOs.CreateLeadRequest request,
+            CreateLeadRequest request,
             String sessionToken
     ) {
         // 1. Validate OTP session token server-side
@@ -122,7 +125,7 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
 
     @Override
     @Transactional(readOnly = true)
-    public MarketplaceLeadDTOs.LeadStatusResponse getLeadStatus(UUID leadId) {
+    public LeadStatusResponse getLeadStatus(UUID leadId) {
         MarketplaceLeadTbl lead = leadRepository.findById(leadId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Marketplace lead not found with id: " + leadId));
         return MarketplaceLeadMapper.toStatusResponse(lead, Instant.now());
@@ -142,7 +145,7 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
                 leadRepository.saveAndFlush(tour);
             } else {
                 String unitNumber = unitFacade.getUnitListingById(tour.getUnitId()).map(UnitListingDTO::unitNumber).orElse(null);
-                throw new DuplicateTourRequestException(new TourRequestDTOs.ExistingTourRequestSummary(
+                throw new DuplicateTourRequestException(new ExistingTourRequestSummary(
                         tour.getId(), tour.getUnitId(), unitNumber, tour.getStatus(), tour.getPreferredSlot()));
             }
         }
@@ -154,7 +157,7 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
 
     @Override
     @Transactional
-    public MarketplaceLeadDTOs.TokenPaymentInitResponse initiateTokenPayment(UUID leadId) {
+    public TokenPaymentInitResponse initiateTokenPayment(UUID leadId) {
         MarketplaceLeadTbl lead = leadRepository.findById(leadId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Marketplace lead not found with id: " + leadId));
 
@@ -180,7 +183,7 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
         lead.setPaymentTransactionId(transaction.id());
         leadRepository.save(lead);
 
-        return new MarketplaceLeadDTOs.TokenPaymentInitResponse(
+        return new TokenPaymentInitResponse(
                 lead.getId(),
                 transaction.id(),
                 transaction.gatewayTransactionId(),

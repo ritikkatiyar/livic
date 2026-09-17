@@ -74,16 +74,13 @@ export async function mockGetTourSlots(propertyId: string, otpSessionToken?: str
 
 export async function mockRequestOtp(
   phone: string
-): Promise<{ success: boolean; message: string; resendAfterSeconds: number }> {
+): Promise<{ expiresSeconds: number; resendAfterSeconds: number }> {
   await new Promise((resolve) => setTimeout(resolve, 150));
   if (!phone || phone.length < 10) {
     throw new Error('Please enter a valid 10-digit mobile number');
   }
-  return {
-    success: true,
-    message: `OTP sent successfully to +91 ${phone}. Use 000000 for mock verification.`,
-    resendAfterSeconds: 60,
-  };
+  // Mock mode accepts 000000 as the code
+  return { expiresSeconds: 300, resendAfterSeconds: 60 };
 }
 
 export async function mockVerifyOtp(

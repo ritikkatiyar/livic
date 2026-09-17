@@ -1,6 +1,7 @@
 package com.livic.features.marketplace.mapper;
 
-import com.livic.features.marketplace.dto.MarketplacePropertyDTOs;
+import com.livic.features.marketplace.dto.MarketplacePropertyDTOs.PropertyDetailResponse;
+import com.livic.features.marketplace.dto.MarketplacePropertyDTOs.PropertySummaryResponse;
 import com.livic.services.property.dto.PublicPropertyListingDTO;
 
 import java.util.Collections;
@@ -10,7 +11,7 @@ public final class MarketplacePropertyMapper {
 
     private MarketplacePropertyMapper() {}
 
-    public static MarketplacePropertyDTOs.PropertySummaryResponse toSummaryResponse(
+    public static PropertySummaryResponse toSummaryResponse(
             PublicPropertyListingDTO property,
             List<String> imageUrls,
             String startingPrice,
@@ -20,7 +21,7 @@ public final class MarketplacePropertyMapper {
             return null;
         }
 
-        return new MarketplacePropertyDTOs.PropertySummaryResponse(
+        return new PropertySummaryResponse(
                 property.id(),
                 property.name(),
                 property.address(),
@@ -35,7 +36,7 @@ public final class MarketplacePropertyMapper {
         );
     }
 
-    public static MarketplacePropertyDTOs.PropertyDetailResponse toDetailResponse(
+    public static PropertyDetailResponse toDetailResponse(
             PublicPropertyListingDTO property,
             List<String> imageUrls,
             String startingPrice,
@@ -46,7 +47,7 @@ public final class MarketplacePropertyMapper {
             return null;
         }
 
-        return new MarketplacePropertyDTOs.PropertyDetailResponse(
+        return new PropertyDetailResponse(
                 property.id(),
                 property.name(),
                 property.address(),

@@ -1,12 +1,15 @@
 package com.livic.features.marketplace.service.interfaces;
 
-import com.livic.features.marketplace.dto.OtpDTOs;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpRequestRequest;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpRequestResponse;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpVerifyRequest;
+import com.livic.features.marketplace.dto.OtpDTOs.OtpVerifyResponse;
 
 public interface OtpService {
 
-    OtpDTOs.OtpRequestResponse requestOtp(OtpDTOs.OtpRequestRequest request);
+    OtpRequestResponse requestOtp(OtpRequestRequest request);
 
-    OtpDTOs.OtpVerifyResponse verifyOtp(OtpDTOs.OtpVerifyRequest request);
+    OtpVerifyResponse verifyOtp(OtpVerifyRequest request);
 
     void validateSessionToken(String sessionToken, String prospectPhone);
 

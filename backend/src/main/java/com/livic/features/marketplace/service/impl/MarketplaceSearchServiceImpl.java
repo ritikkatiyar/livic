@@ -1,14 +1,16 @@
 package com.livic.features.marketplace.service.impl;
 
-import com.livic.platform.common.domain.PropertyType;
-import com.livic.platform.common.enums.OwnerModule;
-import com.livic.platform.common.exception.BusinessException;
-import com.livic.features.marketplace.dto.MarketplacePropertyDTOs;
-import com.livic.features.marketplace.dto.MarketplaceUnitDTOs;
+import com.livic.features.marketplace.dto.MarketplacePropertyDTOs.PropertyDetailResponse;
+import com.livic.features.marketplace.dto.MarketplacePropertyDTOs.PropertySummaryResponse;
+import com.livic.features.marketplace.dto.MarketplaceUnitDTOs.UnitDetailCompositeResponse;
+import com.livic.features.marketplace.dto.MarketplaceUnitDTOs.UnitSummaryResponse;
 import com.livic.features.marketplace.mapper.MarketplacePropertyMapper;
 import com.livic.features.marketplace.mapper.MarketplaceUnitMapper;
 import com.livic.features.marketplace.qr.QrCodeService;
 import com.livic.features.marketplace.service.interfaces.MarketplaceSearchService;
+import com.livic.platform.common.domain.PropertyType;
+import com.livic.platform.common.enums.OwnerModule;
+import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.storage.dto.MediaDTOs;
 import com.livic.platform.storage.facade.StorageFacade;
 import com.livic.services.property.dto.PublicPropertyListingDTO;
@@ -50,7 +52,7 @@ public class MarketplaceSearchServiceImpl implements MarketplaceSearchService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MarketplacePropertyDTOs.PropertySummaryResponse> searchProperties(
+    public Page<PropertySummaryResponse> searchProperties(
             String city,
             PropertyType type,
             Pageable pageable
@@ -85,7 +87,7 @@ public class MarketplaceSearchServiceImpl implements MarketplaceSearchService {
 
     @Override
     @Transactional(readOnly = true)
-    public MarketplacePropertyDTOs.PropertyDetailResponse getPropertyDetail(UUID propertyId) {
+    public PropertyDetailResponse getPropertyDetail(UUID propertyId) {
         PublicPropertyListingDTO property = getPublicListingOrThrow(propertyId);
 
         List<String> propertyImages = imageUrls(propertyId);
@@ -100,7 +102,7 @@ public class MarketplaceSearchServiceImpl implements MarketplaceSearchService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MarketplaceUnitDTOs.UnitSummaryResponse> getPropertyUnits(UUID propertyId, boolean availableOnly, Pageable pageable) {
+    public Page<UnitSummaryResponse> getPropertyUnits(UUID propertyId, boolean availableOnly, Pageable pageable) {
         getPublicListingOrThrow(propertyId);
 
         Pageable page = PageRequest.of(pageable.getPageNumber(), Math.min(Math.max(pageable.getPageSize(), 1), MAX_UNITS_PAGE_SIZE));
@@ -115,7 +117,7 @@ public class MarketplaceSearchServiceImpl implements MarketplaceSearchService {
 
     @Override
     @Transactional(readOnly = true)
-    public MarketplaceUnitDTOs.UnitDetailCompositeResponse getUnitDetailComposite(UUID propertyId, UUID unitId) {
+    public UnitDetailCompositeResponse getUnitDetailComposite(UUID propertyId, UUID unitId) {
         PublicPropertyListingDTO property = getPublicListingOrThrow(propertyId);
 
         UnitListingDTO unit = unitFacade.getUnitListingById(unitId)
@@ -127,11 +129,11 @@ public class MarketplaceSearchServiceImpl implements MarketplaceSearchService {
 
         // Composite property summary
         List<UnitListingDTO> allPropUnits = unitFacade.getUnitListingsByPropertyId(propertyId);
-        MarketplacePropertyDTOs.PropertySummaryResponse propertySummary = MarketplacePropertyMapper.toSummaryResponse(
+        PropertySummaryResponse propertySummary = MarketplacePropertyMapper.toSummaryResponse(
                 property, imageUrls(propertyId), startingPrice(allPropUnits), allPropUnits.size());
 
         // Unit summary & images
-        MarketplaceUnitDTOs.UnitSummaryResponse unitSummary = MarketplaceUnitMapper.toResponse(unit, imageUrls(unitId));
+        UnitSummaryResponse unitSummary = MarketplaceUnitMapper.toResponse(unit, imageUrls(unitId));
 
         return MarketplaceUnitMapper.toCompositeResponse(propertySummary, unitSummary);
     }

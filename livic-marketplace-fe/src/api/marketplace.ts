@@ -103,7 +103,7 @@ export async function getUnitDetail(
   return { ...res, data: toUnitDetail(res.data) };
 }
 
-export type OtpRequestResult = { success: boolean; message: string; resendAfterSeconds?: number };
+export type OtpRequestResult = { expiresSeconds?: number; resendAfterSeconds?: number };
 
 export async function requestOtp(phone: string): Promise<ApiResponse<OtpRequestResult>> {
   if (USE_MOCK) {

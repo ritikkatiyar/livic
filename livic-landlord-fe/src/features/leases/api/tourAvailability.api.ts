@@ -72,7 +72,7 @@ export interface TourSlots {
 }
 
 export async function getTourAvailability(propertyId: string, token: string): Promise<TourAvailability> {
-  return apiRequest<TourAvailability>(`/api/v1/properties/${propertyId}/tour-availability`, { token });
+  return apiRequest<TourAvailability>(`/api/v1/marketplace/properties/${propertyId}/tour-availability`, { token });
 }
 
 export async function updateTourAvailability(
@@ -80,7 +80,7 @@ export async function updateTourAvailability(
   request: UpdateTourAvailabilityRequest,
   token: string
 ): Promise<TourAvailability> {
-  return apiRequest<TourAvailability>(`/api/v1/properties/${propertyId}/tour-availability`, {
+  return apiRequest<TourAvailability>(`/api/v1/marketplace/properties/${propertyId}/tour-availability`, {
     method: 'PUT',
     token,
     body: JSON.stringify(request),
@@ -88,7 +88,7 @@ export async function updateTourAvailability(
 }
 
 export async function addTourBlackout(propertyId: string, request: CreateBlackoutRequest, token: string): Promise<TourBlackout> {
-  return apiRequest<TourBlackout>(`/api/v1/properties/${propertyId}/tour-blackouts`, {
+  return apiRequest<TourBlackout>(`/api/v1/marketplace/properties/${propertyId}/tour-blackouts`, {
     method: 'POST',
     token,
     body: JSON.stringify(request),
@@ -96,7 +96,7 @@ export async function addTourBlackout(propertyId: string, request: CreateBlackou
 }
 
 export async function deleteTourBlackout(blackoutId: string, token: string): Promise<void> {
-  await apiRequest<void>(`/api/v1/tour-blackouts/${blackoutId}`, { method: 'DELETE', token });
+  await apiRequest<void>(`/api/v1/marketplace/tour-blackouts/${blackoutId}`, { method: 'DELETE', token });
 }
 
 /** The slots visitors currently see on the marketplace (public endpoint). */

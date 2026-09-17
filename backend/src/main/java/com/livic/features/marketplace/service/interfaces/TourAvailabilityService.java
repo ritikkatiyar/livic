@@ -1,6 +1,10 @@
 package com.livic.features.marketplace.service.interfaces;
 
-import com.livic.features.marketplace.dto.TourAvailabilityDTOs;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.BlackoutResponse;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.CreateBlackoutRequest;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.TourAvailabilityResponse;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.TourSlotsResponse;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.UpdateTourAvailabilityRequest;
 import com.livic.features.marketplace.slots.TourSchedule;
 
 import java.time.Instant;
@@ -9,12 +13,12 @@ import java.util.UUID;
 /** Landlord-defined visiting hours for marketplace tours, and the visit slots derived from them. */
 public interface TourAvailabilityService {
 
-    TourAvailabilityDTOs.TourAvailabilityResponse getAvailability(UUID propertyId);
+    TourAvailabilityResponse getAvailability(UUID propertyId);
 
-    TourAvailabilityDTOs.TourAvailabilityResponse updateAvailability(
-            UUID propertyId, TourAvailabilityDTOs.UpdateTourAvailabilityRequest request, UUID userId);
+    TourAvailabilityResponse updateAvailability(
+            UUID propertyId, UpdateTourAvailabilityRequest request, UUID userId);
 
-    TourAvailabilityDTOs.BlackoutResponse addBlackout(UUID propertyId, TourAvailabilityDTOs.CreateBlackoutRequest request, UUID userId);
+    BlackoutResponse addBlackout(UUID propertyId, CreateBlackoutRequest request, UUID userId);
 
     /** Checks the caller may manage tours at the blackout's property. */
     void deleteBlackout(UUID blackoutId);
@@ -23,7 +27,7 @@ public interface TourAvailabilityService {
      * Visit slots for a publicly listed property. With a valid OTP session token, slots the landlord declined for that
      * phone are marked; an invalid or expired token is treated like an anonymous visitor.
      */
-    TourAvailabilityDTOs.TourSlotsResponse getTourSlots(UUID propertyId, String otpSessionToken);
+    TourSlotsResponse getTourSlots(UUID propertyId, String otpSessionToken);
 
     /**
      * Throws {@link com.livic.features.marketplace.exception.TourSlotUnavailableException} unless {@code slot} is one

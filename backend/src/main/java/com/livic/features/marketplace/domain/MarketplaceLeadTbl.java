@@ -9,8 +9,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
-import com.livic.platform.common.exception.BusinessException;
-import org.springframework.http.HttpStatus;
+import com.livic.features.marketplace.exception.TourRequestStateException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -147,7 +146,7 @@ public class MarketplaceLeadTbl extends BaseEntity {
 
     public void cancelByProspect(Instant now) {
         if (!isActiveTour(now)) {
-            throw new BusinessException(HttpStatus.CONFLICT,
+            throw new TourRequestStateException(
                     "This tour request can no longer be cancelled (current status: " + effectiveStatus(now) + ")");
         }
         status = LeadStatus.CANCELLED;
@@ -156,10 +155,11 @@ public class MarketplaceLeadTbl extends BaseEntity {
 
     private void requirePendingTour(Instant now, String action) {
         if (!isTourRequest()) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Only tour requests can be " + action);
+            // Services only load tour requests before deciding, so reaching this is a programming error
+            throw new IllegalStateException("Only tour requests can be " + action);
         }
         if (status != LeadStatus.NEW || !isActiveTour(now)) {
-            throw new BusinessException(HttpStatus.CONFLICT,
+            throw new TourRequestStateException(
                     "This tour request can no longer be " + action + " (current status: " + effectiveStatus(now) + ")");
         }
     }

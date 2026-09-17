@@ -1,6 +1,6 @@
 package com.livic.features.marketplace.controller;
 
-import com.livic.features.marketplace.dto.TourAvailabilityDTOs;
+import com.livic.features.marketplace.dto.TourAvailabilityDTOs.TourSlotsResponse;
 import com.livic.features.marketplace.service.interfaces.TourAvailabilityService;
 import com.livic.platform.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class TourSlotController {
     private final TourAvailabilityService tourAvailabilityService;
 
     @GetMapping("/properties/{propertyId}/tour-slots")
-    public ResponseEntity<ApiResponse<TourAvailabilityDTOs.TourSlotsResponse>> getTourSlots(
+    public ResponseEntity<ApiResponse<TourSlotsResponse>> getTourSlots(
             @PathVariable UUID propertyId,
             @RequestHeader(name = "X-Otp-Session-Token", required = false) String sessionToken
     ) {

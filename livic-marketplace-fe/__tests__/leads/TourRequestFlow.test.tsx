@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { RoomConversionContainer } from '@/components/booking/RoomConversionContainer';
@@ -199,7 +199,7 @@ describe('RoomConversionContainer tour request flow', () => {
     // The verified session is remembered per tab; start every test unverified
     window.sessionStorage.clear();
     mockedApi.getTourSlots.mockResolvedValue({ success: true, data: slotsFixture([{ date: dateIn(1), slots: WORKING_DAY }, { date: dateIn(2), slots: WORKING_DAY }]) });
-    mockedApi.requestOtp.mockResolvedValue({ success: true, data: { success: true, message: 'sent', resendAfterSeconds: 60 } });
+    mockedApi.requestOtp.mockResolvedValue({ success: true, data: { expiresSeconds: 300, resendAfterSeconds: 60 } });
     mockedApi.verifyOtp.mockResolvedValue({ success: true, data: { otpSessionToken: 'server-session-token' } });
   });
 

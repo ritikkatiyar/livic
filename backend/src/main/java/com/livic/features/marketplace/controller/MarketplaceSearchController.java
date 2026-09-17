@@ -1,10 +1,12 @@
 package com.livic.features.marketplace.controller;
 
-import com.livic.platform.common.response.ApiResponse;
-import com.livic.features.marketplace.dto.MarketplacePropertyDTOs;
-import com.livic.features.marketplace.dto.MarketplaceUnitDTOs;
+import com.livic.features.marketplace.dto.MarketplacePropertyDTOs.PropertyDetailResponse;
+import com.livic.features.marketplace.dto.MarketplacePropertyDTOs.PropertySummaryResponse;
+import com.livic.features.marketplace.dto.MarketplaceUnitDTOs.UnitDetailCompositeResponse;
+import com.livic.features.marketplace.dto.MarketplaceUnitDTOs.UnitSummaryResponse;
 import com.livic.features.marketplace.service.interfaces.MarketplaceSearchService;
 import com.livic.platform.common.domain.PropertyType;
+import com.livic.platform.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,39 +31,39 @@ public class MarketplaceSearchController {
     private final MarketplaceSearchService searchService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<MarketplacePropertyDTOs.PropertySummaryResponse>>> searchProperties(
+    public ResponseEntity<ApiResponse<Page<PropertySummaryResponse>>> searchProperties(
             @RequestParam(required = false) String city,
             @RequestParam(required = false) PropertyType type,
             @PageableDefault(size = 12) Pageable pageable
     ) {
-        Page<MarketplacePropertyDTOs.PropertySummaryResponse> page = searchService.searchProperties(city, type, pageable);
+        Page<PropertySummaryResponse> page = searchService.searchProperties(city, type, pageable);
         return ResponseEntity.ok(ApiResponse.success(page));
     }
 
     @GetMapping("/{propertyId}")
-    public ResponseEntity<ApiResponse<MarketplacePropertyDTOs.PropertyDetailResponse>> getPropertyDetail(
+    public ResponseEntity<ApiResponse<PropertyDetailResponse>> getPropertyDetail(
             @PathVariable UUID propertyId
     ) {
-        MarketplacePropertyDTOs.PropertyDetailResponse response = searchService.getPropertyDetail(propertyId);
+        PropertyDetailResponse response = searchService.getPropertyDetail(propertyId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/{propertyId}/units")
-    public ResponseEntity<ApiResponse<Page<MarketplaceUnitDTOs.UnitSummaryResponse>>> getPropertyUnits(
+    public ResponseEntity<ApiResponse<Page<UnitSummaryResponse>>> getPropertyUnits(
             @PathVariable UUID propertyId,
             @RequestParam(defaultValue = "false") boolean availableOnly,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        Page<MarketplaceUnitDTOs.UnitSummaryResponse> page = searchService.getPropertyUnits(propertyId, availableOnly, pageable);
+        Page<UnitSummaryResponse> page = searchService.getPropertyUnits(propertyId, availableOnly, pageable);
         return ResponseEntity.ok(ApiResponse.success(page));
     }
 
     @GetMapping("/{propertyId}/units/{unitId}")
-    public ResponseEntity<ApiResponse<MarketplaceUnitDTOs.UnitDetailCompositeResponse>> getUnitDetailComposite(
+    public ResponseEntity<ApiResponse<UnitDetailCompositeResponse>> getUnitDetailComposite(
             @PathVariable UUID propertyId,
             @PathVariable UUID unitId
     ) {
-        MarketplaceUnitDTOs.UnitDetailCompositeResponse response = searchService.getUnitDetailComposite(propertyId, unitId);
+        UnitDetailCompositeResponse response = searchService.getUnitDetailComposite(propertyId, unitId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

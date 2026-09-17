@@ -3,7 +3,8 @@ package com.livic.features.marketplace.exception;
 import com.livic.features.marketplace.controller.MarketplaceLeadController;
 import com.livic.features.marketplace.controller.MyTourRequestController;
 import com.livic.features.marketplace.controller.TourRequestManagementController;
-import com.livic.features.marketplace.dto.TourRequestDTOs;
+import com.livic.features.marketplace.dto.TourRequestDTOs.DuplicateTourRequestError;
+import com.livic.features.marketplace.dto.TourRequestDTOs.TourSlotUnavailableError;
 import com.livic.platform.common.exception.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,7 @@ import java.time.Instant;
 public class MarketplaceExceptionHandler {
 
     @ExceptionHandler(DuplicateTourRequestException.class)
-    public ResponseEntity<TourRequestDTOs.DuplicateTourRequestError> handleDuplicateTourRequest(
+    public ResponseEntity<DuplicateTourRequestError> handleDuplicateTourRequest(
             DuplicateTourRequestException exception,
             HttpServletRequest request
     ) {
@@ -39,7 +40,7 @@ public class MarketplaceExceptionHandler {
                 exception.getExistingRequest() != null ? exception.getExistingRequest().leadId() : null);
 
         HttpStatus status = HttpStatus.CONFLICT;
-        return ResponseEntity.status(status).body(new TourRequestDTOs.DuplicateTourRequestError(
+        return ResponseEntity.status(status).body(new DuplicateTourRequestError(
                 Instant.now(),
                 status.value(),
                 status.getReasonPhrase(),
@@ -50,14 +51,14 @@ public class MarketplaceExceptionHandler {
     }
 
     @ExceptionHandler(TourSlotUnavailableException.class)
-    public ResponseEntity<TourRequestDTOs.TourSlotUnavailableError> handleTourSlotUnavailable(
+    public ResponseEntity<TourSlotUnavailableError> handleTourSlotUnavailable(
             TourSlotUnavailableException exception,
             HttpServletRequest request
     ) {
         log.warn("[TOUR_SLOT_UNAVAILABLE] uri={} reason={} slot={}", request.getRequestURI(), exception.getReason(), exception.getSlot());
 
         HttpStatus status = HttpStatus.CONFLICT;
-        return ResponseEntity.status(status).body(new TourRequestDTOs.TourSlotUnavailableError(
+        return ResponseEntity.status(status).body(new TourSlotUnavailableError(
                 Instant.now(),
                 status.value(),
                 status.getReasonPhrase(),

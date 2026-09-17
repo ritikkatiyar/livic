@@ -57,9 +57,6 @@ public class OtpServiceTest {
 
         OtpDTOs.OtpRequestRequest request = new OtpDTOs.OtpRequestRequest(TEST_PHONE);
         OtpDTOs.OtpRequestResponse response = otpService.requestOtp(request);
-
-        assertTrue(response.success());
-        assertEquals("OTP sent successfully", response.message());
         assertEquals(300, response.expiresSeconds());
         assertEquals(60, response.resendAfterSeconds());
 

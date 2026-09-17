@@ -49,7 +49,7 @@ describe('MyRequestsView', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     window.sessionStorage.clear();
-    mockedApi.requestOtp.mockResolvedValue({ success: true, data: { success: true, message: 'sent', resendAfterSeconds: 60 } });
+    mockedApi.requestOtp.mockResolvedValue({ success: true, data: { expiresSeconds: 300, resendAfterSeconds: 60 } });
     mockedApi.verifyOtp.mockResolvedValue({ success: true, data: { otpSessionToken: 'session-1', expiresAt: '2099-01-01T00:00:00Z' } });
   });
 

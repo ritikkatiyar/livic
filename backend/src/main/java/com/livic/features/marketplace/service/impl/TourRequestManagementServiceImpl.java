@@ -1,7 +1,9 @@
 package com.livic.features.marketplace.service.impl;
 
 import com.livic.features.marketplace.domain.MarketplaceLeadTbl;
-import com.livic.features.marketplace.dto.TourRequestDTOs;
+import com.livic.features.marketplace.dto.TourRequestDTOs.LandlordTourRequestResponse;
+import com.livic.features.marketplace.dto.TourRequestDTOs.TourRequestFilter;
+import com.livic.features.marketplace.dto.TourRequestDTOs.TourRequestSummaryResponse;
 import com.livic.features.marketplace.mapper.TourRequestMapper;
 import com.livic.features.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.features.marketplace.service.interfaces.TourAvailabilityService;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -41,9 +44,9 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TourRequestDTOs.LandlordTourRequestResponse> listTourRequests(
+    public Page<LandlordTourRequestResponse> listTourRequests(
             UUID propertyId,
-            TourRequestDTOs.TourRequestFilter filter,
+            TourRequestFilter filter,
             Pageable pageable
     ) {
         Instant now = Instant.now();
@@ -65,9 +68,9 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
 
     @Override
     @Transactional(readOnly = true)
-    public TourRequestDTOs.TourRequestSummaryResponse getSummary(UUID propertyId) {
+    public TourRequestSummaryResponse getSummary(UUID propertyId) {
         Instant now = Instant.now();
-        return new TourRequestDTOs.TourRequestSummaryResponse(
+        return new TourRequestSummaryResponse(
                 leadRepository.countUpcomingTours(propertyId, LeadStatus.NEW, now),
                 leadRepository.countUpcomingTours(propertyId, LeadStatus.APPROVED, now)
         );
@@ -75,7 +78,7 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
 
     @Override
     @Transactional
-    public TourRequestDTOs.LandlordTourRequestResponse approve(UUID leadId, UUID landlordUserId) {
+    public LandlordTourRequestResponse approve(UUID leadId, UUID landlordUserId) {
         MarketplaceLeadTbl lead = getAuthorizedTourRequest(leadId);
         Instant now = Instant.now();
 
@@ -88,7 +91,7 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
 
     @Override
     @Transactional
-    public TourRequestDTOs.LandlordTourRequestResponse reject(UUID leadId, UUID landlordUserId, String note) {
+    public LandlordTourRequestResponse reject(UUID leadId, UUID landlordUserId, String note) {
         MarketplaceLeadTbl lead = getAuthorizedTourRequest(leadId);
         Instant now = Instant.now();
 
@@ -97,6 +100,22 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
         log.info("tour_request_rejected leadId={} propertyId={} landlordUserId={}", leadId, lead.getPropertyId(), landlordUserId);
 
         return toResponse(lead, now);
+    }
+
+    @Override
+    @Transactional
+    public int closePastTourRequests() {
+        Instant now = Instant.now();
+        // updated_at is a LocalDateTime column (BaseEntity), so the bulk update sets it with the same type
+        LocalDateTime updatedAt = LocalDateTime.now();
+
+        int expired = leadRepository.closePastTours(LeadStatus.NEW, LeadStatus.EXPIRED, now, updatedAt);
+        int completed = leadRepository.closePastTours(LeadStatus.APPROVED, LeadStatus.COMPLETED, now, updatedAt);
+
+        if (expired > 0 || completed > 0) {
+            log.info("tour_request_lifecycle_closed expired={} completed={}", expired, completed);
+        }
+        return expired + completed;
     }
 
     private MarketplaceLeadTbl getAuthorizedTourRequest(UUID leadId) {
@@ -111,7 +130,7 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
         return lead;
     }
 
-    private TourRequestDTOs.LandlordTourRequestResponse toResponse(MarketplaceLeadTbl lead, Instant now) {
+    private LandlordTourRequestResponse toResponse(MarketplaceLeadTbl lead, Instant now) {
         String unitNumber = unitFacade.getUnitById(lead.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse(null);
         return TourRequestMapper.toLandlordResponse(lead, unitNumber, tourAvailabilityService.getSchedule(lead.getPropertyId()), now);
     }

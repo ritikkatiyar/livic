@@ -51,6 +51,7 @@ module/
     12. `issue` - Maintenance tickets, issue reporting, priority triage, and resolution workflows.
     13. `analytics` - Business intelligence, revenue metrics, occupancy rates, and operational reporting.
     14. `inventory` - Physical asset registry, appliances, condition tracking, and lease move-in/move-out lifecycle.
+    15. `marketplace` - Public rental listings, prospect OTP verification, tour requests and bookings, and landlord visiting hours.
 * Dependencies flow `features` -> `services` -> `platform`, and modules must stay free of cycles (enforced by `ModuleBoundaryTest`). When a lower module needs a higher one, define an SPI in the lower module or publish a synchronous event.
 * No direct repository access across modules
 * Modules communicate ONLY via facade or service interfaces (e.g. `com.livic.services.finance.facade` or `com.livic.services.finance.service.interfaces`)

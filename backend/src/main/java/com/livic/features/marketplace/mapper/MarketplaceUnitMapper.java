@@ -1,7 +1,8 @@
 package com.livic.features.marketplace.mapper;
 
-import com.livic.features.marketplace.dto.MarketplacePropertyDTOs;
-import com.livic.features.marketplace.dto.MarketplaceUnitDTOs;
+import com.livic.features.marketplace.dto.MarketplacePropertyDTOs.PropertySummaryResponse;
+import com.livic.features.marketplace.dto.MarketplaceUnitDTOs.UnitDetailCompositeResponse;
+import com.livic.features.marketplace.dto.MarketplaceUnitDTOs.UnitSummaryResponse;
 import com.livic.services.property.dto.UnitListingDTO;
 
 import java.util.Collections;
@@ -11,12 +12,12 @@ public final class MarketplaceUnitMapper {
 
     private MarketplaceUnitMapper() {}
 
-    public static MarketplaceUnitDTOs.UnitSummaryResponse toResponse(UnitListingDTO unit, List<String> imageUrls) {
+    public static UnitSummaryResponse toResponse(UnitListingDTO unit, List<String> imageUrls) {
         if (unit == null) {
             return null;
         }
 
-        return new MarketplaceUnitDTOs.UnitSummaryResponse(
+        return new UnitSummaryResponse(
                 unit.id(),
                 unit.propertyId(),
                 unit.unitNumber(),
@@ -32,10 +33,10 @@ public final class MarketplaceUnitMapper {
         );
     }
 
-    public static MarketplaceUnitDTOs.UnitDetailCompositeResponse toCompositeResponse(
-            MarketplacePropertyDTOs.PropertySummaryResponse propertySummary,
-            MarketplaceUnitDTOs.UnitSummaryResponse unitSummary
+    public static UnitDetailCompositeResponse toCompositeResponse(
+            PropertySummaryResponse propertySummary,
+            UnitSummaryResponse unitSummary
     ) {
-        return new MarketplaceUnitDTOs.UnitDetailCompositeResponse(propertySummary, unitSummary);
+        return new UnitDetailCompositeResponse(propertySummary, unitSummary);
     }
 }

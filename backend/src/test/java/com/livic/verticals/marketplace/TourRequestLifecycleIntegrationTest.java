@@ -356,6 +356,29 @@ class TourRequestLifecycleIntegrationTest {
         assertThrows(DataIntegrityViolationException.class, () -> leadRepository.saveAndFlush(activeTour(unitB)));
     }
 
+    @Test
+    @DisplayName("Reminder job marks approved tours starting within two hours, once")
+    void remindersAreClaimedOnce() {
+        MarketplaceLeadTbl dueSoon = activeTour(unitA);
+        dueSoon.setStatus(LeadStatus.APPROVED);
+        dueSoon.setDecidedAt(Instant.now().minus(1, ChronoUnit.DAYS));
+        dueSoon.setPreferredSlot(Instant.now().plus(90, ChronoUnit.MINUTES));
+        MarketplaceLeadTbl later = activeTour(otherPropertyUnit);
+        later.setPropertyId(otherProperty.getId());
+        later.setStatus(LeadStatus.APPROVED);
+        later.setDecidedAt(Instant.now().minus(1, ChronoUnit.DAYS));
+        later.setPreferredSlot(Instant.now().plus(5, ChronoUnit.HOURS));
+        UUID dueSoonId = leadRepository.saveAndFlush(dueSoon).getId();
+        UUID laterId = leadRepository.saveAndFlush(later).getId();
+
+        lifecycleJob.sendTourReminders();
+
+        Instant remindedAt = leadRepository.findById(dueSoonId).orElseThrow().getReminderSentAt();
+        assertNotNull(remindedAt);
+        assertNull(leadRepository.findById(laterId).orElseThrow().getReminderSentAt());
+        assertEquals(0, leadRepository.claimReminder(dueSoonId, Instant.now()), "a second run must not claim the same reminder");
+    }
+
     private MarketplaceLeadTbl activeTour(UnitTbl unit) {
         return MarketplaceLeadTbl.builder()
                 .propertyId(property.getId())

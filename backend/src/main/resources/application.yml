@@ -81,6 +81,9 @@ app:
     lockout-duration-ms: ${APP_AUTH_LOCKOUT_DURATION_MS:900000}
   logging:
     correlation-header-name: ${APP_CORRELATION_HEADER_NAME:X-Correlation-Id}
+  marketplace:
+    # Public marketplace site, used for links in SMS (the domain must be whitelisted with DLT)
+    base-url: ${MARKETPLACE_BASE_URL:http://localhost:3000}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:8081}
     allowed-methods: ${APP_CORS_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}
@@ -114,7 +117,14 @@ msg91:
   sender-id: ${MSG91_SENDER_ID:LIVIC}
   sms:
     enabled: ${MSG91_SMS_ENABLED:false}
-    flow-id: ${MSG91_SMS_FLOW_ID:}
+    # Refuse to start with SMS disabled (production sets this so OTPs are always delivered)
+    required: ${MSG91_SMS_REQUIRED:false}
+    # One MSG91 flow per DLT-approved template; the wording to register is in MessageTemplate
+    flows:
+      marketplace-otp: ${MSG91_SMS_FLOW_MARKETPLACE_OTP:}
+      tour-approved: ${MSG91_SMS_FLOW_TOUR_APPROVED:}
+      tour-declined: ${MSG91_SMS_FLOW_TOUR_DECLINED:}
+      tour-reminder: ${MSG91_SMS_FLOW_TOUR_REMINDER:}
   whatsapp:
     enabled: ${MSG91_WHATSAPP_ENABLED:false}
     integrated-number: ${MSG91_WHATSAPP_INTEGRATED_NUMBER:}

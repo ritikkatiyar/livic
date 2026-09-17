@@ -39,7 +39,7 @@ module/
     2. `security` - Current-user principal and JWT verification (depends only on `common`).
     3. `auth` - Identity & Access Management (Logins, Tokens, Memberships, Roles & Permissions).
     4. `user` - Core User Profile and Global Roles.
-    5. `notification` - Multi-channel alert delivery (Email, Push, WhatsApp).
+    5. `notification` - Multi-channel alert delivery (Email, Push, WhatsApp, SMS). SMS must use a DLT-registered `MessageTemplate` via `SmsService`, never free-form text.
     6. `storage` - Pluggable media storage and CDN integration (Cloudinary, S3, R2, Local).
     7. `payment` - Payment gateway integrations (Razorpay, Stripe, PayPal), payment initiation, webhooks, and ledger transactions.
     8. `subscription` - Livic SaaS subscriptions, plan tiers, feature limits, and quota enforcement.

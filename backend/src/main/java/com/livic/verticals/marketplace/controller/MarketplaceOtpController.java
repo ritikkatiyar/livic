@@ -6,6 +6,7 @@ import com.livic.verticals.marketplace.dto.OtpDTOs.OtpVerifyRequest;
 import com.livic.verticals.marketplace.dto.OtpDTOs.OtpVerifyResponse;
 import com.livic.verticals.marketplace.service.interfaces.OtpService;
 import com.livic.platform.common.response.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +24,10 @@ public class MarketplaceOtpController {
 
     @PostMapping("/request")
     public ResponseEntity<ApiResponse<OtpRequestResponse>> requestOtp(
-            @Valid @RequestBody OtpRequestRequest request
+            @Valid @RequestBody OtpRequestRequest request,
+            HttpServletRequest httpRequest
     ) {
-        OtpRequestResponse response = otpService.requestOtp(request);
+        OtpRequestResponse response = otpService.requestOtp(request, httpRequest.getRemoteAddr());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

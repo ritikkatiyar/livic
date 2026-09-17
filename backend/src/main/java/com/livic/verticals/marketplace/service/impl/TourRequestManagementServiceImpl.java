@@ -4,6 +4,7 @@ import com.livic.verticals.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.verticals.marketplace.dto.TourRequestDTOs.LandlordTourRequestResponse;
 import com.livic.verticals.marketplace.dto.TourRequestDTOs.TourRequestFilter;
 import com.livic.verticals.marketplace.dto.TourRequestDTOs.TourRequestSummaryResponse;
+import com.livic.verticals.marketplace.event.TourRequestDecidedEvent;
 import com.livic.verticals.marketplace.mapper.TourRequestMapper;
 import com.livic.verticals.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.verticals.marketplace.service.interfaces.TourAvailabilityService;
@@ -16,6 +17,7 @@ import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +43,7 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
     private final UnitFacade unitFacade;
     private final AuthorizationService authorizationService;
     private final TourAvailabilityService tourAvailabilityService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -85,6 +88,7 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
         lead.approve(landlordUserId, now);
         leadRepository.saveAndFlush(lead);
         log.info("tour_request_approved leadId={} propertyId={} landlordUserId={}", leadId, lead.getPropertyId(), landlordUserId);
+        eventPublisher.publishEvent(new TourRequestDecidedEvent(leadId));
 
         return toResponse(lead, now);
     }
@@ -98,6 +102,7 @@ public class TourRequestManagementServiceImpl implements TourRequestManagementSe
         lead.reject(landlordUserId, note, now);
         leadRepository.saveAndFlush(lead);
         log.info("tour_request_rejected leadId={} propertyId={} landlordUserId={}", leadId, lead.getPropertyId(), landlordUserId);
+        eventPublisher.publishEvent(new TourRequestDecidedEvent(leadId));
 
         return toResponse(lead, now);
     }

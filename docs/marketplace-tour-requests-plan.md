@@ -103,6 +103,8 @@ A prospect can already request a tour from the public marketplace (OTP-verified 
 - `ObjectOptimisticLockingFailureException` → 409 "already updated".
 
 ### 4.5 Notifications
+> **Status:** prospect SMS shipped. `TourRequestDecidedEvent` → `TourRequestSmsListener` (after commit, async) sends the approved/declined SMS, `TourRequestLifecycleJob` sends a reminder 2 hours before approved visits, and marketplace OTPs are now delivered by SMS. It uses templated `SmsService.sendToPhone` (DLT templates in `MessageTemplate`) instead of the free-form `sendToAddress` below. Owner notifications and WhatsApp are still open.
+
 - `NotificationService.sendToAddress(NotificationChannel, String address, String title, String body)` for recipients who aren't users (no user lookup or preference check; the log stores the channel with the address masked to its last 4 digits).
 - Events, published inside the transaction and handled with `@TransactionalEventListener(AFTER_COMMIT)` + `@Async`, so a failed SMS never rolls back a decision:
   - `TourRequestCreatedEvent` → owner via `AuthFacade.findPropertyOwnerId` → `NotificationService.send(ownerId, PUSH/WHATSAPP, …)`.

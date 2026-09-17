@@ -2,6 +2,9 @@ package com.livic.verticals.marketplace.repository;
 
 import com.livic.verticals.marketplace.domain.OtpVerificationTbl;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -18,5 +21,9 @@ public interface OtpVerificationRepository extends JpaRepository<OtpVerification
 
     Optional<OtpVerificationTbl> findBySessionToken(String sessionToken);
 
-    void deleteByExpiresAtBefore(Instant threshold);
+    long countByRequestIpAndCreatedAtAfter(String requestIp, Instant since);
+
+    @Modifying
+    @Query("DELETE FROM OtpVerificationTbl o WHERE o.expiresAt < :threshold")
+    int deleteByExpiresAtBefore(@Param("threshold") Instant threshold);
 }

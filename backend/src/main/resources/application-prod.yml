@@ -21,7 +21,13 @@ spring:
       hibernate:
         format_sql: false
 
+msg91:
+  sms:
+    required: ${MSG91_SMS_REQUIRED:true}
+
 server:
+  # Client IPs from X-Forwarded-For, trusted only from proxies on private networks (per-IP OTP limit)
+  forward-headers-strategy: native
   tomcat:
     threads:
       max: 20

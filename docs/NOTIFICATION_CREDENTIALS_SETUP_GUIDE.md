@@ -31,9 +31,16 @@ MSG91_ENABLED=true
 MSG91_AUTH_KEY=your_msg91_auth_key
 MSG91_SENDER_ID=LIVIC
 
-# MSG91 SMS:
+# MSG91 SMS (one flow per DLT template; see section 4, Step 2):
 MSG91_SMS_ENABLED=true
-MSG91_SMS_FLOW_ID=your_msg91_approved_sms_flow_id
+MSG91_SMS_FLOW_MARKETPLACE_OTP=flow_id
+MSG91_SMS_FLOW_TOUR_APPROVED=flow_id
+MSG91_SMS_FLOW_TOUR_DECLINED=flow_id
+MSG91_SMS_FLOW_TOUR_REMINDER=flow_id
+# Production defaults to true: the app refuses to start with SMS disabled
+MSG91_SMS_REQUIRED=true
+# Links in SMS point here; the domain must be whitelisted with DLT
+MARKETPLACE_BASE_URL=https://your-marketplace-domain
 
 # MSG91 WhatsApp:
 MSG91_WHATSAPP_ENABLED=true
@@ -119,14 +126,25 @@ MSG91 is a single provider that handles both **TRAI DLT-compliant transactional 
 2. Open the **Dashboard** and navigate to **Authkey**: [https://control.msg91.com/app/authkey](https://control.msg91.com/app/authkey).
 3. Click **Create New Authkey**, name it `Livic-Backend`, and copy the key into `MSG91_AUTH_KEY`.
 
-### Step 2: Configure SMS (`MSG91_SMS_FLOW_ID` & `MSG91_SENDER_ID`)
-1. **DLT Registration**: In India, transactional SMS requires TRAI DLT registration (e.g. via Jio DLT, Vilpower, or Airtel DLT).
-2. **Sender ID**: In the MSG91 dashboard under **SMS** > **Sender ID**, register your approved 6-letter sender ID (e.g. `LIVICR`). Set `MSG91_SENDER_ID=LIVICR`.
-3. **SMS Flow**:
-   - Go to **SMS** > **Campaign / Flows**.
-   - Create a new Flow using your approved DLT content template for rent cycle publication and payment alerts.
-   - Copy the generated Flow ID (a hexadecimal string like `64b8f0...`) into `MSG91_SMS_FLOW_ID`.
-   - Set `MSG91_SMS_ENABLED=true`.
+### Step 2: Configure SMS (`MSG91_SMS_FLOW_*` & `MSG91_SENDER_ID`)
+Carriers in India deliver only SMS whose text matches a DLT-registered template, so every SMS the backend sends is one of the fixed templates in `MessageTemplate` (`backend/src/main/java/com/livic/platform/notification/domain/MessageTemplate.java`). Registration takes days to weeks, so start it early; the code runs with the console provider meanwhile.
+
+1. **DLT registration**: register the business as a Principal Entity on a DLT portal (Jio, Vilpower, Airtel, etc.) and add the entity ID in MSG91.
+2. **Sender ID (header)**: register a 6-letter transactional header (e.g. `LIVICR`) on DLT and in MSG91 under **SMS** > **Sender ID**. Set `MSG91_SENDER_ID`.
+3. **URL whitelisting**: whitelist the marketplace domain used in `MARKETPLACE_BASE_URL` on the DLT portal; SMS with unlisted links are blocked.
+4. **Content templates**: register these four as *Service Implicit* templates. The text must match exactly; each `{#var#}` value is at most 30 characters (the backend cuts longer values), and the link uses `{#url#}`.
+
+   | Template (env var) | DLT text | MSG91 variables, in order |
+   |---|---|---|
+   | `MSG91_SMS_FLOW_MARKETPLACE_OTP` | `{#var#} is your Livic verification code. It expires in {#var#} minutes. Do not share it with anyone. -LIVIC` | `otp`, `minutes` |
+   | `MSG91_SMS_FLOW_TOUR_APPROVED` | `Hi {#var#}, your visit to {#var#} on {#var#} at {#var#} is confirmed. Details: {#url#} -LIVIC` | `name`, `property`, `date`, `time`, `link` |
+   | `MSG91_SMS_FLOW_TOUR_DECLINED` | `Hi {#var#}, your visit request for {#var#} on {#var#} at {#var#} was declined. {#var#} See other slots: {#url#} -LIVIC` | `name`, `property`, `date`, `time`, `note`, `link` |
+   | `MSG91_SMS_FLOW_TOUR_REMINDER` | `Reminder: your visit to {#var#} is on {#var#} at {#var#}. Details: {#url#} -LIVIC` | `property`, `date`, `time`, `link` |
+
+5. **Flows**: in MSG91 under **SMS** > **Flows**, create one flow per approved template, writing each variable as `##name##` with the names above (e.g. `##otp## is your Livic verification code...`). Copy each Flow ID into its env var.
+6. Set `MSG91_SMS_ENABLED=true` and `MSG91_AUTH_KEY`. At startup the backend checks that the auth key and all four flow IDs are present.
+
+If you change a template's wording, change `MessageTemplate`, re-register on DLT and update the MSG91 flow together.
 
 ### Step 3: Configure WhatsApp (`MSG91_WHATSAPP_INTEGRATED_NUMBER`)
 1. In the MSG91 dashboard, navigate to **WhatsApp**.
@@ -164,7 +182,8 @@ If you prefer to connect directly to Meta without MSG91:
 ## 6. Local Development Mode (Zero Credentials Required)
 
 If you are developing locally or do not yet have live credentials:
-- Keep `EMAIL_ENABLED=false`, `PUSH_ENABLED=false`, and `MSG91_ENABLED=false`.
+- Keep `EMAIL_ENABLED=false`, `PUSH_ENABLED=false`, `MSG91_ENABLED=false` and `MSG91_SMS_ENABLED=false`.
+- SMS then go to `ConsoleSmsProvider`, which prints the rendered text with a masked number (`[SMS - not sent, console provider] to=******3210 template=TOUR_APPROVED: Hi Riya, ...`). The dev profile also fixes marketplace OTPs to `000000` and skips sending them; set `MARKETPLACE_DEV_OTP_CODE=` (empty) to exercise the OTP SMS.
 - Spring Boot will automatically activate `ConsoleNotificationSender`.
 - When rent cycles are published or notifications are triggered, all notifications will print directly to the backend log output:
   ```text

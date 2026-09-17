@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   Modal,
   View,
@@ -190,13 +190,13 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
     },
     kickerText: {
       fontSize: theme.Typography.labelSmall?.fontSize || 10,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.primary,
       letterSpacing: 1,
     },
     modalTitle: {
       fontSize: isMobile ? 18 : (theme.Typography.headlineMd?.fontSize || 22),
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     modalSubtitle: {
@@ -222,7 +222,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
     },
     statsLabel: {
       fontSize: theme.Typography.labelSmall?.fontSize || 10,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurfaceVariant,
       letterSpacing: 0.5,
     },

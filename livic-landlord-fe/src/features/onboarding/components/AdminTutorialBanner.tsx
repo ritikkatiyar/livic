@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -177,13 +177,13 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
     },
     badgeText: {
       fontSize: theme.Typography.labelSmall?.fontSize || 10,
-      fontWeight: '800',
+      fontWeight: '600',
       letterSpacing: 1,
       color: theme.Colors.primary,
     },
     mainTitle: {
       fontSize: isMobile ? 16 : (theme.Typography.headlineSm?.fontSize || 18),
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurface,
     },
     rightHeaderActions: {
@@ -202,7 +202,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
     },
     progressBold: {
       color: theme.Colors.primary,
-      fontWeight: '800',
+      fontWeight: '600',
     },
     dismissBtn: {
       padding: 4,
@@ -251,7 +251,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
     },
     stepKicker: {
       fontSize: theme.Typography.labelSmall?.fontSize || 10,
-      fontWeight: '800',
+      fontWeight: '600',
       color: theme.Colors.onSurfaceVariant,
       letterSpacing: 0.5,
     },

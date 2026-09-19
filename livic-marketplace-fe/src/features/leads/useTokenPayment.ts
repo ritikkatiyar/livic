@@ -58,15 +58,6 @@ export function useTokenPayment() {
         }
 
         const order = res.data;
-        const useMock = process.env.NEXT_PUBLIC_USE_MOCK_API !== 'false';
-
-        if (useMock) {
-          // Stub Razorpay checkout in mock mode with a small fake delay
-          await new Promise((r) => setTimeout(r, 800));
-          setLoading(false);
-          await pollStatus(lead.id);
-          return;
-        }
 
         // Live Razorpay Script Checkout
         if (typeof window !== 'undefined') {

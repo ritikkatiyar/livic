@@ -2,6 +2,8 @@ import { Metadata } from 'next';
 import { SearchFilters } from '@/components/search/SearchFilters';
 import { PropertyGridWrapper } from '@/components/search/PropertyGridWrapper';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Explore Rental Homes, Hostels & Societies | Livic Marketplace',
   description:

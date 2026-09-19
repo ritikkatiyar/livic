@@ -2,6 +2,7 @@ package com.livic.services.property.service.impl;
 
 import com.livic.services.property.domain.PropertyTbl;
 import com.livic.services.property.dto.PropertyDTOs;
+import com.livic.services.property.service.interfaces.BlockService;
 import com.livic.services.property.service.interfaces.PropertyCrudService;
 import com.livic.services.property.service.interfaces.PropertyService;
 import com.livic.services.property.mapper.PropertyMapper;
@@ -31,6 +32,7 @@ public class PropertyServiceImpl implements PropertyService {
     private final UserFacade userFacade;
     private final AuthFacade authFacade;
     private final UnitCrudService unitCrudService;
+    private final BlockService blockService;
     private final ApplicationEventPublisher eventPublisher;
     private final UnitOccupancyProvider unitOccupancyProvider;
 
@@ -41,6 +43,7 @@ public class PropertyServiceImpl implements PropertyService {
 
         PropertyTbl property = PropertyMapper.toEntity(request);
         PropertyTbl savedProperty = propertyCrudService.save(property);
+        blockService.getOrCreateDefaultBlock(savedProperty);
 
         // Assign OWNER role using AuthFacade
         authFacade.createOwnerMembership(savedProperty.getId(), creatorId);
@@ -70,6 +73,7 @@ public class PropertyServiceImpl implements PropertyService {
         eventPublisher.publishEvent(new PropertyDeletionEvent(this, propertyId));
         
         unitCrudService.deleteByPropertyId(propertyId);
+        blockService.deleteByPropertyId(propertyId);
         propertyCrudService.delete(property);
     }
 

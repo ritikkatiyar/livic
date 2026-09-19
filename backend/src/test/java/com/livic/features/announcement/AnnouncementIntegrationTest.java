@@ -38,6 +38,9 @@ public class AnnouncementIntegrationTest {
     private AnnouncementService announcementService;
 
     @Autowired
+    private com.livic.services.property.service.interfaces.BlockService blockService;
+
+    @Autowired
     private AnnouncementRepository announcementRepository;
 
     @Autowired
@@ -92,6 +95,7 @@ public class AnnouncementIntegrationTest {
 
         unit = UnitTbl.builder()
                 .property(property)
+                .block(blockService.getOrCreateDefaultBlock(property))
                 .unitNumber("101")
                 .floor(1)
                 .capacity(2)

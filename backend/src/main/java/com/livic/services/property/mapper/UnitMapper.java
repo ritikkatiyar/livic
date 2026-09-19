@@ -1,6 +1,7 @@
 package com.livic.services.property.mapper;
 
 import com.livic.platform.common.domain.FacingDirection;
+import com.livic.services.property.domain.BlockTbl;
 import com.livic.services.property.domain.PropertyTbl;
 import com.livic.services.property.domain.UnitTbl;
 import com.livic.services.property.dto.PropertyDTOs;
@@ -11,10 +12,11 @@ public final class UnitMapper {
     private UnitMapper() {
     }
 
-    public static UnitTbl toEntity(UnitDTOs.FloorLayoutUnitRequest request, PropertyTbl property, int floorNumber) {
+    public static UnitTbl toEntity(UnitDTOs.FloorLayoutUnitRequest request, PropertyTbl property, BlockTbl block, int floorNumber) {
         FacingDirection facing = request.facing() != null ? request.facing() : FacingDirection.UNKNOWN;
         return UnitTbl.builder()
                 .property(property)
+                .block(block)
                 .unitNumber(request.unitNumber())
                 .floor(floorNumber)
                 .gridX(request.gridX())
@@ -27,9 +29,10 @@ public final class UnitMapper {
                 .build();
     }
 
-    public static UnitTbl toEntity(PropertyDTOs.BatchUnitRequest request, PropertyTbl property, int floorNumber, int gridX, int gridY, int gridWidth, int gridHeight, String unitNumber) {
+    public static UnitTbl toEntity(PropertyDTOs.BatchUnitRequest request, PropertyTbl property, BlockTbl block, int floorNumber, int gridX, int gridY, int gridWidth, int gridHeight, String unitNumber) {
         return UnitTbl.builder()
                 .property(property)
+                .block(block)
                 .unitNumber(unitNumber)
                 .floor(floorNumber)
                 .gridX(gridX)

@@ -38,6 +38,9 @@ public class MarketplaceLeadServiceIntegrationTest {
     private MarketplaceLeadService leadService;
 
     @Autowired
+    private com.livic.services.property.service.interfaces.BlockService blockService;
+
+    @Autowired
     private PropertyRepository propertyRepository;
 
     @Autowired
@@ -67,6 +70,7 @@ public class MarketplaceLeadServiceIntegrationTest {
 
         bookableUnit = UnitTbl.builder()
                 .property(property)
+                .block(blockService.getOrCreateDefaultBlock(property))
                 .unitNumber("201")
                 .floor(2)
                 .capacity(2)
@@ -81,6 +85,7 @@ public class MarketplaceLeadServiceIntegrationTest {
 
         unbookableUnit = UnitTbl.builder()
                 .property(property)
+                .block(blockService.getOrCreateDefaultBlock(property))
                 .unitNumber("202")
                 .floor(2)
                 .capacity(2)

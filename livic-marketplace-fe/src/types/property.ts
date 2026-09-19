@@ -1,4 +1,4 @@
-export type PropertyType = 'RENTAL' | 'HOSTEL' | 'SOCIETY' | 'MESS' | 'INDIVIDUAL';
+export type PropertyType = 'RENTAL' | 'RESIDENTIAL' | 'HOSTEL' | 'SOCIETY' | 'MESS' | 'INDIVIDUAL';
 
 export type PropertySummary = {
   id: string;

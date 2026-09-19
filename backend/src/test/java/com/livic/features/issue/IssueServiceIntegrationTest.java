@@ -52,6 +52,9 @@ public class IssueServiceIntegrationTest {
     private IssueService issueService;
 
     @Autowired
+    private com.livic.services.property.service.interfaces.BlockService blockService;
+
+    @Autowired
     private IssueCrudService issueCrudService;
 
     @Autowired
@@ -126,6 +129,7 @@ public class IssueServiceIntegrationTest {
 
         unit = UnitTbl.builder()
                 .property(property)
+                .block(blockService.getOrCreateDefaultBlock(property))
                 .unitNumber("101")
                 .floor(1)
                 .capacity(2)

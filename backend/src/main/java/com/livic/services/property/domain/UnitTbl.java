@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "unit_tbl", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"property_id", "unit_number"})
+        @UniqueConstraint(columnNames = {"block_id", "unit_number"})
 })
 @Getter
 @Setter
@@ -22,6 +22,11 @@ public class UnitTbl extends BaseEntity {
     @JoinColumn(name = "property_id", nullable = false)
     @ToString.Exclude
     private PropertyTbl property;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "block_id", nullable = false)
+    @ToString.Exclude
+    private BlockTbl block;
 
     @Column(name = "unit_number", nullable = false)
     private String unitNumber;

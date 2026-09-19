@@ -3,6 +3,7 @@ package com.livic.services.property.service.impl;
 import com.livic.platform.common.domain.FacingDirection;
 import com.livic.platform.common.event.UnitsCreationRequestedEvent;
 import com.livic.platform.common.exception.BusinessException;
+import com.livic.services.property.domain.BlockTbl;
 import com.livic.services.property.domain.PropertyTbl;
 import com.livic.services.property.dto.PropertyDTOs;
 import com.livic.services.property.domain.UnitTbl;
@@ -11,6 +12,7 @@ import com.livic.services.property.mapper.UnitMapper;
 import com.livic.services.property.repository.UnitRepository;
 import com.livic.services.property.service.interfaces.UnitCrudService;
 import com.livic.services.property.service.interfaces.UnitService;
+import com.livic.services.property.service.interfaces.BlockService;
 import com.livic.services.property.service.interfaces.PropertyQueryService;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ public class UnitServiceImpl implements UnitService {
 
     private final UnitCrudService unitCrudService;
     private final PropertyQueryService propertyQueryService;
+    private final BlockService blockService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -101,7 +104,7 @@ public class UnitServiceImpl implements UnitService {
                             "Unit number \"" + item.unitNumber() + "\" already exists on another floor for this property"
                     );
                 }
-                UnitTbl created = UnitMapper.toEntity(item, property, floorNumber);
+                UnitTbl created = UnitMapper.toEntity(item, property, blockService.getOrCreateDefaultBlock(property), floorNumber);
                 toSave.add(created);
             }
         }
@@ -163,7 +166,7 @@ public class UnitServiceImpl implements UnitService {
                     String prefix = request.prefix() != null ? request.prefix() : "";
                     String unitNumber = prefix + currentFloor + String.format("%02d", unitGlobalIndex);
 
-                    UnitTbl unit = UnitMapper.toEntity(request, property, currentFloor, currentX, currentY, unitWidth, rowHeight, unitNumber);
+                    UnitTbl unit = UnitMapper.toEntity(request, property, blockService.getOrCreateDefaultBlock(property), currentFloor, currentX, currentY, unitWidth, rowHeight, unitNumber);
 
                     generatedUnits.add(unit);
                     currentX += unitWidth;

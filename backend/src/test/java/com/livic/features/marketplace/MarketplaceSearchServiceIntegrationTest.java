@@ -36,6 +36,9 @@ public class MarketplaceSearchServiceIntegrationTest {
     private MarketplaceSearchService searchService;
 
     @Autowired
+    private com.livic.services.property.service.interfaces.BlockService blockService;
+
+    @Autowired
     private PropertyRepository propertyRepository;
 
     @Autowired
@@ -74,6 +77,7 @@ public class MarketplaceSearchServiceIntegrationTest {
 
         unit1 = UnitTbl.builder()
                 .property(publicProperty)
+                .block(blockService.getOrCreateDefaultBlock(publicProperty))
                 .unitNumber("101-A")
                 .floor(1)
                 .capacity(1)
@@ -123,6 +127,7 @@ public class MarketplaceSearchServiceIntegrationTest {
         for (int i = 1; i <= 11; i++) {
             unitRepository.save(UnitTbl.builder()
                     .property(publicProperty)
+                .block(blockService.getOrCreateDefaultBlock(publicProperty))
                     .unitNumber(String.valueOf(200 + i))
                     .floor(2)
                     .capacity(1)

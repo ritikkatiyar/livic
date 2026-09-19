@@ -70,6 +70,7 @@ class TourRequestLifecycleIntegrationTest {
     @Autowired private OtpVerificationRepository otpRepository;
     @Autowired private PropertyRepository propertyRepository;
     @Autowired private UnitRepository unitRepository;
+    @Autowired private com.livic.services.property.service.interfaces.BlockService blockService;
 
     @MockitoBean private AuthorizationService authorizationService;
 
@@ -112,9 +113,10 @@ class TourRequestLifecycleIntegrationTest {
                 .build();
     }
 
-    private static UnitTbl unit(PropertyTbl property, String number, int gridX) {
+    private UnitTbl unit(PropertyTbl property, String number, int gridX) {
         return UnitTbl.builder()
                 .property(property)
+                .block(blockService.getOrCreateDefaultBlock(property))
                 .unitNumber(number)
                 .floor(1)
                 .capacity(2)

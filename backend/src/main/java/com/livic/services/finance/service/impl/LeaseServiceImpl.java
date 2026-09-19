@@ -16,6 +16,7 @@ import com.livic.services.finance.service.interfaces.LeaseQueryService;
 import com.livic.services.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.services.property.dto.UnitSummaryDTO;
 import com.livic.services.property.facade.UnitFacade;
+import com.livic.services.property.facade.UnitMemberFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class LeaseServiceImpl implements LeaseService {
     private final LeaseCrudService leaseCrudService;
     private final LeaseQueryService leaseQueryService;
     private final UnitFacade unitFacade;
+    private final UnitMemberFacade unitMemberFacade;
     private final UserFacade userFacade;
     private final UnitBookingCrudService unitBookingCrudService;
     private final FinanceLedgerCrudService financeLedgerCrudService;
@@ -107,6 +109,10 @@ public class LeaseServiceImpl implements LeaseService {
         LeaseTbl lease = LeaseMapper.toEntity(request, unitSummary.id(), targetUserId);
         LeaseTbl saved = leaseCrudService.save(lease);
 
+        // The tenant becomes a member of the unit, in the same transaction as the lease, so
+        // everything that asks "who is in this flat" sees them without reading leases.
+        unitMemberFacade.addTenant(unitSummary.id(), targetUserId, saved.getId(), saved.getMoveInDate(), assignedByUserId);
+
         // 3. Mark booking as converted
         if (booking != null) {
             booking.setStatus(UnitBookingStatus.CONVERTED.name());
@@ -143,7 +149,9 @@ public class LeaseServiceImpl implements LeaseService {
         if (lease.getMoveOutDate() == null) {
             lease.setMoveOutDate(LocalDate.now());
         }
-        return leaseCrudService.save(lease);
+        LeaseTbl ended = leaseCrudService.save(lease);
+        unitMemberFacade.endTenancy(ended.getId(), ended.getMoveOutDate());
+        return ended;
     }
 
     @Override

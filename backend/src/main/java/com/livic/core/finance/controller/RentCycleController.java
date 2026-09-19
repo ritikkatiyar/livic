@@ -89,6 +89,7 @@ public class RentCycleController {
     }
 
     @GetMapping
+    @PreAuthorize("#propertyId == null or @authorizationService.hasPermission(#propertyId, 'RENT_ROLL_VIEW')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleListResponse>> list(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) UUID propertyId,

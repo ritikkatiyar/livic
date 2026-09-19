@@ -7,6 +7,7 @@ import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.core.finance.controller.InvoiceController;
+import com.livic.core.finance.controller.RentCycleController;
 import com.livic.core.finance.controller.LeaseController;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -101,6 +102,20 @@ class LeaseAuthorizationTest {
                 .thenReturn(true);
 
         assertThat(authorizationService.hasPermission(propertyId, "LEASE_VIEW")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Listing rent cycles for a property requires RENT_ROLL_VIEW, rather than returning an empty page")
+    void rentCycleListIsAuthorized() throws NoSuchMethodException {
+        Method list = java.util.Arrays.stream(RentCycleController.class.getMethods())
+                .filter(m -> m.getName().equals("list"))
+                .findFirst()
+                .orElseThrow();
+        PreAuthorize preAuthorize = list.getAnnotation(PreAuthorize.class);
+
+        assertThat(preAuthorize).isNotNull();
+        assertThat(preAuthorize.value())
+                .isEqualTo("#propertyId == null or @authorizationService.hasPermission(#propertyId, 'RENT_ROLL_VIEW')");
     }
 
     @Test

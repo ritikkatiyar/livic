@@ -7,6 +7,8 @@ import { RoomConversionContainer } from '@/components/booking/RoomConversionCont
 import { Badge } from '@/components/ui/Badge';
 import { formatCurrency } from '@/utils/formatCurrency';
 
+export const dynamic = 'force-dynamic';
+
 type Props = {
   params: Promise<{ propertyId: string; unitId: string }>;
 };

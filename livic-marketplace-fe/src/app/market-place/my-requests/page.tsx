@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { ArrowLeft, ClipboardList } from 'lucide-react';
 import { MyRequestsView } from '@/components/leads/MyRequestsView';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'My Requests | Livic Marketplace',
   description: 'Track the status of your property visit requests.',

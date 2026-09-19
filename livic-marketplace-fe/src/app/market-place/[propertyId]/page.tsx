@@ -8,6 +8,8 @@ import { PropertyAmenities } from '@/components/property/PropertyAmenities';
 import { buildRoomsHref, RoomList } from '@/components/property/RoomList';
 import { PropertyQrSection } from '@/components/property/PropertyQrSection';
 import { PropertyTypeBadge } from '@/components/ui/Badge';
+
+export const dynamic = 'force-dynamic';
 import { formatCurrency } from '@/utils/formatCurrency';
 
 type Props = {

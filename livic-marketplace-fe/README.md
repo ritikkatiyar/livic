@@ -9,7 +9,6 @@ Public-facing, unauthenticated-by-default Marketplace web application for the Li
 - **Room Detail & Lead Generation**: Deep-dive room pages (`/market-place/[propertyId]/rooms/[unitId]`) supporting unified lead submission for both **Tour Requests** and **Token Bookings**.
 - **OTP Verification Modal**: Secure 6-digit phone verification with focus trapping, keyboard navigation, and session token management.
 - **Razorpay Integration**: Token payment checkout with status polling (2s interval, max 5 attempts) and clear refundable token disclosure copy.
-- **Isomorphic Mock Layer**: Out-of-the-box development seam (`src/api/mock/`) allowing frontend execution before backend `marketplace` module deployment.
 
 ## Environment Configuration
 
@@ -18,8 +17,7 @@ Copy `.env.example` to `.env.local`:
 ```bash
 NEXT_PUBLIC_API_BASE_URL=https://api.livic.app/api/v1
 NEXT_PUBLIC_MARKETPLACE_BASE_URL=https://livic.app/market-place
-NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_mockkey12345
-NEXT_PUBLIC_USE_MOCK_API=true # Set to false when live backend API is available
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_live_xxxx
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 ```
 
@@ -52,10 +50,10 @@ livic-marketplace-fe/
 │   ├── layout.tsx              # Root layout
 │   └── page.tsx                # Home redirect
 ├── src/
-│   ├── api/                    # Typed API client & mock layer
+│   ├── api/                    # Typed API client
 │   │   ├── client.ts
 │   │   ├── marketplace.ts
-│   │   └── mock/
+│   │   └── adapters.ts
 │   ├── components/             # Reusable UI & domain components
 │   │   ├── booking/
 │   │   ├── layout/

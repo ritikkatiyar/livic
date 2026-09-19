@@ -197,25 +197,31 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     public void verifyAndCompletePayment(com.livic.platform.payment.dto.PaymentVerificationRequest request) {
         log.info("[RAZORPAY] Verifying client-side payment: paymentId={}, orderId={}", request.razorpayPaymentId(), request.razorpayOrderId());
 
-        // 1. Verify HMAC signature: signature = HMAC-SHA256(orderId + "|" + paymentId, keySecret)
+        // 1. Verify HMAC signature: signature = HMAC-SHA256(orderId + "|" + paymentId, keySecret).
+        // Every path here fails closed: a payment is only ever completed against a signature we verified.
         String keySecret = razorpayProperties.getKeySecret();
-        if (keySecret != null && !keySecret.isBlank() && request.razorpaySignature() != null) {
-            try {
-                JSONObject attributes = new JSONObject();
-                attributes.put("razorpay_order_id", request.razorpayOrderId());
-                attributes.put("razorpay_payment_id", request.razorpayPaymentId());
-                attributes.put("razorpay_signature", request.razorpaySignature());
-                boolean isValid = Utils.verifyPaymentSignature(attributes, keySecret);
-                if (!isValid) {
-                    log.error("[RAZORPAY] Client payment signature verification failed for orderId={}", request.razorpayOrderId());
-                    throw new BusinessException(HttpStatus.BAD_REQUEST, "Invalid payment signature");
-                }
-            } catch (BusinessException e) {
-                throw e;
-            } catch (Exception e) {
-                log.error("[RAZORPAY] Signature verification error", e);
-                // Allow test mode to proceed without valid signature (rzp_test_ keys)
+        if (keySecret == null || keySecret.isBlank()) {
+            log.error("[RAZORPAY] Key secret is not configured; refusing to complete payment for orderId={}", request.razorpayOrderId());
+            throw new BusinessException(HttpStatus.SERVICE_UNAVAILABLE, "Payment verification is not available");
+        }
+        if (request.razorpaySignature() == null || request.razorpaySignature().isBlank()) {
+            log.error("[RAZORPAY] Client payment verification without a signature for orderId={}", request.razorpayOrderId());
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Invalid payment signature");
+        }
+        try {
+            JSONObject attributes = new JSONObject();
+            attributes.put("razorpay_order_id", request.razorpayOrderId());
+            attributes.put("razorpay_payment_id", request.razorpayPaymentId());
+            attributes.put("razorpay_signature", request.razorpaySignature());
+            if (!Utils.verifyPaymentSignature(attributes, keySecret)) {
+                log.error("[RAZORPAY] Client payment signature verification failed for orderId={}", request.razorpayOrderId());
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "Invalid payment signature");
             }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("[RAZORPAY] Signature verification error for orderId={}", request.razorpayOrderId(), e);
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Invalid payment signature");
         }
 
         // 2. Find transaction by order ID and mark SUCCESS

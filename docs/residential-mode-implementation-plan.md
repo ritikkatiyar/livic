@@ -1,390 +1,387 @@
-# Livic — Multi-Vertical Architecture & Residential Plan
+# Livic — Platform Architecture & Roadmap
 
-> **Status**: Draft for discussion · **Last updated**: 2026-09-16
-> **Supersedes**: the earlier residential-only plan (ownership as a lease type, then a separate `unit_ownership_tbl`). Both are replaced by the core model in §4.
+> **Status**: Draft for discussion · **Last updated**: 2026-09-19 · **Base**: `main` @ `a113250`
+> **Supersedes**: the residential-only plans (ownership as a lease type; a separate `unit_ownership_tbl`). Both are replaced by the core model in §4.
 > **Stage**: development — destructive schema and package changes are acceptable.
 
+**Strategy in one line:** fix the spine first — property → block → unit → unit member, payer-based bills, one permission rule — and then residential, society, hostel and the marketplace are additions on top rather than rewrites.
+
 ---
 
-## 1. Goal
+## 1. The product
 
-Grow Livic from a rental-only product into one platform that serves:
+```
+Marketplace  — public portal: anyone lists a flat, room, house or plot to rent or sell;
+               prospects search, book visits, pay a token.        ← traffic and supply
+       ↕  two-way
+Management   — the SaaS: rental, residential and society buildings;
+               people, billing, payments, issues, notices.        ← revenue
+```
 
-| Product | What it is | Status |
+| Line | What it is | Status |
 |---|---|---|
-| **Rental** | A landlord rents rooms/flats in their property to tenants | Live today |
-| **Residential** | One building, each flat owned by a different person; owners live there or rent it out | Next |
-| **Society** | Many towers, hundreds of flats, committee-run, gate/visitors, amenities | Later |
+| **Marketplace** | Listings, leads, tours, bookings | Partly built (PRs #60, #61) |
+| **Rental** | Landlord rents rooms/flats to tenants | Live |
+| **Residential** | One building, each flat owned by a different person | Next, small once the spine lands |
+| **Society** | Many towers, committee-run, gate, amenities | After |
 | **Hostel** | Beds instead of flats, meals, attendance | Later |
-| **Vendor marketplace** | Local vendors sell to residents across many buildings | Later, separate build |
+| **Vendor marketplace** | Local vendors selling to residents (Whimsical board) | Later, separate from the property portal |
 
-Principle: **build the shared core once, keep only product-specific logic in verticals.** Residential is not its own module — it is Society with fewer modules switched on.
+Residential is Society with fewer modules switched on — not its own module.
 
 ---
 
-## 2. Target architecture
+## 2. Architecture
 
 ```
-verticals/     only what is unique per product
-  rental       leases, bookings, deposits, roommate split, move-in/out inventory
-  society      ownership transfer, committee, visitors/gate, amenities, parking, polls, society accounting
-  (later)      hostel, vendor marketplace
-      │
-      ▼
-core/          the building and its money, shared by every product
-  property     property, block, unit, unit_member
-  finance      charge configs, bills, bill lines, ledger, meter readings, worksheets
-  community    issues, announcements, documents, analytics
-      │
-      ▼
-platform/      identity, money movement, messaging
-  auth, user, security, payment gateway, notification, storage,
-  subscription (moved from services/billing), permission registry
+platform/     auth, user, security, payment gateway, notification, storage,
+              subscription (from services/billing), permission registry, outbox
+   ▲
+core/         property   property, block, unit, unit_member
+              finance    charges, bills, bill lines, ledger, invoices, readings
+              community  issues, announcements, documents, analytics
+   ▲
+verticals/    rental      leases, bookings, deposits, roommate split, inventory
+              society     ownership transfer, committee, visitors, amenities, parking
+              marketplace listings, search, leads, tours (works with or without a unit)
+              later       hostel, vendor marketplace
 ```
 
-### Dependency rules (enforced by `ModuleBoundaryTest`)
-- `verticals → core → platform`, never upward.
-- A vertical never depends on another vertical.
-- When core needs something from a vertical, it uses an SPI or an event (the existing `UnitOccupancyProvider` pattern).
-- Core must never import lease/rental classes. This is why `unit_member` (§4.3) and payer-based bills (§4.5) live in core.
+**Rules (ArchUnit):** `verticals → core → platform`, never upward; no vertical depends on another; core reaches a vertical only through an SPI or an event; marketplace may reference a core unit but must work without one.
 
-### Where today's code moves
+### Restructure — done
+The move landed in one commit (packages only, no behaviour change), and the ArchUnit rules
+now enforce the direction rather than describing it:
 
-| Today | Target |
+| Was | Now |
 |---|---|
-| `platform/*` (auth, user, security, payment, notification, storage, common, config) | stays in `platform` |
-| `services/billing` (SaaS plans, feature limits, wallet) | `platform/subscription` |
-| `platform/common/constant/StaffPermission` (one central enum listing rental permissions) | `platform` **permission registry**; each module contributes its own permission catalog |
-| `services/property` (property, unit, join codes, memberships UI) | `core/property` |
-| `services/finance` charge configs, worksheets, meter readings, rent cycles, ledger | `core/finance` |
-| `services/finance` leases, unit bookings, rent auto-billing rules | `verticals/rental` |
-| `features/issue`, `features/announcement`, `features/analytics` | `core/community` |
-| `features/inventory` | `verticals/rental` (move-in/out); revisit if societies need asset registers |
+| `services/property` | `core/property` |
+| `services/finance` | `core/finance` (leases and bookings move to `verticals/rental` with the bill rename) |
+| `features/announcement`, `features/issue`, `features/analytics` | `core/community` |
+| `features/inventory` | `verticals/rental/inventory` |
+| `features/marketplace` | `verticals/marketplace` |
+| `services/billing` | `platform/subscription` |
 
-### Frontends
-Apps stay split **by role, not by product**. Both apps show/hide features per property using `property_module_tbl`.
+The layering immediately caught subscription enforcement reaching into core to count
+properties and units; it now asks through `PropertyUsageProvider`, declared in platform and
+implemented in core. `.agents/skills/backend-engineering/SKILL.md` documents the new layout,
+so the PR review agent checks against it.
 
-| App | Used by |
-|---|---|
-| **Landlord app** | Rental landlords, residential building admins, society managers/committee, staff |
-| **Resident app** | Tenants (any product), unit owners (residential/society), family members (society) |
+### Apps (split by role, not product)
+| App | Stack | Used by |
+|---|---|---|
+| Marketplace | Next.js `livic-marketplace-fe` | Public prospects, buyers, renters (SEO) |
+| Landlord | Expo `livic-landlord-fe` | Landlords, building admins, society managers, staff |
+| Resident | Expo `livic-resident-fe` | Tenants, unit owners, family |
 
 ---
 
 ## 3. Entry points
 
-- **A person** enters through `user_tbl`. One user can be admin of one property, owner of a flat in another and tenant in a third. `/api/v1/me/context` returns all of these links.
-- **A place** enters through `property_tbl`. Every building record, screen and permission check starts with "which property?", then narrows to block → unit → member.
+- **A person** enters via `user_tbl`; `/api/v1/me/context` returns every link (memberships and unit memberships).
+- **A place** enters via `property_tbl` — except a marketplace listing, which may exist with no property at all.
 
 ```
-property_tbl (type: RENTAL | RESIDENTIAL | SOCIETY)
-├── property_module_tbl       which features are on
-├── membership_tbl            admin, staff, guards (property-wide access)
-├── charge_config_tbl         what gets billed, and to which role
-├── announcement_tbl, issue_tbl
-└── block_tbl                 hidden default block, or Tower A / B
-    └── unit_tbl              room or flat
-        └── unit_member_tbl   OWNER / TENANT / FAMILY
-            ├── lease_tbl     rental contract (tenants only; rental vertical)
-            └── bill_tbl      rent or maintenance, exactly one payer
+property_tbl (RENTAL | RESIDENTIAL | SOCIETY)
+├── property_module_tbl    which features are on
+├── membership_tbl         admin, staff, guards (property-wide)
+├── charge_config_tbl      what is billed, to which role
+├── announcement_tbl, issue_tbl, document_tbl
+└── block_tbl              hidden default block, or Tower A / B
+    └── unit_tbl           room or flat
+        ├── listing_tbl    optional marketplace projection
+        └── unit_member_tbl  OWNER / TENANT / FAMILY
+            ├── lease_tbl  tenant contract (rental vertical)
+            └── bill_tbl   one payer, one issuer
                 ├── bill_line_tbl
                 └── payment_transaction_tbl → finance_ledger_tbl
 ```
 
-**Later — organisation above property.** Today the subscription belongs to the user who created the property. That breaks for a facility-management company running 20 societies, a society whose committee changes, or a vendor business with staff. An `organisation_tbl` that owns the subscription and its properties is needed before Society/Vendor. Until then, avoid new code that assumes "creator of the property = payer". Current spots with that assumption: `AuthFacadeImpl.findPropertyOwnerId` (matches title `"Owner"`) and the subscription/limit checks against the owner's plan (`SubscriptionEnforcementAspect`, `TeamMemberLimitValidator`).
+**Later — `organisation_tbl` above property.** Subscriptions belong to the user who created the property, which breaks for facility-management firms, committee handovers and broker/vendor businesses. Avoid new "creator = payer" assumptions; the existing ones are `AuthFacadeImpl.findPropertyOwnerId` (matches title `"Owner"`), `SubscriptionEnforcementAspect`, `TeamMemberLimitValidator`.
 
 ---
 
-## 4. Core data model
+## 4. Core model (the spine)
 
-### 4.1 Table changes
+### 4.1 Renames — exactly two
+| From | To | Change |
+|---|---|---|
+| `rent_cycle_tbl` | `bill_tbl` | add `member_id` (payer, required), `issued_by_member_id` (null = the property itself), `bill_type` (`RENT`, `MAINTENANCE`, later `PARKING`, `AMENITY`, `PENALTY`), `invoice_no`; `lease_id` nullable; unique key → `(member_id, billing_month, bill_type)` |
+| `rent_cycle_charge_tbl` | `bill_line_tbl` | `rent_cycle_id` → `bill_id`; add `tax_rate`, `tax_amount` |
 
+Everything else keeps its name and only gains columns.
+
+### 4.2 Table changes
 | Table | Change | Owner |
 |---|---|---|
-| `property_tbl` | add `property_type` (`RENTAL` default) | core/property |
-| `property_module_tbl` | start using it (entity exists, nothing reads it today); property type seeds default modules | core/property |
-| `block_tbl` | **new** — `id, property_id, name, sort_order`; rental/residential get one hidden default block | core/property |
-| `unit_tbl` | add `block_id`; unique key moves from `(property_id, unit_number)` to `(block_id, unit_number)` | core/property |
-| `unit_member_tbl` | **new** — see §4.3 | core/property |
-| `charge_config_tbl` | add `billed_to_role` (`TENANT` default / `OWNER`) | core/finance |
-| `bill_tbl` | **renamed from `rent_cycle_tbl`** — add `member_id` (payer, required), `bill_type` (`RENT`, `MAINTENANCE`, later `PARKING`, `AMENITY`, `PENALTY`); `lease_id` becomes nullable | core/finance |
-| `bill_line_tbl` | renamed from `rent_cycle_charge_tbl` | core/finance |
-| `finance_ledger_tbl` | add `member_id`; running balance per payer | core/finance |
-| `lease_tbl`, `unit_booking_tbl`, `lease_inventory_assignment_tbl` | unchanged, moved to rental | verticals/rental |
-| `visitor_tbl`, `amenity_tbl`, `amenity_booking_tbl` | **new, later** | verticals/society |
-
-Everything else (`user_tbl`, `auth_identity_tbl`, `membership_tbl`, `membership_permission_tbl`, `payment_transaction_tbl`, `notification_log_tbl`, `issue_tbl`, `announcement_tbl`, …) is unchanged.
-
-### 4.2 Property types and modules
-
-| Type | Default modules |
-|---|---|
-| `RENTAL` | units, leases, bookings, rent billing, meter readings, inventory, issues, announcements, analytics |
-| `RESIDENTIAL` | units, ownership, maintenance billing, owner rent-out, issues, announcements |
-| `SOCIETY` | residential defaults + blocks, visitors, amenities, parking, committee, polls (each switchable) |
-
-Code checks **modules**, not types (`isModuleEnabled(propertyId, VISITORS)`), so there are no scattered `if type == …` branches.
+| `property_tbl` | `invoice_prefix`. **`property_type` already exists** (V19, marketplace) as RENTAL/HOSTEL/SOCIETY/MESS/INDIVIDUAL — `RESIDENTIAL` added to the enum; the column is VARCHAR(32) so no migration was needed. `is_publicly_listed` also already exists. | core/property |
+| `property_module_tbl` | start using it; type seeds the default module set | core/property |
+| `block_tbl` | **new** — `property_id, name, sort_order`; rental/residential get one hidden default | core/property |
+| `unit_tbl` | `block_id` (unique key moves from `(property_id, unit_number)` to `(block_id, unit_number)`), optional `area`. **Already exists** from the marketplace work: `base_price`, `is_bookable`, `description`, `amenities` — `is_bookable` is the per-unit listing switch the plan called `is_listed`. | core/property |
+| `unit_member_tbl` | **new** — §4.3 | core/property |
+| `charge_config_tbl` | `billed_to_role` (TENANT default / OWNER), optional `unit_id` for owner-specific charges, `tax_rate` | core/finance |
+| `finance_ledger_tbl` | `member_id`, `unit_id` kept — balance per payer **and** per unit (dues follow the flat on sale) | core/finance |
+| `credit_note_tbl` | **new** — refunds, waivers, advances | core/finance |
+| `document_tbl` | **new** — agreements, ID proofs, no-dues certificates, over `media_asset_tbl` | core/community |
+| `audit_log_tbl` | **new** — ownership changes, bill edits, permission changes | platform |
+| `outbox_tbl` | **new** — §4.6 | platform |
+| `listing_tbl` | **new** — §5 | verticals/marketplace |
+| `marketplace_lead_tbl` | `property_id` + `unit_id` (NOT NULL today) → `listing_id` | verticals/marketplace |
+| `lease_tbl`, `unit_booking_tbl`, `lease_inventory_assignment_tbl` | unchanged, owned by rental | verticals/rental |
+| `visitor_tbl`, `amenity_booking_tbl` | **new, later** | verticals/society |
 
 ### 4.3 `unit_member_tbl` — who belongs to a flat
-
 ```
-unit_member_tbl
-  id, unit_id, user_id,
-  role        OWNER | TENANT | FAMILY
-  is_primary
-  lease_id    nullable, set for TENANT
-  from_date, to_date (null = current), is_active
-  assigned_by_id, created_at, updated_at
+id, unit_id, user_id (null while pending), role OWNER|TENANT|FAMILY,
+is_primary, lease_id (tenants only), from_date, to_date, is_active, assigned_by_id
 ```
-
-- The **single answer** to "who belongs to this flat". Announcements, issues, resident context and (later) visitor approvals read it — never `lease_tbl`.
-- Rental: creating a lease also creates a `TENANT` member. Roommates = several `TENANT` members on one unit (matches today's multiple leases per unit).
-- Residential/Society: admin assigns an `OWNER`; owner may add `FAMILY`; renting out creates a lease + `TENANT` member.
-- Rules: at most one active primary `OWNER` per unit; an owner and a tenant can be active on the same unit; selling a flat = end the owner row, create the next one.
+- The single answer to "who is in this unit" — used by announcements, issues, resident context, marketplace availability and later visitor approval. Nothing reads `lease_tbl` for this.
+- **Why both member and lease for a rental tenant:** the member row answers *who is here* and lives in core; the lease answers *what was agreed* and lives in the rental vertical. Core cannot depend on rental, owners and family have no lease, and one lookup beats four.
+- **Invariant:** creating a lease creates the member row in the same transaction; ending a lease sets `to_date` in the same transaction. Tested both ways.
+- One active primary OWNER per unit; owner and tenant can be active together; a sale ends one owner row and opens the next.
 
 ### 4.4 Occupancy
-- Rented = active `TENANT` member.
-- Owner-occupied = active `OWNER`, no active `TENANT`.
-- Vacant = neither.
-- Capacity checks count `TENANT` members only.
+Rented = active TENANT · Owner-occupied = active OWNER with no tenant · Vacant = neither. Capacity counts TENANT only.
 
-### 4.5 Bills
+### 4.5 Bills — one payer, one issuer
+| Product | Bill | Payer | Issuer | Lines |
+|---|---|---|---|---|
+| Rental | RENT | tenant member | property | base rent + TENANT charges + readings |
+| Residential / Society | MAINTENANCE | owner member | property | OWNER charges, no rent |
+| Residential / Society, rented flat | RENT | tenant member | **owner member** | base rent from the lease (v1) |
 
-Every bill has **exactly one payer** (`member_id`). This keeps core finance free of leases.
+`issued_by_member_id` is what makes the two-layer residential case explicit rather than inferred.
 
-| Product | Bill | Payer | Line items |
-|---|---|---|---|
-| Rental | `RENT` | tenant member (with `lease_id`) | base rent + all `billed_to_role = TENANT` charges + meter/worksheet entries (as today) |
-| Residential / Society | `MAINTENANCE` | owner member | `billed_to_role = OWNER` charges, no base rent |
-| Residential / Society, flat rented out | `RENT` | tenant member (with `lease_id`) | base rent from the lease only (v1) |
+**Compliance built in from the start** (retrofitting numbering is painful):
+- gapless `invoice_no` per property per financial year, from `invoice_prefix`
+- `tax_rate` / `tax_amount` per line — societies crossing the GST threshold must charge it
+- rent receipts for tenants (HRA claims)
+- credit notes for refunds, waivers and advances
+- TDS on rent: out of scope for v1, but the bill must be able to carry a deduction later
 
-- Batch generation moves to a background job for Society-scale properties (today `batchGenerate` loops inside one HTTP request).
-- Ledger balance is per payer, so an owner's maintenance and their tenant's rent on the same flat never mix.
+Batch generation moves to a background job at society scale.
 
-### 4.6 Worked example — flat 102, residential, rented out
+### 4.6 Events — transactional outbox
+Marketplace availability, notifications and analytics all ride on domain events. In-process Spring events are lost on crash or rollback, which would leave a rented room showing as vacant. So:
+- write an `outbox_tbl` row in the same transaction as the change
+- a publisher relays rows to consumers, consumers are idempotent (`event_id`)
+- a nightly reconciliation job repairs any drift in the listing projection
 
+### 4.7 Worked example — flat 102, residential, rented out
 | Table | Rows |
 |---|---|
 | `unit_member_tbl` | A = Ravi, OWNER · B = Amit, TENANT, `lease_id` L1 |
 | `lease_tbl` | L1 = Amit, rent 15000, deposit 30000 |
-| `bill_tbl` (Sep) | B1 = MAINTENANCE, payer A · B2 = RENT, payer B, lease L1 |
-| `finance_ledger_tbl` | Ravi's balance, Amit's balance — separate |
+| `bill_tbl` (Sep) | B1 MAINTENANCE, payer A, issuer property · B2 RENT, payer B, issuer A |
+| `finance_ledger_tbl` | Ravi's balance and Amit's balance, separate; unit 102 total for dues-on-sale |
 
-Visibility: building admin sees B1 only · Ravi sees B1 and B2 · Amit sees B2 only.
-
-### 4.7 Migration (single Flyway version, dev stage)
-1. Create `block_tbl`; one default block per existing property; set `unit_tbl.block_id`; swap the unique key.
-2. Create `unit_member_tbl`; one `TENANT` member per active lease.
-3. Rename `rent_cycle_tbl` → `bill_tbl`, `rent_cycle_charge_tbl` → `bill_line_tbl`; add `member_id` (backfill from lease → member), `bill_type = RENT`; make `lease_id` nullable.
-4. Add `member_id` to `finance_ledger_tbl` (backfill from lease), `billed_to_role` to `charge_config_tbl`, `property_type` to `property_tbl`.
-5. Hibernate runs in `validate` mode — entities and migration must land in the same commit.
+Visibility: admin sees B1 · Ravi sees B1 and B2 · Amit sees B2.
 
 ---
 
-## 5. Roles, permissions and onboarding
+## 5. Marketplace
 
-### 5.1 Where access comes from
+### 5.1 What exists (PRs #60, #61)
+`features/marketplace`: `marketplace_lead_tbl` (type, status, prospect name/phone/email, preferred slot, token amount, payment id, `converted_unit_booking_id`, decision fields), `otp_verification_tbl`, tour availability tables, landlord visiting-hours and tour screens, and the Next.js app. Migrations run to **V23**; next free number is **V24**.
 
-| Who | Source | Scope | Controlled by |
-|---|---|---|---|
-| Building admin / landlord / society manager | `membership_tbl`, `FULL_ACCESS` | whole property | automatic on create |
-| Staff (manager, accountant, guard later) | `membership_tbl` + picked permissions (join code) | whole property, chosen modules | admin |
-| Unit owner | `unit_member_tbl` role `OWNER` | own unit only | admin assigns; rights fixed in code |
-| Tenant | `unit_member_tbl` role `TENANT` (+ lease) | own lease and bills | landlord / unit owner |
-| Family (society) | `unit_member_tbl` role `FAMILY` | view unit, raise issues | owner |
+**The blocker:** leads require `property_id` and `unit_id`, and public DTOs project managed properties — so only existing customers can have supply. A portal needs listing first, management later.
 
-**Unit members never get a membership row.** Memberships are property-wide (would leak every flat), they count against `MAX_TEAM_MEMBERS`, and an owner's rights over their flat shouldn't be editable from the staff screen.
+### 5.2 `listing_tbl`
+```
+id, source STANDALONE | MANAGED,
+unit_id (null when standalone), owner_user_id (null before signup),
+listing_type RENT | SALE, title, description, photos, amenities,
+rent_or_price, deposit, address, locality, city, lat, lng,
+status DRAFT | LIVE | PAUSED | RENTED | EXPIRED, published_at, expires_at
+```
+Conversion keeps the same row — it gains `unit_id` and `owner_user_id`, so leads, tours and the page URL survive (SEO). `marketplace_lead_tbl` points at `listing_id`.
 
-### 5.2 One authorization rule
-`AuthorizationServiceImpl.hasPermission(resourceType, id, code)` allows if **either**:
-1. the user's property membership grants `code` (today's logic), or
-2. the resource resolves to a unit (`ResourceScope.Property` gains `unitId`) and the user's active `unit_member` role on that unit grants `code`, via a role → permissions map:
+### 5.3 Two-way flow
+**Listing first:** standalone listing (no account) → leads and tours → owner signs up → wizard creates property, block, unit and OWNER member → listing becomes MANAGED, keeping its leads.
 
-| Role | Permissions on that unit |
+**Management first:** marketplace module on the property + `unit_tbl.is_listed` per room (never listed by default) → public sees live status → tour → token booking (`unit_booking_tbl`) → landlord accepts → lease + TENANT member → listing flips to RENTED and leaves the portal.
+
+Who may list: landlord or admin any unit; residential/society **unit owner their own flat only**; a society admin can block flat-level listing.
+
+| Public sees | Source |
 |---|---|
-| `OWNER` | `PROPERTY_VIEW`, `LEASE_VIEW`, `LEASE_CREATE`, `LEASE_UPDATE`, `RENT_ROLL_VIEW`, `RENT_ROLL_MANAGE` (rent bills only), `ISSUE_VIEW`, `ISSUE_MANAGE`, pay own maintenance |
-| `TENANT` | view own lease, pay own bills, `ISSUE_VIEW` (own), raise issues |
-| `FAMILY` | view unit, raise issues |
+| Available now | no active TENANT member |
+| Available from 15 Oct | notice served, `move_out_date` |
+| Occupied / hidden | active tenant |
+| Rent, deposit | charge config or last lease |
+| Room type, floor, furnishing, photos | unit + listing |
 
-- Replaces the current `LEASE_VIEW_OWN` special case (`AuthorizationServiceImpl.java:95`).
-- `platform/auth` reads unit members through an SPI (`UnitMemberProvider`) implemented in core/property — no module cycle.
-- Maintenance bills never resolve to owner-manage rights: an owner can pay their maintenance but not publish or mark it paid.
-- Property-id-only checks (`hasPermission(propertyId, code)`) are unchanged — unit members never gain property-wide rights.
+**Never public:** tenant identity, bills, ledger, documents, issues, who lives where. Public reads hit the listing projection, never live management queries — today's public DTOs read managed properties directly and must change.
 
-### 5.3 Permission registry
-`StaffPermission` is replaced by per-module catalogs registered with platform. The staff permission picker shows only modules enabled for that property (e.g. residential hides Leases and shows "Maintenance" instead of "Rent roll"). Codes stay stable.
-
-### 5.4 Onboarding
-
-**Signup mode (`UserMode`) is only a UI preference** — which home screen opens first. It never grants permissions. Fix: join codes currently force `UserMode.RENTAL` (`PropertyJoinCodeServiceImpl.java:142`); derive it from the property type instead.
-
-| Flow | Steps | Tables written |
-|---|---|---|
-| Set up a building | sign up → pick product → create property → add blocks/units → assign owners → invite staff | `user_tbl`, `auth_identity_tbl`, `property_tbl`, `property_module_tbl`, `membership_tbl`, `block_tbl`, `unit_tbl`, `unit_member_tbl` |
-| Flat owner | admin assigns by phone → owner signs up in resident app with that phone → member row linked → My Home | `unit_member_tbl` (pending → linked to `user_id`) |
-| Tenant | landlord or unit owner creates lease | `lease_tbl`, `unit_member_tbl` |
-| Staff | join code | `membership_tbl`, `membership_permission_tbl` |
-
-Pending members: if the admin assigns a phone with no account, store the member with the phone and no `user_id`; attach it on signup/login with that verified phone.
-
-UI label: show "Building admin" on residential/society; the stored membership title stays `"Owner"` until `findPropertyOwnerId` stops depending on it.
+### 5.4 Portal gaps beyond the listing
+Locality/geo and map search · filters and a search engine when MySQL runs out · sale flow (negotiation, ownership proof, brokerage) · broker and builder accounts with lead credits · trust and moderation (verification, reporting, expiry, duplicates) · lead economics · media pipeline (resize, CDN) · OTP rate limits and bot protection.
 
 ---
 
-## 6. Flows side by side
+## 6. Roles, permissions, onboarding
+
+| Who | Source | Scope |
+|---|---|---|
+| Landlord / admin / society manager | `membership_tbl` FULL_ACCESS | whole property |
+| Staff (manager, accountant, guard) | `membership_tbl` + picked permissions | whole property, chosen modules |
+| Unit owner | `unit_member_tbl` OWNER | own unit |
+| Tenant | `unit_member_tbl` TENANT (+ lease) | own lease and bills |
+| Family | `unit_member_tbl` FAMILY | view unit, raise issues |
+| Prospect | none, OTP only | public listings, own leads |
+
+Unit members never get a membership row: memberships are property-wide, count against `MAX_TEAM_MEMBERS`, and an owner's rights shouldn't be editable from the staff screen.
+
+**One authorization rule** — allow if the property membership grants the code, **or** the resource resolves to a unit (`ResourceScope.Property` gains `unitId`) and the caller's active member role grants it:
+
+| Role | On that unit |
+|---|---|
+| OWNER | `PROPERTY_VIEW`, `LEASE_VIEW/CREATE/UPDATE`, `RENT_ROLL_VIEW/MANAGE` (rent bills only), `ISSUE_VIEW/MANAGE`, `LISTING_MANAGE`, pay own maintenance |
+| TENANT | view own lease and bills, pay, raise issues |
+| FAMILY | view unit, raise issues |
+
+Replaces the `LEASE_VIEW_OWN` special case (`AuthorizationServiceImpl.java:95`). Platform reads members through an SPI (`UnitMemberProvider`). Maintenance bills never grant owner-manage rights — an owner pays but cannot publish or mark paid. Property-level checks are unchanged.
+
+**Permission registry:** `StaffPermission` becomes per-module catalogs registered with platform; the picker shows only enabled modules (residential hides Leases, shows "Maintenance"). New code: `LISTING_MANAGE`.
+
+**Onboarding:** `UserMode` is a UI preference only and never grants access; join codes must stop forcing `UserMode.RENTAL` (`PropertyJoinCodeServiceImpl.java:142`). Owners are assigned by phone and linked on signup (pending member with no `user_id`). UI says "Building admin" while the stored title stays `"Owner"` until `findPropertyOwnerId` changes.
+
+---
+
+## 7. Flows side by side
 
 | Step | Rental | Residential | Society |
 |---|---|---|---|
-| **1. Create** | landlord → `property_tbl` RENTAL, `membership_tbl` FULL | building admin → `property_tbl` RESIDENTIAL, `membership_tbl` FULL | manager/committee → `property_tbl` SOCIETY, `membership_tbl` FULL |
-| **2. Structure** | default `block_tbl` → `unit_tbl` | default `block_tbl` → `unit_tbl` | Tower A/B `block_tbl` → `unit_tbl` |
-| **3. People** | `unit_booking_tbl` → `lease_tbl` + `unit_member_tbl` TENANT | `unit_member_tbl` OWNER; if rented: `lease_tbl` + `unit_member_tbl` TENANT | `unit_member_tbl` OWNER/FAMILY/TENANT; guards/staff → `membership_tbl` |
-| **4. Charges** | `charge_config_tbl` → TENANT | `charge_config_tbl` → OWNER | `charge_config_tbl` → OWNER (per sq ft, sinking fund, parking) |
-| **5. Monthly bill** | `meter_reading_tbl`, `billing_worksheet_entry_tbl` → `bill_tbl` RENT + `bill_line_tbl` | `bill_tbl` MAINTENANCE per owner; `bill_tbl` RENT per tenant if rented | background job → `bill_tbl` MAINTENANCE per owner |
-| **6. Payment** | `payment_transaction_tbl` → `bill_tbl` PAID → `finance_ledger_tbl` → `notification_log_tbl` | same | same |
-| **7. Day to day** | `issue_tbl`, `announcement_tbl`, `lease_inventory_assignment_tbl` | `issue_tbl` (common area + flat), `announcement_tbl` to all members | + `visitor_tbl`, `amenity_booking_tbl`, notices per tower |
+| **0. Marketplace** | landlord lists rooms; tour + token → `listing_tbl`, `marketplace_lead_tbl`, `unit_booking_tbl` | owner lists their own flat (rent or sale) | same, unless the society blocks it |
+| **1. Create** | landlord → RENTAL | admin → RESIDENTIAL | manager/committee → SOCIETY |
+| **2. Structure** | default block → rooms | default block → flats | towers → flats |
+| **3. People** | booking → lease + TENANT member | admin assigns OWNER; owner adds TENANT | OWNER / FAMILY / TENANT; staff and guards |
+| **4. Charges** | to TENANT | to OWNER | to OWNER (per sq ft, sinking fund, parking) |
+| **5. Bill** | RENT per tenant | MAINTENANCE per owner + RENT per tenant | MAINTENANCE per owner, background job |
+| **6. Payment** | payment → bill → ledger → receipt | same | same |
+| **7. Day to day** | issues, notices, inventory | issues (common + flat), notices to all members | + visitors, amenities, per-tower notices |
+| **8. Exit** | notice → move-out → deposit settled → relisted | tenant leaves, or flat sold → new OWNER | flat sold → dues follow the flat, no-dues certificate |
 
 ---
 
-## 7. Residential specifics
+## 8. Residential (small, once the spine lands)
 
-### 7.1 Actors
 ```
 Building admin ──(maintenance)──▶ Unit owner ──(rent)──▶ Tenant
 ```
+- **Backend:** assign owner (pending by phone), OWNER charge configs, maintenance bills, owner-issued rent bills, rent privacy from the admin, issue routing. No new core work.
+- **Landlord app:** property type on create; units grid with owner and occupancy; charges billed to owners; maintenance roll and ledger without tenant rent; common-area issues.
+- **Resident app — owner:** My Home (dues, pay, history, notices, issues) and My Tenant (add tenant, lease terms, notice, end lease, generate/publish rent, record cash/UPI, tenant's issues). Not shown: worksheets, readings, batch billing, analytics, staff.
+- **Tenant:** unchanged.
 
-### 7.2 Screens
-
-**Landlord app — building admin**
-1. Create property: Rental / Residential / Society.
-2. Units grid: owner name, occupancy badge, assign/change owner.
-3. Charges: billed to owners; no RENT config.
-4. Maintenance roll, ledger, analytics — no tenant rent amounts.
-5. Issues: common area, owner-occupied flats, escalations.
-6. Staff with residential permission catalog.
-
-**Resident app — unit owner**
-- **My Home**: maintenance dues + pay, payment history, notices, raise issue.
-- **My Tenant** (only after renting out):
-
-| Screen | API |
-|---|---|
-| Add tenant | `POST /finance/leases` |
-| Tenant & lease details, edit terms, notice, end lease | `GET/PUT /finance/leases/{id}` |
-| Generate / publish rent | `POST /rent-cycles/generate`, `/{id}/publish` (renamed with `bill_tbl`) |
-| Record cash/UPI | `POST /rent-cycles/{id}/cash` |
-| Payment history | `GET /rent-cycles?unitId=` |
-| Tenant's issues | issues filtered by unit |
-
-Not shown to owners: worksheets, meter readings, batch billing, analytics, staff. Unit switcher when a user owns several flats. An investor renting out many flats should use the landlord app with a rental property instead.
-
-**Resident app — tenant**: unchanged.
-
-### 7.3 Issues
-- Resident can raise issues with an active `OWNER` or `TENANT` membership on a unit in that property.
-- `COMMON_AREA` → admin · owner-occupied `UNIT` issue → owner + admin · tenant's `UNIT` issue → tenant + unit owner, admin only if escalated.
-
----
-
-## 8. Society and later verticals
+## 9. Society and later
 
 | Vertical | Needs beyond core |
 |---|---|
-| **Society** | real blocks/towers; visitors/gate with near real-time approval; amenities & bookings; parking; committee & polls; per-sq-ft charges (`unit_tbl.area` + new calculation strategy); society accounting (vendors, expenses, audit); background batch billing |
-| **Hostel** | bed level under unit (or members per bed); meals; attendance |
-| **Vendor marketplace** | vendor accounts not tied to a property; catalog, orders, delivery status, ratings, location search; society manager approves vendors; commission. Uses platform auth/payment/notification and core property only for "nearby buildings". A separate build, not a toggle. |
+| Society | towers UI, visitors/gate, amenities, parking, committee and polls, per-sq-ft charges, society accounting (vendors, expenses, audit), background batch billing, dues-follow-flat and no-dues certificate |
+| Hostel | bed level under unit, meals, attendance |
+| Vendor marketplace | vendor accounts not tied to a property, catalog, orders, ratings, society approval, commission — a separate build |
 
 ---
 
-## 9. Platform gaps (affect every vertical)
+## 10. Platform gaps
 
-| Gap | Why it matters | Needed before |
-|---|---|---|
-| Payments settle to one Razorpay account (`RazorpayProperties`) | rent to landlords, maintenance to societies, payouts to vendors need split settlement — Razorpay Route + payout reconciliation | online rent to owners, Society, Vendor |
-| Subscription owned by one user | organisations, committee changes, vendor businesses | Society, Vendor |
-| Central permission enum | every vertical would edit platform | Restructure (phase 1) |
-| Open security findings from 2026-09-13 review — phone-as-password, lockout, payment fail-open, invoice IDOR | more payers and money flows raise impact | Phase 0 |
-
----
-
-## 10. Decisions
-
-### Made
-| # | Decision |
+| Gap | Needed before |
 |---|---|
-| ✔ | Layered structure: platform → core → verticals |
-| ✔ | `lease_tbl` stays a rental contract; ownership is **not** a lease type |
-| ✔ | `unit_member_tbl` in core is the single "who belongs to a flat" (replaces the separate ownership-table idea) |
-| ✔ | Unit owners manage their tenant in the **resident app** |
-| ✔ | Apps split by role, not by product |
-| ✔ | `property_tbl` is the root for all building data; `user_tbl` is the root for a person |
-
-### Open (defaults proposed)
-| # | Question | Proposed default |
-|---|---|---|
-| D1 | Who pays maintenance on a rented flat? | Owner |
-| D2 | Can the building admin see owner↔tenant rent? | No |
-| D3 | How is rent collected in residential v1? | Owner records cash/UPI; online rent to owners after Razorpay Route |
-| D4 | Who pays the SaaS subscription? | Building admin's plan now; organisation later |
-| D5 | How are owners linked? | Admin assigns by phone, auto-link on signup (vs per-flat invite code) |
-| D6 | Who can remove/transfer an owner? | Admin only; transfer-request flow later |
-| D7 | Rename `rent_cycle_tbl` → `bill_tbl`? | Yes (cheap now) |
-| D8 | `RESIDENTIAL` and `SOCIETY` as separate types, or one type + modules? | Separate types, both driven by modules |
+| One Razorpay account — rent to landlords, maintenance to societies, vendor payouts need Route + reconciliation | online rent to owners, society, vendors |
+| Subscription owned by one user — no organisations | society, facility managers, brokers |
+| Deposit settlement at move-out (refunds, damage deductions from inventory) | residential/rental exit flow |
+| Idempotency keys on payments and webhooks | any payment scale |
+| Synchronous batch billing | society |
+| Open security findings (2026-09-13): phone-as-password, lockout, payment fail-open, invoice IDOR | now |
 
 ---
 
-## 11. Roadmap
+## 11. How we will know it works
+
+- **Feature flags** per module so half-built verticals ship dark.
+- **Seed and demo data** per product line — a demo society and a demo rental, for sales and for tests.
+- **Funnel metrics** as events: listing created → lead → tour → booking → signup → first bill → first payment. The whole thesis is the funnel; it has to be measured.
+- **Performance budget** for the portal: public listing page and search response time, cache hit rate.
+- **Reconciliation dashboards:** listing projection drift, outbox lag, failed payments.
+
+### Assumptions to validate with real users (before Society)
+1. Do flat owners pay, or only the building admin?
+2. Will societies switch without gate management?
+3. Will owners list on a portal with no traffic yet, and what unlocks supply — free listings, or calling brokers?
+
+---
+
+## 12. Decisions
+
+**Made:** layered structure; incremental restructure; `lease_tbl` stays the rental contract; `unit_member_tbl` is the single residency record; payer-and-issuer bills with two renames; unit owners use the resident app; apps split by role; listings work with or without a managed unit; marketplace is two-way.
+
+**Open**
+| # | Question | Proposed |
+|---|---|---|
+| D1 | Maintenance on a rented flat | Owner pays |
+| D2 | Admin sees owner↔tenant rent | No |
+| D3 | Rent collection in residential v1 | Cash/UPI recorded by owner; online after Route |
+| D4 | Who pays the subscription | Admin's plan now; organisation later |
+| D5 | How owners are linked | Assign by phone, auto-link on signup |
+| D6 | Who removes/transfers an owner | Admin only |
+| D7 | Rename rent cycle → bill | Yes |
+| D8 | RESIDENTIAL and SOCIETY separate types | Separate, module-driven |
+| D9 | Sale listings in v1 | Rent first |
+| D10 | Brokers allowed to list | Owners only first |
+| D11 | Auto-unlist when taken | Yes |
+| D12 | Dues follow the flat on sale | Yes — ledger keeps a per-unit view |
+| D13 | GST and invoice numbering in v1 | Yes, numbering from day one; GST when societies arrive |
+
+---
+
+### Parked (not in scope now)
+**Living ecosystem / personal home** — an individual managing their own bills with no managed building behind them. Would need: property type `PERSONAL` (self-managed, one unit), `bill.source` (SYSTEM / MANUAL / EXTERNAL-BBPS), `bill.visibility` (PROPERTY / PRIVATE — a resident's personal bills must stay invisible to a society admin), and a `living` vertical (personal bills, reminders, documents, flatmate expense split, home services). The spine in §4 already supports it; revisit after residential.
+
+## 13. Roadmap
+
+**Next quarter — the spine and residential**
 
 | Phase | Deliverable | Size |
 |---|---|---|
-| **0** | Fix open security findings (§9) | S |
-| **1** | **Restructure, no behaviour change**: packages → platform / core / verticals/rental; `services/billing` → `platform/subscription`; permission registry; update ArchUnit rules. Existing tests prove nothing broke. | M |
-| **2** | **Core model**: `property_type`, modules in use, `block_tbl`, `unit_member_tbl`, `bill_tbl` rename + payer, ledger per member, migration + backfill. Announcements/issues/resident context read `unit_member`. | L |
-| **3** | **Authorization**: unit-member role rule, SPI, drop `LEASE_VIEW_OWN` special case; `/me/context` returns unit links. | M |
-| **4** | **Residential backend**: assign owner (+ pending by phone), maintenance bills, owner rent-out, D2 visibility, issues routing. | M |
-| **5** | **Residential frontend**: landlord app (building admin) + resident app (My Home, My Tenant). | L |
-| **6** | **Platform for scale**: Razorpay Route / split settlement, organisation accounts, background batch billing. | L |
-| **7** | **Society vertical**: towers UI, visitors, amenities, parking, committee, per-sq-ft. | XL |
-| **8** | Hostel, vendor marketplace. | XL |
+| **0** | Open security findings | S |
+| **1** | **Core model**, in slices: (a) `block_tbl` + `unit.block_id` + `RESIDENTIAL` type — **done, migration V24**; (b) modules in use; (c) `unit_member_tbl`; (d) bill rename + payer/issuer + `invoice_no`, ledger per member and per unit; (e) outbox. Property and finance packages move as part of this work. Announcements, issues and resident context read members. | L |
+| **2** | **Authorization**: unit-member role rule, `UnitMemberProvider` SPI, drop `LEASE_VIEW_OWN`, permission registry, `/me/context` returns unit links | M |
+| **3** | **Residential**: assign owners, maintenance bills, owner-issued rent, rent privacy, issue routing, landlord + resident screens | M |
 
-Phases 1 and 2 must be separate PRs — never move packages and change the model together.
+**After that**
 
----
+| Phase | Deliverable |
+|---|---|
+| **4** | **Marketplace supply**: `listing_tbl`, standalone listings with no account, leads on listings, locality and geo, listing projection + privacy line; `features/marketplace` → `verticals/marketplace` |
+| **5** | **Two-way marketplace**: list from a managed property, live status via outbox events, booking → lease, conversion wizard; `community` and `inventory` packages move |
+| **6** | **Platform for scale**: Razorpay Route, organisations, background batch billing, deposit settlement, idempotency keys |
+| **7** | **Society**: towers, visitors, amenities, parking, committee, per-sq-ft, dues on sale |
+| **8** | Hostel; vendor marketplace; brokers and lead economics |
 
-## 12. Tests
-
-**Restructure (phase 1)**
-- Full existing suite green with no test logic changes.
-- ArchUnit: verticals don't depend on each other; core doesn't depend on verticals; platform doesn't depend on core/verticals.
-
-**Core model (phase 2)**
-- Migration backfill: every active lease has a `TENANT` member; every bill has a `member_id`; units unique per block.
-- Occupancy (rented / owner-occupied / vacant) and capacity count `TENANT` only.
-- Announcements reach each active member once; issues resolve residents from members.
-
-**Authorization (phase 3)**
-- Owner of unit A manages leases/rent on A; 403 on unit B.
-- Owner can pay but not publish/mark paid their maintenance bill.
-- Owner/tenant/family never pass property-level checks (`batch-generate`, charges, staff, analytics).
-- Ended member loses access; tenant sees only own lease and bills.
-
-**Residential (phase 4)**
-- Maintenance bill has only `OWNER` charges; residential rent bill has only base rent.
-- Maintenance and rent on the same flat keep separate ledger balances.
-- Admin batch generation on residential creates maintenance bills only.
-- Pending owner by phone links on signup.
-
-**Rental regression (every phase)** — lease, booking, rent roll, payment, inventory, analytics flows behave as today.
+Phase 1 is the one big change. Everything after it is additive — which is the point of doing it first.
 
 ---
 
-## 13. Risks
+## 14. Tests
+
+- **Core model (1):** backfill — every active lease has a TENANT member, every bill a payer, units unique per block; occupancy and capacity count TENANT only; announcements reach each member once; invoice numbers gapless per property per year; outbox row written in the same transaction and consumed once.
+- **Authorization (2):** owner manages leases and rent on their unit, 403 on another; owner pays but cannot publish or mark paid maintenance; members never pass property-level checks; ended member loses access.
+- **Residential (3):** maintenance bill has only OWNER charges; residential rent bill only base rent; separate ledger balances; admin batch generates maintenance only; pending owner links on signup.
+- **Marketplace (4, 5):** standalone listing with no account; lead attaches to a listing; conversion keeps leads and URL; managed listing shows vacant/vacating; public API exposes no tenant, bill or document data; listing flips to RENTED when a tenant member is created.
+- **Rental regression (every phase):** lease, booking, rent roll, payment, inventory and analytics unchanged.
+- **ArchUnit:** rules added in phase 1 as warnings, tightened to failures as each module lands.
+
+---
+
+## 15. Risks
 
 | Risk | Mitigation |
 |---|---|
-| Package move breaks wiring or hides a behaviour change | Phase 1 is move-only; full suite + ArchUnit; separate PR |
-| Code still reads leases to find residents after phase 2 | Remove resident lookups from rental facades; ArchUnit forbids core → rental |
-| Backfill errors in `bill_tbl.member_id` / ledger | Migration verification queries in tests; dev data reset acceptable |
-| Privilege escalation through unit-member role rule | One rule, role map in one place, negative tests per endpoint |
-| Rename of rent cycles ripples through FE and API | Keep old endpoint paths as aliases during the transition, regenerate API clients |
-| Society scale (1000 units) in synchronous flows | Background batch billing and notification fan-out before Society launch |
-| Hidden "creator = payer" assumptions | Track `findPropertyOwnerId` and subscription checks; replace when organisations arrive |
+| Phase 1 is large and touches billing | Land it behind flags, in reviewable slices (property → members → bills), with backfill verification queries |
+| Code still reads leases to find residents | Remove resident lookups from rental facades; ArchUnit forbids core → rental |
+| Events lost, listings show stale availability | Outbox + idempotent consumers + nightly reconciliation |
+| Public marketplace leaks management data | Listing projection is an allow-list; tests assert the shape |
+| Invoice numbering retrofit | Built in phase 1, not later |
+| Privilege escalation via unit-member rule | One rule, one role map, negative tests per endpoint |
+| Rename ripples through FE and API | Old endpoint paths kept as aliases during transition; regenerate clients |
+| Building for untested demand | Validate §11 assumptions before Society |

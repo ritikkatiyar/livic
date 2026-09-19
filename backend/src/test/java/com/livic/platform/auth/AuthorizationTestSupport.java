@@ -3,12 +3,12 @@ package com.livic.platform.auth;
 import com.livic.platform.auth.service.impl.AuthorizationServiceImpl;
 import com.livic.platform.auth.service.impl.ResourceScopeRegistry;
 import com.livic.platform.auth.service.interfaces.MembershipCrudService;
-import com.livic.services.finance.facade.FinanceFacade;
-import com.livic.services.finance.security.FinanceResourceScopeResolver;
-import com.livic.features.inventory.facade.InventoryFacade;
-import com.livic.features.inventory.security.InventoryResourceScopeResolver;
-import com.livic.services.property.facade.UnitFacade;
-import com.livic.services.property.security.PropertyResourceScopeResolver;
+import com.livic.core.finance.facade.FinanceFacade;
+import com.livic.core.finance.security.FinanceResourceScopeResolver;
+import com.livic.verticals.rental.inventory.facade.InventoryFacade;
+import com.livic.verticals.rental.inventory.security.InventoryResourceScopeResolver;
+import com.livic.core.property.facade.UnitFacade;
+import com.livic.core.property.security.PropertyResourceScopeResolver;
 import com.livic.platform.storage.facade.StorageFacade;
 import com.livic.platform.storage.security.StorageResourceScopeResolver;
 

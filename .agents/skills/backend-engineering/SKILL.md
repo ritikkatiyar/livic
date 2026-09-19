@@ -33,8 +33,8 @@ module/
 ## MODULE BOUNDARY RULES
 
 * **Bounded Contexts Only**: Modules must be organized by Domain (Bounded Contexts), NOT by individual database tables (Entity Services).
-* Approved modules, grouped under `com.livic.<group>.<module>`:
-  * `platform` - Shared foundations with no business rules:
+* Approved modules, grouped under `com.livic.<layer>.<module>`:
+  * `platform` - Shared foundations with no business rules, and nothing about buildings:
     1. `common` / `config` - Cross-cutting concerns.
     2. `security` - Current-user principal and JWT verification (depends only on `common`).
     3. `auth` - Identity & Access Management (Logins, Tokens, Memberships, Roles & Permissions).
@@ -42,19 +42,20 @@ module/
     5. `notification` - Multi-channel alert delivery (Email, Push, WhatsApp).
     6. `storage` - Pluggable media storage and CDN integration (Cloudinary, S3, R2, Local).
     7. `payment` - Payment gateway integrations (Razorpay, Stripe, PayPal), payment initiation, webhooks, and ledger transactions.
-  * `services` - Core business domain:
-    8. `property` - Real Estate / Asset Management (Properties, Units, Layouts, Property Join Codes).
-    9. `finance` - Tenancy & Financials (Leases, Rent Cycles, Expenses, Splits).
-    10. `billing` - Landlord SaaS subscriptions, plan tiers, feature limits, and quota enforcement.
-  * `features` - Product features built on services:
-    11. `announcement` - Targeted announcements/broadcasts to properties, floors, or units.
-    12. `issue` - Maintenance tickets, issue reporting, priority triage, and resolution workflows.
-    13. `analytics` - Business intelligence, revenue metrics, occupancy rates, and operational reporting.
-    14. `inventory` - Physical asset registry, appliances, condition tracking, and lease move-in/move-out lifecycle.
-    15. `marketplace` - Public rental listings, prospect OTP verification, tour requests and bookings, and landlord visiting hours.
-* Dependencies flow `features` -> `services` -> `platform`, and modules must stay free of cycles (enforced by `ModuleBoundaryTest`). When a lower module needs a higher one, define an SPI in the lower module or publish a synchronous event.
+    8. `subscription` - Livic SaaS subscriptions, plan tiers, feature limits, and quota enforcement.
+  * `core` - The building and its money, shared by every product line:
+    9. `property` - Properties, blocks (towers/wings), units, and `unit_member` (who belongs to a unit: owners, tenants, family).
+    10. `finance` - Charge configs, bills, bill lines, ledger, meter readings, worksheets.
+    11. `community` - Product-neutral resident features: `announcement`, `issue`, `analytics`.
+  * `verticals` - Only what is unique to one product line:
+    12. `rental` - Leases, unit bookings, deposits, roommate splits, and `inventory` (move-in/move-out asset tracking).
+    13. `marketplace` - Public listings, prospect OTP verification, tour requests and bookings, landlord visiting hours.
+    14. (planned) `society` - Ownership transfer, committee, visitors/gate, amenities, parking.
+* Dependencies flow `verticals` -> `core` -> `platform`, and modules must stay free of cycles (enforced by `ModuleBoundaryTest`). Never the reverse: `platform` must not reference `core` or `verticals`, `core` must not reference `verticals`, and one vertical must not reference another.
+* **Core must never know about a vertical.** This is what keeps residential, society and hostel additive rather than rewrites. Anything that needs to know "who is in this unit" reads `unit_member` in `core.property`, never leases in `verticals.rental`.
+* When a lower layer needs something from a higher one, declare an SPI in the lower layer and implement it in the higher one (e.g. `platform.subscription.spi.PropertyUsageProvider` implemented by `core.property`), or publish a synchronous event.
 * No direct repository access across modules
-* Modules communicate ONLY via facade or service interfaces (e.g. `com.livic.services.finance.facade` or `com.livic.services.finance.service.interfaces`)
+* Modules communicate ONLY via facade or service interfaces (e.g. `com.livic.core.finance.facade` or `com.livic.core.finance.service.interfaces`)
 * Controllers must remain thin
 * Business logic only inside services
 
@@ -160,7 +161,7 @@ Avoid:
 * Keep methods small and readable
 * Use constructor injection only
 * **Code Reuse and Redundancy Check**: Always inspect the codebase to verify if a utility method, mapper, conversion helper, or business function already exists before writing new code. Reuse existing structures instead of writing redundant code.
-* **Clean Import Styling — No Inline Imports**: Fully-qualified class names (e.g., `org.springframework.data.domain.Page`, `java.util.List`, `com.livic.services.property.dto.PropertySummaryDTO`) MUST NEVER appear inline inside method signatures, field declarations, return types, or code bodies. **All types, regardless of package, must be declared as top-level `import` statements at the top of the file** and referenced using their simple class names throughout the code. This rule applies universally — Spring types, JPA types, internal domain types, third-party library types, and standard Java types are all subject to this rule. Violations of this rule are treated as compile-style errors that block PR approval.
+* **Clean Import Styling — No Inline Imports**: Fully-qualified class names (e.g., `org.springframework.data.domain.Page`, `java.util.List`, `com.livic.core.property.dto.PropertySummaryDTO`) MUST NEVER appear inline inside method signatures, field declarations, return types, or code bodies. **All types, regardless of package, must be declared as top-level `import` statements at the top of the file** and referenced using their simple class names throughout the code. This rule applies universally — Spring types, JPA types, internal domain types, third-party library types, and standard Java types are all subject to this rule. Violations of this rule are treated as compile-style errors that block PR approval.
 * **Service-DTO Decoupling & Mapper Conventions**: To maintain pure business logic in service implementations, DTO-to-entity and entity-to-DTO conversion must be decoupled from the service layer and delegated to dedicated, stateless mapper utility classes.
   * Mappers must follow the naming pattern `<DomainName>Mapper` (e.g., `LeaseMapper`) and define a `private` constructor to prevent instantiation.
   * DTO-to-Entity mapping methods must be named `toEntity(...)` (accepting custom type-safe arguments for contextual domain dependencies like unit/property entities).

@@ -1,27 +1,13 @@
--- MySQL dump 10.13  Distrib 8.4.8, for Linux (x86_64)
+-- V1__init_schema.sql
+-- Consolidated schema for Livic. The product is still in development, so the earlier
+-- incremental migrations were collapsed into this single baseline.
 --
--- Host: localhost    Database: livic
--- ------------------------------------------------------
--- Server version	8.4.8
+-- Layout: platform (users, auth, payments, notifications, storage, subscription),
+-- core (property -> block -> unit -> unit_member, finance, community) and
+-- verticals (rental inventory, marketplace).
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+SET FOREIGN_KEY_CHECKS = 0;
 
---
--- Table structure for table `ai_job_tbl`
---
-
-DROP TABLE IF EXISTS `ai_job_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `ai_job_tbl` (
   `id` varchar(36) NOT NULL,
   `user_id` varchar(36) NOT NULL,
@@ -37,15 +23,6 @@ CREATE TABLE `ai_job_tbl` (
   KEY `idx_ai_job_user_id` (`user_id`),
   CONSTRAINT `fk_ai_job_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `announcement_receipt_tbl`
---
-
-DROP TABLE IF EXISTS `announcement_receipt_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `announcement_receipt_tbl` (
   `id` varchar(36) NOT NULL,
   `announcement_id` varchar(36) NOT NULL,
@@ -58,15 +35,6 @@ CREATE TABLE `announcement_receipt_tbl` (
   CONSTRAINT `fk_receipt_announcement` FOREIGN KEY (`announcement_id`) REFERENCES `announcement_tbl` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_receipt_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `announcement_tbl`
---
-
-DROP TABLE IF EXISTS `announcement_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `announcement_tbl` (
   `id` varchar(36) NOT NULL,
   `property_id` varchar(36) NOT NULL,
@@ -76,25 +44,29 @@ CREATE TABLE `announcement_tbl` (
   `category` varchar(50) NOT NULL DEFAULT 'GENERAL',
   `severity` varchar(50) NOT NULL DEFAULT 'INFO',
   `target_type` varchar(50) NOT NULL DEFAULT 'PROPERTY',
-  `target_value` varchar(100) DEFAULT NULL,
   `metadata` json DEFAULT NULL,
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  `target_floor_number` int DEFAULT NULL,
+  `target_unit_id` varchar(36) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_announcement_creator` (`creator_id`),
   KEY `idx_announcement_property` (`property_id`),
   CONSTRAINT `fk_announcement_creator` FOREIGN KEY (`creator_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_announcement_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `billing_wallet_tbl`
---
-
-DROP TABLE IF EXISTS `billing_wallet_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `auth_identity_tbl` (
+  `id` varchar(36) NOT NULL,
+  `user_id` varchar(36) NOT NULL,
+  `provider` varchar(32) NOT NULL,
+  `provider_subject` varchar(255) NOT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_auth_identity_provider_subject` (`provider`,`provider_subject`),
+  KEY `idx_auth_identity_user` (`user_id`),
+  CONSTRAINT `fk_auth_identity_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 CREATE TABLE `billing_wallet_tbl` (
   `id` varchar(36) NOT NULL,
   `user_id` varchar(36) NOT NULL,
@@ -107,15 +79,6 @@ CREATE TABLE `billing_wallet_tbl` (
   UNIQUE KEY `user_id` (`user_id`),
   CONSTRAINT `fk_billing_wallet_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `billing_worksheet_entry_tbl`
---
-
-DROP TABLE IF EXISTS `billing_worksheet_entry_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `billing_worksheet_entry_tbl` (
   `id` varchar(36) NOT NULL,
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -136,15 +99,19 @@ CREATE TABLE `billing_worksheet_entry_tbl` (
   CONSTRAINT `fk_meter_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`),
   CONSTRAINT `fk_meter_unit` FOREIGN KEY (`unit_id`) REFERENCES `unit_tbl` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `charge_config_tbl`
---
-
-DROP TABLE IF EXISTS `charge_config_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `block_tbl` (
+  `id` varchar(36) NOT NULL,
+  `property_id` varchar(36) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `sort_order` int NOT NULL DEFAULT '0',
+  `is_default` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_block_property_name` (`property_id`,`name`),
+  KEY `idx_block_property_id` (`property_id`),
+  CONSTRAINT `fk_block_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 CREATE TABLE `charge_config_tbl` (
   `id` varchar(36) NOT NULL,
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -165,15 +132,19 @@ CREATE TABLE `charge_config_tbl` (
   KEY `fk_charge_config_property` (`property_id`),
   CONSTRAINT `fk_charge_config_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `failed_payment_event_tbl`
---
-
-DROP TABLE IF EXISTS `failed_payment_event_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `email_verification_tbl` (
+  `id` varchar(36) NOT NULL,
+  `user_id` varchar(36) NOT NULL,
+  `code_hash` varchar(255) NOT NULL,
+  `expires_at` datetime(6) NOT NULL,
+  `attempt_count` int NOT NULL DEFAULT '0',
+  `last_sent_at` datetime(6) NOT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_email_verification_user` (`user_id`),
+  CONSTRAINT `fk_email_verification_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 CREATE TABLE `failed_payment_event_tbl` (
   `id` varchar(36) NOT NULL,
   `event_type` varchar(100) NOT NULL,
@@ -185,15 +156,6 @@ CREATE TABLE `failed_payment_event_tbl` (
   PRIMARY KEY (`id`),
   KEY `idx_failed_event_type` (`event_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `finance_ledger_tbl`
---
-
-DROP TABLE IF EXISTS `finance_ledger_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `finance_ledger_tbl` (
   `id` varchar(36) NOT NULL,
   `unit_id` varchar(36) NOT NULL,
@@ -211,38 +173,102 @@ CREATE TABLE `finance_ledger_tbl` (
   CONSTRAINT `fk_ledger_lease` FOREIGN KEY (`lease_id`) REFERENCES `lease_tbl` (`id`),
   CONSTRAINT `fk_ledger_unit` FOREIGN KEY (`unit_id`) REFERENCES `unit_tbl` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `flyway_schema_history`
---
-
-DROP TABLE IF EXISTS `flyway_schema_history`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `flyway_schema_history` (
-  `installed_rank` int NOT NULL,
-  `version` varchar(50) DEFAULT NULL,
-  `description` varchar(200) NOT NULL,
-  `type` varchar(20) NOT NULL,
-  `script` varchar(1000) NOT NULL,
-  `checksum` int DEFAULT NULL,
-  `installed_by` varchar(100) NOT NULL,
-  `installed_on` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `execution_time` int NOT NULL,
-  `success` tinyint(1) NOT NULL,
-  PRIMARY KEY (`installed_rank`),
-  KEY `flyway_schema_history_s_idx` (`success`)
+CREATE TABLE `inventory_item_tbl` (
+  `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `property_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `unit_id` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `category` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `serial_number` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `model_number` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `scope` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `current_condition` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `purchase_date` date DEFAULT NULL,
+  `warranty_expires_at` date DEFAULT NULL,
+  `next_service_date` date DEFAULT NULL,
+  `replacement_value` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `notes` text COLLATE utf8mb4_unicode_ci,
+  `created_at` datetime(6) NOT NULL,
+  `updated_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_inv_item_property` (`property_id`),
+  KEY `idx_inv_item_unit` (`unit_id`),
+  KEY `idx_inv_item_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `inventory_service_expense_tbl` (
+  `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `item_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `property_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `vendor_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `service_date` date NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `next_service_date` date DEFAULT NULL,
+  `recorded_by` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `updated_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_inv_service_item` (`item_id`),
+  KEY `idx_inv_service_property` (`property_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `issue_tbl` (
+  `id` varchar(36) NOT NULL,
+  `property_id` varchar(36) NOT NULL,
+  `unit_id` varchar(36) DEFAULT NULL,
+  `lease_id` varchar(36) DEFAULT NULL,
+  `tenant_id` varchar(36) DEFAULT NULL,
+  `reported_by_user_id` varchar(36) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `category` varchar(64) NOT NULL,
+  `priority` varchar(32) NOT NULL,
+  `status` varchar(64) NOT NULL,
+  `scope` varchar(32) NOT NULL,
+  `escalation_status` varchar(32) NOT NULL,
+  `escalation_level` int NOT NULL DEFAULT '0',
+  `assigned_contact_name` varchar(128) NOT NULL,
+  `assigned_contact_phone` varchar(32) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  KEY `idx_issue_property` (`property_id`),
+  KEY `idx_issue_tenant` (`tenant_id`),
+  CONSTRAINT `fk_issue_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `lease_tbl`
---
-
-DROP TABLE IF EXISTS `lease_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `issue_timeline_tbl` (
+  `id` varchar(36) NOT NULL,
+  `issue_id` varchar(36) NOT NULL,
+  `author_user_id` varchar(36) NOT NULL,
+  `entry_type` varchar(64) NOT NULL,
+  `content` text NOT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  KEY `idx_timeline_issue` (`issue_id`),
+  CONSTRAINT `fk_timeline_issue` FOREIGN KEY (`issue_id`) REFERENCES `issue_tbl` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `lease_inventory_assignment_tbl` (
+  `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `lease_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `item_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `condition_at_assignment` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `assigned_at` datetime(6) NOT NULL,
+  `assignment_notes` text COLLATE utf8mb4_unicode_ci,
+  `condition_at_return` varchar(32) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `returned_at` datetime(6) DEFAULT NULL,
+  `return_notes` text COLLATE utf8mb4_unicode_ci,
+  `damage_deduction_amount` decimal(12,2) DEFAULT NULL,
+  `deduction_approval_status` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'NONE',
+  `verified_by` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `settled_at` datetime(6) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `updated_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_lease_inv_assign_lease` (`lease_id`),
+  KEY `idx_lease_inv_assign_item` (`item_id`),
+  KEY `idx_lease_inv_assign_returned` (`item_id`,`returned_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE `lease_tbl` (
   `id` varchar(36) NOT NULL,
   `user_id` varchar(36) NOT NULL,
@@ -261,49 +287,72 @@ CREATE TABLE `lease_tbl` (
   CONSTRAINT `fk_lease_unit` FOREIGN KEY (`unit_id`) REFERENCES `unit_tbl` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_lease_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `maintenance_ticket_tbl`
---
-
-DROP TABLE IF EXISTS `maintenance_ticket_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `maintenance_ticket_tbl` (
+CREATE TABLE `marketplace_lead_tbl` (
   `id` varchar(36) NOT NULL,
-  `ticket_number` varchar(32) NOT NULL,
-  `tenant_id` varchar(36) NOT NULL,
-  `lease_id` varchar(36) NOT NULL,
   `property_id` varchar(36) NOT NULL,
   `unit_id` varchar(36) NOT NULL,
-  `title` varchar(255) NOT NULL,
-  `description` text NOT NULL,
-  `category` varchar(64) NOT NULL,
-  `priority` varchar(32) NOT NULL DEFAULT 'STANDARD',
-  `status` varchar(64) NOT NULL DEFAULT 'PENDING',
-  `assigned_technician_name` varchar(128) DEFAULT NULL,
+  `lead_type` varchar(32) NOT NULL,
+  `status` varchar(32) NOT NULL DEFAULT 'NEW',
+  `prospect_name` varchar(255) NOT NULL,
+  `prospect_phone` varchar(20) NOT NULL,
+  `prospect_email` varchar(255) DEFAULT NULL,
+  `preferred_slot` datetime(6) DEFAULT NULL,
+  `expected_move_in_date` date DEFAULT NULL,
+  `token_amount` decimal(12,2) DEFAULT NULL,
+  `payment_transaction_id` varchar(36) DEFAULT NULL,
+  `converted_unit_booking_id` varchar(36) DEFAULT NULL,
+  `source` varchar(32) DEFAULT 'MARKETPLACE',
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  `decision_note` varchar(500) DEFAULT NULL,
+  `decided_by_user_id` varchar(36) DEFAULT NULL,
+  `decided_at` datetime(6) DEFAULT NULL,
+  `cancelled_at` datetime(6) DEFAULT NULL,
+  `version` bigint NOT NULL DEFAULT '0',
+  `active_tour_key` varchar(80) GENERATED ALWAYS AS ((case when ((`lead_type` = _utf8mb4'TOUR_REQUEST') and (`status` in (_utf8mb4'NEW',_utf8mb4'APPROVED'))) then concat(`property_id`,_utf8mb4':',`prospect_phone`) else NULL end)) VIRTUAL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_marketplace_lead_active_tour` (`active_tour_key`),
+  KEY `idx_marketplace_lead_property` (`property_id`),
+  KEY `idx_marketplace_lead_unit` (`unit_id`),
+  KEY `idx_marketplace_lead_phone` (`prospect_phone`),
+  KEY `idx_marketplace_lead_status` (`status`),
+  KEY `fk_marketplace_lead_payment` (`payment_transaction_id`),
+  KEY `fk_marketplace_lead_unit_booking` (`converted_unit_booking_id`),
+  KEY `idx_marketplace_lead_property_tours` (`property_id`,`lead_type`,`status`,`preferred_slot`),
+  CONSTRAINT `fk_marketplace_lead_payment` FOREIGN KEY (`payment_transaction_id`) REFERENCES `payment_transaction_tbl` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_marketplace_lead_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_marketplace_lead_unit` FOREIGN KEY (`unit_id`) REFERENCES `unit_tbl` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_marketplace_lead_unit_booking` FOREIGN KEY (`converted_unit_booking_id`) REFERENCES `unit_booking_tbl` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `media_asset_tbl` (
+  `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `owner_module` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `reference_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `storage_provider` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `external_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `url` varchar(1024) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_type` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `caption` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `uploaded_by_user_id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `uploaded_at` datetime(6) NOT NULL,
+  `created_at` datetime(6) NOT NULL,
+  `updated_at` datetime(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_media_asset_owner_ref` (`owner_module`,`reference_id`),
+  KEY `idx_media_asset_uploaded_by` (`uploaded_by_user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `membership_permission_tbl` (
+  `id` varchar(36) NOT NULL,
+  `membership_id` varchar(36) NOT NULL,
+  `permission_id` varchar(36) NOT NULL,
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `ticket_number` (`ticket_number`),
-  KEY `fk_maint_ticket_unit` (`unit_id`),
-  KEY `idx_maint_ticket_tenant` (`tenant_id`),
-  KEY `idx_maint_ticket_property` (`property_id`),
-  CONSTRAINT `fk_maint_ticket_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_maint_ticket_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_maint_ticket_unit` FOREIGN KEY (`unit_id`) REFERENCES `unit_tbl` (`id`) ON DELETE CASCADE
+  UNIQUE KEY `uq_membership_perm` (`membership_id`,`permission_id`),
+  KEY `fk_membership_permission_perm` (`permission_id`),
+  CONSTRAINT `fk_membership_permission_mem` FOREIGN KEY (`membership_id`) REFERENCES `membership_tbl` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_membership_permission_perm` FOREIGN KEY (`permission_id`) REFERENCES `permission_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
---
--- Table structure for table `membership_tbl`
---
-
-DROP TABLE IF EXISTS `membership_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `membership_tbl` (
   `id` varchar(36) NOT NULL,
   `user_id` varchar(36) NOT NULL,
@@ -311,26 +360,17 @@ CREATE TABLE `membership_tbl` (
   `title` varchar(100) NOT NULL DEFAULT 'Member',
   `access_type` varchar(20) NOT NULL DEFAULT 'CUSTOM_ACCESS',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  `assigned_by` varchar(36) DEFAULT NULL,
+  `assigned_by_id` varchar(36) DEFAULT NULL,
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_membership_user_property` (`user_id`,`property_id`),
   KEY `fk_membership_property` (`property_id`),
-  KEY `fk_membership_assigned_by` (`assigned_by`),
-  CONSTRAINT `fk_membership_assigned_by` FOREIGN KEY (`assigned_by`) REFERENCES `user_tbl` (`id`),
+  KEY `fk_membership_assigned_by` (`assigned_by_id`),
+  CONSTRAINT `fk_membership_assigned_by` FOREIGN KEY (`assigned_by_id`) REFERENCES `user_tbl` (`id`),
   CONSTRAINT `fk_membership_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_membership_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `meter_reading_tbl`
---
-
-DROP TABLE IF EXISTS `meter_reading_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `meter_reading_tbl` (
   `id` varchar(36) NOT NULL,
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -351,15 +391,6 @@ CREATE TABLE `meter_reading_tbl` (
   CONSTRAINT `fk_meter_rdg_prop_tbl_idx` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`),
   CONSTRAINT `fk_meter_rdg_unit_tbl_idx` FOREIGN KEY (`unit_id`) REFERENCES `unit_tbl` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `notification_log_tbl`
---
-
-DROP TABLE IF EXISTS `notification_log_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `notification_log_tbl` (
   `id` varchar(36) NOT NULL,
   `recipient_id` varchar(36) NOT NULL,
@@ -375,18 +406,23 @@ CREATE TABLE `notification_log_tbl` (
   KEY `idx_notification_recipient` (`recipient_id`),
   CONSTRAINT `fk_notification_recipient` FOREIGN KEY (`recipient_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `payment_transaction_tbl`
---
-
-DROP TABLE IF EXISTS `payment_transaction_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `otp_verification_tbl` (
+  `id` varchar(36) NOT NULL,
+  `phone` varchar(20) NOT NULL,
+  `otp_code_hash` varchar(255) NOT NULL,
+  `session_token` varchar(255) DEFAULT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `expires_at` datetime(6) NOT NULL,
+  `verified_at` datetime(6) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_otp_session_token` (`session_token`),
+  KEY `idx_otp_phone` (`phone`),
+  KEY `idx_otp_session_token` (`session_token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 CREATE TABLE `payment_transaction_tbl` (
   `id` varchar(36) NOT NULL,
-  `payer_user_id` varchar(36) NOT NULL,
+  `payer_user_id` varchar(36) DEFAULT NULL,
   `payment_method` varchar(32) NOT NULL,
   `reference_type` varchar(32) NOT NULL,
   `reference_id` varchar(36) NOT NULL,
@@ -408,15 +444,6 @@ CREATE TABLE `payment_transaction_tbl` (
   CONSTRAINT `fk_payment_tx_confirmed` FOREIGN KEY (`confirmed_by`) REFERENCES `user_tbl` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_payment_tx_payer` FOREIGN KEY (`payer_user_id`) REFERENCES `user_tbl` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `payment_webhook_event_tbl`
---
-
-DROP TABLE IF EXISTS `payment_webhook_event_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `payment_webhook_event_tbl` (
   `id` varchar(36) NOT NULL,
   `gateway_name` varchar(50) NOT NULL,
@@ -429,15 +456,6 @@ CREATE TABLE `payment_webhook_event_tbl` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `gateway_event_id` (`gateway_event_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `permission_tbl`
---
-
-DROP TABLE IF EXISTS `permission_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `permission_tbl` (
   `id` varchar(36) NOT NULL,
   `code` varchar(100) NOT NULL,
@@ -447,15 +465,6 @@ CREATE TABLE `permission_tbl` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `plan_feature_limit_tbl`
---
-
-DROP TABLE IF EXISTS `plan_feature_limit_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `plan_feature_limit_tbl` (
   `id` varchar(36) NOT NULL,
   `plan_id` varchar(36) NOT NULL,
@@ -468,15 +477,32 @@ CREATE TABLE `plan_feature_limit_tbl` (
   KEY `idx_plan_feature_key` (`feature_key`),
   CONSTRAINT `fk_plan_feature_plan` FOREIGN KEY (`plan_id`) REFERENCES `subscription_plan_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `property_join_code_tbl`
---
-
-DROP TABLE IF EXISTS `property_join_code_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `property_amenities_tbl` (
+  `property_id` varchar(36) NOT NULL,
+  `amenity` varchar(255) NOT NULL,
+  PRIMARY KEY (`property_id`,`amenity`),
+  CONSTRAINT `fk_property_amenities_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `property_discovery_code_tbl` (
+  `id` varchar(36) NOT NULL,
+  `property_id` varchar(36) NOT NULL,
+  `code` varchar(16) NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by_user_id` varchar(36) NOT NULL,
+  `scan_count` int NOT NULL DEFAULT '0',
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_prop_disc_code` (`code`),
+  KEY `idx_prop_disc_prop_active` (`property_id`,`is_active`),
+  CONSTRAINT `fk_prop_disc_code_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `property_join_code_permission_tbl` (
+  `join_code_id` varchar(36) NOT NULL,
+  `permission_code` varchar(100) NOT NULL,
+  PRIMARY KEY (`join_code_id`,`permission_code`),
+  CONSTRAINT `fk_join_code_permission_code` FOREIGN KEY (`join_code_id`) REFERENCES `property_join_code_tbl` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 CREATE TABLE `property_join_code_tbl` (
   `id` varchar(36) NOT NULL,
   `property_id` varchar(36) NOT NULL,
@@ -498,30 +524,6 @@ CREATE TABLE `property_join_code_tbl` (
   CONSTRAINT `fk_join_code_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_join_code_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `property_join_code_permission_tbl`
---
-
-DROP TABLE IF EXISTS `property_join_code_permission_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `property_join_code_permission_tbl` (
-  `join_code_id` varchar(36) NOT NULL,
-  `permission_code` varchar(100) NOT NULL,
-  PRIMARY KEY (`join_code_id`,`permission_code`),
-  CONSTRAINT `fk_join_code_permission_code` FOREIGN KEY (`join_code_id`) REFERENCES `property_join_code_tbl` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `property_module_tbl`
---
-
-DROP TABLE IF EXISTS `property_module_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `property_module_tbl` (
   `id` varchar(36) NOT NULL,
   `property_id` varchar(36) NOT NULL,
@@ -533,15 +535,6 @@ CREATE TABLE `property_module_tbl` (
   UNIQUE KEY `property_id` (`property_id`,`module_name`),
   CONSTRAINT `fk_property_module_prop` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `property_tbl`
---
-
-DROP TABLE IF EXISTS `property_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `property_tbl` (
   `id` varchar(36) NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -555,17 +548,13 @@ CREATE TABLE `property_tbl` (
   `auto_bill_time` time DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `allow_partial_payment` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
+  `property_type` varchar(32) NOT NULL DEFAULT 'RENTAL',
+  `is_publicly_listed` tinyint(1) NOT NULL DEFAULT '1',
+  `description` text,
+  `qr_slug` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `qr_slug` (`qr_slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `refreshtoken_tbl`
---
-
-DROP TABLE IF EXISTS `refreshtoken_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `refreshtoken_tbl` (
   `id` varchar(36) NOT NULL,
   `user_id` varchar(36) NOT NULL,
@@ -579,15 +568,6 @@ CREATE TABLE `refreshtoken_tbl` (
   KEY `idx_refreshtoken_user_id` (`user_id`),
   CONSTRAINT `fk_refreshtoken_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `rent_cycle_charge_tbl`
---
-
-DROP TABLE IF EXISTS `rent_cycle_charge_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `rent_cycle_charge_tbl` (
   `id` varchar(36) NOT NULL,
   `rent_cycle_id` varchar(36) NOT NULL,
@@ -603,15 +583,6 @@ CREATE TABLE `rent_cycle_charge_tbl` (
   CONSTRAINT `fk_rent_cycle_charge_config` FOREIGN KEY (`charge_config_id`) REFERENCES `charge_config_tbl` (`id`),
   CONSTRAINT `fk_rent_cycle_charge_cycle` FOREIGN KEY (`rent_cycle_id`) REFERENCES `rent_cycle_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `rent_cycle_tbl`
---
-
-DROP TABLE IF EXISTS `rent_cycle_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `rent_cycle_tbl` (
   `id` varchar(36) NOT NULL,
   `lease_id` varchar(36) NOT NULL,
@@ -630,39 +601,23 @@ CREATE TABLE `rent_cycle_tbl` (
   KEY `idx_rent_cycle_month` (`billing_month`),
   KEY `idx_rent_cycle_billing_month` (`billing_month`),
   KEY `fk_rent_cycle_payment_tx` (`payment_transaction_id`),
+  KEY `idx_rent_cycle_month_status_due` (`billing_month`,`status`,`due_date`),
+  KEY `idx_rent_cycle_lease_month` (`lease_id`,`billing_month`),
   CONSTRAINT `fk_rent_cycle_lease` FOREIGN KEY (`lease_id`) REFERENCES `lease_tbl` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_rent_cycle_payment_tx` FOREIGN KEY (`payment_transaction_id`) REFERENCES `payment_transaction_tbl` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `membership_permission_tbl`
---
-
-DROP TABLE IF EXISTS `membership_permission_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `membership_permission_tbl` (
+CREATE TABLE `resident_notification_preference_tbl` (
   `id` varchar(36) NOT NULL,
-  `membership_id` varchar(36) NOT NULL,
-  `permission_id` varchar(36) NOT NULL,
+  `user_id` varchar(36) NOT NULL,
+  `email_enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `push_enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `whatsapp_enabled` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_membership_perm` (`membership_id`,`permission_id`),
-  KEY `fk_membership_permission_perm` (`permission_id`),
-  CONSTRAINT `fk_membership_permission_mem` FOREIGN KEY (`membership_id`) REFERENCES `membership_tbl` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_membership_permission_perm` FOREIGN KEY (`permission_id`) REFERENCES `permission_tbl` (`id`) ON DELETE CASCADE
+  UNIQUE KEY `uk_resident_notif_pref_user` (`user_id`),
+  CONSTRAINT `fk_resident_notif_pref_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `saas_subscription_tbl`
---
-
-DROP TABLE IF EXISTS `saas_subscription_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `saas_subscription_tbl` (
   `id` varchar(36) NOT NULL,
   `user_id` varchar(36) NOT NULL,
@@ -683,15 +638,6 @@ CREATE TABLE `saas_subscription_tbl` (
   CONSTRAINT `fk_saas_sub_plan` FOREIGN KEY (`plan_id`) REFERENCES `subscription_plan_tbl` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_saas_sub_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `subscription_plan_tbl`
---
-
-DROP TABLE IF EXISTS `subscription_plan_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `subscription_plan_tbl` (
   `id` varchar(36) NOT NULL,
   `plan_key` varchar(50) NOT NULL,
@@ -707,15 +653,51 @@ CREATE TABLE `subscription_plan_tbl` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `plan_key` (`plan_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `unit_booking_tbl`
---
-
-DROP TABLE IF EXISTS `unit_booking_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tour_availability_settings_tbl` (
+  `id` varchar(36) NOT NULL,
+  `property_id` varchar(36) NOT NULL,
+  `slot_minutes` int NOT NULL DEFAULT '60',
+  `min_notice_minutes` int NOT NULL DEFAULT '60',
+  `booking_window_days` int NOT NULL DEFAULT '14',
+  `max_visitors_per_slot` int DEFAULT NULL,
+  `timezone` varchar(64) NOT NULL DEFAULT 'Asia/Kolkata',
+  `updated_by_user_id` varchar(36) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_tour_availability_settings_property` (`property_id`),
+  CONSTRAINT `fk_tour_availability_settings_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_tour_availability_max_visitors` CHECK (((`max_visitors_per_slot` is null) or (`max_visitors_per_slot` >= 1))),
+  CONSTRAINT `chk_tour_availability_slot_minutes` CHECK ((`slot_minutes` in (30,60)))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `tour_availability_window_tbl` (
+  `id` varchar(36) NOT NULL,
+  `property_id` varchar(36) NOT NULL,
+  `day_of_week` varchar(9) NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  KEY `idx_tour_availability_window_property` (`property_id`,`day_of_week`),
+  CONSTRAINT `fk_tour_availability_window_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_tour_availability_window_range` CHECK ((`start_time` < `end_time`))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `tour_blackout_tbl` (
+  `id` varchar(36) NOT NULL,
+  `property_id` varchar(36) NOT NULL,
+  `blackout_date` date NOT NULL,
+  `start_time` time DEFAULT NULL,
+  `end_time` time DEFAULT NULL,
+  `reason` varchar(200) DEFAULT NULL,
+  `created_by_user_id` varchar(36) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  KEY `idx_tour_blackout_property_date` (`property_id`,`blackout_date`),
+  CONSTRAINT `fk_tour_blackout_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_tour_blackout_range` CHECK ((((`start_time` is null) and (`end_time` is null)) or ((`start_time` is not null) and (`end_time` is not null) and (`start_time` < `end_time`))))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 CREATE TABLE `unit_booking_tbl` (
   `id` varchar(36) NOT NULL,
   `unit_id` varchar(36) NOT NULL,
@@ -740,18 +722,32 @@ CREATE TABLE `unit_booking_tbl` (
   CONSTRAINT `fk_unit_booking_unit` FOREIGN KEY (`unit_id`) REFERENCES `unit_tbl` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_unit_booking_user` FOREIGN KEY (`prospective_tenant_user_id`) REFERENCES `user_tbl` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `unit_tbl`
---
-
-DROP TABLE IF EXISTS `unit_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `unit_member_tbl` (
+  `id` varchar(36) NOT NULL,
+  `unit_id` varchar(36) NOT NULL,
+  `user_id` varchar(36) DEFAULT NULL,
+  `role` varchar(20) NOT NULL,
+  `is_primary` tinyint(1) NOT NULL DEFAULT '0',
+  `lease_id` varchar(36) DEFAULT NULL,
+  `invited_phone` varchar(20) DEFAULT NULL,
+  `from_date` date NOT NULL,
+  `to_date` date DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `assigned_by_id` varchar(36) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  KEY `idx_unit_member_unit_active` (`unit_id`,`is_active`),
+  KEY `idx_unit_member_user_active` (`user_id`,`is_active`),
+  KEY `idx_unit_member_lease` (`lease_id`),
+  CONSTRAINT `fk_unit_member_lease` FOREIGN KEY (`lease_id`) REFERENCES `lease_tbl` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_unit_member_unit` FOREIGN KEY (`unit_id`) REFERENCES `unit_tbl` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_unit_member_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 CREATE TABLE `unit_tbl` (
   `id` varchar(36) NOT NULL,
   `property_id` varchar(36) NOT NULL,
+  `block_id` varchar(36) NOT NULL,
   `unit_number` varchar(100) NOT NULL,
   `floor` int NOT NULL,
   `type` enum('SINGLE_UNIT','SHARED_UNIT','ONE_BHK','TWO_BHK','STUDIO') NOT NULL,
@@ -763,20 +759,28 @@ CREATE TABLE `unit_tbl` (
   `grid_y` int NOT NULL DEFAULT '0',
   `grid_width` int NOT NULL DEFAULT '1',
   `grid_height` int NOT NULL DEFAULT '1',
+  `base_price` decimal(12,2) DEFAULT NULL,
+  `is_bookable` tinyint(1) NOT NULL DEFAULT '0',
+  `description` text,
+  `amenities` json DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_unit_tbl_property_unit_number` (`property_id`,`unit_number`),
+  UNIQUE KEY `uk_unit_block_unit_number` (`block_id`,`unit_number`),
   KEY `idx_unit_property_id` (`property_id`),
+  CONSTRAINT `fk_unit_block` FOREIGN KEY (`block_id`) REFERENCES `block_tbl` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_unit_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `user_preference_tbl`
---
-
-DROP TABLE IF EXISTS `user_preference_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_device_token_tbl` (
+  `id` varchar(36) NOT NULL,
+  `user_id` varchar(36) NOT NULL,
+  `expo_push_token` varchar(255) NOT NULL,
+  `platform` varchar(32) NOT NULL,
+  `registered_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `last_seen_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_device_token_token` (`expo_push_token`),
+  KEY `fk_user_device_token_user` (`user_id`),
+  CONSTRAINT `fk_user_device_token_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 CREATE TABLE `user_preference_tbl` (
   `id` varchar(36) NOT NULL,
   `user_id` varchar(36) NOT NULL,
@@ -788,21 +792,13 @@ CREATE TABLE `user_preference_tbl` (
   UNIQUE KEY `user_id` (`user_id`),
   CONSTRAINT `fk_onboarding_preference_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `user_tbl`
---
-
-DROP TABLE IF EXISTS `user_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_tbl` (
   `id` varchar(36) NOT NULL,
   `auth_uid` varchar(255) NOT NULL,
   `full_name` varchar(255) NOT NULL,
   `phone_number` varchar(50) DEFAULT NULL,
   `password_hash` varchar(255) DEFAULT NULL,
+  `email_verified` tinyint(1) NOT NULL DEFAULT '1',
   `failed_login_attempts` int NOT NULL DEFAULT '0',
   `lockout_until` datetime(6) DEFAULT NULL,
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -813,15 +809,6 @@ CREATE TABLE `user_tbl` (
   UNIQUE KEY `phone_number` (`phone_number`),
   UNIQUE KEY `uk_user_tbl_phone_number` (`phone_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `wallet_transaction_tbl`
---
-
-DROP TABLE IF EXISTS `wallet_transaction_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `wallet_transaction_tbl` (
   `id` varchar(36) NOT NULL,
   `wallet_id` varchar(36) NOT NULL,
@@ -835,15 +822,6 @@ CREATE TABLE `wallet_transaction_tbl` (
   KEY `idx_wallet_tx_wallet` (`wallet_id`),
   CONSTRAINT `fk_wallet_tx_wallet` FOREIGN KEY (`wallet_id`) REFERENCES `billing_wallet_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `webhook_event_log_tbl`
---
-
-DROP TABLE IF EXISTS `webhook_event_log_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `webhook_event_log_tbl` (
   `id` varchar(36) NOT NULL,
   `gateway_name` varchar(30) NOT NULL,
@@ -858,15 +836,5 @@ CREATE TABLE `webhook_event_log_tbl` (
   KEY `idx_webhook_gateway_event` (`gateway_name`,`gateway_event_id`),
   KEY `idx_webhook_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2026-08-09  4:19:27
+SET FOREIGN_KEY_CHECKS = 1;

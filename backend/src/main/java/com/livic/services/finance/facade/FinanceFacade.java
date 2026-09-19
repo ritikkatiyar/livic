@@ -34,6 +34,9 @@ public interface FinanceFacade {
 
     Optional<UUID> getPropertyIdByRentCycleId(UUID rentCycleId);
 
+    /** The lease a rent cycle belongs to, so access to the cycle can follow access to the lease. */
+    Optional<UUID> getLeaseIdByRentCycleId(UUID rentCycleId);
+
     ChargeConfigResponse getChargeConfigById(UUID chargeConfigId);
 
     // Analytics Read Methods

@@ -6,6 +6,7 @@ import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.security.UserDetailsImpl;
+import com.livic.services.finance.controller.InvoiceController;
 import com.livic.services.finance.controller.LeaseController;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,5 +101,17 @@ class LeaseAuthorizationTest {
                 .thenReturn(true);
 
         assertThat(authorizationService.hasPermission(propertyId, "LEASE_VIEW")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Invoice HTML requires lease access on the rent cycle, with no role escape hatch")
+    void invoiceEndpointIsAuthorized() throws NoSuchMethodException {
+        Method invoice = InvoiceController.class.getMethod("getPaymentStatementHtml", UUID.class);
+        PreAuthorize preAuthorize = invoice.getAnnotation(PreAuthorize.class);
+
+        assertThat(preAuthorize).isNotNull();
+        assertThat(preAuthorize.value()).doesNotContain("hasAnyRole");
+        assertThat(preAuthorize.value()).contains("RENT_CYCLE, #rentCycleId, 'LEASE_VIEW'");
+        assertThat(preAuthorize.value()).contains("RENT_CYCLE, #rentCycleId, 'LEASE_VIEW_OWN'");
     }
 }

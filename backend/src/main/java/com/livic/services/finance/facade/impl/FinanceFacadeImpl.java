@@ -122,6 +122,12 @@ public class FinanceFacadeImpl implements FinanceFacade {
     }
 
     @Override
+    public Optional<UUID> getLeaseIdByRentCycleId(UUID rentCycleId) {
+        return rentCycleCrudService.findById(rentCycleId)
+                .map(r -> r.getLease() == null ? null : r.getLease().getId());
+    }
+
+    @Override
     public ChargeConfigResponse getChargeConfigById(UUID chargeConfigId) {
         return chargeConfigQueryService.getChargeConfigById(chargeConfigId);
     }

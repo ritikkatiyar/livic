@@ -27,8 +27,10 @@ public class FinanceResourceScopeResolver implements ResourceScopeResolver {
         return switch (type) {
             case LEASE -> financeFacade.getLeaseById(resourceId)
                     .map(lease -> new ResourceScope.Property(lease.propertyId(), lease.userId()));
-            case RENT_CYCLE -> financeFacade.getPropertyIdByRentCycleId(resourceId)
-                    .map(propertyId -> new ResourceScope.Property(propertyId, null));
+            // A rent cycle inherits access from its lease, so the tenant it belongs to can see it
+            // (LEASE_VIEW_OWN) while staff still need the property-level permission.
+            case RENT_CYCLE -> financeFacade.getLeaseIdByRentCycleId(resourceId)
+                    .map(leaseId -> new ResourceScope.Delegated(ResourceType.LEASE, leaseId, null));
             case CHARGE_CONFIG -> Optional.ofNullable(financeFacade.getChargeConfigById(resourceId))
                     .map(chargeConfig -> new ResourceScope.Property(chargeConfig.getPropertyId(), null));
             default -> Optional.empty();

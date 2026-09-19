@@ -7,8 +7,8 @@ import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.common.event.IssueCreatedEvent;
 import com.livic.platform.common.event.IssueEscalatedEvent;
 import com.livic.platform.common.exception.BusinessException;
-import com.livic.services.finance.dto.LeaseSummaryDTO;
-import com.livic.services.finance.facade.FinanceFacade;
+import com.livic.services.property.dto.UnitResidentDTO;
+import com.livic.services.property.facade.UnitMemberFacade;
 import com.livic.features.issue.domain.IssueEscalationStatus;
 import com.livic.features.issue.domain.IssueStatus;
 import com.livic.features.issue.domain.IssueTbl;
@@ -58,7 +58,7 @@ public class IssueServiceImpl implements IssueService {
 
     private final IssueCrudService issueCrudService;
     private final IssueTimelineCrudService issueTimelineCrudService;
-    private final FinanceFacade financeFacade;
+    private final UnitMemberFacade unitMemberFacade;
     private final AuthFacade authFacade;
     private final PropertyFacade propertyFacade;
     private final UnitFacade unitFacade;
@@ -77,17 +77,21 @@ public class IssueServiceImpl implements IssueService {
         boolean isStaff = hasStaffPermission(callerUserId, propertyId, StaffPermission.ISSUE_MANAGE);
         
         if (!isStaff) {
-            // Must be a tenant, resolve and verify active lease
-            LeaseSummaryDTO lease = financeFacade.getActiveLeaseForUser(callerUserId)
-                    .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Caller does not have an active lease"));
-            
-            if (!lease.propertyId().equals(propertyId)) {
-                throw new BusinessException(HttpStatus.FORBIDDEN, "Lease does not belong to the selected property");
+            // A resident of the property: owner, tenant or family member.
+            List<UnitResidentDTO> residences = unitMemberFacade.getActiveResidencesByUserId(callerUserId);
+            if (residences.isEmpty()) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "Caller does not live in any unit");
             }
-            
+            UUID requestedUnitId = request.unitId();
+            UnitResidentDTO residence = residences.stream()
+                    .filter(r -> propertyId.equals(r.propertyId()))
+                    .filter(r -> requestedUnitId == null || requestedUnitId.equals(r.unitId()))
+                    .findFirst()
+                    .orElseThrow(() -> new BusinessException(HttpStatus.FORBIDDEN, "Caller does not live in the selected property"));
+
             tenantId = callerUserId;
-            leaseId = lease.id();
-            unitId = lease.unitId();
+            leaseId = residence.leaseId();
+            unitId = residence.unitId();
         } else {
             // Staff caller
             if (request.tenantId() != null) {
@@ -155,12 +159,14 @@ public class IssueServiceImpl implements IssueService {
         if (!staffPropertyIds.isEmpty()) {
             issuesPage = issueCrudService.findByPropertyIdIn(staffPropertyIds, pageable);
         } else {
-            Optional<LeaseSummaryDTO> leaseOpt = financeFacade.getActiveLeaseForUser(callerUserId);
-            if (leaseOpt.isPresent()) {
-                issuesPage = issueCrudService.findByLeaseId(leaseOpt.get().id(), pageable);
-            } else {
-                issuesPage = Page.empty(pageable);
-            }
+            List<UUID> myUnitIds = unitMemberFacade.getActiveResidencesByUserId(callerUserId).stream()
+                    .map(UnitResidentDTO::unitId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
+            issuesPage = myUnitIds.isEmpty()
+                    ? Page.empty(pageable)
+                    : issueCrudService.findByUnitIdIn(myUnitIds, pageable);
         }
 
         // Pre-fetch names to prevent N+1 queries
@@ -375,8 +381,10 @@ public class IssueServiceImpl implements IssueService {
         if (hasStaffPermission(userId, issue.getPropertyId(), staffPermission)) {
             return;
         }
-        Optional<LeaseSummaryDTO> leaseOpt = financeFacade.getActiveLeaseForUser(userId);
-        if (leaseOpt.isPresent() && leaseOpt.get().id().equals(issue.getLeaseId())) {
+        boolean livesInTheUnit = issue.getUnitId() != null
+                && unitMemberFacade.getActiveResidencesByUserId(userId).stream()
+                        .anyMatch(residence -> issue.getUnitId().equals(residence.unitId()));
+        if (livesInTheUnit) {
             return;
         }
         throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");

@@ -38,6 +38,9 @@ public class AnnouncementIntegrationTest {
     private AnnouncementService announcementService;
 
     @Autowired
+    private com.livic.services.property.service.interfaces.UnitMemberService unitMemberService;
+
+    @Autowired
     private com.livic.services.property.service.interfaces.BlockService blockService;
 
     @Autowired
@@ -116,6 +119,8 @@ public class AnnouncementIntegrationTest {
                 .splitStrategy(LeaseSplitStrategy.FULL_UNIT)
                 .build();
         lease = leaseRepository.save(lease);
+        // The lease is saved directly here, so add the unit member the lease service would create.
+        unitMemberService.addTenant(unit.getId(), tenant.getId(), lease.getId(), lease.getMoveInDate(), null);
     }
 
     @Test

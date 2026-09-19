@@ -13,6 +13,8 @@ import java.util.UUID;
 public interface IssueCrudService extends CrudService<IssueTbl, UUID> {
     Page<IssueTbl> findByPropertyId(UUID propertyId, Pageable pageable);
     Page<IssueTbl> findByLeaseId(UUID leaseId, Pageable pageable);
+
+    Page<IssueTbl> findByUnitIdIn(Collection<UUID> unitIds, Pageable pageable);
     Page<IssueTbl> findByPropertyIdIn(Collection<UUID> propertyIds, Pageable pageable);
     List<IssueTbl> findByStatusInAndEscalationStatus(Collection<IssueStatus> statuses, IssueEscalationStatus escalationStatus);
 }

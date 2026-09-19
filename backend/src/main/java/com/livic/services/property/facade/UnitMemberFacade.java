@@ -2,6 +2,7 @@ package com.livic.services.property.facade;
 
 import com.livic.services.property.domain.UnitMemberRole;
 import com.livic.services.property.dto.UnitMemberSummaryDTO;
+import com.livic.services.property.dto.UnitResidentDTO;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -28,6 +29,12 @@ public interface UnitMemberFacade {
     List<UnitMemberSummaryDTO> getActiveMembersByPropertyId(UUID propertyId);
 
     Optional<UnitMemberSummaryDTO> getActiveMemberByLeaseId(UUID leaseId);
+
+    /** Active members of a property, with each unit's floor, for targeting notices. */
+    List<UnitResidentDTO> getActiveResidentsByPropertyId(UUID propertyId);
+
+    /** Every unit a person is currently attached to, primary first. */
+    List<UnitResidentDTO> getActiveResidencesByUserId(UUID userId);
 
     boolean isActiveMember(UUID userId, UUID unitId, UnitMemberRole role);
 }

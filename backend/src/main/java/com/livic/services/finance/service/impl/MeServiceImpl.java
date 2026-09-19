@@ -8,6 +8,10 @@ import com.livic.services.finance.facade.FinanceFacade;
 import com.livic.services.finance.service.interfaces.MeService;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
+import com.livic.services.property.dto.PropertySummaryDTO;
+import com.livic.services.property.dto.UnitResidentDTO;
+import com.livic.services.property.facade.PropertyFacade;
+import com.livic.services.property.facade.UnitMemberFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,6 +29,8 @@ public class MeServiceImpl implements MeService {
     private final UserFacade userFacade;
     private final AuthFacade authFacade;
     private final FinanceFacade financeFacade;
+    private final UnitMemberFacade unitMemberFacade;
+    private final PropertyFacade propertyFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -47,11 +53,29 @@ public class MeServiceImpl implements MeService {
                 .map(lease -> List.of(MeDTOs.ActiveLeaseSummary.from(lease)))
                 .orElse(List.of());
 
+        // Every unit this person belongs to — owned, rented, or lived in with family.
+        List<UnitResidentDTO> residences = unitMemberFacade.getActiveResidencesByUserId(userId);
+        Map<UUID, PropertySummaryDTO> propertiesById = propertyFacade.getPropertiesByIds(
+                residences.stream().map(UnitResidentDTO::propertyId).filter(java.util.Objects::nonNull).distinct().toList());
+        List<MeDTOs.UnitMembershipSummary> unitMemberships = residences.stream()
+                .map(residence -> new MeDTOs.UnitMembershipSummary(
+                        residence.memberId(),
+                        residence.unitId(),
+                        residence.unitNumber(),
+                        residence.floor(),
+                        residence.propertyId(),
+                        propertiesById.containsKey(residence.propertyId())
+                                ? propertiesById.get(residence.propertyId()).name() : null,
+                        residence.role(),
+                        residence.leaseId()))
+                .toList();
+
         return MeDTOs.MyContextResponse.build(
                 user.globalRole(),
                 managedProperties,
                 tenantProperties,
-                activeLeases
+                activeLeases,
+                unitMemberships
         );
     }
 }

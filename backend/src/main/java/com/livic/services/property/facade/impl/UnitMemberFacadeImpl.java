@@ -2,6 +2,7 @@ package com.livic.services.property.facade.impl;
 
 import com.livic.services.property.domain.UnitMemberRole;
 import com.livic.services.property.dto.UnitMemberSummaryDTO;
+import com.livic.services.property.dto.UnitResidentDTO;
 import com.livic.services.property.facade.UnitMemberFacade;
 import com.livic.services.property.service.interfaces.UnitMemberService;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,16 @@ public class UnitMemberFacadeImpl implements UnitMemberFacade {
     @Override
     public Optional<UnitMemberSummaryDTO> getActiveMemberByLeaseId(UUID leaseId) {
         return unitMemberService.findActiveByLeaseId(leaseId).map(UnitMemberSummaryDTO::from);
+    }
+
+    @Override
+    public List<UnitResidentDTO> getActiveResidentsByPropertyId(UUID propertyId) {
+        return unitMemberService.findActiveResidentsByPropertyId(propertyId);
+    }
+
+    @Override
+    public List<UnitResidentDTO> getActiveResidencesByUserId(UUID userId) {
+        return unitMemberService.findActiveResidencesByUserId(userId);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.livic.services.property.service.impl;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.services.property.domain.UnitMemberRole;
 import com.livic.services.property.domain.UnitMemberTbl;
+import com.livic.services.property.dto.UnitResidentDTO;
 import com.livic.services.property.repository.UnitMemberRepository;
 import com.livic.services.property.service.interfaces.UnitMemberService;
 import lombok.RequiredArgsConstructor;
@@ -110,6 +111,18 @@ public class UnitMemberServiceImpl implements UnitMemberService {
     @Transactional(readOnly = true)
     public Optional<UnitMemberTbl> findActiveByLeaseId(UUID leaseId) {
         return unitMemberRepository.findFirstByLeaseIdAndIsActiveTrue(leaseId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UnitResidentDTO> findActiveResidentsByPropertyId(UUID propertyId) {
+        return unitMemberRepository.findActiveResidentsByPropertyId(propertyId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UnitResidentDTO> findActiveResidencesByUserId(UUID userId) {
+        return userId == null ? List.of() : unitMemberRepository.findActiveResidencesByUserId(userId);
     }
 
     @Override

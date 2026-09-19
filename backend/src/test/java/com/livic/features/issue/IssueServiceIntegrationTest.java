@@ -52,6 +52,9 @@ public class IssueServiceIntegrationTest {
     private IssueService issueService;
 
     @Autowired
+    private com.livic.services.property.service.interfaces.UnitMemberService unitMemberService;
+
+    @Autowired
     private com.livic.services.property.service.interfaces.BlockService blockService;
 
     @Autowired
@@ -150,6 +153,8 @@ public class IssueServiceIntegrationTest {
                 .splitStrategy(com.livic.platform.common.domain.LeaseSplitStrategy.FULL_UNIT)
                 .build();
         leaseRepository.save(lease);
+        // The lease is saved directly here, so add the unit member the lease service would create.
+        unitMemberService.addTenant(unit.getId(), tenant.getId(), lease.getId(), lease.getMoveInDate(), null);
 
         SubscriptionTestSupport.subscribe(subscriptionRepository, planRepository, landlord.getId(), SubscriptionTestSupport.ENTERPRISE_PLAN_ID);
         // Seed property memberships

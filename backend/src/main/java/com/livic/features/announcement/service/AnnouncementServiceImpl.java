@@ -6,12 +6,12 @@ import com.livic.features.announcement.dto.AnnouncementDTOs.AnnouncementResponse
 import com.livic.features.announcement.mapper.AnnouncementMapper;
 import com.livic.features.announcement.service.interfaces.AnnouncementService;
 import com.livic.platform.common.event.AnnouncementBroadcastEvent;
-import com.livic.services.finance.dto.LeaseSummaryDTO;
-import com.livic.services.finance.facade.FinanceFacade;
 import com.livic.services.property.dto.PropertySummaryDTO;
 import com.livic.services.property.dto.UnitSummaryDTO;
 import com.livic.services.property.facade.PropertyFacade;
+import com.livic.services.property.dto.UnitResidentDTO;
 import com.livic.services.property.facade.UnitFacade;
+import com.livic.services.property.facade.UnitMemberFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import com.livic.features.announcement.service.interfaces.AnnouncementCrudService;
@@ -39,7 +39,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     private final PropertyFacade propertyFacade;
     private final UnitFacade unitFacade;
     private final UserFacade userFacade;
-    private final FinanceFacade financeFacade;
+    private final UnitMemberFacade unitMemberFacade;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -54,16 +54,10 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
         announcement = announcementCrudService.save(announcement);
 
-        // Fetch recipients — pre-fetch all property leases for the optimized path
-        List<LeaseSummaryDTO> allActivePropertyLeases = financeFacade.getActiveLeasesByPropertyId(propSummary.id());
-        Map<UUID, List<LeaseSummaryDTO>> leasesByUnit = allActivePropertyLeases.stream()
-                .filter(l -> l.unitId() != null)
-                .collect(Collectors.groupingBy(LeaseSummaryDTO::unitId));
-        Map<Integer, List<LeaseSummaryDTO>> leasesByFloor = allActivePropertyLeases.stream()
-                .filter(l -> l.floor() != null)
-                .collect(Collectors.groupingBy(LeaseSummaryDTO::floor));
-        List<String> recipientUserIds = getRecipientUserIdsOptimized(
-                request.getTargetType(), request.getTargetFloorNumber(), request.getTargetUnitId(), allActivePropertyLeases, leasesByUnit, leasesByFloor);
+        // Recipients are the property's unit members — owners, tenants and family alike.
+        List<UnitResidentDTO> residents = unitMemberFacade.getActiveResidentsByPropertyId(propSummary.id());
+        List<String> recipientUserIds = getRecipientUserIds(
+                request.getTargetType(), request.getTargetFloorNumber(), request.getTargetUnitId(), residents);
 
         // Publish Spring Event to trigger Notification module listeners
         AnnouncementBroadcastEvent event = new AnnouncementBroadcastEvent(
@@ -83,15 +77,19 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     @Override
     @Transactional(readOnly = true)
     public Page<AnnouncementResponse> getNoticesForTenant(UUID tenantUserId, Pageable pageable) {
-        LeaseSummaryDTO activeLease = financeFacade.getActiveLeaseForUser(tenantUserId).orElse(null);
+        // Where this person lives, whether they own the flat, rent it, or live with someone who does.
+        UnitResidentDTO residence = unitMemberFacade.getActiveResidencesByUserId(tenantUserId).stream()
+                .filter(r -> r.propertyId() != null)
+                .findFirst()
+                .orElse(null);
 
-        if (activeLease == null || activeLease.propertyId() == null) {
+        if (residence == null) {
             return Page.empty(pageable);
         }
 
-        UUID propertyId = activeLease.propertyId();
-        Integer floor = activeLease.floor() != null ? activeLease.floor() : 0;
-        UUID unitId = activeLease.unitId();
+        UUID propertyId = residence.propertyId();
+        Integer floor = residence.floor() != null ? residence.floor() : 0;
+        UUID unitId = residence.unitId();
 
         Page<AnnouncementTbl> announcements = announcementCrudService.findNoticesForTenant(propertyId, floor, unitId, pageable);
 
@@ -148,14 +146,8 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             }
         }
 
-        // Optimized: Fetch all active property leases once to group in memory instead of executing DB queries in loop
-        List<LeaseSummaryDTO> allActivePropertyLeases = financeFacade.getActiveLeasesByPropertyId(propertyId);
-        Map<UUID, List<LeaseSummaryDTO>> leasesByUnit = allActivePropertyLeases.stream()
-                .filter(l -> l.unitId() != null)
-                .collect(Collectors.groupingBy(LeaseSummaryDTO::unitId));
-        Map<Integer, List<LeaseSummaryDTO>> leasesByFloor = allActivePropertyLeases.stream()
-                .filter(l -> l.floor() != null)
-                .collect(Collectors.groupingBy(LeaseSummaryDTO::floor));
+        // Fetched once and grouped in memory, instead of a query per announcement.
+        List<UnitResidentDTO> residents = unitMemberFacade.getActiveResidentsByPropertyId(propertyId);
 
         List<UUID> creatorIds = announcements.getContent().stream()
                 .map(AnnouncementTbl::getCreatorId)
@@ -166,8 +158,8 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
         return announcements.map(announcement -> {
             long readCount = readCountsMap.getOrDefault(announcement.getId(), 0L);
-            List<String> recipients = getRecipientUserIdsOptimized(
-                    announcement.getTargetType(), announcement.getTargetFloorNumber(), announcement.getTargetUnitId(), allActivePropertyLeases, leasesByUnit, leasesByFloor);
+            List<String> recipients = getRecipientUserIds(
+                    announcement.getTargetType(), announcement.getTargetFloorNumber(), announcement.getTargetUnitId(), residents);
             long totalRecipients = recipients.size();
             UserSummaryDTO creator = creatorsMap.get(announcement.getCreatorId());
             String creatorName = creator != null ? creator.fullName() : "System";
@@ -176,37 +168,19 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         });
     }
 
-    private List<String> getRecipientUserIdsOptimized(AnnouncementTargetType targetType, Integer targetFloorNumber, UUID targetUnitId, 
-                                                      List<LeaseSummaryDTO> allActivePropertyLeases, 
-                                                      Map<UUID, List<LeaseSummaryDTO>> leasesByUnit, 
-                                                      Map<Integer, List<LeaseSummaryDTO>> leasesByFloor) {
-        List<String> recipientUserIds = new ArrayList<>();
-        if (targetType == AnnouncementTargetType.PROPERTY) {
-            for (LeaseSummaryDTO lease : allActivePropertyLeases) {
-                if (lease.userId() != null) {
-                    recipientUserIds.add(lease.userId().toString());
-                }
-            }
-        } else if (targetType == AnnouncementTargetType.FLOOR) {
-            if (targetFloorNumber != null) {
-                List<LeaseSummaryDTO> floorLeases = leasesByFloor.getOrDefault(targetFloorNumber, List.of());
-                for (LeaseSummaryDTO lease : floorLeases) {
-                    if (lease.userId() != null) {
-                        recipientUserIds.add(lease.userId().toString());
-                    }
-                }
-            }
-        } else if (targetType == AnnouncementTargetType.UNIT) {
-            if (targetUnitId != null) {
-                List<LeaseSummaryDTO> unitLeases = leasesByUnit.getOrDefault(targetUnitId, List.of());
-                for (LeaseSummaryDTO lease : unitLeases) {
-                    if (lease.userId() != null) {
-                        recipientUserIds.add(lease.userId().toString());
-                    }
-                }
-            }
-        }
-        return recipientUserIds.stream().distinct().collect(Collectors.toList());
+    /** Who a notice reaches: every active member of the targeted property, floor or unit. */
+    private List<String> getRecipientUserIds(AnnouncementTargetType targetType, Integer targetFloorNumber,
+                                             UUID targetUnitId, List<UnitResidentDTO> residents) {
+        return residents.stream()
+                .filter(resident -> resident.userId() != null)
+                .filter(resident -> switch (targetType) {
+                    case PROPERTY -> true;
+                    case FLOOR -> targetFloorNumber != null && targetFloorNumber.equals(resident.floor());
+                    case UNIT -> targetUnitId != null && targetUnitId.equals(resident.unitId());
+                })
+                .map(resident -> resident.userId().toString())
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     @Override

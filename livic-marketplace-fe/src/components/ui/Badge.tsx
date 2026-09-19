@@ -32,6 +32,7 @@ export function Badge({ children, variant = 'default', className = '' }: BadgePr
 export function PropertyTypeBadge({ type }: { type: PropertyType }) {
   const labels: Record<PropertyType, { label: string; variant: BadgeProps['variant'] }> = {
     RENTAL: { label: 'Rental Apartment', variant: 'indigo' },
+    RESIDENTIAL: { label: 'Residential Building', variant: 'indigo' },
     HOSTEL: { label: 'Co-Living / Hostel', variant: 'purple' },
     SOCIETY: { label: 'Gated Society', variant: 'success' },
     MESS: { label: 'Mess & Dining', variant: 'warning' },

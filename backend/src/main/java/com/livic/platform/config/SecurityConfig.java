@@ -23,9 +23,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import org.springframework.expression.spel.support.StandardTypeLocator;
-import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
-import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 
 /**
  * Security: stateless JWT for API access; login uses DAO provider + BCrypt.
@@ -81,15 +78,6 @@ public class SecurityConfig {
                 .addFilterBefore(internalFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
-    }
-
-    @Bean
-    static MethodSecurityExpressionHandler methodSecurityExpressionHandler() {
-        DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
-        StandardTypeLocator locator = new StandardTypeLocator();
-        locator.registerImport("com.livic.platform.common.enums");
-        handler.setTypeLocator(locator);
-        return handler;
     }
 
     // Simple internal auth filter that checks a pre-shared token header and grants ADMIN role.

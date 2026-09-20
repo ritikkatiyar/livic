@@ -1,20 +1,16 @@
 package com.livic.core.finance.service.impl;
 
 import com.livic.platform.common.domain.CalculationStrategyType;
-import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.ChargeConfigTbl;
-import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.domain.MeterReadingTbl;
 import com.livic.core.finance.dto.MeterReadingDTOs.*;
 import com.livic.core.finance.service.MeterReadingService;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
 import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
-import com.livic.core.property.domain.PropertyTbl;
-import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.PropertySummaryDTO;
+import com.livic.core.property.dto.UnitMemberSummaryDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.facade.UnitFacade;
@@ -56,10 +52,10 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
         // Occupied means "has an active member", so a metered charge on an owner-occupied
         // flat gets a reading row too; in a rental every occupied unit has a tenant member.
-        List<com.livic.core.property.dto.UnitMemberSummaryDTO> activeMembers =
+        List<UnitMemberSummaryDTO> activeMembers =
                 unitMemberFacade.getActiveMembersByPropertyId(propertyId);
-        Map<UUID, List<com.livic.core.property.dto.UnitMemberSummaryDTO>> unitToMembersMap = activeMembers.stream()
-                .collect(Collectors.groupingBy(com.livic.core.property.dto.UnitMemberSummaryDTO::unitId));
+        Map<UUID, List<UnitMemberSummaryDTO>> unitToMembersMap = activeMembers.stream()
+                .collect(Collectors.groupingBy(UnitMemberSummaryDTO::unitId));
         Set<UUID> occupiedUnitIds = unitToMembersMap.keySet();
 
         List<MeterReadingTbl> existingEntries = meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
@@ -111,8 +107,8 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         }
 
         Set<UUID> userIds = activeMembers.stream()
-                .map(com.livic.core.property.dto.UnitMemberSummaryDTO::userId)
-                .filter(java.util.Objects::nonNull)
+                .map(UnitMemberSummaryDTO::userId)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(userIds);
 
@@ -122,7 +118,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
                 .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
 
         return finalEntries.stream().map(r -> {
-            List<com.livic.core.property.dto.UnitMemberSummaryDTO> members =
+            List<UnitMemberSummaryDTO> members =
                     unitToMembersMap.getOrDefault(r.getUnitId(), List.of());
             String tenantName = "Vacant";
             if (!members.isEmpty()) {

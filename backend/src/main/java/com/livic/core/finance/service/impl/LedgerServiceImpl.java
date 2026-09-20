@@ -1,7 +1,6 @@
 package com.livic.core.finance.service.impl;
 
 import com.livic.core.finance.domain.FinanceLedgerTbl;
-import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.dto.LedgerDTOs.LedgerEntryResponse;
 import com.livic.core.finance.service.interfaces.FinanceLedgerCrudService;
 import com.livic.core.finance.specification.FinanceLedgerSpecifications;
@@ -9,6 +8,7 @@ import com.livic.core.finance.service.interfaces.LedgerService;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
+import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,7 +38,7 @@ public class LedgerServiceImpl implements LedgerService {
     private final FinanceLedgerCrudService financeLedgerCrudService;
     private final UserFacade userFacade;
     private final UnitFacade unitFacade;
-    private final com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
+    private final UnitMemberFacade unitMemberFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -61,7 +62,7 @@ public class LedgerServiceImpl implements LedgerService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         Map<UUID, UnitResidentDTO> payersByMemberId = unitMemberFacade.getResidentsByMemberIds(memberIds).stream()
-                .collect(Collectors.toMap(UnitResidentDTO::memberId, java.util.function.Function.identity(), (a, b) -> a));
+                .collect(Collectors.toMap(UnitResidentDTO::memberId, Function.identity(), (a, b) -> a));
 
         Set<UUID> userIds = payersByMemberId.values().stream()
                 .map(UnitResidentDTO::userId)

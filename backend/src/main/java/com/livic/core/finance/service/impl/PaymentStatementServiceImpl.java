@@ -2,10 +2,18 @@ package com.livic.core.finance.service.impl;
 
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.BillLineTbl;
+import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.service.interfaces.PaymentStatementService;
 import com.livic.core.finance.service.interfaces.BillLineCrudService;
 import com.livic.core.finance.service.interfaces.BillCrudService;
+import com.livic.core.property.dto.UnitResidentDTO;
+import com.livic.core.property.dto.UnitSummaryDTO;
+import com.livic.core.property.facade.UnitFacade;
+import com.livic.core.property.facade.UnitMemberFacade;
+import com.livic.platform.payment.constant.PaymentConstants;
+import com.livic.platform.payment.dto.PaymentInitiationResponse;
+import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +37,9 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
     private final BillCrudService billCrudService;
     private final BillLineCrudService billLineCrudService;
     private final UserFacade userFacade;
-    private final com.livic.core.property.facade.UnitFacade unitFacade;
-    private final com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
-    private final com.livic.platform.payment.facade.PaymentFacade paymentFacade;
+    private final UnitFacade unitFacade;
+    private final UnitMemberFacade unitMemberFacade;
+    private final PaymentFacade paymentFacade;
 
     @Override
     public String generateStatementHtml(UUID billId) {
@@ -40,11 +48,11 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
         BillTbl bill = billCrudService.findById(billId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
 
-        if (bill.getStatus() == com.livic.core.finance.domain.BillStatus.PENDING) {
+        if (bill.getStatus() == BillStatus.PENDING) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Rent cycle invoice has not been published yet");
         }
 
-        com.livic.core.property.dto.UnitResidentDTO payer = bill.getMemberId() == null ? null
+        UnitResidentDTO payer = bill.getMemberId() == null ? null
                 : unitMemberFacade.getResidentByMemberId(bill.getMemberId()).orElse(null);
         UserSummaryDTO tenant = payer == null ? null
                 : userFacade.getUserById(payer.userId()).orElse(null);
@@ -52,7 +60,7 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
         List<BillLineTbl> charges = billLineCrudService.findByBill_Id(billId);
 
         UUID unitId = payer != null ? payer.unitId() : null;
-        com.livic.core.property.dto.UnitSummaryDTO unit = unitFacade.getUnitById(unitId).orElse(null);
+        UnitSummaryDTO unit = unitFacade.getUnitById(unitId).orElse(null);
         UUID propertyId = unit != null ? unit.propertyId() : null;
         String propertyName = unit != null ? unit.propertyName() : "N/A";
         String unitNumber = unit != null ? unit.unitNumber() : "N/A";
@@ -102,9 +110,9 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
 
         String transactionDetailsHtml = "";
         {
-            com.livic.platform.payment.dto.PaymentInitiationResponse tx = paymentFacade
+            PaymentInitiationResponse tx = paymentFacade
                     .getLatestSuccessfulTransaction(
-                            com.livic.platform.payment.constant.PaymentConstants.ReferenceType.BILL,
+                            PaymentConstants.ReferenceType.BILL,
                             bill.getId())
                     .orElse(null);
             if (tx != null) {

@@ -13,6 +13,7 @@ import com.livic.platform.payment.service.interfaces.PaymentTransactionService;
 import com.livic.platform.payment.dto.PaymentGatewayType;
 import com.livic.platform.payment.dto.PaymentIntentRequest;
 import com.livic.platform.payment.dto.PaymentIntentResponse;
+import com.livic.platform.payment.dto.PaymentVerificationRequest;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
 
 import lombok.RequiredArgsConstructor;
@@ -202,7 +203,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
 
     @Override
     @Transactional
-    public void verifyAndCompletePayment(com.livic.platform.payment.dto.PaymentVerificationRequest request) {
+    public void verifyAndCompletePayment(PaymentVerificationRequest request) {
         log.info("[RAZORPAY] Verifying client-side payment: paymentId={}, orderId={}", request.razorpayPaymentId(), request.razorpayOrderId());
 
         // 1. Verify HMAC signature: signature = HMAC-SHA256(orderId + "|" + paymentId, keySecret).

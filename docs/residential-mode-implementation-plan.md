@@ -1,6 +1,6 @@
 # Livic — Platform Architecture & Roadmap
 
-> **Status**: Draft for discussion · **Last updated**: 2026-09-19 · **Base**: `main` @ `a113250`
+> **Status**: Draft for discussion · **Last updated**: 2026-09-20 · **Base**: `main` @ `a113250`
 > **Supersedes**: the residential-only plans (ownership as a lease type; a separate `unit_ownership_tbl`). Both are replaced by the core model in §4.
 > **Stage**: development — destructive schema and package changes are acceptable.
 
@@ -87,7 +87,7 @@ property_tbl (RENTAL | RESIDENTIAL | SOCIETY)
 ├── membership_tbl         admin, staff, guards (property-wide)
 ├── charge_config_tbl      what is billed, to which role
 ├── announcement_tbl, issue_tbl, document_tbl
-└── block_tbl              hidden default block, or Tower A / B
+└── block_tbl              one per property by default, N when there are several buildings
     └── unit_tbl           room or flat
         ├── listing_tbl    optional marketplace projection
         └── unit_member_tbl  OWNER / TENANT / FAMILY
@@ -116,7 +116,7 @@ Everything else keeps its name and only gains columns.
 |---|---|---|
 | `property_tbl` | `invoice_prefix`. **`property_type` already exists** (V19, marketplace) as RENTAL/HOSTEL/SOCIETY/MESS/INDIVIDUAL — `RESIDENTIAL` added to the enum; the column is VARCHAR(32) so no migration was needed. `is_publicly_listed` also already exists. | core/property |
 | `property_module_tbl` | start using it; type seeds the default module set | core/property |
-| `block_tbl` | **new** — `property_id, name, sort_order`; rental/residential get one hidden default | core/property |
+| `block_tbl` | **new** — `property_id, name, sort_order`, `is_default`; every property gets an auto-created `"Main"` block, and **any type may have several** — see §4.2a | core/property |
 | `unit_tbl` | `block_id` (unique key moves from `(property_id, unit_number)` to `(block_id, unit_number)`), optional `area`. **Already exists** from the marketplace work: `base_price`, `is_bookable`, `description`, `amenities` — `is_bookable` is the per-unit listing switch the plan called `is_listed`. | core/property |
 | `unit_member_tbl` | **new** — §4.3 | core/property |
 | `charge_config_tbl` | `billed_to_role` (TENANT default / OWNER), optional `unit_id` for owner-specific charges, `tax_rate` | core/finance |
@@ -129,6 +129,50 @@ Everything else keeps its name and only gains columns.
 | `marketplace_lead_tbl` | `property_id` + `unit_id` (NOT NULL today) → `listing_id` | verticals/marketplace |
 | `lease_tbl`, `unit_booking_tbl`, `lease_inventory_assignment_tbl` | unchanged, owned by rental | verticals/rental |
 | `visitor_tbl`, `amenity_booking_tbl` | **new, later** | verticals/society |
+
+### 4.2a Blocks belong to every property type
+
+A block is **not a society feature**. The schema has never restricted it — `unit_tbl`'s unique
+key is `(block_id, unit_number)`, so Building A/101 and Building B/101 already coexist, and
+`block_tbl` is unique on `(property_id, name)` with no type check anywhere. A landlord with
+two buildings on one plot, or a row-house colony, must not be forced into two properties:
+that splits their staff, charge configs, rent roll and analytics, which is the exact pain
+blocks were introduced to remove.
+
+The correct framing is **any property has N blocks; one is created automatically so simple
+properties never meet the concept.** All four shapes are legal and need no special cases:
+
+| Shape | Status |
+|---|---|
+| 1 property, 1 block | today's rental/residential — the auto-created `"Main"` block |
+| 1 property, N blocks | schema ready; needs the API and the UI level |
+| N properties, 1 block each | already live — the seed loops `mom's pg 1..N` for one owner |
+| N properties, N blocks each | falls out of the above |
+
+**When is it a block and when is it a separate property?** A block is a *physical* grouping;
+a property is an *administrative boundary*. That is what the schema already enforces —
+everything keyed on `property_id` is shared across all of its blocks: `membership_tbl` (staff,
+guards), `charge_config_tbl`, announcements, issues, join codes, `invoice_prefix`. So two
+buildings sharing staff, charges and books are one property with two blocks; two buildings
+needing separate books are two properties.
+
+**This rule is a pricing surface, not only a modelling preference.** `PropertyLimitValidator`
+counts properties and `UnitLimitValidator` counts units; **blocks are uncounted**. Modelling
+two buildings as blocks consumes one property of the plan, as properties it consumes two, and
+the unit count is identical either way. That asymmetry pushes people toward the correct choice,
+but it does mean someone will eventually collapse properties into blocks to fit a cheaper
+plan — units being counted independently is what keeps that mostly honest. Revisit if block
+counts ever become large.
+
+**`sort_order` (resolved — was open decision 1).** Keep it. It is the manual display order of
+blocks within a property, so a committee's "Tower A, B, C" survives and name sorting does not
+break on "Tower 10". It is already in V1, the entity and the one list query; removing it is
+four edits of churn to save one `int` on a table holding single digits of rows.
+**But the ordering is a live bug:** nothing writes a value other than `0`, so
+`findByPropertyIdOrderBySortOrderAsc` reads as deterministic and is not — InnoDB may return
+blocks in any order. Add the tiebreaker:
+`findByPropertyIdOrderBySortOrderAscNameAsc`. Invisible today with one block per property;
+it surfaces the moment a second one exists.
 
 ### 4.3 `unit_member_tbl` — who belongs to a flat
 ```
@@ -277,7 +321,7 @@ Building admin ──(maintenance)──▶ Unit owner ──(rent)──▶ Ten
 
 | Vertical | Needs beyond core |
 |---|---|
-| Society | towers UI, visitors/gate, amenities, parking, committee and polls, per-sq-ft charges, society accounting (vendors, expenses, audit), background batch billing, dues-follow-flat and no-dues certificate |
+| Society | visitors/gate, amenities, parking, committee and polls, per-sq-ft charges, society accounting (vendors, expenses, audit), background batch billing, dues-follow-flat and no-dues certificate |
 | Hostel | bed level under unit, meals, attendance |
 | Vendor marketplace | vendor accounts not tied to a property, catalog, orders, ratings, society approval, commission — a separate build |
 
@@ -313,7 +357,7 @@ Building admin ──(maintenance)──▶ Unit owner ──(rent)──▶ Ten
 
 ## 12. Decisions
 
-**Made:** layered structure; incremental restructure; `lease_tbl` stays the rental contract; `unit_member_tbl` is the single residency record; payer-and-issuer bills with two renames; unit owners use the resident app; apps split by role; listings work with or without a managed unit; marketplace is two-way.
+**Made:** blocks belong to every property type, one auto-created default (§4.2a); a block is a physical grouping and a property an administrative boundary; layered structure; incremental restructure; `lease_tbl` stays the rental contract; `unit_member_tbl` is the single residency record; payer-and-issuer bills with two renames; unit owners use the resident app; apps split by role; listings work with or without a managed unit; marketplace is two-way.
 
 **Open**
 | # | Question | Proposed |
@@ -331,6 +375,8 @@ Building admin ──(maintenance)──▶ Unit owner ──(rent)──▶ Ten
 | D11 | Auto-unlist when taken | Yes |
 | D12 | Dues follow the flat on sale | Yes — ledger keeps a per-unit view |
 | D13 | GST and invoice numbering in v1 | Yes, numbering from day one; GST when societies arrive |
+| D14 | Can a rental have several blocks | Yes — any type, any number; `is_default` hides the level for the single-block case |
+| D15 | Block vs separate property | Shared staff, charges and books → one property with blocks; separate books → separate properties |
 
 ---
 
@@ -365,19 +411,80 @@ Building admin ──(maintenance)──▶ Unit owner ──(rent)──▶ Ten
 - `bill.member_id` (payer, required) and `issued_by_member_id`; `bill_type`; `invoice_no` (gapless per property per financial year)
 - **No `lease_id` on the bill.** The payer member already carries `lease_id`, so rental answers "bills for lease X" with one join through `unit_member`. A second path would drift, and a rental foreign key has no business in a core table.
 - `finance_ledger_tbl` gains `member_id`; its JPA relation to `LeaseTbl` must go, since leases leave core in 1d-ii
-- Rent-roll queries that filter `rent_cycle.lease_id` need rewriting through the member, not renaming
+- Rent-roll queries that filter `rent_cycle.lease_id` need rewriting through the member, not renaming. Every query in `RentCycleRepository` filters `lease.id IN :leaseIds`; all of them change.
+
+**Four corrections to the §4.1 shape, found while reviewing the current schema:**
+
+1. **`bill_type` names a payer↔issuer relationship, not a charge category.** Two bills exist
+   in §4.7 because Ravi owes the property and Amit owes Ravi — different payer, different
+   issuer. Apply that test and most of the proposed future enum falls away: PARKING has the
+   same payer and issuer as MAINTENANCE, so it is a *line*; a late fee is a line on the next
+   bill. Only AMENITY plausibly earns bill-hood. Without this rule `bill_type` becomes a
+   dumping ground and the service rots into `if (type == …)` branching. Note the collision
+   already waiting: `charge_type` on the line table carries `MAINTENANCE` and `PENALTY`
+   today, and the plan wants both as *bill* types.
+2. **Make `billing_month` nullable, or the unique key blocks the types it is meant to
+   support.** `(member_id, billing_month, bill_type)` with `billing_month CHAR(7) NOT NULL`
+   is a recurring-billing assumption: an amenity booking happens three times a month, a
+   penalty has no month. Nullable solves it by itself — InnoDB treats NULLs as distinct in a
+   unique index, so recurring bills stay protected against double-generation while ad-hoc
+   bills are simply unconstrained. No second table, no partial index (MySQL has none).
+3. **Drop `payment_transaction_id` from the bill.** It is a dead column — declared at
+   `RentCycleTbl.java:50` and never read or written anywhere. It is also wrong in principle:
+   `FinancePaymentEventListener` accumulates partial payments into `amount_paid`, so a bill
+   has *many* transactions, and `payment_transaction_tbl` already points back via
+   `reference_type` + `reference_id`. Carrying one FK forward invites someone to use it.
+4. **`status` and `bill_type` as `VARCHAR(32)`, not MySQL `enum`.** This is the same
+   reasoning §4.2 already used to avoid a migration for `property_type`; reintroducing enums
+   here would be inconsistent.
+
+**Bill lines are immutable once published.** `tax_rate`, `amount` and description are frozen
+at generation and never re-derived from `charge_config_id` at render time — the FK is for
+traceability only. Otherwise last month's invoice changes silently when someone edits a
+charge config, which breaks the gapless-numbering compliance story the rename is paying for.
 
 **1d-ii — leases leave core**
+- **Confirmed still outstanding:** `LeaseTbl`, `LeaseController` and `LeaseService` all sit in `core/finance` today, and `verticals/rental` contains only `inventory`. 24 files under `core` reference the lease.
+- **ArchUnit cannot catch this**, which is worth stating plainly: the rules forbid `core → verticals`, and the lease is *in* core — its misplacement is exactly what makes it legal. The direction rules will only start protecting the boundary once the move happens, so nothing will remind us.
 - `lease_tbl`, bookings, `LeaseService`, `LeaseController`, the lease scope resolver and the `UnitOccupancyProvider` implementation move to `verticals/rental`
 - Rent generation moves with them: rental reads the lease, builds the lines, asks core's bill service to write them
 - Bills stay in core: a maintenance bill is sent to an owner who has no lease, so core must be able to bill without rental
 
 **Also agreed, folds into the same work:** `total_floors` moves from `property_tbl` to `block_tbl` (a tower has floors, a location does not). Keep `totalFloors` in the property API response, derived from blocks, so the landlord app's five touchpoints keep working; create still accepts it and routes it to the default block.
 
+Once §4.2a is accepted, this move stops being cosmetic: with Building A on 3 floors and
+Building B on 5, `property_tbl.total_floors` has no correct value — max and sum are both
+lies. The derived `totalFloors` on the property response is therefore a **temporary shim**
+for `useCreateProperty`, `useEditProperty` and `PropertyCard`, not something to keep.
+
+### The block UI — the real cost of §4.2a
+No client can create a block today: there is no `BlockController`, no DTO, no entry in the
+generated FE client. `getOrCreateDefaultBlock` is the only creation path. Adding the endpoint
+is thin — create, list, rename, delete-if-empty; no migration and no backfill, since every
+property already has exactly one block.
+
+**What is not thin is the floor navigation, and it breaks as soon as a second block exists —
+not at Society.** `unit_tbl.floor` is a plain `int` on the unit, so floors are not a table but
+a grouping, and today that grouping is property-wide:
+
+- `getFloorSummaries(propertyId, token, property.totalFloors)` buckets *every* unit in the
+  property by floor number, so Building A floor 1 silently merges with Building B floor 1
+- the route `/properties/[id]/floors/[floorNumber]` cannot address which building
+- unit generation keys on `startingFloorNumber` alone
+
+The fix is scoping, not new tables: group by `(block_id, floor)`, and put a block segment in
+the route — `/properties/[id]/blocks/[blockId]/floors/[floorNumber]`. It must ship **with**
+the block UI, not after it.
+
+**Progressive disclosure keeps today's landlords unaffected.** `is_default` is the hinge:
+exactly one block and it is the default → hide the block level entirely, and rental and
+residential keep the screens they have now. A second block makes the level appear. Because
+the default block is named `"Main"`, adding block #2 must prompt the landlord to rename the
+first — nobody should be left with "Main" and "Building B".
+
 ### Open decisions
-1. `block.sort_order` — keep (societies order towers deliberately; name sorting breaks on "Tower 10") or drop until society arrives.
-2. Schema changes: edit V1/V2 in place and drop the volume again (preferred, keeps the two-file rule) or add a V3.
-3. `AnnouncementDTOs`-style wrapper classes: the PR review agent wants top-level DTO records. Pre-existing pattern across the codebase — bless it in the skill, or schedule the cleanup.
+1. Schema changes: edit V1/V2 in place and drop the volume again (preferred, keeps the two-file rule) or add a V3.
+2. `AnnouncementDTOs`-style wrapper classes: the PR review agent wants top-level DTO records. Pre-existing pattern across the codebase — bless it in the skill, or schedule the cleanup.
 
 ### Known gaps, deliberately not fixed
 - Phase 0 leftovers: lockout counters are never written; `createTenant` still sets `passwordHash = encode(phone)`.
@@ -393,7 +500,7 @@ Building admin ──(maintenance)──▶ Unit owner ──(rent)──▶ Ten
 | Phase | Deliverable | Size |
 |---|---|---|
 | **0** | Open security findings | S |
-| **1** | **Core model**, in slices: (a) `block_tbl` + `unit.block_id` + `RESIDENTIAL` type — **done, migration V24**; (b) modules in use; (c) `unit_member_tbl`; (d) bill rename + payer/issuer + `invoice_no`, ledger per member and per unit; (e) outbox. Property and finance packages move as part of this work. Announcements, issues and resident context read members. | L |
+| **1** | **Core model**, in slices: (a) `block_tbl` + `unit.block_id` + `RESIDENTIAL` type — **done, migration V24**; (b) modules in use; (c) `unit_member_tbl`; (d) bill rename + payer/issuer + `invoice_no`, ledger per member and per unit; (e) outbox; (f) blocks for every property type — `BlockController`, block level in the units navigation, floor grouping scoped to `(block_id, floor)`, §4.2a. Property and finance packages move as part of this work. Announcements, issues and resident context read members. | L |
 | **2** | **Authorization**: unit-member role rule, `UnitMemberProvider` SPI, drop `LEASE_VIEW_OWN`, permission registry, `/me/context` returns unit links | M |
 | **3** | **Residential**: assign owners, maintenance bills, owner-issued rent, rent privacy, issue routing, landlord + resident screens | M |
 
@@ -404,7 +511,7 @@ Building admin ──(maintenance)──▶ Unit owner ──(rent)──▶ Ten
 | **4** | **Marketplace supply**: `listing_tbl`, standalone listings with no account, leads on listings, locality and geo, listing projection + privacy line; `features/marketplace` → `verticals/marketplace` |
 | **5** | **Two-way marketplace**: list from a managed property, live status via outbox events, booking → lease, conversion wizard; `community` and `inventory` packages move |
 | **6** | **Platform for scale**: Razorpay Route, organisations, background batch billing, deposit settlement, idempotency keys |
-| **7** | **Society**: towers, visitors, amenities, parking, committee, per-sq-ft, dues on sale |
+| **7** | **Society**: visitors, amenities, parking, committee, per-sq-ft, dues on sale (the blocks UI is no longer here — see phase 1f) |
 | **8** | Hostel; vendor marketplace; brokers and lead economics |
 
 Phase 1 is the one big change. Everything after it is additive — which is the point of doing it first.
@@ -413,7 +520,7 @@ Phase 1 is the one big change. Everything after it is additive — which is the 
 
 ## 14. Tests
 
-- **Core model (1):** backfill — every active lease has a TENANT member, every bill a payer, units unique per block; occupancy and capacity count TENANT only; announcements reach each member once; invoice numbers gapless per property per year; outbox row written in the same transaction and consumed once.
+- **Core model (1):** backfill — every active lease has a TENANT member, every bill a payer, units unique per block; a rental property accepts a second block and the same unit number in both; block listing order is stable across repeated calls; a single-default-block property exposes no block level; occupancy and capacity count TENANT only; announcements reach each member once; invoice numbers gapless per property per year; outbox row written in the same transaction and consumed once.
 - **Authorization (2):** owner manages leases and rent on their unit, 403 on another; owner pays but cannot publish or mark paid maintenance; members never pass property-level checks; ended member loses access.
 - **Residential (3):** maintenance bill has only OWNER charges; residential rent bill only base rent; separate ledger balances; admin batch generates maintenance only; pending owner links on signup.
 - **Marketplace (4, 5):** standalone listing with no account; lead attaches to a listing; conversion keeps leads and URL; managed listing shows vacant/vacating; public API exposes no tenant, bill or document data; listing flips to RENTED when a tenant member is created.

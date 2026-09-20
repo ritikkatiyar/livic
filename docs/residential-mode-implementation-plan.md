@@ -337,6 +337,55 @@ Building admin ──(maintenance)──▶ Unit owner ──(rent)──▶ Ten
 ### Parked (not in scope now)
 **Living ecosystem / personal home** — an individual managing their own bills with no managed building behind them. Would need: property type `PERSONAL` (self-managed, one unit), `bill.source` (SYSTEM / MANUAL / EXTERNAL-BBPS), `bill.visibility` (PROPERTY / PRIVATE — a resident's personal bills must stay invisible to a society admin), and a `living` vertical (personal bills, reminders, documents, flatmate expense split, home services). The spine in §4 already supports it; revisit after residential.
 
+## 12a. Where the work stands (handoff, 2026-09-20)
+
+**Branch:** `feat/core-model-member-readers` (pushed; one PR open against `main`). All work below is on it.
+
+### Done
+| Commit | What |
+|---|---|
+| `96b95c2` | Invoice access scoped to tenant and staff; rent cycles resolve through their lease |
+| `8f14653` | Razorpay verification fails closed (missing/blank/forged signature, unconfigured secret) |
+| `cf2d7d0` | `block_tbl`, `unit.block_id`, unique key per block, `RESIDENTIAL` property type |
+| `db46eb5` | `unit_member_tbl` + lease sync (created and ended with the lease, in one transaction) |
+| `93d6f9e` | Announcements, issues and `/me/context` read members, not leases |
+| `3646c0a` | Packages split into `platform` / `core` / `verticals`; ArchUnit enforces direction; subscription usage SPI |
+| `08b4c0d` | Migrations collapsed to V1 (schema) + V2 (seed), seed fixed for blocks and members |
+| `a5996ff` | 405 for wrong method (was 500); cross-property rent roll 403 (was silent empty page) |
+| `ebc413a` | Marketplace FE badge label for RESIDENTIAL |
+| `be0abc7` | Backend skill documents the new layering, so the PR review agent checks against it |
+
+**Verified:** 222 backend tests green against MySQL; full rental flow exercised end to end on the fresh seed (landlord layout/rent roll/cash payment/ledger/notice, resident context/invoice/issue, marketplace search/OTP/tour/approval, payment 400 on forgery); cross-owner isolation probed both ways between `owner@livic.com` and `owner@moms.com` with no leaks.
+
+**Local dev:** `docker compose up -d mysql`, then `mvn spring-boot:run -Dspring-boot.run.profiles=dev` in `backend/`. Seed password for every seeded user is `Adm!n@super`. Marketplace dev OTP is `000000`. Kill a stuck app by listening port, not `pkill`.
+
+### Next: slice 1d, in two commits
+**1d-i — bills**
+- `rent_cycle_tbl` → `bill_tbl`, `rent_cycle_charge_tbl` → `bill_line_tbl`
+- `bill.member_id` (payer, required) and `issued_by_member_id`; `bill_type`; `invoice_no` (gapless per property per financial year)
+- **No `lease_id` on the bill.** The payer member already carries `lease_id`, so rental answers "bills for lease X" with one join through `unit_member`. A second path would drift, and a rental foreign key has no business in a core table.
+- `finance_ledger_tbl` gains `member_id`; its JPA relation to `LeaseTbl` must go, since leases leave core in 1d-ii
+- Rent-roll queries that filter `rent_cycle.lease_id` need rewriting through the member, not renaming
+
+**1d-ii — leases leave core**
+- `lease_tbl`, bookings, `LeaseService`, `LeaseController`, the lease scope resolver and the `UnitOccupancyProvider` implementation move to `verticals/rental`
+- Rent generation moves with them: rental reads the lease, builds the lines, asks core's bill service to write them
+- Bills stay in core: a maintenance bill is sent to an owner who has no lease, so core must be able to bill without rental
+
+**Also agreed, folds into the same work:** `total_floors` moves from `property_tbl` to `block_tbl` (a tower has floors, a location does not). Keep `totalFloors` in the property API response, derived from blocks, so the landlord app's five touchpoints keep working; create still accepts it and routes it to the default block.
+
+### Open decisions
+1. `block.sort_order` — keep (societies order towers deliberately; name sorting breaks on "Tower 10") or drop until society arrives.
+2. Schema changes: edit V1/V2 in place and drop the volume again (preferred, keeps the two-file rule) or add a V3.
+3. `AnnouncementDTOs`-style wrapper classes: the PR review agent wants top-level DTO records. Pre-existing pattern across the codebase — bless it in the skill, or schedule the cleanup.
+
+### Known gaps, deliberately not fixed
+- Phase 0 leftovers: lockout counters are never written; `createTenant` still sets `passwordHash = encode(phone)`.
+- The lease/member invariant holds because `LeaseServiceImpl` is the only writer. Reconciliation should assert it when the outbox lands (1e).
+- Frontend builds are not run on every backend change; the RESIDENTIAL enum broke the marketplace build once. Run all three app builds before pushing.
+
+---
+
 ## 13. Roadmap
 
 **Next quarter — the spine and residential**

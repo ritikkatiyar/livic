@@ -46,7 +46,7 @@ interface CommandCenterScreenProps {
 export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogout }: CommandCenterScreenProps) {
   const { theme, isDark } = useAppTheme();
   const { isDesktop } = useResponsive();
-  const { accessToken } = useAuth();
+  const { accessToken, context } = useAuth();
   const { searchQuery, setSearchQuery } = useGlobalPropertySelection();
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
@@ -88,11 +88,13 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
 
   const { autoDetectProgress } = useAdminTutorial();
 
+  const isAdminRole = context?.globalRole === 'ADMIN' || context?.globalRole === 'SUPER_ADMIN';
+
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && isAdminRole) {
       autoDetectProgress({ propertyCount: properties.length });
     }
-  }, [properties.length, isLoading, autoDetectProgress]);
+  }, [properties.length, isLoading, autoDetectProgress, isAdminRole]);
 
   useEffect(() => {
     async function loadMetrics() {

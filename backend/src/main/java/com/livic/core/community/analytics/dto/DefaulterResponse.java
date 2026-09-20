@@ -1,6 +1,7 @@
 package com.livic.core.community.analytics.dto;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record DefaulterResponse(
         String tenantName,
@@ -8,5 +9,5 @@ public record DefaulterResponse(
         String propertyName,
         int daysOverdue,
         BigDecimal amountDue,
-        String billId
+        UUID billId
 ) {}

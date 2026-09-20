@@ -72,7 +72,7 @@ public final class AnalyticsMapper {
                 row.propertyName(),
                 (int) daysOverdue,
                 row.amountDue(),
-                row.billId().toString()
+                row.billId()
         );
     }
 

@@ -26,7 +26,8 @@ export interface DefaulterResponse {
   propertyName: string;
   daysOverdue: number;
   amountDue: number;
-  rentCycleId: string;
+  billId?: string;
+  rentCycleId?: string;
 }
 
 export interface ExpensesBreakdownResponse {

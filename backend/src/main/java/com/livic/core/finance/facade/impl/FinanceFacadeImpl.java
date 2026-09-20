@@ -2,13 +2,13 @@ package com.livic.core.finance.facade.impl;
 
 import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.core.finance.dto.ChargeConfigResponse;
-import com.livic.core.finance.dto.LeaseSummaryDTO;
+import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
 import com.livic.core.finance.dto.UnitBookingDTOs;
 import com.livic.core.finance.facade.FinanceFacade;
 import com.livic.core.finance.mapper.UnitBookingMapper;
 import com.livic.core.finance.service.ChargeConfigQueryService;
-import com.livic.core.finance.service.interfaces.LeaseCrudService;
-import com.livic.core.finance.service.interfaces.LeaseQueryService;
+import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
+import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.service.interfaces.BillCrudService;
 import com.livic.core.finance.service.interfaces.UnitBookingCrudService;
@@ -31,8 +31,6 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class FinanceFacadeImpl implements FinanceFacade {
 
-    private final LeaseQueryService leaseQueryService;
-    private final LeaseCrudService leaseCrudService;
     private final BillCrudService billCrudService;
     private final ChargeConfigQueryService chargeConfigQueryService;
     private final UnitBookingCrudService unitBookingCrudService;
@@ -40,79 +38,16 @@ public class FinanceFacadeImpl implements FinanceFacade {
     private final com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
 
     public FinanceFacadeImpl(
-            LeaseQueryService leaseQueryService,
-            LeaseCrudService leaseCrudService,
             BillCrudService billCrudService,
             ChargeConfigQueryService chargeConfigQueryService,
             UnitBookingCrudService unitBookingCrudService,
             com.livic.core.property.facade.UnitFacade unitFacade,
             com.livic.core.property.facade.UnitMemberFacade unitMemberFacade) {
-        this.leaseQueryService = leaseQueryService;
-        this.leaseCrudService = leaseCrudService;
         this.billCrudService = billCrudService;
         this.chargeConfigQueryService = chargeConfigQueryService;
         this.unitBookingCrudService = unitBookingCrudService;
         this.unitFacade = unitFacade;
         this.unitMemberFacade = unitMemberFacade;
-    }
-
-    @Override
-    public boolean isUnitOccupiedOnDate(UUID unitId, LocalDate date) {
-        return leaseCrudService.existsActiveLeaseOnDate(unitId, LeaseStatus.ACTIVE, date);
-    }
-
-    @Override
-    public Optional<LeaseSummaryDTO> getActiveLeaseForUser(UUID userId) {
-        return leaseQueryService.findByUserIdAndStatus(userId, LeaseStatus.ACTIVE)
-                .map(lease -> {
-                    com.livic.core.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
-                    return LeaseSummaryDTO.from(lease, u);
-                });
-    }
-
-    @Override
-    public List<LeaseSummaryDTO> getActiveLeasesByPropertyId(UUID propertyId) {
-        List<com.livic.core.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
-        Map<UUID, com.livic.core.property.dto.UnitSummaryDTO> unitMap = units.stream()
-                .collect(java.util.stream.Collectors.toMap(com.livic.core.property.dto.UnitSummaryDTO::id, u -> u));
-        return leaseQueryService.findActiveLeasesByProperty(propertyId).stream()
-                .map(lease -> LeaseSummaryDTO.from(lease, unitMap.get(lease.getUnitId())))
-                .toList();
-    }
-
-    @Override
-    public List<LeaseSummaryDTO> getActiveLeasesByUnitId(UUID unitId) {
-        com.livic.core.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(unitId).orElse(null);
-        return leaseQueryService.findByUnitIdAndStatus(unitId, LeaseStatus.ACTIVE).stream()
-                .map(lease -> LeaseSummaryDTO.from(lease, u))
-                .toList();
-    }
-
-    @Override
-    public Map<UUID, List<LeaseSummaryDTO>> getActiveLeasesByUnitIds(Collection<UUID> unitIds) {
-        if (unitIds == null || unitIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        return leaseQueryService.findActiveLeasesByUnitIds(unitIds);
-    }
-
-    @Override
-    public boolean hasLeasesForProperty(UUID propertyId) {
-        return leaseQueryService.existsByPropertyId(propertyId);
-    }
-
-    @Override
-    public boolean hasLeasesForUnit(UUID unitId) {
-        return leaseQueryService.existsByUnitId(unitId);
-    }
-
-    @Override
-    public Optional<LeaseSummaryDTO> getLeaseById(UUID leaseId) {
-        return leaseCrudService.findById(leaseId)
-                .map(lease -> {
-                    com.livic.core.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
-                    return LeaseSummaryDTO.from(lease, u);
-                });
     }
 
     @Override

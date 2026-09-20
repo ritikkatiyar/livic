@@ -5,8 +5,8 @@ import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.auth.service.impl.AuthorizationServiceImpl;
 import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.platform.common.domain.UserRole;
-import com.livic.core.finance.dto.LeaseSummaryDTO;
-import com.livic.core.finance.facade.FinanceFacade;
+import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
+import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import com.livic.verticals.rental.inventory.facade.InventoryFacade;
 import com.livic.platform.storage.controller.MediaController;
 import com.livic.platform.storage.dto.FileType;
@@ -42,7 +42,7 @@ class MediaAuthorizationTest {
     private MembershipCrudService membershipCrudService;
 
     @Mock
-    private FinanceFacade financeFacade;
+    private LeaseFacade leaseFacade;
 
     @Mock
     private InventoryFacade inventoryFacade;
@@ -62,7 +62,7 @@ class MediaAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, financeFacade, inventoryFacade, storageFacade);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, null, leaseFacade, inventoryFacade, storageFacade);
         propertyId = UUID.randomUUID();
         leaseId = UUID.randomUUID();
         itemId = UUID.randomUUID();
@@ -144,7 +144,7 @@ class MediaAuthorizationTest {
                 new java.math.BigDecimal("20000.00")
         );
 
-        when(financeFacade.getLeaseById(leaseId)).thenReturn(Optional.of(leaseSummary));
+        when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(leaseSummary));
         when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("LEASE_UPDATE", "LEASE_VIEW"));
 
@@ -171,7 +171,7 @@ class MediaAuthorizationTest {
                 new java.math.BigDecimal("20000.00")
         );
 
-        when(financeFacade.getLeaseById(leaseId)).thenReturn(Optional.of(leaseSummary));
+        when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(leaseSummary));
 
         assertThat(authorizationService.hasMediaAccess(OwnerModule.LEASE, leaseId, "READ")).isTrue();
         assertThat(authorizationService.hasMediaAccess(OwnerModule.LEASE, leaseId, "WRITE")).isFalse();
@@ -196,7 +196,7 @@ class MediaAuthorizationTest {
                 new java.math.BigDecimal("20000.00")
         );
 
-        when(financeFacade.getLeaseById(leaseId)).thenReturn(Optional.of(leaseSummary));
+        when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(leaseSummary));
         when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(strangerUserId, propertyId))
                 .thenReturn(Set.of());
 

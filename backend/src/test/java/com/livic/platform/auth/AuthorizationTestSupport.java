@@ -5,6 +5,8 @@ import com.livic.platform.auth.service.impl.ResourceScopeRegistry;
 import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.core.finance.facade.FinanceFacade;
 import com.livic.core.finance.security.FinanceResourceScopeResolver;
+import com.livic.verticals.rental.lease.facade.LeaseFacade;
+import com.livic.verticals.rental.lease.security.LeaseResourceScopeResolver;
 import com.livic.verticals.rental.inventory.facade.InventoryFacade;
 import com.livic.verticals.rental.inventory.security.InventoryResourceScopeResolver;
 import com.livic.core.property.facade.UnitFacade;
@@ -28,19 +30,22 @@ public final class AuthorizationTestSupport {
     public static AuthorizationServiceImpl authorizationService(MembershipCrudService membershipCrudService,
                                                                 UnitFacade unitFacade,
                                                                 FinanceFacade financeFacade,
+                                                                LeaseFacade leaseFacade,
                                                                 InventoryFacade inventoryFacade,
                                                                 StorageFacade storageFacade) {
         return new AuthorizationServiceImpl(membershipCrudService, resourceScopeRegistry(
-                unitFacade, financeFacade, inventoryFacade, storageFacade));
+                unitFacade, financeFacade, leaseFacade, inventoryFacade, storageFacade));
     }
 
     public static ResourceScopeRegistry resourceScopeRegistry(UnitFacade unitFacade,
                                                               FinanceFacade financeFacade,
+                                                              LeaseFacade leaseFacade,
                                                               InventoryFacade inventoryFacade,
                                                               StorageFacade storageFacade) {
         return new ResourceScopeRegistry(List.of(
                 new PropertyResourceScopeResolver(orMock(unitFacade, UnitFacade.class)),
                 new FinanceResourceScopeResolver(orMock(financeFacade, FinanceFacade.class)),
+                new LeaseResourceScopeResolver(orMock(leaseFacade, LeaseFacade.class)),
                 new InventoryResourceScopeResolver(orMock(inventoryFacade, InventoryFacade.class)),
                 new StorageResourceScopeResolver(orMock(storageFacade, StorageFacade.class))));
     }

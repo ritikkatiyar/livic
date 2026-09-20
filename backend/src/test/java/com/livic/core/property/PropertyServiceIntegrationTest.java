@@ -16,8 +16,8 @@ import com.livic.core.property.repository.UnitRepository;
 import com.livic.core.property.service.interfaces.PropertyService;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.user.repository.UserRepository;
-import com.livic.core.finance.domain.LeaseTbl;
-import com.livic.core.finance.repository.LeaseRepository;
+import com.livic.verticals.rental.lease.domain.LeaseTbl;
+import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.service.interfaces.MembershipService;
 

@@ -1,7 +1,6 @@
 package com.livic.core.finance.facade;
 
 import com.livic.core.finance.dto.ChargeConfigResponse;
-import com.livic.core.finance.dto.LeaseSummaryDTO;
 import com.livic.core.finance.dto.UnitBookingDTOs;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,25 +15,9 @@ import java.util.UUID;
 
 public interface FinanceFacade {
 
-    boolean isUnitOccupiedOnDate(UUID unitId, LocalDate date);
-
-    Optional<LeaseSummaryDTO> getActiveLeaseForUser(UUID userId);
-
-    List<LeaseSummaryDTO> getActiveLeasesByPropertyId(UUID propertyId);
-
-    List<LeaseSummaryDTO> getActiveLeasesByUnitId(UUID unitId);
-
-    Map<UUID, List<LeaseSummaryDTO>> getActiveLeasesByUnitIds(Collection<UUID> unitIds);
-
-    boolean hasLeasesForProperty(UUID propertyId);
-
-    boolean hasLeasesForUnit(UUID unitId);
-
-    Optional<LeaseSummaryDTO> getLeaseById(UUID leaseId);
-
     Optional<UUID> getPropertyIdByBillId(UUID billId);
 
-    /** The lease a rent cycle belongs to, so access to the cycle can follow access to the lease. */
+    /** The lease a bill's payer is on, for the rental vertical's own scope resolution. */
     Optional<UUID> getLeaseIdByBillId(UUID billId);
 
     ChargeConfigResponse getChargeConfigById(UUID chargeConfigId);

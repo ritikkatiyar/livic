@@ -9,8 +9,8 @@ import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.common.enums.ResourceType;
 import com.livic.core.finance.dto.ChargeConfigResponse;
-import com.livic.core.finance.dto.LeaseSummaryDTO;
-import com.livic.core.finance.facade.FinanceFacade;
+import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
+import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import com.livic.verticals.rental.inventory.facade.InventoryFacade;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
@@ -44,7 +44,10 @@ class AuthorizationServiceImplTest {
     private UnitFacade unitFacade;
 
     @Mock
-    private FinanceFacade financeFacade;
+    private LeaseFacade leaseFacade;
+
+    @Mock
+    private com.livic.core.finance.facade.FinanceFacade financeFacade;
 
     @Mock
     private InventoryFacade inventoryFacade;
@@ -59,7 +62,7 @@ class AuthorizationServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, unitFacade, financeFacade, inventoryFacade, storageFacade);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, unitFacade, financeFacade, leaseFacade, inventoryFacade, storageFacade);
         propertyId = UUID.randomUUID();
         userId = UUID.randomUUID();
     }
@@ -192,8 +195,8 @@ class AuthorizationServiceImplTest {
                 leaseBId, UUID.randomUUID(), "102", 1, propertyId, "Property A", tenantBUserId, "ACTIVE", null, null, null
         );
 
-        when(financeFacade.getLeaseById(leaseAId)).thenReturn(Optional.of(leaseA));
-        when(financeFacade.getLeaseById(leaseBId)).thenReturn(Optional.of(leaseB));
+        when(leaseFacade.getLeaseById(leaseAId)).thenReturn(Optional.of(leaseA));
+        when(leaseFacade.getLeaseById(leaseBId)).thenReturn(Optional.of(leaseB));
 
         // Tenant A accessing own lease -> Granted
         assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseAId, "LEASE_VIEW_OWN")).isTrue();
@@ -219,7 +222,7 @@ class AuthorizationServiceImplTest {
                 foreignPropertyId, "Other Property", UUID.randomUUID(), "ACTIVE", null, null, null);
 
         when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(foreignLeaseId));
-        when(financeFacade.getLeaseById(foreignLeaseId)).thenReturn(Optional.of(foreignLease));
+        when(leaseFacade.getLeaseById(foreignLeaseId)).thenReturn(Optional.of(foreignLease));
         when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, foreignPropertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, foreignPropertyId))
@@ -240,7 +243,7 @@ class AuthorizationServiceImplTest {
                 "Property A", userId, "ACTIVE", null, null, null);
 
         when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(leaseId));
-        when(financeFacade.getLeaseById(leaseId)).thenReturn(Optional.of(ownLease));
+        when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(ownLease));
         when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
@@ -263,7 +266,7 @@ class AuthorizationServiceImplTest {
                 "Property A", UUID.randomUUID(), "ACTIVE", null, null, null);
 
         when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(leaseId));
-        when(financeFacade.getLeaseById(leaseId)).thenReturn(Optional.of(othersLease));
+        when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(othersLease));
         when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
@@ -280,7 +283,7 @@ class AuthorizationServiceImplTest {
         LeaseSummaryDTO lease = new LeaseSummaryDTO(leaseId, UUID.randomUUID(), "101", 1, propertyId, "Property",
                 userId, "ACTIVE", null, null, null);
 
-        when(financeFacade.getLeaseById(leaseId)).thenReturn(Optional.of(lease));
+        when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(lease));
         when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
@@ -300,7 +303,7 @@ class AuthorizationServiceImplTest {
                 UUID.randomUUID(), "ACTIVE", null, null, null);
 
         when(inventoryFacade.getLeaseIdForAssignment(assignmentId)).thenReturn(Optional.of(leaseId));
-        when(financeFacade.getLeaseById(leaseId)).thenReturn(Optional.of(lease));
+        when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(lease));
         when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(true);
 

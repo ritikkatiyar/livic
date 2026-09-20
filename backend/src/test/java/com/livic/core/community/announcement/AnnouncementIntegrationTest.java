@@ -7,8 +7,8 @@ import com.livic.core.community.announcement.repository.AnnouncementReceiptRepos
 import com.livic.core.community.announcement.repository.AnnouncementRepository;
 import com.livic.core.community.announcement.service.interfaces.AnnouncementService;
 import com.livic.platform.common.domain.*;
-import com.livic.core.finance.domain.LeaseTbl;
-import com.livic.core.finance.repository.LeaseRepository;
+import com.livic.verticals.rental.lease.domain.LeaseTbl;
+import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.repository.PropertyRepository;

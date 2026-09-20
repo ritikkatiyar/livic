@@ -8,7 +8,7 @@ import com.livic.core.finance.domain.UnitBookingTbl;
 import com.livic.core.finance.dto.UnitBookingDTOs;
 import com.livic.core.finance.dto.UnitBookingDTOs.UnitBookingResponse;
 import com.livic.core.finance.mapper.UnitBookingMapper;
-import com.livic.core.finance.service.interfaces.LeaseQueryService;
+import com.livic.core.property.spi.UnitOccupancyProvider;
 import com.livic.core.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.core.finance.service.interfaces.UnitBookingService;
 import com.livic.platform.payment.dto.PaymentTransactionResponse;
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 public class UnitBookingServiceImpl implements UnitBookingService {
 
     private final UnitBookingCrudService unitBookingCrudService;
-    private final LeaseQueryService leaseQueryService;
+    private final UnitOccupancyProvider unitOccupancyProvider;
     private final UnitFacade unitFacade;
     private final PropertyFacade propertyFacade;
     private final PaymentFacade paymentFacade;
@@ -52,7 +52,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
     public UnitBookingDTOs.UnitBookingResponse createBooking(UnitBookingDTOs.CreateBookingRequest request) {
         log.info("Processing booking creation for unit: {}, tenant name: {}", request.unitId(), request.prospectiveTenantName());
 
-        boolean available = leaseQueryService.isUnitAvailableOnDate(request.unitId(), request.expectedMoveInDate());
+        boolean available = unitOccupancyProvider.isUnitAvailableOnDate(request.unitId(), request.expectedMoveInDate());
         if (!available) {
             throw new BusinessException(HttpStatus.CONFLICT, "No vacancy available in this unit on the requested date");
         }

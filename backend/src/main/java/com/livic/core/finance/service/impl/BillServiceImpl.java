@@ -7,7 +7,7 @@ import com.livic.platform.common.event.RentPublishedEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.core.finance.domain.ChargeConfigTbl;
-import com.livic.core.finance.domain.LeaseTbl;
+import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.domain.MeterReadingTbl;
 import com.livic.core.finance.domain.BillLineTbl;
 import com.livic.core.finance.domain.BillStatus;
@@ -16,8 +16,8 @@ import com.livic.core.finance.dto.BillDTOs;
 import com.livic.core.finance.mapper.BillMapper;
 import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
-import com.livic.core.finance.service.interfaces.LeaseCrudService;
-import com.livic.core.finance.service.interfaces.LeaseQueryService;
+import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
+import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
 import com.livic.core.finance.service.interfaces.BillLineCrudService;
 import com.livic.core.finance.service.interfaces.BillCrudService;
@@ -67,8 +67,6 @@ public class BillServiceImpl implements BillService {
 
     private final BillCrudService billCrudService;
     private final BillLineCrudService billLineCrudService;
-    private final LeaseQueryService leaseQueryService;
-    private final LeaseCrudService leaseCrudService;
     private final BillingWorksheetCrudService billingWorksheetCrudService;
     private final MeterReadingCrudService meterReadingCrudService;
     private final ChargeConfigCrudService chargeConfigCrudService;
@@ -78,101 +76,12 @@ public class BillServiceImpl implements BillService {
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
     private final PropertyFacade propertyFacade;
-    private final BillTransactionHelper transactionHelper;
-
-    @Override
-    @Transactional
-    public BillDTOs.BillResponse generate(BillDTOs.GenerateBillRequest request) {
-        LeaseTbl lease = leaseQueryService.getLeaseById(request.leaseId());
-        BillTbl cycle = transactionHelper.generateSingleInTransaction(lease, request.billingMonth(), request.dueDate(), null);
-        return buildSingleResponse(cycle);
-    }
-
-    @Override
-    public BillDTOs.BatchGenerateResult batchGenerate(BillDTOs.BatchGenerateBillRequest request) {
-        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(request.propertyId());
-        Map<UUID, String> unitNumbers = units.stream().collect(Collectors.toMap(UnitSummaryDTO::id, UnitSummaryDTO::unitNumber, (a, b) -> a));
-        List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
-        List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
-                leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
-
-        Map<UUID, Integer> roommateCounts = activeLeases.stream()
-                .collect(Collectors.groupingBy(LeaseTbl::getUnitId, Collectors.collectingAndThen(Collectors.toList(), List::size)));
-
-        List<BillingWorksheetEntryTbl> propertyWorksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(request.propertyId(), request.billingMonth());
-        List<ChargeConfigTbl> propertyActiveConfigs = chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(request.propertyId());
-
-        List<BillTbl> successes = new ArrayList<>();
-        List<BillDTOs.BatchGenerateFailure> failures = new ArrayList<>();
-
-        for (LeaseTbl lease : activeLeases) {
-            String unitNum = unitNumbers.get(lease.getUnitId());
-            try {
-                BillTbl cycle = transactionHelper.generateSingleInTransaction(
-                        lease,
-                        request.billingMonth(),
-                        request.dueDate(),
-                        roommateCounts,
-                        propertyWorksheets,
-                        propertyActiveConfigs,
-                        unitNumbers
-                );
-                successes.add(cycle);
-            } catch (Exception e) {
-                log.error("[BillServiceImpl] Failed to generate rent cycle for lease ID: {}, unit: {}", lease.getId(), unitNum, e);
-                failures.add(new BillDTOs.BatchGenerateFailure(lease.getId(), unitNum, e.getMessage()));
-            }
-        }
-
-        List<BillDTOs.BillResponse> succeededResponses = new ArrayList<>(toResponses(successes));
-        succeededResponses.sort(Comparator.comparing(BillDTOs.BillResponse::unitNumber)
-                .thenComparing(BillDTOs.BillResponse::tenantName));
-        return new BillDTOs.BatchGenerateResult(succeededResponses, failures);
-    }
 
     @Override
     @Transactional(readOnly = true)
-    public BillDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth) {
-        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
-        List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
-        List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
-                leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
-        int totalUnits = units.size();
-        int activeLeasesCount = activeLeases.size();
-
-        long meteredTypesCount = chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId).stream()
-                .filter(c -> c.getCalculationStrategy() == CalculationStrategyType.METERED)
-                .count();
-
-        int meterReadingsExpected = activeLeasesCount * (int) meteredTypesCount;
-        int meterReadingsEntered = 0;
-
-        try {
-            String[] parts = billingMonth.split("-");
-            int year = Integer.parseInt(parts[0]);
-            int month = Integer.parseInt(parts[1]);
-
-            List<MeterReadingTbl> propertyReadings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
-            Map<UUID, List<MeterReadingTbl>> readingsByUnit = propertyReadings.stream()
-                    .collect(Collectors.groupingBy(MeterReadingTbl::getUnitId));
-
-            for (LeaseTbl lease : activeLeases) {
-                List<MeterReadingTbl> readings = readingsByUnit.getOrDefault(lease.getUnitId(), List.of());
-                long enteredForLease = readings.stream().filter(r -> r.getCurrentReading() != null).count();
-                meterReadingsEntered += enteredForLease;
-            }
-        } catch (Exception e) {
-            log.warn("Failed to calculate meter readings for checklist", e);
-        }
-
-        boolean isReady = (meterReadingsEntered >= meterReadingsExpected) || activeLeasesCount == 0;
-        return new BillDTOs.PreFlightChecklistResponse(
-            totalUnits,
-            activeLeasesCount,
-            meterReadingsExpected,
-            meterReadingsEntered,
-            isReady
-        );
+    public BillDTOs.BillResponse getById(UUID id) {
+        return buildSingleResponse(billCrudService.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found")));
     }
 
     @Override
@@ -235,9 +144,11 @@ public class BillServiceImpl implements BillService {
 
         boolean isTenantView = false;
         if (currentUserId != null) {
-            Optional<LeaseTbl> tenantLeaseOpt = leaseQueryService.findByUserIdAndStatus(currentUserId, LeaseStatus.ACTIVE);
-            if (tenantLeaseOpt.isPresent()) {
-                leaseId = tenantLeaseOpt.get().getId();
+            Optional<UnitResidentDTO> tenancyOpt = unitMemberFacade.getActiveResidencesByUserId(currentUserId).stream()
+                    .filter(r -> r.role() == com.livic.core.property.domain.UnitMemberRole.TENANT)
+                    .findFirst();
+            if (tenancyOpt.isPresent()) {
+                leaseId = tenancyOpt.get().leaseId();
                 propertyId = null;
                 isTenantView = true;
             } else {
@@ -497,7 +408,7 @@ public class BillServiceImpl implements BillService {
         for (BillTbl cycle : propertyCycles) {
             String unitNum = (payerOf(cycle) != null) ? unitNumbers.get(payerUnitIdOf(cycle)) : null;
             try {
-                BillDTOs.BillResponse res = transactionHelper.publishSingleInTransaction(cycle.getId());
+                BillDTOs.BillResponse res = publish(cycle.getId());
                 succeeded.add(res);
             } catch (Exception e) {
                 log.error("[BillServiceImpl] Failed to publish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
@@ -554,7 +465,7 @@ public class BillServiceImpl implements BillService {
         for (BillTbl cycle : propertyCycles) {
             String unitNum = (payerOf(cycle) != null) ? unitNumbers.get(payerUnitIdOf(cycle)) : null;
             try {
-                BillDTOs.BillResponse res = transactionHelper.unpublishSingleInTransaction(cycle.getId());
+                BillDTOs.BillResponse res = unpublish(cycle.getId());
                 succeeded.add(res);
             } catch (Exception e) {
                 log.error("[BillServiceImpl] Failed to unpublish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);

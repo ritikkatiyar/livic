@@ -8,7 +8,7 @@ import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.core.finance.controller.InvoiceController;
 import com.livic.core.finance.controller.BillController;
-import com.livic.core.finance.controller.LeaseController;
+import com.livic.verticals.rental.lease.controller.LeaseController;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +40,7 @@ class LeaseAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, null, null, null);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, null, null, null, null);
         propertyId = UUID.randomUUID();
     }
 

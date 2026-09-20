@@ -6,8 +6,8 @@ import com.livic.verticals.rental.inventory.dto.InventoryStatsResponse;
 import com.livic.verticals.rental.inventory.dto.TenantVisibleInventoryResponse;
 import com.livic.verticals.rental.inventory.dto.UpdateInventoryItemRequest;
 import com.livic.platform.common.exception.BusinessException;
-import com.livic.core.finance.dto.LeaseSummaryDTO;
-import com.livic.core.finance.facade.FinanceFacade;
+import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
+import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import com.livic.verticals.rental.inventory.domain.InventoryItemTbl;
 import com.livic.verticals.rental.inventory.domain.enums.InventoryScope;
 import com.livic.verticals.rental.inventory.domain.enums.InventoryStatus;
@@ -44,7 +44,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     private final InventoryItemRepository inventoryItemRepository;
     private final StorageFacade storageFacade;
     private final PropertyFacade propertyFacade;
-    private final FinanceFacade financeFacade;
+    private final LeaseFacade leaseFacade;
 
     @Override
     @Transactional
@@ -179,7 +179,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     @Override
     @Transactional(readOnly = true)
     public TenantVisibleInventoryResponse getTenantVisibleItems(UUID userId, UUID propertyId) {
-        Optional<LeaseSummaryDTO> activeLeaseOpt = financeFacade.getActiveLeaseForUser(userId);
+        Optional<LeaseSummaryDTO> activeLeaseOpt = leaseFacade.getActiveLeaseForUser(userId);
         if (activeLeaseOpt.isEmpty()) {
             return new TenantVisibleInventoryResponse(List.of(), List.of());
         }

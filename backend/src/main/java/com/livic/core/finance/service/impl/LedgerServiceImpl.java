@@ -1,7 +1,7 @@
 package com.livic.core.finance.service.impl;
 
 import com.livic.core.finance.domain.FinanceLedgerTbl;
-import com.livic.core.finance.domain.LeaseTbl;
+import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.dto.LedgerDTOs.LedgerEntryResponse;
 import com.livic.core.finance.service.interfaces.FinanceLedgerCrudService;
 import com.livic.core.finance.specification.FinanceLedgerSpecifications;

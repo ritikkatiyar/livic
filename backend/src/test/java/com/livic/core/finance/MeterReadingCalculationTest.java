@@ -9,14 +9,14 @@ import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.platform.common.domain.UnitType;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.core.finance.domain.ChargeConfigTbl;
-import com.livic.core.finance.domain.LeaseTbl;
+import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.domain.MeterReadingTbl;
 import com.livic.core.finance.dto.MeterReadingDTOs.MeterReadingRequest;
 import com.livic.core.finance.dto.MeterReadingDTOs.MeterReadingResponse;
 import com.livic.core.finance.dto.MeterReadingDTOs.UnitReading;
 import com.livic.core.finance.service.impl.MeterReadingServiceImpl;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
-import com.livic.core.finance.service.interfaces.LeaseQueryService;
+import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
 import com.livic.core.finance.strategy.CalculationResult;
 import com.livic.core.finance.strategy.MeteredCalculation;
@@ -53,7 +53,7 @@ class MeterReadingCalculationTest {
     @Mock
     private MeterReadingCrudService meterReadingCrudService;
     @Mock
-    private LeaseQueryService leaseQueryService;
+    private com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
     @Mock
     private ChargeConfigCrudService chargeConfigCrudService;
     @Mock
@@ -122,7 +122,11 @@ class MeterReadingCalculationTest {
                 .build();
         activeLease.setId(leaseId);
 
-        when(leaseQueryService.findActiveLeasesByProperty(propertyId)).thenReturn(List.of(activeLease));
+        when(unitMemberFacade.getActiveMembersByPropertyId(propertyId)).thenReturn(List.of(
+                new com.livic.core.property.dto.UnitMemberSummaryDTO(
+                        UUID.randomUUID(), unitId, userId,
+                        com.livic.core.property.domain.UnitMemberRole.TENANT, true, leaseId,
+                        LocalDate.of(2026, 1, 1), null, true)));
         when(userFacade.getUsersByIds(Set.of(userId))).thenReturn(Map.of(userId, userSummary));
 
         // Month 8 (August 2026) has no existing readings
@@ -194,7 +198,11 @@ class MeterReadingCalculationTest {
                 .build();
         activeLease.setId(leaseId);
 
-        when(leaseQueryService.findActiveLeasesByProperty(propertyId)).thenReturn(List.of(activeLease));
+        when(unitMemberFacade.getActiveMembersByPropertyId(propertyId)).thenReturn(List.of(
+                new com.livic.core.property.dto.UnitMemberSummaryDTO(
+                        UUID.randomUUID(), unitId, userId,
+                        com.livic.core.property.domain.UnitMemberRole.TENANT, true, leaseId,
+                        LocalDate.of(2026, 1, 1), null, true)));
         when(userFacade.getUsersByIds(Set.of(userId))).thenReturn(Map.of(userId, userSummary));
 
         // Month 9 (September 2026) has no readings yet

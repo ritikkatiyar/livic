@@ -3,8 +3,8 @@ package com.livic.verticals.rental.inventory;
 import com.livic.verticals.rental.inventory.dto.CreateInventoryItemRequest;
 import com.livic.verticals.rental.inventory.dto.InventoryItemResponse;
 import com.livic.verticals.rental.inventory.dto.TenantVisibleInventoryResponse;
-import com.livic.core.finance.dto.LeaseSummaryDTO;
-import com.livic.core.finance.facade.FinanceFacade;
+import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
+import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import com.livic.verticals.rental.inventory.domain.InventoryItemTbl;
 import com.livic.verticals.rental.inventory.domain.enums.InventoryCategory;
 import com.livic.verticals.rental.inventory.domain.enums.InventoryCondition;
@@ -49,7 +49,7 @@ class InventoryItemServiceTest {
     private PropertyFacade propertyFacade;
 
     @Mock
-    private FinanceFacade financeFacade;
+    private LeaseFacade leaseFacade;
 
     @InjectMocks
     private InventoryItemServiceImpl itemService;
@@ -114,7 +114,7 @@ class InventoryItemServiceTest {
                 LocalDate.now().plusMonths(11),
                 BigDecimal.valueOf(25000)
         );
-        when(financeFacade.getActiveLeaseForUser(userId)).thenReturn(Optional.of(lease));
+        when(leaseFacade.getActiveLeaseForUser(userId)).thenReturn(Optional.of(lease));
 
         InventoryItemTbl sharedItem = InventoryItemTbl.builder()
                 .id(UUID.randomUUID())

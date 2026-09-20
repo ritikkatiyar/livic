@@ -29,24 +29,6 @@ public class BillController {
 
     private final BillService billService;
 
-    @PostMapping("/generate")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #request.leaseId, 'LEASE_UPDATE')")
-    public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> generate(
-            @Valid @RequestBody BillDTOs.GenerateBillRequest request
-    ) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(billService.generate(request)));
-    }
-
-    @PostMapping("/batch-generate")
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'RENT_ROLL_MANAGE')")
-    public ResponseEntity<ApiResponse<BillDTOs.BatchGenerateResult>> batchGenerate(
-            @Valid @RequestBody BillDTOs.BatchGenerateBillRequest request
-    ) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(billService.batchGenerate(request)));
-    }
-
     @PostMapping("/{id}/publish")
     @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'RENT_ROLL_MANAGE')")
     public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> publish(
@@ -77,15 +59,6 @@ public class BillController {
             @Valid @RequestBody BillDTOs.BillPropertyBillingMonthRequest request
     ) {
         return ResponseEntity.ok(ApiResponse.success(billService.batchUnpublish(request.propertyId(), request.billingMonth())));
-    }
-
-    @GetMapping({"/pre-flight", "/preflight"})
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'RENT_ROLL_VIEW')")
-    public ResponseEntity<ApiResponse<BillDTOs.PreFlightChecklistResponse>> getPreFlightChecklist(
-            @RequestParam UUID propertyId,
-            @RequestParam String billingMonth
-    ) {
-        return ResponseEntity.ok(ApiResponse.success(billService.getPreFlightChecklist(propertyId, billingMonth)));
     }
 
     @GetMapping

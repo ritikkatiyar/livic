@@ -9,12 +9,9 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface BillService {
-    BillDTOs.BillResponse generate(BillDTOs.GenerateBillRequest request);
 
-    BillDTOs.BatchGenerateResult batchGenerate(BillDTOs.BatchGenerateBillRequest request);
-
-    BillDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth);
-
+    /** One bill with its payer, unit and lines — how rental renders what it generated. */
+    BillDTOs.BillResponse getById(UUID id);
     BillDTOs.BillListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, BillStatus status, String search, Pageable pageable);
 
     BillDTOs.BillResponse markPaid(UUID id);

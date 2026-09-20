@@ -4,6 +4,8 @@ import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.UnitDTOs;
+import com.livic.core.property.domain.BlockTbl;
+import com.livic.core.property.service.interfaces.BlockService;
 import com.livic.core.property.service.interfaces.UnitCrudService;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
 import com.livic.core.property.service.interfaces.UnitQueryService;
@@ -26,6 +28,7 @@ public class UnitQueryServiceImpl implements UnitQueryService {
 
     private final UnitCrudService unitCrudService;
     private final PropertyQueryService propertyQueryService;
+    private final BlockService blockService;
 
     @Override
     public UnitTbl getUnitById(UUID id) {
@@ -34,19 +37,21 @@ public class UnitQueryServiceImpl implements UnitQueryService {
     }
 
     @Override
-    public List<UnitDTOs.FloorSummaryResponse> getFloorSummaries(UUID propertyId, Integer throughFloor) {
-        PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
-        
-        int maxFromUnits = unitCrudService.findMaxFloorByPropertyId(propertyId);
-        int propertyTotalFloors = property.getTotalFloors() != null ? property.getTotalFloors() : 0;
+    public List<UnitDTOs.FloorSummaryResponse> getFloorSummaries(UUID propertyId, UUID blockId, Integer throughFloor) {
+        // Scoped to one block: grouping by floor across the whole property would merge
+        // Building A's first floor with Building B's.
+        BlockTbl block = blockService.resolveBlock(propertyId, blockId);
+
+        int maxFromUnits = unitCrudService.findMaxFloorByBlockId(block.getId());
+        int blockTotalFloors = block.getTotalFloors() != null ? block.getTotalFloors() : 0;
         int requestedTop = throughFloor != null ? throughFloor : 0;
         
-        int topFloor = Math.max(Math.max(requestedTop, maxFromUnits), propertyTotalFloors);
+        int topFloor = Math.max(Math.max(requestedTop, maxFromUnits), blockTotalFloors);
         if (topFloor < 1) {
             topFloor = 1;
         }
 
-        Map<Integer, Long> countsByFloor = unitCrudService.findByPropertyId(propertyId).stream()
+        Map<Integer, Long> countsByFloor = unitCrudService.findByBlockId(block.getId()).stream()
                 .collect(Collectors.groupingBy(UnitTbl::getFloor, Collectors.counting()));
 
         List<UnitDTOs.FloorSummaryResponse> rows = new ArrayList<>();
@@ -64,11 +69,9 @@ public class UnitQueryServiceImpl implements UnitQueryService {
     }
 
     @Override
-    public List<UnitTbl> getUnitsByFloor(UUID propertyId, int floorNumber) {
-        if (!propertyQueryService.existsById(propertyId)) {
-            throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
-        }
-        return unitCrudService.findByPropertyIdAndFloor(propertyId, floorNumber);
+    public List<UnitTbl> getUnitsByFloor(UUID propertyId, UUID blockId, int floorNumber) {
+        BlockTbl block = blockService.resolveBlock(propertyId, blockId);
+        return unitCrudService.findByBlockIdAndFloor(block.getId(), floorNumber);
     }
 
     @Override

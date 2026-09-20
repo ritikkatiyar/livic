@@ -61,7 +61,7 @@ public class MarketplaceLeadServiceIntegrationTest {
                 .name("Green Park Residency")
                 .address("500 Green Avenue")
                 .city("Hyderabad")
-                .totalFloors(4)
+                
                 .propertyType(PropertyType.RENTAL)
                 .isActive(true)
                 .isPubliclyListed(true)

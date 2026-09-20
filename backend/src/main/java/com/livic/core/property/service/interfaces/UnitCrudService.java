@@ -14,6 +14,12 @@ public interface UnitCrudService extends CrudService<UnitTbl, UUID> {
     List<UnitTbl> findByPropertyIdIn(Collection<UUID> propertyIds);
     boolean existsByPropertyIdAndUnitNumber(UUID propertyId, String unitNumber);
     List<UnitTbl> findByPropertyIdAndFloor(UUID propertyId, Integer floor);
+
+    List<UnitTbl> findByBlockId(UUID blockId);
+
+    List<UnitTbl> findByBlockIdAndFloor(UUID blockId, Integer floor);
+
+    int findMaxFloorByBlockId(UUID blockId);
     int findMaxFloorByPropertyId(UUID propertyId);
     long countByPropertyIdIn(List<UUID> propertyIds);
     void deleteByPropertyId(UUID propertyId);

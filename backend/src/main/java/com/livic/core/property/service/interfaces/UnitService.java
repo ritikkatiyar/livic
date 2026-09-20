@@ -10,6 +10,6 @@ import java.util.UUID;
 
 public interface UnitService {
     List<UnitTbl> saveAll(List<UnitTbl> units);
-    List<UnitTbl> saveFloorLayout(UUID propertyId, int floorNumber, List<UnitDTOs.FloorLayoutUnitRequest> items);
+    List<UnitTbl> saveFloorLayout(UUID propertyId, UUID blockId, int floorNumber, List<UnitDTOs.FloorLayoutUnitRequest> items);
     List<UnitTbl> generateBatchUnits(UUID propertyId, PropertyDTOs.BatchUnitRequest request);
 }

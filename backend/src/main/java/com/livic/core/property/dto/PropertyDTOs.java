@@ -76,6 +76,9 @@ public class PropertyDTOs {
                         @Min(value = 1, message = "Must have at least 1 occupant capacity")
             int capacity,
 
-                        @NotNull(message = "Unit type is required") UnitType unitType
+                        @NotNull(message = "Unit type is required") UnitType unitType,
+
+                        /** Null means the property's default block, so older clients keep working. */
+                        java.util.UUID blockId
     ) {}
 }

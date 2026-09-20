@@ -60,7 +60,7 @@ class UnitMemberLeaseSyncIntegrationTest {
         tenant = userRepository.save(user("tenant", UserRole.USER));
 
         PropertyTbl property = propertyRepository.save(PropertyTbl.builder()
-                .name("Member Sync Property").address("4 Test St").city("Test City").totalFloors(1).build());
+                .name("Member Sync Property").address("4 Test St").city("Test City").build());
         BlockTbl block = blockService.getOrCreateDefaultBlock(property);
 
         unit = unitRepository.save(UnitTbl.builder()

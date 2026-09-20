@@ -18,7 +18,6 @@ public final class PropertyMapper {
                 .address(request.address())
                 .city(request.city())
                 .landmark(request.landmark())
-                .totalFloors(request.totalFloors())
                 .amenities(am)
                 .autoBillDayOfMonth(request.autoBillDayOfMonth())
                 .build();
@@ -29,7 +28,6 @@ public final class PropertyMapper {
         property.setAddress(request.address());
         property.setCity(request.city());
         property.setLandmark(request.landmark());
-        property.setTotalFloors(request.totalFloors());
         if (request.autoBillDayOfMonth() != null) {
             property.setAutoBillDayOfMonth(request.autoBillDayOfMonth());
         }
@@ -40,6 +38,15 @@ public final class PropertyMapper {
     }
 
     public static PropertyDTOs.PropertyResponse toResponse(PropertyTbl property) {
+        return toResponse(property, null);
+    }
+
+    /**
+     * {@code totalFloors} is derived from the property's blocks, not stored on the property:
+     * two towers on one plot can differ in height. Clients that have not learned about blocks
+     * still get the tallest one here.
+     */
+    public static PropertyDTOs.PropertyResponse toResponse(PropertyTbl property, Integer totalFloors) {
         if (property == null) {
             return null;
         }
@@ -49,7 +56,7 @@ public final class PropertyMapper {
                 property.getAddress(),
                 property.getCity(),
                 property.getLandmark(),
-                property.getTotalFloors(),
+                totalFloors,
                 null,
                 property.isActive(),
                 property.getAmenities() != null ? property.getAmenities() : List.of(),

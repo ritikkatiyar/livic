@@ -31,8 +31,9 @@ public class UnitController {
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<List<UnitDTOs.FloorSummaryResponse>>> listFloorsForConfiguration(
             @PathVariable UUID propertyId,
+            @RequestParam(required = false) UUID blockId,
             @RequestParam(required = false) Integer throughFloor) {
-        List<UnitDTOs.FloorSummaryResponse> rows = unitQueryService.getFloorSummaries(propertyId, throughFloor);
+        List<UnitDTOs.FloorSummaryResponse> rows = unitQueryService.getFloorSummaries(propertyId, blockId, throughFloor);
         return ResponseEntity.ok(ApiResponse.success(rows));
     }
 
@@ -40,8 +41,9 @@ public class UnitController {
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<List<UnitDTOs.UnitResponse>>> getFloorLayout(
             @PathVariable UUID propertyId,
-            @PathVariable int floorNumber) {
-        List<UnitDTOs.UnitResponse> layout = unitLayoutOrchestrationService.getFloorLayout(propertyId, floorNumber);
+            @PathVariable int floorNumber,
+            @RequestParam(required = false) UUID blockId) {
+        List<UnitDTOs.UnitResponse> layout = unitLayoutOrchestrationService.getFloorLayout(propertyId, blockId, floorNumber);
         return ResponseEntity.ok(ApiResponse.success(layout));
     }
 
@@ -58,8 +60,9 @@ public class UnitController {
     public ResponseEntity<ApiResponse<List<UnitDTOs.UnitResponse>>> saveFloorLayout(
             @PathVariable UUID propertyId,
             @PathVariable int floorNumber,
+            @RequestParam(required = false) UUID blockId,
             @Valid @RequestBody List<UnitDTOs.FloorLayoutUnitRequest> items) {
-        List<UnitDTOs.UnitResponse> saved = unitLayoutOrchestrationService.saveFloorLayout(propertyId, floorNumber, items);
+        List<UnitDTOs.UnitResponse> saved = unitLayoutOrchestrationService.saveFloorLayout(propertyId, blockId, floorNumber, items);
         return ResponseEntity.ok(ApiResponse.success(saved));
     }
 
@@ -69,7 +72,7 @@ public class UnitController {
             @PathVariable UUID propertyId,
             @Valid @RequestBody PropertyDTOs.BatchUnitRequest request) {
         List<UnitTbl> units = unitService.generateBatchUnits(propertyId, request);
-        return ResponseEntity.ok(ApiResponse.success(unitLayoutOrchestrationService.getFloorLayout(propertyId, request.startingFloorNumber())));
+        return ResponseEntity.ok(ApiResponse.success(unitLayoutOrchestrationService.getFloorLayout(propertyId, request.blockId(), request.startingFloorNumber())));
     }
 
     @GetMapping("/units/vacating")

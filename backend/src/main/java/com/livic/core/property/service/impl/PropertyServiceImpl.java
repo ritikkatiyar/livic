@@ -1,5 +1,6 @@
 package com.livic.core.property.service.impl;
 
+import com.livic.core.property.domain.BlockTbl;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.dto.PropertyDTOs;
 import com.livic.core.property.service.interfaces.BlockService;
@@ -33,6 +34,7 @@ public class PropertyServiceImpl implements PropertyService {
     private final AuthFacade authFacade;
     private final UnitCrudService unitCrudService;
     private final BlockService blockService;
+    private final com.livic.core.property.repository.BlockRepository blockRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final UnitOccupancyProvider unitOccupancyProvider;
 
@@ -43,7 +45,13 @@ public class PropertyServiceImpl implements PropertyService {
 
         PropertyTbl property = PropertyMapper.toEntity(request);
         PropertyTbl savedProperty = propertyCrudService.save(property);
-        blockService.getOrCreateDefaultBlock(savedProperty);
+        // Create still takes totalFloors, which now belongs to the building rather than the
+        // plot, so it lands on the default block.
+        BlockTbl defaultBlock = blockService.getOrCreateDefaultBlock(savedProperty);
+        if (request.totalFloors() != null) {
+            defaultBlock.setTotalFloors(request.totalFloors());
+            blockRepository.save(defaultBlock);
+        }
 
         // Assign OWNER role using AuthFacade
         authFacade.createOwnerMembership(savedProperty.getId(), creatorId);
@@ -57,6 +65,11 @@ public class PropertyServiceImpl implements PropertyService {
         PropertyTbl property = propertyCrudService.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
         PropertyMapper.updateEntity(request, property);
+        if (request.totalFloors() != null) {
+            BlockTbl defaultBlock = blockService.getOrCreateDefaultBlock(property);
+            defaultBlock.setTotalFloors(request.totalFloors());
+            blockRepository.save(defaultBlock);
+        }
         return propertyCrudService.save(property);
     }
 
@@ -84,4 +97,5 @@ public class PropertyServiceImpl implements PropertyService {
         property.setActive(active);
         return propertyCrudService.save(property);
     }
+
 }

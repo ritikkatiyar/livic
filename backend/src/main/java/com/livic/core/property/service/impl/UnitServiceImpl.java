@@ -48,6 +48,7 @@ public class UnitServiceImpl implements UnitService {
     @Override
     public List<UnitTbl> saveFloorLayout(
             UUID propertyId,
+            UUID blockId,
             int floorNumber,
             List<UnitDTOs.FloorLayoutUnitRequest> items
     ) {
@@ -55,6 +56,7 @@ public class UnitServiceImpl implements UnitService {
             throw new BusinessException("Floor number must be at least 1");
         }
         PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
+        BlockTbl block = blockService.resolveBlock(propertyId, blockId);
 
         Set<String> seenNumbers = new HashSet<>();
         for (UnitDTOs.FloorLayoutUnitRequest item : items) {
@@ -63,7 +65,7 @@ public class UnitServiceImpl implements UnitService {
             }
         }
 
-        List<UnitTbl> onFloor = unitCrudService.findByPropertyIdAndFloor(propertyId, floorNumber);
+        List<UnitTbl> onFloor = unitCrudService.findByBlockIdAndFloor(block.getId(), floorNumber);
         Set<String> incomingNumbers = items.stream()
                 .map(UnitDTOs.FloorLayoutUnitRequest::unitNumber)
                 .collect(Collectors.toSet());
@@ -83,11 +85,13 @@ public class UnitServiceImpl implements UnitService {
         unitCrudService.deleteAll(toRemove);
 
         // Optimized: bulk cache unit numbers to avoid exists queries inside loops
-        Set<String> allExistingUnitNumbers = unitCrudService.findByPropertyId(propertyId).stream()
+        // Unit numbers are unique per block, not per property: Building A and Building B
+        // both having a 101 is the point of blocks.
+        Set<String> allExistingUnitNumbers = unitCrudService.findByBlockId(block.getId()).stream()
                 .map(UnitTbl::getUnitNumber)
                 .collect(Collectors.toSet());
 
-        Map<String, UnitTbl> existingOnFloorByNumber = unitCrudService.findByPropertyIdAndFloor(propertyId, floorNumber)
+        Map<String, UnitTbl> existingOnFloorByNumber = unitCrudService.findByBlockIdAndFloor(block.getId(), floorNumber)
                 .stream()
                 .collect(Collectors.toMap(UnitTbl::getUnitNumber, u -> u, (a, b) -> a));
 
@@ -101,10 +105,10 @@ public class UnitServiceImpl implements UnitService {
                 // Optimized: check in-memory cached Set instead of querying database in loop
                 if (allExistingUnitNumbers.contains(item.unitNumber())) {
                     throw new BusinessException(
-                            "Unit number \"" + item.unitNumber() + "\" already exists on another floor for this property"
+                            "Unit number \"" + item.unitNumber() + "\" already exists on another floor of this block"
                     );
                 }
-                UnitTbl created = UnitMapper.toEntity(item, property, blockService.getOrCreateDefaultBlock(property), floorNumber);
+                UnitTbl created = UnitMapper.toEntity(item, property, block, floorNumber);
                 toSave.add(created);
             }
         }
@@ -115,10 +119,14 @@ public class UnitServiceImpl implements UnitService {
     @Override
     public List<UnitTbl> generateBatchUnits(UUID propertyId, PropertyDTOs.BatchUnitRequest request) {
         PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
-        if (request.totalFloors() > 1 || (property.getTotalFloors() != null && request.totalFloors() == property.getTotalFloors() && request.startingFloorNumber() == 1)) {
-            boolean hasExistingUnits = !unitCrudService.findByPropertyId(propertyId).isEmpty();
+        BlockTbl block = blockService.resolveBlock(propertyId, request.blockId());
+        Integer blockFloors = block.getTotalFloors();
+        if (request.totalFloors() > 1 || (blockFloors != null && request.totalFloors() == blockFloors && request.startingFloorNumber() == 1)) {
+            // Scoped to the block: filling Building B wholesale must not be refused because
+            // Building A already has floors.
+            boolean hasExistingUnits = !unitCrudService.findByBlockId(block.getId()).isEmpty();
             if (hasExistingUnits) {
-                throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot configure units globally because this property already has configured floors.");
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot configure units globally because this block already has configured floors.");
             }
         }
         List<UnitTbl> generatedUnits = new ArrayList<>();
@@ -166,7 +174,7 @@ public class UnitServiceImpl implements UnitService {
                     String prefix = request.prefix() != null ? request.prefix() : "";
                     String unitNumber = prefix + currentFloor + String.format("%02d", unitGlobalIndex);
 
-                    UnitTbl unit = UnitMapper.toEntity(request, property, blockService.getOrCreateDefaultBlock(property), currentFloor, currentX, currentY, unitWidth, rowHeight, unitNumber);
+                    UnitTbl unit = UnitMapper.toEntity(request, property, block, currentFloor, currentX, currentY, unitWidth, rowHeight, unitNumber);
 
                     generatedUnits.add(unit);
                     currentX += unitWidth;

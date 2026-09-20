@@ -63,7 +63,6 @@ class UnitLimitEnforcementIntegrationTest {
                 .name("Free Property")
                 .address("1 Test St")
                 .city("Test City")
-                .totalFloors(1)
                 .build());
         membershipService.createOwnerMembership(property.getId(), landlord.getId());
 
@@ -94,10 +93,10 @@ class UnitLimitEnforcementIntegrationTest {
 
     @Test
     void floorLayoutCannotAddUnitsBeyondThePlanLimit() {
-        unitController.saveFloorLayout(property.getId(), 1, layout(STARTER_MAX_UNITS));
+        unitController.saveFloorLayout(property.getId(), 1, null, layout(STARTER_MAX_UNITS));
 
         BusinessException denied = assertThrows(BusinessException.class,
-                () -> unitController.saveFloorLayout(property.getId(), 1, layout(STARTER_MAX_UNITS + 1)));
+                () -> unitController.saveFloorLayout(property.getId(), 1, null, layout(STARTER_MAX_UNITS + 1)));
 
         assertEquals(HttpStatus.FORBIDDEN, denied.getStatus());
         assertEquals(STARTER_MAX_UNITS, unitCount());
@@ -105,10 +104,10 @@ class UnitLimitEnforcementIntegrationTest {
 
     @Test
     void floorLayoutEditsWithoutNewUnitsAreAllowedAtTheLimit() {
-        unitController.saveFloorLayout(property.getId(), 1, layout(STARTER_MAX_UNITS));
+        unitController.saveFloorLayout(property.getId(), 1, null, layout(STARTER_MAX_UNITS));
 
         // Same unit numbers, so nothing new is created
-        assertDoesNotThrow(() -> unitController.saveFloorLayout(property.getId(), 1, layout(STARTER_MAX_UNITS)));
+        assertDoesNotThrow(() -> unitController.saveFloorLayout(property.getId(), 1, null, layout(STARTER_MAX_UNITS)));
         assertEquals(STARTER_MAX_UNITS, unitCount());
     }
 
@@ -119,7 +118,7 @@ class UnitLimitEnforcementIntegrationTest {
     }
 
     private static BatchUnitRequest batch(int units) {
-        return new BatchUnitRequest(1, units, 1, "A", 1, UnitType.STUDIO);
+        return new BatchUnitRequest(1, units, 1, "A", 1, UnitType.STUDIO, null);
     }
 
     private static List<FloorLayoutUnitRequest> layout(int units) {

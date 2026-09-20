@@ -168,13 +168,13 @@ BEGIN
         (UUID(), curr_caretaker_id, 'RENTAL', TRUE);
         
         -- Insert Property
-        INSERT INTO property_tbl (id, name, city, address, total_floors, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
-        VALUES (prop_id, CONCAT('mom\'s pg ', b), 'New York', CONCAT('Address Building ', b), 5, TRUE, TRUE, 1, '09:00:00');
+        INSERT INTO property_tbl (id, name, city, address, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
+        VALUES (prop_id, CONCAT('mom\'s pg ', b), 'New York', CONCAT('Address Building ', b), TRUE, TRUE, 1, '09:00:00');
         
         -- Default block: rental properties keep one the apps never show
         SET curr_block_id = UUID();
-        INSERT INTO block_tbl (id, property_id, name, sort_order, is_default)
-        VALUES (curr_block_id, prop_id, 'Main', 0, TRUE);
+        INSERT INTO block_tbl (id, property_id, name, sort_order, is_default, total_floors)
+        VALUES (curr_block_id, prop_id, 'Main', 0, TRUE, 5);
         
         -- Map Owner, Manager, Caretaker to this specific Building
         INSERT INTO membership_tbl (id, user_id, property_id, title, access_type, is_active) VALUES
@@ -285,13 +285,13 @@ BEGIN
     (UUID(), caretaker_id, 'RENTAL', TRUE);
     
     -- 3. Insert Property (5 floors)
-    INSERT INTO property_tbl (id, name, city, address, total_floors, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
-    VALUES (prop_id, 'Livic Residency', 'Bangalore', '100 Feet Road, Indiranagar', 5, TRUE, TRUE, 1, '09:00:00');
+    INSERT INTO property_tbl (id, name, city, address, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
+    VALUES (prop_id, 'Livic Residency', 'Bangalore', '100 Feet Road, Indiranagar', TRUE, TRUE, 1, '09:00:00');
     
     -- Default block
     SET curr_block_id = UUID();
-    INSERT INTO block_tbl (id, property_id, name, sort_order, is_default)
-    VALUES (curr_block_id, prop_id, 'Main', 0, TRUE);
+    INSERT INTO block_tbl (id, property_id, name, sort_order, is_default, total_floors)
+    VALUES (curr_block_id, prop_id, 'Main', 0, TRUE, 5);
     
     -- 4. Map Owner (FULL_ACCESS) and Caretaker (CUSTOM_ACCESS) to this Property
     INSERT INTO membership_tbl (id, user_id, property_id, title, access_type, is_active) VALUES

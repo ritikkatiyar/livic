@@ -33,8 +33,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Units live in a block. Rental and residential properties keep one hidden default block;
- * societies will name their towers, which is what lets A-101 and B-101 co-exist.
+ * Units live in a block. Every property gets one automatically, so a single-building landlord
+ * never meets the concept; any property type may add more, which is what lets A-101 and B-101
+ * co-exist and keeps two buildings on one plot under one set of staff and charge configs.
  */
 @SpringBootTest
 @ActiveProfiles("dev")
@@ -43,9 +44,11 @@ class BlockProvisioningIntegrationTest {
 
     @Autowired private PropertyService propertyService;
     @Autowired private UnitService unitService;
+    @Autowired private com.livic.core.property.service.interfaces.UnitQueryService unitQueryService;
     @Autowired private UserRepository userRepository;
     @Autowired private PropertyRepository propertyRepository;
     @Autowired private BlockRepository blockRepository;
+    @Autowired private com.livic.core.property.service.interfaces.BlockService blockService;
     @Autowired private UnitRepository unitRepository;
 
     @AfterEach
@@ -83,7 +86,7 @@ class BlockProvisioningIntegrationTest {
     void newPropertyGetsADefaultBlock() {
         PropertyTbl property = createProperty("Default Block Property");
 
-        List<BlockTbl> blocks = blockRepository.findByPropertyIdOrderBySortOrderAsc(property.getId());
+        List<BlockTbl> blocks = blockRepository.findByPropertyIdOrderBySortOrderAscNameAsc(property.getId());
 
         assertThat(blocks).hasSize(1);
         assertThat(blocks.get(0).isDefault()).isTrue();
@@ -95,7 +98,7 @@ class BlockProvisioningIntegrationTest {
     void unitsLandInTheDefaultBlock() {
         PropertyTbl property = createProperty("Layout Property");
 
-        unitService.saveFloorLayout(property.getId(), 1, List.of(layoutUnit("101", 0), layoutUnit("102", 1)));
+        unitService.saveFloorLayout(property.getId(), null, 1, List.of(layoutUnit("101", 0), layoutUnit("102", 1)));
 
         BlockTbl defaultBlock = blockRepository.findFirstByPropertyIdAndIsDefaultTrue(property.getId()).orElseThrow();
         List<UnitTbl> units = unitRepository.findByPropertyId(property.getId());
@@ -110,9 +113,9 @@ class BlockProvisioningIntegrationTest {
     void legacyPropertyGetsABlockLazily() {
         authenticatedOwner();
         PropertyTbl property = propertyRepository.save(PropertyTbl.builder()
-                .name("Legacy Property").address("2 Test St").city("Test City").totalFloors(1).build());
+                .name("Legacy Property").address("2 Test St").city("Test City").build());
 
-        unitService.saveFloorLayout(property.getId(), 1, List.of(layoutUnit("201", 0)));
+        unitService.saveFloorLayout(property.getId(), null, 1, List.of(layoutUnit("201", 0)));
 
         assertThat(blockRepository.findFirstByPropertyIdAndIsDefaultTrue(property.getId())).isPresent();
         assertThat(unitRepository.findByPropertyId(property.getId()).get(0).getBlock()).isNotNull();
@@ -141,11 +144,11 @@ class BlockProvisioningIntegrationTest {
         UserTbl owner = authenticatedOwner();
         PropertyTbl property = propertyService.createProperty(new PropertyDTOs.CreatePropertyRequest(
                 "Disposable Property", "3 Test St", "Test City", null, 1, List.of(), null), owner.getId());
-        unitService.saveFloorLayout(property.getId(), 1, List.of(layoutUnit("301", 0)));
+        unitService.saveFloorLayout(property.getId(), null, 1, List.of(layoutUnit("301", 0)));
 
         propertyService.deleteProperty(property.getId());
 
-        assertThat(blockRepository.findByPropertyIdOrderBySortOrderAsc(property.getId())).isEmpty();
+        assertThat(blockRepository.findByPropertyIdOrderBySortOrderAscNameAsc(property.getId())).isEmpty();
         assertThat(unitRepository.findByPropertyId(property.getId())).isEmpty();
     }
 
@@ -161,4 +164,75 @@ class BlockProvisioningIntegrationTest {
                 .type(UnitType.SINGLE_UNIT)
                 .build();
     }
+
+    @Test
+    @DisplayName("A rental property can hold a second block, and the same unit number in both")
+    void aRentalCanHaveASecondBlock() {
+        PropertyTbl property = createProperty("Two Building Rental");
+
+        var buildingB = blockService.create(property.getId(),
+                new com.livic.core.property.dto.BlockDTOs.CreateBlockRequest("Building B", 3, 1));
+
+        unitService.saveFloorLayout(property.getId(), null, 1, List.of(layoutUnit("101", 0)));
+        unitService.saveFloorLayout(property.getId(), buildingB.id(), 1, List.of(layoutUnit("101", 0)));
+
+        List<UnitTbl> units = unitRepository.findByPropertyId(property.getId());
+        assertThat(units).hasSize(2);
+        assertThat(units).extracting(UnitTbl::getUnitNumber).containsExactlyInAnyOrder("101", "101");
+        assertThat(units).extracting(u -> u.getBlock().getId()).doesNotHaveDuplicates();
+    }
+
+    @Test
+    @DisplayName("Floor summaries count only the block asked for, not the whole property")
+    void floorSummariesAreScopedToOneBlock() {
+        PropertyTbl property = createProperty("Scoped Floors");
+        var buildingB = blockService.create(property.getId(),
+                new com.livic.core.property.dto.BlockDTOs.CreateBlockRequest("Building B", 2, 1));
+
+        unitService.saveFloorLayout(property.getId(), null, 1, List.of(layoutUnit("101", 0), layoutUnit("102", 1)));
+        unitService.saveFloorLayout(property.getId(), buildingB.id(), 1, List.of(layoutUnit("101", 0)));
+
+        long defaultFirstFloor = unitQueryService.getFloorSummaries(property.getId(), null, null).stream()
+                .filter(f -> f.floorNumber() == 1).findFirst().orElseThrow().unitCount();
+        long blockBFirstFloor = unitQueryService.getFloorSummaries(property.getId(), buildingB.id(), null).stream()
+                .filter(f -> f.floorNumber() == 1).findFirst().orElseThrow().unitCount();
+
+        assertThat(defaultFirstFloor).isEqualTo(2);
+        assertThat(blockBFirstFloor).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Block listing order is stable across repeated calls")
+    void blockOrderIsStable() {
+        PropertyTbl property = createProperty("Ordered Blocks");
+        for (String name : List.of("Tower 10", "Tower 2", "Tower 1")) {
+            blockService.create(property.getId(),
+                    new com.livic.core.property.dto.BlockDTOs.CreateBlockRequest(name, 1, 0));
+        }
+
+        List<String> first = blockService.listBlocks(property.getId()).stream()
+                .map(com.livic.core.property.dto.BlockDTOs.BlockResponse::name).toList();
+        List<String> second = blockService.listBlocks(property.getId()).stream()
+                .map(com.livic.core.property.dto.BlockDTOs.BlockResponse::name).toList();
+
+        assertThat(first).isEqualTo(second);
+    }
+
+    @Test
+    @DisplayName("A block holding units cannot be deleted, and a property keeps at least one")
+    void blockDeletionIsGuarded() {
+        PropertyTbl property = createProperty("Guarded Blocks");
+        var buildingB = blockService.create(property.getId(),
+                new com.livic.core.property.dto.BlockDTOs.CreateBlockRequest("Building B", 1, 1));
+        unitService.saveFloorLayout(property.getId(), buildingB.id(), 1, List.of(layoutUnit("101", 0)));
+
+        assertThatThrownBy(() -> blockService.delete(property.getId(), buildingB.id()))
+                .hasMessageContaining("units first");
+
+        BlockTbl defaultBlock = blockRepository.findFirstByPropertyIdAndIsDefaultTrue(property.getId()).orElseThrow();
+        blockService.delete(property.getId(), defaultBlock.getId());
+        assertThatThrownBy(() -> blockService.delete(property.getId(), buildingB.id()))
+                .hasMessageContaining("units first");
+    }
+
 }

@@ -92,7 +92,6 @@ public class AnnouncementIntegrationTest {
                 .address("123 Test St")
                 .city("Test City")
                 .landmark("Test Landmark")
-                .totalFloors(5)
                 .build();
         property = propertyRepository.save(property);
 

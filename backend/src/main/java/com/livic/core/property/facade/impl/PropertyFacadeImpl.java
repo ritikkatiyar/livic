@@ -30,12 +30,13 @@ public class PropertyFacadeImpl implements PropertyFacade {
     private EntityManager entityManager;
 
     private final PropertyQueryService propertyQueryService;
+    private final com.livic.core.property.service.interfaces.BlockService blockService;
     private final PropertyCrudService propertyCrudService;
 
     @Override
     public Optional<PropertySummaryDTO> getPropertyById(UUID propertyId) {
         try {
-            return Optional.ofNullable(PropertySummaryDTO.from(propertyQueryService.getPropertyById(propertyId)));
+            return Optional.ofNullable(PropertySummaryDTO.from(propertyQueryService.getPropertyById(propertyId), blockService.totalFloorsForProperty(propertyId)));
         } catch (Exception e) {
             return Optional.empty();
         }

@@ -55,7 +55,7 @@ public class MarketplaceSearchServiceIntegrationTest {
                 .address("100 Tech Park Way")
                 .city("Bengaluru")
                 .landmark("Near Metro Station")
-                .totalFloors(10)
+                
                 .propertyType(PropertyType.RENTAL)
                 .isActive(true)
                 .isPubliclyListed(true)
@@ -68,7 +68,7 @@ public class MarketplaceSearchServiceIntegrationTest {
                 .name("Private Villa")
                 .address("200 Private Road")
                 .city("Bengaluru")
-                .totalFloors(2)
+                
                 .propertyType(PropertyType.RENTAL)
                 .isActive(true)
                 .isPubliclyListed(false) // Not publicly listed!

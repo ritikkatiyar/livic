@@ -106,7 +106,7 @@ class TourRequestLifecycleIntegrationTest {
                 .name(name)
                 .address("1 Test Road")
                 .city("Pune")
-                .totalFloors(2)
+                
                 .propertyType(PropertyType.RENTAL)
                 .isActive(true)
                 .isPubliclyListed(true)

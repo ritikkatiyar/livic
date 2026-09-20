@@ -3,7 +3,7 @@ package com.livic.core.finance.repository;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.domain.BillType;
-import com.livic.core.finance.dto.DefaulterRecordDTO;
+import com.livic.core.finance.dto.RentRollMetricsDTO;
 import com.livic.core.finance.dto.RevenueMetricsDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -48,13 +48,13 @@ public interface BillRepository extends JpaRepository<BillTbl, UUID>, JpaSpecifi
             @Param("statusPaid") BillStatus statusPaid
     );
 
-    @Query("SELECT " +
+    @Query("SELECT new com.livic.core.finance.dto.RentRollMetricsDTO(" +
            "COALESCE(SUM(b.totalAmount), 0), " +
-           "COALESCE(SUM(CASE WHEN b.status = :statusPending THEN 1 ELSE 0 END), 0), " +
-           "COALESCE(SUM(CASE WHEN b.status IN (:statusPublished, :statusPaid, :statusOverdue, :statusPartiallyPaid) THEN 1 ELSE 0 END), 0) " +
+           "COALESCE(SUM(CASE WHEN b.status = :statusPending THEN 1L ELSE 0L END), 0L), " +
+           "COALESCE(SUM(CASE WHEN b.status IN (:statusPublished, :statusPaid, :statusOverdue, :statusPartiallyPaid) THEN 1L ELSE 0L END), 0L)) " +
            "FROM BillTbl b " +
            "WHERE b.propertyId IN :propertyIds AND b.billingMonth = :billingMonth")
-    List<Object[]> getRentRollMetrics(
+    RentRollMetricsDTO getRentRollMetrics(
             @Param("propertyIds") Collection<UUID> propertyIds,
             @Param("billingMonth") String billingMonth,
             @Param("statusPending") BillStatus statusPending,

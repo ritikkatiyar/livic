@@ -5,7 +5,7 @@ import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.domain.BillType;
 import com.livic.core.finance.dto.DefaulterRecordDTO;
-import com.livic.core.finance.dto.BillDTOs.RentRollMetricsDTO;
+import com.livic.core.finance.dto.RentRollMetricsDTO;
 import com.livic.core.finance.dto.RevenueMetricsDTO;
 import com.livic.core.finance.repository.BillRepository;
 import com.livic.core.finance.service.interfaces.BillCrudService;
@@ -190,7 +190,7 @@ public class BillCrudServiceImpl extends AbstractCrudService<BillTbl, UUID, Bill
         if (propertyIds == null || propertyIds.isEmpty()) {
             return new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
         }
-        List<Object[]> metrics = repository.getRentRollMetrics(
+        RentRollMetricsDTO metrics = repository.getRentRollMetrics(
                 propertyIds,
                 billingMonth,
                 statusPending,
@@ -199,22 +199,6 @@ public class BillCrudServiceImpl extends AbstractCrudService<BillTbl, UUID, Bill
                 statusOverdue,
                 statusPartiallyPaid
         );
-
-        BigDecimal totalExpectedRevenue = BigDecimal.ZERO;
-        long pendingDraftsCount = 0;
-        long publishedCount = 0;
-
-        if (metrics != null && !metrics.isEmpty() && metrics.get(0) != null) {
-            Object[] row = metrics.get(0);
-            totalExpectedRevenue = (BigDecimal) (row[0] != null ? row[0] : BigDecimal.ZERO);
-            pendingDraftsCount = ((Number) (row[1] != null ? row[1] : 0L)).longValue();
-            publishedCount = ((Number) (row[2] != null ? row[2] : 0L)).longValue();
-        }
-
-        return new RentRollMetricsDTO(
-                totalExpectedRevenue,
-                pendingDraftsCount,
-                publishedCount
-        );
+        return metrics != null ? metrics : new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
     }
 }

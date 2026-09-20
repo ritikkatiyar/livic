@@ -78,12 +78,6 @@ public class BillDTOs {
             RentRollMetricsDTO metrics
     ) {}
 
-    public record RentRollMetricsDTO(
-            BigDecimal totalExpectedRevenue,
-            long pendingDraftsCount,
-            long publishedCount
-    ) {}
-
     public record BatchGenerateFailure(
             UUID leaseId,
             String unitNumber,

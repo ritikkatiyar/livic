@@ -13,6 +13,7 @@ import com.livic.core.finance.domain.BillLineTbl;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.dto.BillDTOs;
+import com.livic.core.finance.dto.RentRollMetricsDTO;
 import com.livic.core.finance.mapper.BillMapper;
 import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
@@ -159,7 +160,7 @@ public class BillServiceImpl implements BillService {
                     if (!ownedPropertyIds.contains(propertyId)) {
                         return new BillDTOs.BillListResponse(
                                 List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                                new BillDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                                new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
                         );
                     }
                     targetPropertyIds.add(propertyId);
@@ -167,7 +168,7 @@ public class BillServiceImpl implements BillService {
                     if (ownedPropertyIds.isEmpty()) {
                         return new BillDTOs.BillListResponse(
                                 List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                                new BillDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                                new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
                         );
                     }
                     targetPropertyIds.addAll(ownedPropertyIds);
@@ -180,7 +181,7 @@ public class BillServiceImpl implements BillService {
         if (isTenantView && status == BillStatus.PENDING) {
             return new BillDTOs.BillListResponse(
                     List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                    new BillDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                    new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
             );
         }
 
@@ -209,7 +210,7 @@ public class BillServiceImpl implements BillService {
         Page<BillTbl> page = billCrudService.findAll(spec, pageable);
         List<BillDTOs.BillResponse> content = toResponses(page.getContent());
 
-        BillDTOs.RentRollMetricsDTO rentRollMetrics = !targetPropertyIds.isEmpty() ?
+        RentRollMetricsDTO rentRollMetrics = !targetPropertyIds.isEmpty() ?
                 billCrudService.getRentRollMetricsForProperties(
                         targetPropertyIds,
                         billingMonth,
@@ -218,7 +219,7 @@ public class BillServiceImpl implements BillService {
                         BillStatus.PAID,
                         BillStatus.OVERDUE,
                         BillStatus.PARTIALLY_PAID
-                ) : new BillDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
+                ) : new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
 
         return new BillDTOs.BillListResponse(
                 content,

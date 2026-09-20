@@ -19,6 +19,7 @@ import com.livic.core.finance.dto.BillingWorksheetDTOs.WorksheetEntryResponse;
 import com.livic.core.finance.dto.ChargeConfigRequest;
 import com.livic.verticals.rental.lease.dto.LeaseDTOs;
 import com.livic.core.finance.dto.BillDTOs;
+import com.livic.core.finance.dto.RentRollMetricsDTO;
 import com.livic.verticals.rental.lease.mapper.LeaseMapper;
 import com.livic.verticals.rental.billing.service.impl.BillingWorksheetServiceImpl;
 import com.livic.core.finance.service.impl.ChargeConfigServiceImpl;
@@ -406,7 +407,7 @@ public class RentModelingFixesTest {
                 .thenReturn(mockPage);
 
         when(billCrudService.getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any()))
-                .thenReturn(new BillDTOs.RentRollMetricsDTO(BigDecimal.valueOf(50000), 2L, 8L));
+                .thenReturn(new RentRollMetricsDTO(BigDecimal.valueOf(50000), 2L, 8L));
 
         BillDTOs.BillListResponse result = billService.list(landlordId, null, null, "2026-08", null, null, pageable);
 

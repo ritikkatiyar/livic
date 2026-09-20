@@ -10,8 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.BillType;
-import com.livic.core.finance.dto.BillDTOs;
-import com.livic.core.finance.dto.BillDTOs.RentRollMetricsDTO;
+import com.livic.core.finance.dto.RentRollMetricsDTO;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;

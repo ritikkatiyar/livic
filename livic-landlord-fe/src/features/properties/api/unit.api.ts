@@ -7,8 +7,17 @@ export interface FloorSummaryResponse {
   unitCount: number;
 }
 
-export function getFloorSummaries(propertyId: string, token: string, throughFloor?: number): Promise<FloorSummaryResponse[]> {
-  const query = throughFloor !== undefined ? `?throughFloor=${throughFloor}` : '';
+/** Floors belong to a block. Omitting blockId means the property's default block. */
+export function getFloorSummaries(
+  propertyId: string,
+  token: string,
+  throughFloor?: number,
+  blockId?: string | null
+): Promise<FloorSummaryResponse[]> {
+  const params = new URLSearchParams();
+  if (throughFloor !== undefined) params.set('throughFloor', String(throughFloor));
+  if (blockId) params.set('blockId', blockId);
+  const query = params.toString() ? `?${params.toString()}` : '';
   const path = `/api/v1/properties/${propertyId}/floors${query}`;
 
   return apiRequest<FloorSummaryResponse[]>(path, {
@@ -19,6 +28,7 @@ export function getFloorSummaries(propertyId: string, token: string, throughFloo
 
 export interface UnitResponse {
   id: string;
+  blockId?: string | null;
   unitNumber: string;
   floor: number;
   gridX: number;
@@ -40,16 +50,23 @@ export interface ActiveLeaseSummary {
   status: string;
 }
 
-export function getFloorLayout(propertyId: string, floorNumber: number, token: string): Promise<UnitResponse[]> {
-  const path = `/api/v1/properties/${propertyId}/floors/${floorNumber}/layout`;
+export function getFloorLayout(
+  propertyId: string,
+  floorNumber: number,
+  token: string,
+  blockId?: string | null
+): Promise<UnitResponse[]> {
+  const query = blockId ? `?blockId=${blockId}` : '';
+  const path = `/api/v1/properties/${propertyId}/floors/${floorNumber}/layout${query}`;
   return apiRequest<UnitResponse[]>(path, {
     method: 'GET',
     token,
   });
 }
 
-export function getAllFloorsLayout(propertyId: string, token: string): Promise<UnitResponse[]> {
-  const path = `/api/v1/properties/${propertyId}/floors/layouts`;
+export function getAllFloorsLayout(propertyId: string, token: string, blockId?: string | null): Promise<UnitResponse[]> {
+  const query = blockId ? `?blockId=${blockId}` : '';
+  const path = `/api/v1/properties/${propertyId}/floors/layouts${query}`;
   return apiRequest<UnitResponse[]>(path, {
     method: 'GET',
     token,
@@ -63,6 +80,8 @@ export interface BatchUnitRequest {
   prefix: string;
   capacity: number;
   unitType: string;
+  /** Null means the property's default block. */
+  blockId?: string | null;
 }
 
 export function generateBatchUnits(propertyId: string, request: BatchUnitRequest, token: string): Promise<UnitResponse[]> {
@@ -78,9 +97,11 @@ export function saveFloorLayout(
   propertyId: string,
   floorNumber: number,
   token: string,
-  layout: any[]
+  layout: any[],
+  blockId?: string | null
 ): Promise<UnitResponse[]> {
-  const path = `/api/v1/properties/${propertyId}/floors/${floorNumber}/layout`;
+  const query = blockId ? `?blockId=${blockId}` : '';
+  const path = `/api/v1/properties/${propertyId}/floors/${floorNumber}/layout${query}`;
   return apiRequest<UnitResponse[]>(path, {
     method: 'PUT',
     token,

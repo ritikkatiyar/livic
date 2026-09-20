@@ -31,7 +31,7 @@ public class RentPublishedNotificationListener {
         String formattedAmount = formatCurrency(event.getTotalAmount());
         String formattedDueDate = formatDate(event.getDueDate());
 
-        log.info("Sending rent published notifications to tenant: {} for cycle: {}", tenantUserId, event.getRentCycleId());
+        log.info("Sending rent published notifications to tenant: {} for cycle: {}", tenantUserId, event.getBillId());
 
         String emailTitle = "New Rent Statement Published";
         String emailBody = String.format(

@@ -28,8 +28,8 @@ public class FinanceLedgerCrudServiceImpl extends AbstractCrudService<FinanceLed
     }
 
     @Override
-    public BigDecimal getRunningBalanceForLeaseAtEntry(UUID leaseId, LocalDateTime createdAt, UUID id) {
-        return repository.getRunningBalanceForLeaseAtEntry(leaseId, createdAt, id);
+    public BigDecimal getRunningBalanceForMemberAtEntry(UUID memberId, LocalDateTime createdAt, UUID id) {
+        return repository.getRunningBalanceForMemberAtEntry(memberId, createdAt, id);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class FinanceLedgerCrudServiceImpl extends AbstractCrudService<FinanceLed
     }
 
     @Override
-    public BigDecimal sumAmountByLeaseId(UUID leaseId) {
-        return repository.sumAmountByLeaseId(leaseId);
+    public BigDecimal sumAmountByMemberId(UUID memberId) {
+        return repository.sumAmountByMemberId(memberId);
     }
 }

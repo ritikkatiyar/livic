@@ -10,5 +10,5 @@ public record DefaulterRecordDTO(
         String propertyName,
         LocalDate dueDate,
         BigDecimal amountDue,
-        UUID rentCycleId
+        UUID billId
 ) {}

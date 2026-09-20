@@ -6,13 +6,24 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useAdminTutorial } from '../context/AdminTutorialContext';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
+
+/** Roles that are allowed to see the Admin Setup Checklist. */
+const ADMIN_ROLES = ['ADMIN', 'SUPER_ADMIN'] as const;
 
 export const AdminTutorialBanner: React.FC = () => {
+  const { context } = useAuth();
   const { theme, isDark } = useAppTheme();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const isMobile = width < 600;
   const styles = React.useMemo(() => createStyles(theme, isDark, isDesktop, isMobile), [theme, isDark, isDesktop, isMobile]);
+
+  // Only ADMIN and SUPER_ADMIN users should see the setup checklist.
+  const isAdminRole = ADMIN_ROLES.includes(context?.globalRole as typeof ADMIN_ROLES[number]);
+  if (!isAdminRole) {
+    return null;
+  }
 
   const {
     activeStep,

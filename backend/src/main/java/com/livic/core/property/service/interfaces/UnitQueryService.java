@@ -8,7 +8,8 @@ import java.util.UUID;
 
 public interface UnitQueryService {
     UnitTbl getUnitById(UUID id);
-    List<UnitDTOs.FloorSummaryResponse> getFloorSummaries(UUID propertyId, Integer throughFloor);
-    List<UnitTbl> getUnitsByFloor(UUID propertyId, int floorNumber);
+    List<UnitDTOs.FloorSummaryResponse> getFloorSummaries(UUID propertyId, UUID blockId, Integer throughFloor);
+    List<UnitTbl> getUnitsByFloor(UUID propertyId, UUID blockId, int floorNumber);
     List<UnitTbl> getUnitsByProperty(UUID propertyId);
+    List<UnitTbl> getUnitsByProperty(UUID propertyId, UUID blockId);
 }

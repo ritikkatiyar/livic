@@ -127,7 +127,7 @@ public class MarketplacePaymentEventListenerTest {
     @DisplayName("PaymentCompletedEvent - Ignores non-marketplace lead reference types")
     public void testOnPaymentCompletedIgnoreOtherReferenceTypes() {
         PaymentCompletedEvent event = PaymentCompletedEvent.builder()
-                .referenceType("RENT_CYCLE")
+                .referenceType("BILL")
                 .referenceId(leadId)
                 .build();
 

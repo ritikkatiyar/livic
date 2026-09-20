@@ -52,7 +52,7 @@ class TeamMemberLimitIntegrationTest {
                 .name("Team Property")
                 .address("1 Test St")
                 .city("Test City")
-                .totalFloors(1)
+                
                 .build());
         membershipService.createOwnerMembership(property.getId(), owner.getId());
     }

@@ -138,6 +138,7 @@ BEGIN
     DECLARE curr_unit_id VARCHAR(36);
     DECLARE curr_tenant_id VARCHAR(36);
     DECLARE curr_lease_id VARCHAR(36);
+    DECLARE curr_member_id VARCHAR(36);
     
     SET owner_id = 'b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e';
     SET password_hash = '$2a$10$iF2sCXo.GR6uLLooK5FiHubhCvAY8xAr3mYmCIQDEgFuTvOK/PCzq'; -- 'Adm!n@super'
@@ -167,13 +168,13 @@ BEGIN
         (UUID(), curr_caretaker_id, 'RENTAL', TRUE);
         
         -- Insert Property
-        INSERT INTO property_tbl (id, name, city, address, total_floors, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
-        VALUES (prop_id, CONCAT('mom\'s pg ', b), 'New York', CONCAT('Address Building ', b), 5, TRUE, TRUE, 1, '09:00:00');
+        INSERT INTO property_tbl (id, name, city, address, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
+        VALUES (prop_id, CONCAT('mom\'s pg ', b), 'New York', CONCAT('Address Building ', b), TRUE, TRUE, 1, '09:00:00');
         
         -- Default block: rental properties keep one the apps never show
         SET curr_block_id = UUID();
-        INSERT INTO block_tbl (id, property_id, name, sort_order, is_default)
-        VALUES (curr_block_id, prop_id, 'Main', 0, TRUE);
+        INSERT INTO block_tbl (id, property_id, name, sort_order, is_default, total_floors)
+        VALUES (curr_block_id, prop_id, 'Main', 0, TRUE, 5);
         
         -- Map Owner, Manager, Caretaker to this specific Building
         INSERT INTO membership_tbl (id, user_id, property_id, title, access_type, is_active) VALUES
@@ -255,6 +256,7 @@ BEGIN
     DECLARE curr_unit_id VARCHAR(36);
     DECLARE curr_tenant_id VARCHAR(36);
     DECLARE curr_lease_id VARCHAR(36);
+    DECLARE curr_member_id VARCHAR(36);
 
     DECLARE cycle_id_may VARCHAR(36);
     DECLARE cycle_id_jun VARCHAR(36);
@@ -283,13 +285,13 @@ BEGIN
     (UUID(), caretaker_id, 'RENTAL', TRUE);
     
     -- 3. Insert Property (5 floors)
-    INSERT INTO property_tbl (id, name, city, address, total_floors, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
-    VALUES (prop_id, 'Livic Residency', 'Bangalore', '100 Feet Road, Indiranagar', 5, TRUE, TRUE, 1, '09:00:00');
+    INSERT INTO property_tbl (id, name, city, address, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
+    VALUES (prop_id, 'Livic Residency', 'Bangalore', '100 Feet Road, Indiranagar', TRUE, TRUE, 1, '09:00:00');
     
     -- Default block
     SET curr_block_id = UUID();
-    INSERT INTO block_tbl (id, property_id, name, sort_order, is_default)
-    VALUES (curr_block_id, prop_id, 'Main', 0, TRUE);
+    INSERT INTO block_tbl (id, property_id, name, sort_order, is_default, total_floors)
+    VALUES (curr_block_id, prop_id, 'Main', 0, TRUE, 5);
     
     -- 4. Map Owner (FULL_ACCESS) and Caretaker (CUSTOM_ACCESS) to this Property
     INSERT INTO membership_tbl (id, user_id, property_id, title, access_type, is_active) VALUES
@@ -323,83 +325,84 @@ BEGIN
             
             -- The tenant is a member of the unit; this is what notices, issues and the
             -- resident context read, and it is created with the lease in real flows.
+            SET curr_member_id = UUID();
             INSERT INTO unit_member_tbl (id, unit_id, user_id, role, is_primary, lease_id, from_date, is_active)
-            VALUES (UUID(), curr_unit_id, curr_tenant_id, 'TENANT', TRUE, curr_lease_id, '2026-05-01', TRUE);
+            VALUES (curr_member_id, curr_unit_id, curr_tenant_id, 'TENANT', TRUE, curr_lease_id, '2026-05-01', TRUE);
             
             -- Month 1: May 2026 (PAID)
             SET cycle_id_may = UUID();
             SET tx_id_may = UUID();
             INSERT INTO payment_transaction_tbl (id, payer_user_id, payment_method, reference_type, reference_id, gateway_name, gateway_transaction_id, amount, status, confirmed_by, confirmed_at, note, created_at, updated_at)
-            VALUES (tx_id_may, curr_tenant_id, 'ONLINE_UPI', 'RENT_CYCLE', cycle_id_may, 'RAZORPAY', CONCAT('pay_may_', unit_num, '_', SUBSTRING(UUID(), 1, 8)), 1000.00, 'SUCCESS', owner_id, '2026-05-03 10:30:00', 'Rent Payment May 2026', '2026-05-03 10:30:00', '2026-05-03 10:30:00');
+            VALUES (tx_id_may, curr_tenant_id, 'ONLINE_UPI', 'BILL', cycle_id_may, 'RAZORPAY', CONCAT('pay_may_', unit_num, '_', SUBSTRING(UUID(), 1, 8)), 1000.00, 'SUCCESS', owner_id, '2026-05-03 10:30:00', 'Rent Payment May 2026', '2026-05-03 10:30:00', '2026-05-03 10:30:00');
             
-            INSERT INTO rent_cycle_tbl (id, lease_id, billing_month, due_date, status, paid_at, created_at, updated_at, total_amount, amount_paid, payment_transaction_id)
-            VALUES (cycle_id_may, curr_lease_id, '2026-05', '2026-05-05', 'PAID', '2026-05-03 10:30:00', '2026-05-01 09:00:00', '2026-05-03 10:30:00', 1000.00, 1000.00, tx_id_may);
+            INSERT INTO bill_tbl (id, property_id, member_id, bill_type, billing_month, due_date, status, paid_at, created_at, updated_at, total_amount, amount_paid)
+            VALUES (cycle_id_may, prop_id, curr_member_id, 'RENT', '2026-05', '2026-05-05', 'PAID', '2026-05-03 10:30:00', '2026-05-01 09:00:00', '2026-05-03 10:30:00', 1000.00, 1000.00);
             
-            INSERT INTO rent_cycle_charge_tbl (id, rent_cycle_id, charge_type, amount, description, charge_config_id)
+            INSERT INTO bill_line_tbl (id, bill_id, charge_type, amount, description, charge_config_id)
             VALUES (UUID(), cycle_id_may, 'BASE_RENT', 1000.00, 'Monthly Base Rent', charge_cfg_id);
 
-            INSERT INTO finance_ledger_tbl (id, unit_id, lease_id, transaction_type, amount, balance, reference_id, description, created_at, updated_at) VALUES
-            (UUID(), curr_unit_id, curr_lease_id, 'INVOICE_GENERATED', 1000.00, 1000.00, cycle_id_may, 'Invoice Generation for 2026-05', '2026-05-01 09:00:00', '2026-05-01 09:00:00'),
-            (UUID(), curr_unit_id, curr_lease_id, 'PAYMENT_RECEIVED', -1000.00, 0.00, tx_id_may, 'Rent Payment (Full) via RAZORPAY', '2026-05-03 10:30:00', '2026-05-03 10:30:00');
+            INSERT INTO finance_ledger_tbl (id, unit_id, member_id, lease_id, transaction_type, amount, balance, reference_id, description, created_at, updated_at) VALUES
+            (UUID(), curr_unit_id, curr_member_id, curr_lease_id, 'INVOICE_GENERATED', 1000.00, 1000.00, cycle_id_may, 'Invoice Generation for 2026-05', '2026-05-01 09:00:00', '2026-05-01 09:00:00'),
+            (UUID(), curr_unit_id, curr_member_id, curr_lease_id, 'PAYMENT_RECEIVED', -1000.00, 0.00, tx_id_may, 'Rent Payment (Full) via RAZORPAY', '2026-05-03 10:30:00', '2026-05-03 10:30:00');
 
             -- Month 2: June 2026 (PAID)
             SET cycle_id_jun = UUID();
             SET tx_id_jun = UUID();
             INSERT INTO payment_transaction_tbl (id, payer_user_id, payment_method, reference_type, reference_id, gateway_name, gateway_transaction_id, amount, status, confirmed_by, confirmed_at, note, created_at, updated_at)
-            VALUES (tx_id_jun, curr_tenant_id, 'ONLINE_UPI', 'RENT_CYCLE', cycle_id_jun, 'RAZORPAY', CONCAT('pay_jun_', unit_num, '_', SUBSTRING(UUID(), 1, 8)), 1000.00, 'SUCCESS', owner_id, '2026-06-04 14:15:00', 'Rent Payment June 2026', '2026-06-04 14:15:00', '2026-06-04 14:15:00');
+            VALUES (tx_id_jun, curr_tenant_id, 'ONLINE_UPI', 'BILL', cycle_id_jun, 'RAZORPAY', CONCAT('pay_jun_', unit_num, '_', SUBSTRING(UUID(), 1, 8)), 1000.00, 'SUCCESS', owner_id, '2026-06-04 14:15:00', 'Rent Payment June 2026', '2026-06-04 14:15:00', '2026-06-04 14:15:00');
             
-            INSERT INTO rent_cycle_tbl (id, lease_id, billing_month, due_date, status, paid_at, created_at, updated_at, total_amount, amount_paid, payment_transaction_id)
-            VALUES (cycle_id_jun, curr_lease_id, '2026-06', '2026-06-05', 'PAID', '2026-06-04 14:15:00', '2026-06-01 09:00:00', '2026-06-04 14:15:00', 1000.00, 1000.00, tx_id_jun);
+            INSERT INTO bill_tbl (id, property_id, member_id, bill_type, billing_month, due_date, status, paid_at, created_at, updated_at, total_amount, amount_paid)
+            VALUES (cycle_id_jun, prop_id, curr_member_id, 'RENT', '2026-06', '2026-06-05', 'PAID', '2026-06-04 14:15:00', '2026-06-01 09:00:00', '2026-06-04 14:15:00', 1000.00, 1000.00);
             
-            INSERT INTO rent_cycle_charge_tbl (id, rent_cycle_id, charge_type, amount, description, charge_config_id)
+            INSERT INTO bill_line_tbl (id, bill_id, charge_type, amount, description, charge_config_id)
             VALUES (UUID(), cycle_id_jun, 'BASE_RENT', 1000.00, 'Monthly Base Rent', charge_cfg_id);
 
-            INSERT INTO finance_ledger_tbl (id, unit_id, lease_id, transaction_type, amount, balance, reference_id, description, created_at, updated_at) VALUES
-            (UUID(), curr_unit_id, curr_lease_id, 'INVOICE_GENERATED', 1000.00, 1000.00, cycle_id_jun, 'Invoice Generation for 2026-06', '2026-06-01 09:00:00', '2026-06-01 09:00:00'),
-            (UUID(), curr_unit_id, curr_lease_id, 'PAYMENT_RECEIVED', -1000.00, 0.00, tx_id_jun, 'Rent Payment (Full) via RAZORPAY', '2026-06-04 14:15:00', '2026-06-04 14:15:00');
+            INSERT INTO finance_ledger_tbl (id, unit_id, member_id, lease_id, transaction_type, amount, balance, reference_id, description, created_at, updated_at) VALUES
+            (UUID(), curr_unit_id, curr_member_id, curr_lease_id, 'INVOICE_GENERATED', 1000.00, 1000.00, cycle_id_jun, 'Invoice Generation for 2026-06', '2026-06-01 09:00:00', '2026-06-01 09:00:00'),
+            (UUID(), curr_unit_id, curr_member_id, curr_lease_id, 'PAYMENT_RECEIVED', -1000.00, 0.00, tx_id_jun, 'Rent Payment (Full) via RAZORPAY', '2026-06-04 14:15:00', '2026-06-04 14:15:00');
 
             -- Month 3: July 2026 (PAID)
             SET cycle_id_jul = UUID();
             SET tx_id_jul = UUID();
             INSERT INTO payment_transaction_tbl (id, payer_user_id, payment_method, reference_type, reference_id, gateway_name, gateway_transaction_id, amount, status, confirmed_by, confirmed_at, note, created_at, updated_at)
-            VALUES (tx_id_jul, curr_tenant_id, 'ONLINE_UPI', 'RENT_CYCLE', cycle_id_jul, 'RAZORPAY', CONCAT('pay_jul_', unit_num, '_', SUBSTRING(UUID(), 1, 8)), 1000.00, 'SUCCESS', owner_id, '2026-07-02 09:45:00', 'Rent Payment July 2026', '2026-07-02 09:45:00', '2026-07-02 09:45:00');
+            VALUES (tx_id_jul, curr_tenant_id, 'ONLINE_UPI', 'BILL', cycle_id_jul, 'RAZORPAY', CONCAT('pay_jul_', unit_num, '_', SUBSTRING(UUID(), 1, 8)), 1000.00, 'SUCCESS', owner_id, '2026-07-02 09:45:00', 'Rent Payment July 2026', '2026-07-02 09:45:00', '2026-07-02 09:45:00');
             
-            INSERT INTO rent_cycle_tbl (id, lease_id, billing_month, due_date, status, paid_at, created_at, updated_at, total_amount, amount_paid, payment_transaction_id)
-            VALUES (cycle_id_jul, curr_lease_id, '2026-07', '2026-07-05', 'PAID', '2026-07-02 09:45:00', '2026-07-01 09:00:00', '2026-07-02 09:45:00', 1000.00, 1000.00, tx_id_jul);
+            INSERT INTO bill_tbl (id, property_id, member_id, bill_type, billing_month, due_date, status, paid_at, created_at, updated_at, total_amount, amount_paid)
+            VALUES (cycle_id_jul, prop_id, curr_member_id, 'RENT', '2026-07', '2026-07-05', 'PAID', '2026-07-02 09:45:00', '2026-07-01 09:00:00', '2026-07-02 09:45:00', 1000.00, 1000.00);
             
-            INSERT INTO rent_cycle_charge_tbl (id, rent_cycle_id, charge_type, amount, description, charge_config_id)
+            INSERT INTO bill_line_tbl (id, bill_id, charge_type, amount, description, charge_config_id)
             VALUES (UUID(), cycle_id_jul, 'BASE_RENT', 1000.00, 'Monthly Base Rent', charge_cfg_id);
 
-            INSERT INTO finance_ledger_tbl (id, unit_id, lease_id, transaction_type, amount, balance, reference_id, description, created_at, updated_at) VALUES
-            (UUID(), curr_unit_id, curr_lease_id, 'INVOICE_GENERATED', 1000.00, 1000.00, cycle_id_jul, 'Invoice Generation for 2026-07', '2026-07-01 09:00:00', '2026-07-01 09:00:00'),
-            (UUID(), curr_unit_id, curr_lease_id, 'PAYMENT_RECEIVED', -1000.00, 0.00, tx_id_jul, 'Rent Payment (Full) via RAZORPAY', '2026-07-02 09:45:00', '2026-07-02 09:45:00');
+            INSERT INTO finance_ledger_tbl (id, unit_id, member_id, lease_id, transaction_type, amount, balance, reference_id, description, created_at, updated_at) VALUES
+            (UUID(), curr_unit_id, curr_member_id, curr_lease_id, 'INVOICE_GENERATED', 1000.00, 1000.00, cycle_id_jul, 'Invoice Generation for 2026-07', '2026-07-01 09:00:00', '2026-07-01 09:00:00'),
+            (UUID(), curr_unit_id, curr_member_id, curr_lease_id, 'PAYMENT_RECEIVED', -1000.00, 0.00, tx_id_jul, 'Rent Payment (Full) via RAZORPAY', '2026-07-02 09:45:00', '2026-07-02 09:45:00');
 
             -- Month 4: August 2026 (PAID)
             SET cycle_id_aug = UUID();
             SET tx_id_aug = UUID();
             INSERT INTO payment_transaction_tbl (id, payer_user_id, payment_method, reference_type, reference_id, gateway_name, gateway_transaction_id, amount, status, confirmed_by, confirmed_at, note, created_at, updated_at)
-            VALUES (tx_id_aug, curr_tenant_id, 'ONLINE_UPI', 'RENT_CYCLE', cycle_id_aug, 'RAZORPAY', CONCAT('pay_aug_', unit_num, '_', SUBSTRING(UUID(), 1, 8)), 1000.00, 'SUCCESS', owner_id, '2026-08-05 16:20:00', 'Rent Payment August 2026', '2026-08-05 16:20:00', '2026-08-05 16:20:00');
+            VALUES (tx_id_aug, curr_tenant_id, 'ONLINE_UPI', 'BILL', cycle_id_aug, 'RAZORPAY', CONCAT('pay_aug_', unit_num, '_', SUBSTRING(UUID(), 1, 8)), 1000.00, 'SUCCESS', owner_id, '2026-08-05 16:20:00', 'Rent Payment August 2026', '2026-08-05 16:20:00', '2026-08-05 16:20:00');
             
-            INSERT INTO rent_cycle_tbl (id, lease_id, billing_month, due_date, status, paid_at, created_at, updated_at, total_amount, amount_paid, payment_transaction_id)
-            VALUES (cycle_id_aug, curr_lease_id, '2026-08', '2026-08-05', 'PAID', '2026-08-05 16:20:00', '2026-08-01 09:00:00', '2026-08-05 16:20:00', 1000.00, 1000.00, tx_id_aug);
+            INSERT INTO bill_tbl (id, property_id, member_id, bill_type, billing_month, due_date, status, paid_at, created_at, updated_at, total_amount, amount_paid)
+            VALUES (cycle_id_aug, prop_id, curr_member_id, 'RENT', '2026-08', '2026-08-05', 'PAID', '2026-08-05 16:20:00', '2026-08-01 09:00:00', '2026-08-05 16:20:00', 1000.00, 1000.00);
             
-            INSERT INTO rent_cycle_charge_tbl (id, rent_cycle_id, charge_type, amount, description, charge_config_id)
+            INSERT INTO bill_line_tbl (id, bill_id, charge_type, amount, description, charge_config_id)
             VALUES (UUID(), cycle_id_aug, 'BASE_RENT', 1000.00, 'Monthly Base Rent', charge_cfg_id);
 
-            INSERT INTO finance_ledger_tbl (id, unit_id, lease_id, transaction_type, amount, balance, reference_id, description, created_at, updated_at) VALUES
-            (UUID(), curr_unit_id, curr_lease_id, 'INVOICE_GENERATED', 1000.00, 1000.00, cycle_id_aug, 'Invoice Generation for 2026-08', '2026-08-01 09:00:00', '2026-08-01 09:00:00'),
-            (UUID(), curr_unit_id, curr_lease_id, 'PAYMENT_RECEIVED', -1000.00, 0.00, tx_id_aug, 'Rent Payment (Full) via RAZORPAY', '2026-08-05 16:20:00', '2026-08-05 16:20:00');
+            INSERT INTO finance_ledger_tbl (id, unit_id, member_id, lease_id, transaction_type, amount, balance, reference_id, description, created_at, updated_at) VALUES
+            (UUID(), curr_unit_id, curr_member_id, curr_lease_id, 'INVOICE_GENERATED', 1000.00, 1000.00, cycle_id_aug, 'Invoice Generation for 2026-08', '2026-08-01 09:00:00', '2026-08-01 09:00:00'),
+            (UUID(), curr_unit_id, curr_member_id, curr_lease_id, 'PAYMENT_RECEIVED', -1000.00, 0.00, tx_id_aug, 'Rent Payment (Full) via RAZORPAY', '2026-08-05 16:20:00', '2026-08-05 16:20:00');
 
             -- Current Month: September 2026 (PUBLISHED, Due Soon)
             SET cycle_id_sep = UUID();
-            INSERT INTO rent_cycle_tbl (id, lease_id, billing_month, due_date, status, paid_at, created_at, updated_at, total_amount, amount_paid, payment_transaction_id)
-            VALUES (cycle_id_sep, curr_lease_id, '2026-09', '2026-09-10', 'PUBLISHED', NULL, '2026-09-01 09:00:00', '2026-09-01 09:00:00', 1000.00, 0.00, NULL);
+            INSERT INTO bill_tbl (id, property_id, member_id, bill_type, billing_month, due_date, status, paid_at, created_at, updated_at, total_amount, amount_paid)
+            VALUES (cycle_id_sep, prop_id, curr_member_id, 'RENT', '2026-09', '2026-09-10', 'PUBLISHED', NULL, '2026-09-01 09:00:00', '2026-09-01 09:00:00', 1000.00, 0.00);
             
-            INSERT INTO rent_cycle_charge_tbl (id, rent_cycle_id, charge_type, amount, description, charge_config_id)
+            INSERT INTO bill_line_tbl (id, bill_id, charge_type, amount, description, charge_config_id)
             VALUES (UUID(), cycle_id_sep, 'BASE_RENT', 1000.00, 'Monthly Base Rent', charge_cfg_id);
 
-            INSERT INTO finance_ledger_tbl (id, unit_id, lease_id, transaction_type, amount, balance, reference_id, description, created_at, updated_at)
-            VALUES (UUID(), curr_unit_id, curr_lease_id, 'INVOICE_GENERATED', 1000.00, 1000.00, cycle_id_sep, 'Invoice Generation for 2026-09', '2026-09-01 09:00:00', '2026-09-01 09:00:00');
+            INSERT INTO finance_ledger_tbl (id, unit_id, member_id, lease_id, transaction_type, amount, balance, reference_id, description, created_at, updated_at)
+            VALUES (UUID(), curr_unit_id, curr_member_id, curr_lease_id, 'INVOICE_GENERATED', 1000.00, 1000.00, cycle_id_sep, 'Invoice Generation for 2026-09', '2026-09-01 09:00:00', '2026-09-01 09:00:00');
 
             -- Notification Delivery Logs for September Invoice & August Settlement
             INSERT INTO notification_log_tbl (id, recipient_id, channel, recipient_address, title, body, status, created_at, updated_at) VALUES

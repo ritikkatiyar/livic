@@ -1,7 +1,7 @@
 package com.livic.core.finance.specification;
 
 import com.livic.core.finance.domain.FinanceLedgerTbl;
-import com.livic.core.finance.domain.LeaseTbl;
+import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.platform.user.domain.UserTbl;
 import jakarta.persistence.criteria.Join;

@@ -19,6 +19,11 @@ public record PropertySummaryDTO(
     }
 
     public static PropertySummaryDTO from(PropertyTbl p) {
+        return from(p, null);
+    }
+
+    /** {@code totalFloors} is derived from the property's blocks, so callers supply it. */
+    public static PropertySummaryDTO from(PropertyTbl p, Integer totalFloors) {
         if (p == null) {
             return null;
         }
@@ -28,7 +33,7 @@ public record PropertySummaryDTO(
                 p.getAddress(),
                 p.getCity(),
                 p.getLandmark(),
-                p.getTotalFloors(),
+                totalFloors,
                 p.isActive(),
                 p.getAutoBillDayOfMonth()
         );

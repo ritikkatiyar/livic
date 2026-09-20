@@ -40,6 +40,21 @@ public class UnitCrudServiceImpl extends AbstractCrudService<UnitTbl, UUID, Unit
     }
 
     @Override
+    public List<UnitTbl> findByBlockId(UUID blockId) {
+        return repository.findByBlockId(blockId);
+    }
+
+    @Override
+    public List<UnitTbl> findByBlockIdAndFloor(UUID blockId, Integer floor) {
+        return repository.findByBlockIdAndFloor(blockId, floor);
+    }
+
+    @Override
+    public int findMaxFloorByBlockId(UUID blockId) {
+        return repository.findMaxFloorByBlockId(blockId);
+    }
+
+    @Override
     public List<UnitTbl> findByPropertyIdAndFloor(UUID propertyId, Integer floor) {
         return repository.findByPropertyIdAndFloor(propertyId, floor);
     }

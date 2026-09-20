@@ -25,7 +25,7 @@ public class PaymentTransactionTbl extends BaseEntity {
     private String paymentMethod; // ONLINE, CASH, BANK_TRANSFER
 
     @Column(name = "reference_type", nullable = false, length = 32)
-    private String referenceType; // RENT_CYCLE, SUBSCRIPTION, WALLET_TOPUP, UNIT_BOOKING
+    private String referenceType; // BILL, SUBSCRIPTION, WALLET_TOPUP, UNIT_BOOKING
 
     @Column(name = "reference_id", nullable = false)
     private UUID referenceId;

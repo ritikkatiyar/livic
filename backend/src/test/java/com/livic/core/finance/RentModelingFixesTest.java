@@ -6,30 +6,33 @@ import com.livic.platform.common.domain.ChargeCategory;
 import com.livic.platform.common.domain.LeaseSplitStrategy;
 import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.platform.common.domain.RentChargeType;
-import com.livic.core.finance.domain.RentCycleStatus;
+import com.livic.core.finance.domain.BillStatus;
 import com.livic.platform.common.event.RentPublishedEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.core.finance.domain.ChargeConfigTbl;
-import com.livic.core.finance.domain.LeaseTbl;
-import com.livic.core.finance.domain.RentCycleChargeTbl;
-import com.livic.core.finance.domain.RentCycleTbl;
+import com.livic.verticals.rental.lease.domain.LeaseTbl;
+import com.livic.core.finance.domain.BillLineTbl;
+import com.livic.core.finance.domain.BillTbl;
+import com.livic.core.finance.domain.BillType;
 import com.livic.core.finance.dto.BillingWorksheetDTOs.WorksheetEntryResponse;
 import com.livic.core.finance.dto.ChargeConfigRequest;
-import com.livic.core.finance.dto.LeaseDTOs;
-import com.livic.core.finance.dto.RentCycleDTOs;
-import com.livic.core.finance.mapper.LeaseMapper;
-import com.livic.core.finance.service.impl.BillingWorksheetServiceImpl;
+import com.livic.verticals.rental.lease.dto.LeaseDTOs;
+import com.livic.core.finance.dto.BillDTOs;
+import com.livic.core.finance.dto.RentRollMetricsDTO;
+import com.livic.verticals.rental.lease.mapper.LeaseMapper;
+import com.livic.verticals.rental.billing.service.impl.BillingWorksheetServiceImpl;
 import com.livic.core.finance.service.impl.ChargeConfigServiceImpl;
-import com.livic.core.finance.service.impl.RentCycleServiceImpl;
-import com.livic.core.finance.service.impl.RentCycleTransactionHelper;
+import com.livic.core.finance.service.impl.BillServiceImpl;
+import com.livic.verticals.rental.billing.service.impl.RentGenerationServiceImpl;
+import com.livic.verticals.rental.billing.service.impl.BillTransactionHelper;
 import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
-import com.livic.core.finance.service.interfaces.LeaseCrudService;
-import com.livic.core.finance.service.interfaces.LeaseQueryService;
+import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
+import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
-import com.livic.core.finance.service.interfaces.RentCycleChargeCrudService;
-import com.livic.core.finance.service.interfaces.RentCycleCrudService;
+import com.livic.core.finance.service.interfaces.BillLineCrudService;
+import com.livic.core.finance.service.interfaces.BillCrudService;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.PropertySummaryDTO;
@@ -72,9 +75,9 @@ public class RentModelingFixesTest {
     @Mock
     private MeterReadingCrudService meterReadingCrudService;
     @Mock
-    private RentCycleChargeCrudService rentCycleChargeCrudService;
+    private BillLineCrudService billLineCrudService;
     @Mock
-    private RentCycleCrudService rentCycleCrudService;
+    private BillCrudService billCrudService;
     @Mock
     private LeaseQueryService leaseQueryService;
     @Mock
@@ -92,7 +95,9 @@ public class RentModelingFixesTest {
     @Mock
     private com.livic.platform.payment.facade.PaymentFacade paymentFacade;
     @Mock
-    private RentCycleTransactionHelper transactionHelper;
+    private BillTransactionHelper transactionHelper;
+    @Mock
+    private com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
 
     @InjectMocks
     private ChargeConfigServiceImpl chargeConfigService;
@@ -101,12 +106,16 @@ public class RentModelingFixesTest {
     private BillingWorksheetServiceImpl billingWorksheetService;
 
     @InjectMocks
-    private RentCycleServiceImpl rentCycleService;
+    private BillServiceImpl billService;
+
+    private RentGenerationServiceImpl rentGenerationService;
 
     private UUID propertyId;
     private UUID unitId;
     private UUID leaseId;
     private UUID chargeConfigId;
+    private UUID memberId;
+    private com.livic.core.property.dto.UnitResidentDTO payerResident;
     private PropertyTbl property;
     private UnitTbl unit;
     private LeaseTbl lease;
@@ -118,6 +127,7 @@ public class RentModelingFixesTest {
         unitId = UUID.randomUUID();
         leaseId = UUID.randomUUID();
         chargeConfigId = UUID.randomUUID();
+        memberId = UUID.randomUUID();
 
         property = new PropertyTbl();
         property.setId(propertyId);
@@ -152,23 +162,36 @@ public class RentModelingFixesTest {
                 .build();
         rentConfig.setId(chargeConfigId);
 
-        transactionHelper = new RentCycleTransactionHelper(
-                rentCycleCrudService,
-                rentCycleChargeCrudService,
+        payerResident = new com.livic.core.property.dto.UnitResidentDTO(
+                memberId, UUID.randomUUID(), com.livic.core.property.domain.UnitMemberRole.TENANT,
+                leaseId, unitId, "101", 1, propertyId);
+
+        transactionHelper = new BillTransactionHelper(
+                billCrudService,
+                billLineCrudService,
                 unitFacade,
+                unitMemberFacade,
                 billingWorksheetCrudService,
                 leaseCrudService,
                 chargeConfigCrudService,
                 chargeCalculationService,
                 unitBookingCrudService,
                 financeLedgerCrudService,
-                rentCycleService
+                billService
         );
-        rentCycleService = new RentCycleServiceImpl(
-                rentCycleCrudService,
-                rentCycleChargeCrudService,
+        rentGenerationService = new RentGenerationServiceImpl(
                 leaseQueryService,
                 leaseCrudService,
+                chargeConfigCrudService,
+                meterReadingCrudService,
+                unitFacade,
+                billingWorksheetCrudService,
+                transactionHelper,
+                billService
+        );
+        billService = new BillServiceImpl(
+                billCrudService,
+                billLineCrudService,
                 billingWorksheetCrudService,
                 meterReadingCrudService,
                 chargeConfigCrudService,
@@ -176,8 +199,8 @@ public class RentModelingFixesTest {
                 eventPublisher,
                 userFacade,
                 unitFacade,
-                propertyFacade,
-                transactionHelper
+                unitMemberFacade,
+                propertyFacade
         );
     }
 
@@ -200,21 +223,27 @@ public class RentModelingFixesTest {
     @DisplayName("Verification 5: Rent cycle generation uses lease.monthlyRentAmount, not charge_config_tbl base_rate")
     void testProcessLeaseGeneration_SourcesFromLeaseMonthlyRentAmount() {
         when(leaseQueryService.getLeaseById(leaseId)).thenReturn(lease);
-        when(rentCycleCrudService.findByLease_IdAndBillingMonth(leaseId, "2026-08")).thenReturn(Optional.empty());
-        when(rentCycleCrudService.save(any(RentCycleTbl.class))).thenAnswer(i -> {
-            RentCycleTbl c = i.getArgument(0);
+        when(unitMemberFacade.getResidentByLeaseId(leaseId)).thenReturn(Optional.of(payerResident));
+        when(billCrudService.findByMemberIdAndBillingMonth(memberId, "2026-08", BillType.RENT)).thenReturn(Optional.empty());
+        java.util.concurrent.atomic.AtomicReference<BillTbl> saved = new java.util.concurrent.atomic.AtomicReference<>();
+        when(billCrudService.save(any(BillTbl.class))).thenAnswer(i -> {
+            BillTbl c = i.getArgument(0);
             if (c.getId() == null) c.setId(UUID.randomUUID());
+            saved.set(c);
             return c;
         });
+        // generation hands back through core's read path, so that lookup has to resolve
+        when(billCrudService.findById(any(UUID.class))).thenAnswer(i -> Optional.ofNullable(saved.get()));
+        when(unitMemberFacade.getResidentByMemberId(memberId)).thenReturn(Optional.of(payerResident));
 
-        RentCycleDTOs.GenerateRentCycleRequest request = new RentCycleDTOs.GenerateRentCycleRequest(leaseId, "2026-08", LocalDate.now().plusDays(10));
-        rentCycleService.generate(request);
+        BillDTOs.GenerateBillRequest request = new BillDTOs.GenerateBillRequest(leaseId, "2026-08", LocalDate.now().plusDays(10));
+        rentGenerationService.generate(request);
 
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<RentCycleChargeTbl>> chargeCaptor = ArgumentCaptor.forClass(List.class);
-        verify(rentCycleChargeCrudService, times(1)).saveAll(chargeCaptor.capture());
+        ArgumentCaptor<List<BillLineTbl>> chargeCaptor = ArgumentCaptor.forClass(List.class);
+        verify(billLineCrudService, times(1)).saveAll(chargeCaptor.capture());
 
-        RentCycleChargeTbl savedCharge = chargeCaptor.getValue().get(0);
+        BillLineTbl savedCharge = chargeCaptor.getValue().get(0);
         assertEquals(RentChargeType.BASE_RENT, savedCharge.getChargeType());
         assertEquals(BigDecimal.valueOf(1500.00), savedCharge.getAmount()); // Matches lease, NOT charge_config baseRate (9999.00)
     }
@@ -233,7 +262,7 @@ public class RentModelingFixesTest {
         when(leaseQueryService.findActiveLeasesByProperty(propertyId)).thenReturn(List.of(lease));
         when(billingWorksheetCrudService.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(propertyId, chargeConfigId, "2026-08")).thenReturn(List.of());
         when(userFacade.getUsersByIds(any())).thenReturn(Map.of());
-        when(rentCycleCrudService.findByPropertyIdAndBillingMonth(propertyId, "2026-08")).thenReturn(List.of());
+        when(billCrudService.findByPropertyIdAndBillingMonth(propertyId, "2026-08")).thenReturn(List.of());
 
         List<WorksheetEntryResponse> responses = billingWorksheetService.getOrCreateWorksheetForMonth(propertyId, chargeConfigId, "2026-08");
 
@@ -245,27 +274,29 @@ public class RentModelingFixesTest {
     @Test
     @DisplayName("Verification 7: Single cycle publish and unpublish transition status and fire event")
     void testSingleCyclePublishAndUnpublish() {
-        RentCycleTbl cycle = RentCycleTbl.builder()
-                .lease(lease)
+        BillTbl cycle = BillTbl.builder()
+                .propertyId(propertyId)
+                .memberId(memberId)
+                .billType(BillType.RENT)
                 .billingMonth("2026-08")
                 .dueDate(LocalDate.now().plusDays(5))
                 .totalAmount(BigDecimal.valueOf(1500.00))
-                .status(RentCycleStatus.PENDING)
+                .status(BillStatus.PENDING)
                 .build();
         UUID cycleId = UUID.randomUUID();
         cycle.setId(cycleId);
 
-        when(rentCycleCrudService.findById(cycleId)).thenReturn(Optional.of(cycle));
-        when(rentCycleCrudService.save(any(RentCycleTbl.class))).thenAnswer(i -> i.getArgument(0));
+        when(billCrudService.findById(cycleId)).thenReturn(Optional.of(cycle));
+        when(billCrudService.save(any(BillTbl.class))).thenAnswer(i -> i.getArgument(0));
 
         // Test Publish
-        RentCycleDTOs.RentCycleResponse publishedResp = rentCycleService.publish(cycleId);
-        assertEquals(RentCycleStatus.PUBLISHED, publishedResp.status());
+        BillDTOs.BillResponse publishedResp = billService.publish(cycleId);
+        assertEquals(BillStatus.PUBLISHED, publishedResp.status());
         verify(eventPublisher, times(1)).publishEvent(any(RentPublishedEvent.class));
 
         // Test Unpublish
-        RentCycleDTOs.RentCycleResponse unpublishedResp = rentCycleService.unpublish(cycleId);
-        assertEquals(RentCycleStatus.PENDING, unpublishedResp.status());
+        BillDTOs.BillResponse unpublishedResp = billService.unpublish(cycleId);
+        assertEquals(BillStatus.PENDING, unpublishedResp.status());
     }
 
     @Test
@@ -297,7 +328,7 @@ public class RentModelingFixesTest {
         UUID myProperty1 = UUID.randomUUID();
         UUID myProperty2 = UUID.randomUUID();
 
-        when(leaseQueryService.findByUserIdAndStatus(landlordId, LeaseStatus.ACTIVE)).thenReturn(Optional.empty());
+        when(unitMemberFacade.getActiveResidencesByUserId(landlordId)).thenReturn(List.of());
         when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of(
                 new PropertySummaryDTO(myProperty1, "My PG 1", "Address 1", "City", "Landmark", 3, true),
                 new PropertySummaryDTO(myProperty2, "My PG 2", "Address 2", "City", "Landmark", 3, true)
@@ -305,11 +336,11 @@ public class RentModelingFixesTest {
 
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
-        org.springframework.data.domain.Page<RentCycleTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
-        when(rentCycleCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+        org.springframework.data.domain.Page<BillTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
+        when(billCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
                 .thenReturn(mockPage);
 
-        RentCycleDTOs.RentCycleListResponse result = rentCycleService.list(landlordId, null, null, "2026-08", null, null, pageable);
+        BillDTOs.BillListResponse result = billService.list(landlordId, null, null, "2026-08", null, null, pageable);
 
         assertNotNull(result);
         assertEquals(0, result.totalElements());
@@ -322,34 +353,31 @@ public class RentModelingFixesTest {
         UUID landlordId = UUID.randomUUID();
         UUID foreignPropertyId = UUID.randomUUID();
 
-        when(leaseQueryService.findByUserIdAndStatus(landlordId, LeaseStatus.ACTIVE)).thenReturn(Optional.empty());
+        when(unitMemberFacade.getActiveResidencesByUserId(landlordId)).thenReturn(List.of());
         when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of()); // Owns 0 properties
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
-        RentCycleDTOs.RentCycleListResponse result = rentCycleService.list(landlordId, foreignPropertyId, null, "2026-08", null, null, pageable);
+        BillDTOs.BillListResponse result = billService.list(landlordId, foreignPropertyId, null, "2026-08", null, null, pageable);
 
         assertNotNull(result);
         assertEquals(0, result.totalElements());
         assertTrue(result.content().isEmpty());
-        verify(rentCycleCrudService, never()).findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class));
+        verify(billCrudService, never()).findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class));
     }
 
     @Test
-    @DisplayName("Tenant querying rent cycles scopes strictly to their active lease")
-    void testList_Tenant_ScopesStrictlyToLease() {
+    @DisplayName("Tenant querying bills scopes strictly to their own tenancy")
+    void testList_Tenant_ScopesStrictlyToOwnTenancy() {
         UUID tenantId = UUID.randomUUID();
-        LeaseTbl tenantLease = new LeaseTbl();
-        UUID tenantLeaseId = UUID.randomUUID();
-        tenantLease.setId(tenantLeaseId);
 
-        when(leaseQueryService.findByUserIdAndStatus(tenantId, LeaseStatus.ACTIVE)).thenReturn(Optional.of(tenantLease));
+        when(unitMemberFacade.getActiveResidencesByUserId(tenantId)).thenReturn(List.of(payerResident));
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
-        org.springframework.data.domain.Page<RentCycleTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
-        when(rentCycleCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+        org.springframework.data.domain.Page<BillTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
+        when(billCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
                 .thenReturn(mockPage);
 
-        RentCycleDTOs.RentCycleListResponse result = rentCycleService.list(tenantId, null, null, "2026-08", null, null, pageable);
+        BillDTOs.BillListResponse result = billService.list(tenantId, null, null, "2026-08", null, null, pageable);
 
         assertNotNull(result);
         verify(propertyFacade, never()).getPropertiesByUserId(any());
@@ -362,7 +390,7 @@ public class RentModelingFixesTest {
         UUID propertyId1 = UUID.randomUUID();
         UUID propertyId2 = UUID.randomUUID();
 
-        when(leaseQueryService.findByUserIdAndStatus(landlordId, LeaseStatus.ACTIVE)).thenReturn(Optional.empty());
+        when(unitMemberFacade.getActiveResidencesByUserId(landlordId)).thenReturn(List.of());
         when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of(
                 new PropertySummaryDTO(propertyId1, "Property 1", "Addr 1", "City", "Landmark", 5, true),
                 new PropertySummaryDTO(propertyId2, "Property 2", "Addr 2", "City", "Landmark", 5, true)
@@ -374,14 +402,14 @@ public class RentModelingFixesTest {
         ));
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
-        org.springframework.data.domain.Page<RentCycleTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
-        when(rentCycleCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+        org.springframework.data.domain.Page<BillTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
+        when(billCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
                 .thenReturn(mockPage);
 
-        when(rentCycleCrudService.getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any()))
-                .thenReturn(new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.valueOf(50000), 2L, 8L));
+        when(billCrudService.getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any()))
+                .thenReturn(new RentRollMetricsDTO(BigDecimal.valueOf(50000), 2L, 8L));
 
-        RentCycleDTOs.RentCycleListResponse result = rentCycleService.list(landlordId, null, null, "2026-08", null, null, pageable);
+        BillDTOs.BillListResponse result = billService.list(landlordId, null, null, "2026-08", null, null, pageable);
 
         assertNotNull(result);
         assertEquals(BigDecimal.valueOf(50000), result.metrics().totalExpectedRevenue());
@@ -390,7 +418,7 @@ public class RentModelingFixesTest {
 
         // Verify bulk calls executed exactly ONCE across all properties
         verify(unitFacade, times(1)).getUnitsByPropertyIds(any());
-        verify(rentCycleCrudService, times(1)).getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any());
+        verify(billCrudService, times(1)).getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any());
         verify(unitFacade, never()).getUnitsByPropertyId(any());
     }
 }

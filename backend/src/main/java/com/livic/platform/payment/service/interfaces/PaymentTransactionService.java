@@ -15,6 +15,9 @@ public interface PaymentTransactionService {
 
     java.util.Optional<PaymentTransactionTbl> findTransactionById(UUID id);
 
+    /** The latest successful transaction against a reference. */
+    java.util.Optional<PaymentTransactionTbl> findLatestSuccessful(String referenceType, UUID referenceId);
+
     com.livic.platform.payment.dto.PaymentTransactionResponse getTransactionResponse(UUID id);
 
     void verifyAndCompletePayment(PaymentVerificationRequest request);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { getProperty, updateProperty } from '@/src/features/properties/api/property.api';
+import { getBlocks, BlockResponse } from '@/src/features/properties/api/block.api';
 import { generateBatchUnits, getFloorSummaries } from '@/src/features/properties/api/unit.api';
 
 interface UseEditPropertyProps {
@@ -23,6 +24,10 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
   const [saving, setSaving] = useState(false);
   const [hasConfiguredFloor, setHasConfiguredFloor] = useState(false);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [blocks, setBlocks] = useState<BlockResponse[]>([]);
+
+  const hasMultipleBlocks = blocks.length > 1;
+  const totalBlocks = blocks.length;
 
   useEffect(() => {
     fetchPropertyDetails();
@@ -30,7 +35,11 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
 
   const fetchPropertyDetails = async () => {
     try {
-      const data = await getProperty(propertyId, userToken);
+      const [data, blockData, floorSummaries] = await Promise.all([
+        getProperty(propertyId, userToken),
+        getBlocks(propertyId, userToken).catch(() => [] as BlockResponse[]),
+        getFloorSummaries(propertyId, userToken).catch(() => []),
+      ]);
       setName(data.name);
       setAddress(data.address);
       setCity(data.city);
@@ -38,9 +47,9 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
       setTotalFloors(data.totalFloors?.toString() || '');
       setAutoBillDayOfMonth(data.autoBillDayOfMonth?.toString() || '');
       setSelectedAmenities(data.amenities || ['High-speed Fiber Wi-Fi', 'Covered Parking', '24/7 Security', 'Power Backup']);
+      setBlocks(blockData);
       
-      const floorSummaries = await getFloorSummaries(propertyId, userToken);
-      const isAnyConfigured = floorSummaries.some(f => f.configured);
+      const isAnyConfigured = floorSummaries.some((f: any) => f.configured);
       setHasConfiguredFloor(isAnyConfigured);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to fetch property details');
@@ -57,12 +66,12 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
   };
 
   const handleUpdate = async () => {
-    if (!name || !address || !city || !totalFloors) {
-      Alert.alert('Validation', 'Please fill in all required fields (Name, Address, City, Floors).');
+    if (!name || !address || !city || (!hasMultipleBlocks && !totalFloors)) {
+      Alert.alert('Validation', `Please fill in all required fields (Name, Address, City${hasMultipleBlocks ? '' : ', Floors'}).`);
       return;
     }
 
-    if (parseInt(totalFloors, 10) < 1) {
+    if (!hasMultipleBlocks && parseInt(totalFloors, 10) < 1) {
       Alert.alert('Validation', 'Property must have at least 1 floor.');
       return;
     }
@@ -77,13 +86,13 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
           address, 
           city, 
           landmark, 
-          totalFloors: parseInt(totalFloors, 10),
+          totalFloors: hasMultipleBlocks ? undefined : parseInt(totalFloors, 10),
           autoBillDayOfMonth: autoBillDayOfMonth ? parseInt(autoBillDayOfMonth, 10) : null,
           amenities: selectedAmenities
         }
       });
 
-      if (!hasConfiguredFloor && globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0) {
+      if (!hasMultipleBlocks && !hasConfiguredFloor && globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0) {
         await generateBatchUnits(propertyId, {
           totalFloors: parseInt(totalFloors, 10),
           unitsPerFloor: parseInt(globalUnitsPerFloor, 10),
@@ -125,6 +134,8 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
     loading,
     saving,
     hasConfiguredFloor,
+    hasMultipleBlocks,
+    totalBlocks,
     handleUpdate,
     fetchPropertyDetails,
   };

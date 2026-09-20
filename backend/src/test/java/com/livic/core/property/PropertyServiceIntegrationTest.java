@@ -16,8 +16,8 @@ import com.livic.core.property.repository.UnitRepository;
 import com.livic.core.property.service.interfaces.PropertyService;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.user.repository.UserRepository;
-import com.livic.core.finance.domain.LeaseTbl;
-import com.livic.core.finance.repository.LeaseRepository;
+import com.livic.verticals.rental.lease.domain.LeaseTbl;
+import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.service.interfaces.MembershipService;
 
@@ -132,7 +132,6 @@ public class PropertyServiceIntegrationTest {
                 .address("123 Test St")
                 .city("Test City")
                 .landmark("Test Landmark")
-                .totalFloors(5)
                 .build();
         property = propertyRepository.save(property);
 
@@ -209,7 +208,7 @@ public class PropertyServiceIntegrationTest {
         leaseRepository.save(activeLease());
 
         BusinessException exception = assertThrows(BusinessException.class,
-                () -> unitLayoutOrchestrationService.saveFloorLayout(property.getId(), 1, List.of()));
+                () -> unitLayoutOrchestrationService.saveFloorLayout(property.getId(), null, 1, List.of()));
 
         assertEquals(HttpStatus.CONFLICT, exception.getStatus());
         assertTrue(unitRepository.existsById(unit.getId()), "Leased unit should not be removed");
@@ -219,7 +218,7 @@ public class PropertyServiceIntegrationTest {
     public void testFloorLayoutShowsActiveTenantOnUnit() {
         LeaseTbl lease = leaseRepository.save(activeLease());
 
-        List<UnitDTOs.UnitResponse> layout = unitLayoutOrchestrationService.getFloorLayout(property.getId(), 1);
+        List<UnitDTOs.UnitResponse> layout = unitLayoutOrchestrationService.getFloorLayout(property.getId(), null, 1);
 
         UnitDTOs.UnitResponse leasedUnit = layout.stream()
                 .filter(u -> u.id().equals(unit.getId()))

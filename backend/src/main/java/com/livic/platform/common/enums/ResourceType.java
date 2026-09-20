@@ -4,7 +4,7 @@ public enum ResourceType {
     PROPERTY,
     UNIT,
     LEASE,
-    RENT_CYCLE,
+    BILL,
     CHARGE_CONFIG,
     INVENTORY_ITEM,
     INVENTORY_ASSIGNMENT,

@@ -117,17 +117,31 @@ class ModuleBoundaryTest {
     }
 
     @Test
-    @DisplayName("Finance module internal services must not be accessed from outside finance module")
-    void strictFinanceFacadeEnforcement() {
+    @DisplayName("Finance implementations and repositories must not be accessed from outside finance")
+    void financeInternalsAreClosed() {
         ArchRule rule = noClasses()
                 .that().resideOutsideOfPackage("com.livic.core.finance..")
                 .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.core.finance.service.interfaces..",
                         "com.livic.core.finance.service.impl..",
-                        "com.livic.core.finance.repository..",
+                        "com.livic.core.finance.repository.."
+                )
+                .because("Implementations and repositories stay private to the module that owns them");
+
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("Only verticals may build on finance's service contracts and entities")
+    void financeContractsAreOpenToVerticalsOnly() {
+        ArchRule rule = noClasses()
+                .that().resideOutsideOfPackage("com.livic.core.finance..")
+                .and().resideOutsideOfPackage("com.livic.verticals..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "com.livic.core.finance.service.interfaces..",
                         "com.livic.core.finance.domain.."
                 )
-                .because("Outside modules must access the finance module strictly through com.livic.core.finance.facade or DTOs");
+                .because("core is the foundation verticals are built on, so rental may hold a BillTbl and "
+                        + "call BillService directly; everyone else goes through com.livic.core.finance.facade");
 
         rule.check(classes);
     }

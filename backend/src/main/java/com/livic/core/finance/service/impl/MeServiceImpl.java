@@ -4,7 +4,7 @@ import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.dto.MeDTOs;
-import com.livic.core.finance.facade.FinanceFacade;
+import com.livic.core.finance.spi.ActiveTenancyProvider;
 import com.livic.core.finance.service.interfaces.MeService;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
@@ -28,7 +28,7 @@ public class MeServiceImpl implements MeService {
 
     private final UserFacade userFacade;
     private final AuthFacade authFacade;
-    private final FinanceFacade financeFacade;
+    private final ActiveTenancyProvider activeTenancyProvider;
     private final UnitMemberFacade unitMemberFacade;
     private final PropertyFacade propertyFacade;
 
@@ -49,8 +49,8 @@ public class MeServiceImpl implements MeService {
 
         List<MeDTOs.MembershipSummary> tenantProperties = List.of();
 
-        List<MeDTOs.ActiveLeaseSummary> activeLeases = financeFacade.getActiveLeaseForUser(userId)
-                .map(lease -> List.of(MeDTOs.ActiveLeaseSummary.from(lease)))
+        List<MeDTOs.ActiveLeaseSummary> activeLeases = activeTenancyProvider.findActiveTenancy(userId)
+                .map(tenancy -> List.of(MeDTOs.ActiveLeaseSummary.from(tenancy)))
                 .orElse(List.of());
 
         // Every unit this person belongs to — owned, rented, or lived in with family.

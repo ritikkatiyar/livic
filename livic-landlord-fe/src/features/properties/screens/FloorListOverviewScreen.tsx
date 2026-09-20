@@ -13,6 +13,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { formatErrorMessage } from '@/src/utils/errors';
 import { getProperty } from '@/src/features/properties/api/property.api';
+import { getBlocks } from '@/src/features/properties/api/block.api';
 import { getFloorSummaries, FloorSummaryResponse, generateBatchUnits } from '@/src/features/properties/api/unit.api';
 import { useFocusEffect } from 'expo-router';
 
@@ -34,13 +35,22 @@ interface FloorListOverviewScreenProps {
   userToken: string;
   onBack: () => void;
   onEditFloor: (floorNumber: number) => void;
+  /** The building these floors belong to. Omitted means the property's only block. */
+  blockId?: string | null;
+  /** Shown beside the property name once a property has more than one building. */
+  blockName?: string | null;
+  /** How tall this block is, when the caller already knows. */
+  blockTotalFloors?: number | null;
 }
 
 export default function FloorListOverviewScreen({ 
   propertyId, 
   userToken, 
   onBack,
-  onEditFloor
+  onEditFloor,
+  blockId,
+  blockName,
+  blockTotalFloors
 }: FloorListOverviewScreenProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
@@ -58,18 +68,34 @@ export default function FloorListOverviewScreen({
   const fetchInitialData = useCallback(async () => {
     setLoading(true);
     try {
-      const property = await getProperty(propertyId, userToken);
-      setPropertyName(property.name);
-      setTotalFloorsFromProperty(property.totalFloors);
+      const [property, allBlocks] = await Promise.all([
+        getProperty(propertyId, userToken),
+        blockId ? getBlocks(propertyId, userToken) : Promise.resolve([]),
+      ]);
 
-      const floorData = await getFloorSummaries(propertyId, userToken, property.totalFloors);
+      let resolvedBlockName = blockName;
+      let resolvedFloorCount = blockTotalFloors;
+
+      if (blockId && (!resolvedBlockName || resolvedFloorCount === undefined || resolvedFloorCount === null)) {
+        const currentBlock = allBlocks.find((b) => b.id === blockId);
+        if (currentBlock) {
+          resolvedBlockName = currentBlock.name;
+          resolvedFloorCount = currentBlock.totalFloors ?? undefined;
+        }
+      }
+
+      setPropertyName(resolvedBlockName ? `${property.name} · ${resolvedBlockName}` : property.name);
+      const floorCount = resolvedFloorCount ?? (blockId ? undefined : property.totalFloors);
+      setTotalFloorsFromProperty(floorCount);
+
+      const floorData = await getFloorSummaries(propertyId, userToken, floorCount, blockId);
       setFloors([...floorData].sort((a, b) => b.floorNumber - a.floorNumber));
     } catch (error: any) {
       Alert.alert('Error', formatErrorMessage(error));
     } finally {
       setLoading(false);
     }
-  }, [propertyId, userToken]);
+  }, [propertyId, userToken, blockId, blockName, blockTotalFloors]);
 
   useFocusEffect(
     useCallback(() => {
@@ -80,7 +106,7 @@ export default function FloorListOverviewScreen({
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const floorData = await getFloorSummaries(propertyId, userToken, totalFloorsFromProperty);
+      const floorData = await getFloorSummaries(propertyId, userToken, totalFloorsFromProperty, blockId);
       setFloors([...floorData].sort((a, b) => b.floorNumber - a.floorNumber));
     } catch (error: any) {
       Alert.alert('Error', formatErrorMessage(error));
@@ -121,7 +147,8 @@ export default function FloorListOverviewScreen({
         startingFloorNumber: floorNum,
         prefix: '',
         capacity: 1,
-        unitType: unitType
+        unitType: unitType,
+        blockId: blockId ?? null
       }, userToken);
 
       Alert.alert('Success', `Successfully created ${count} units on Floor ${floorNum}`);

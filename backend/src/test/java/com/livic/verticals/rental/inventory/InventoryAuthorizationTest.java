@@ -48,7 +48,7 @@ class InventoryAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, null, inventoryFacade, null);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, null, null, inventoryFacade, null);
         propertyId = UUID.randomUUID();
         itemId = UUID.randomUUID();
         ownerUserId = UUID.randomUUID();

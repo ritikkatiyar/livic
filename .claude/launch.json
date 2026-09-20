@@ -3,13 +3,30 @@
   "configurations": [
     {
       "name": "landlord-web",
-      "url": "http://localhost:3000",
-      "port": 3000
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--max-old-space-size=8192",
+        "node_modules/expo/bin/cli",
+        "start",
+        "--web",
+        "--offline",
+        "--port",
+        "8081"
+      ],
+      "cwd": "livic-landlord-fe",
+      "port": 8081,
+      "url": "http://localhost:8081"
     },
     {
       "name": "backend",
-      "url": "http://localhost:8080",
-      "port": 8080
+      "runtimeExecutable": "mvn",
+      "runtimeArgs": [
+        "spring-boot:run",
+        "-Dspring-boot.run.profiles=dev"
+      ],
+      "cwd": "backend",
+      "port": 8080,
+      "url": "http://localhost:8080"
     }
   ]
 }

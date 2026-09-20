@@ -27,8 +27,6 @@ public class PropertyTbl extends BaseEntity {
 
     private String landmark;
 
-    private Integer totalFloors;
-
     @Column(name = "auto_bill_day_of_month")
     private Integer autoBillDayOfMonth;
 

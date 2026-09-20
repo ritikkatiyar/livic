@@ -1,13 +1,14 @@
 package com.livic.core.finance.service.impl;
 
 import com.livic.core.finance.domain.FinanceLedgerTbl;
-import com.livic.core.finance.domain.LeaseTbl;
 import com.livic.core.finance.dto.LedgerDTOs.LedgerEntryResponse;
 import com.livic.core.finance.service.interfaces.FinanceLedgerCrudService;
 import com.livic.core.finance.specification.FinanceLedgerSpecifications;
 import com.livic.core.finance.service.interfaces.LedgerService;
+import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
+import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -36,6 +38,7 @@ public class LedgerServiceImpl implements LedgerService {
     private final FinanceLedgerCrudService financeLedgerCrudService;
     private final UserFacade userFacade;
     private final UnitFacade unitFacade;
+    private final UnitMemberFacade unitMemberFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -53,11 +56,16 @@ public class LedgerServiceImpl implements LedgerService {
         Map<UUID, UnitSummaryDTO> unitMap = units.stream()
                 .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
 
-        // Batch fetch tenant users to avoid N+1 query
-        Set<UUID> userIds = entriesPage.getContent().stream()
-                .map(FinanceLedgerTbl::getLease)
+        // Batch fetch payers and their users to avoid N+1 queries
+        Set<UUID> memberIds = entriesPage.getContent().stream()
+                .map(FinanceLedgerTbl::getMemberId)
                 .filter(Objects::nonNull)
-                .map(LeaseTbl::getUserId)
+                .collect(Collectors.toSet());
+        Map<UUID, UnitResidentDTO> payersByMemberId = unitMemberFacade.getResidentsByMemberIds(memberIds).stream()
+                .collect(Collectors.toMap(UnitResidentDTO::memberId, Function.identity(), (a, b) -> a));
+
+        Set<UUID> userIds = payersByMemberId.values().stream()
+                .map(UnitResidentDTO::userId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
@@ -83,19 +91,19 @@ public class LedgerServiceImpl implements LedgerService {
 
         return entriesPage.map(entry -> {
             String tenantName = "N/A";
-            LeaseTbl lease = entry.getLease();
-            if (lease != null && lease.getUserId() != null) {
-                UserSummaryDTO tenant = usersMap.get(lease.getUserId());
+            UnitResidentDTO payer = payersByMemberId.get(entry.getMemberId());
+            if (payer != null && payer.userId() != null) {
+                UserSummaryDTO tenant = usersMap.get(payer.userId());
                 if (tenant != null) {
                     tenantName = tenant.fullName();
                 } else {
-                    log.warn("Tenant user not found for lease userId: {}", lease.getUserId());
+                    log.warn("Tenant user not found for member userId: {}", payer.userId());
                 }
             }
 
-            // Compute running cumulative balance for this lease at this entry
+            // Compute running cumulative balance for this payer at this entry
             BigDecimal runningBalance = entry.getAmount();
-            if (lease != null) {
+            if (entry.getMemberId() != null) {
                 BigDecimal balance = finalRunningBalancesMap.get(entry.getId());
                 if (balance != null) {
                     runningBalance = balance;

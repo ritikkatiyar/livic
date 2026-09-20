@@ -34,6 +34,7 @@ interface UseFloorEditorTenantAssignmentProps {
   updateUnitDetails: (id: string, updates: Partial<UnitBlock>) => void;
   propertyId: string;
   floorNumber: number;
+  buildingBlockId?: string | null;
   userToken: string;
   sheetScrollRef: React.RefObject<any>;
   setParentScrollEnabled: React.Dispatch<React.SetStateAction<boolean>>;
@@ -47,6 +48,7 @@ export function useFloorEditorTenantAssignment({
   updateUnitDetails,
   propertyId,
   floorNumber,
+  buildingBlockId,
   userToken,
   sheetScrollRef,
   setParentScrollEnabled,
@@ -177,7 +179,7 @@ export function useFloorEditorTenantAssignment({
         facing: 'NORTH'
       }));
 
-      const savedUnits = await saveFloorLayout(propertyId, floorNumber, userToken, savePayload);
+      const savedUnits = await saveFloorLayout(propertyId, floorNumber, userToken, savePayload, buildingBlockId);
 
       const savedUnit = savedUnits.find(u => 
         (u.gridX === selectedBlock.gridX && u.gridY === selectedBlock.gridY) ||

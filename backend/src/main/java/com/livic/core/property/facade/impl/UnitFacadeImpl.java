@@ -52,7 +52,7 @@ public class UnitFacadeImpl implements UnitFacade {
 
     @Override
     public List<UnitSummaryDTO> getUnitsByFloor(UUID propertyId, int floorNumber) {
-        return unitQueryService.getUnitsByFloor(propertyId, floorNumber).stream()
+        return unitQueryService.getUnitsByFloor(propertyId, null, floorNumber).stream()
                 .map(UnitSummaryDTO::from)
                 .toList();
     }

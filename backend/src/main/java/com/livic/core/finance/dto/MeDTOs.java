@@ -79,9 +79,9 @@ public class MeDTOs {
             BigDecimal rentAmount,
             String status
     ) {
-        public static ActiveLeaseSummary from(LeaseSummaryDTO lease) {
+        public static ActiveLeaseSummary from(com.livic.core.finance.spi.ActiveTenancyProvider.ActiveTenancy lease) {
             return new ActiveLeaseSummary(
-                    lease.id(),
+                    lease.leaseId(),
                     lease.propertyId(),
                     lease.propertyName(),
                     lease.unitId(),

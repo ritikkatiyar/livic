@@ -5,9 +5,9 @@ import com.livic.platform.common.domain.UnitType;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.user.repository.UserRepository;
-import com.livic.core.finance.dto.LeaseDTOs;
-import com.livic.core.finance.domain.LeaseTbl;
-import com.livic.core.finance.service.interfaces.LeaseService;
+import com.livic.verticals.rental.lease.dto.LeaseDTOs;
+import com.livic.verticals.rental.lease.domain.LeaseTbl;
+import com.livic.verticals.rental.lease.service.interfaces.LeaseService;
 import com.livic.core.property.domain.BlockTbl;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitMemberRole;
@@ -60,7 +60,7 @@ class UnitMemberLeaseSyncIntegrationTest {
         tenant = userRepository.save(user("tenant", UserRole.USER));
 
         PropertyTbl property = propertyRepository.save(PropertyTbl.builder()
-                .name("Member Sync Property").address("4 Test St").city("Test City").totalFloors(1).build());
+                .name("Member Sync Property").address("4 Test St").city("Test City").build());
         BlockTbl block = blockService.getOrCreateDefaultBlock(property);
 
         unit = unitRepository.save(UnitTbl.builder()

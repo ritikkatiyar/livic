@@ -47,5 +47,12 @@ public class BlockTbl extends BaseEntity {
     @Builder.Default
     private boolean isDefault = false;
 
+    /**
+     * How tall this building is. It sits here rather than on the property because two towers
+     * on one plot can have different heights, and a property-wide number would then be a lie.
+     */
+    @Column(name = "total_floors")
+    private Integer totalFloors;
+
     public static final String DEFAULT_NAME = "Main";
 }

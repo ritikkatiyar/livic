@@ -38,6 +38,7 @@ import static com.livic.core.property.dto.PropertyDTOs.UpdatePropertyRequest;
 @RequiredArgsConstructor
 public class PropertyController {
     private final PropertyService propertyService;
+    private final com.livic.core.property.service.interfaces.BlockService blockService;
     private final PropertyQueryService propertyQueryService;
 
     @PostMapping
@@ -48,7 +49,7 @@ public class PropertyController {
             @Valid @RequestBody CreatePropertyRequest request) {
         UUID creatorId = UUID.fromString(currentUser.getId());
         PropertyTbl createdProperty = propertyService.createProperty(request, creatorId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(PropertyMapper.toResponse(createdProperty)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(PropertyMapper.toResponse(createdProperty, blockService.totalFloorsForProperty(createdProperty.getId()))));
     }
 
     @PutMapping("/{propertyId}")
@@ -57,7 +58,7 @@ public class PropertyController {
             @PathVariable UUID propertyId,
             @Valid @RequestBody UpdatePropertyRequest request) {
         PropertyTbl updatedProperty = propertyService.updateProperty(propertyId, request);
-        return ResponseEntity.ok(ApiResponse.success(PropertyMapper.toResponse(updatedProperty)));
+        return ResponseEntity.ok(ApiResponse.success(PropertyMapper.toResponse(updatedProperty, blockService.totalFloorsForProperty(updatedProperty.getId()))));
     }
 
     @GetMapping("/{propertyId}")
@@ -65,7 +66,7 @@ public class PropertyController {
     public ResponseEntity<ApiResponse<PropertyResponse>> getProperty(
             @PathVariable UUID propertyId) {
         PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
-        return ResponseEntity.ok(ApiResponse.success(PropertyMapper.toResponse(property)));
+        return ResponseEntity.ok(ApiResponse.success(PropertyMapper.toResponse(property, blockService.totalFloorsForProperty(property.getId()))));
     }
 
     @GetMapping
@@ -76,7 +77,8 @@ public class PropertyController {
             @PageableDefault(size = 20) Pageable pageable) {
         UUID userId = UUID.fromString(currentUser.getId());
         Page<PropertyTbl> properties = propertyQueryService.getPropertiesByUserId(userId, search, pageable);
-        return ResponseEntity.ok(ApiResponse.success(properties.map(PropertyMapper::toResponse)));
+        return ResponseEntity.ok(ApiResponse.success(properties.map(
+                p -> PropertyMapper.toResponse(p, blockService.totalFloorsForProperty(p.getId())))));
     }
 
     @DeleteMapping("/{propertyId}")
@@ -93,6 +95,6 @@ public class PropertyController {
             @RequestParam boolean active
     ) {
         PropertyTbl updatedProperty = propertyService.togglePropertyActiveStatus(propertyId, active);
-        return ResponseEntity.ok(ApiResponse.success(PropertyMapper.toResponse(updatedProperty)));
+        return ResponseEntity.ok(ApiResponse.success(PropertyMapper.toResponse(updatedProperty, blockService.totalFloorsForProperty(updatedProperty.getId()))));
     }
 }

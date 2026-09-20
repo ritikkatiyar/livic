@@ -11,7 +11,13 @@ import java.util.UUID;
 @Repository
 public interface BlockRepository extends JpaRepository<BlockTbl, UUID> {
 
-    List<BlockTbl> findByPropertyIdOrderBySortOrderAsc(UUID propertyId);
+    /**
+     * Name breaks the tie: nothing writes a non-zero sort_order yet, so ordering by it alone
+     * is not deterministic once a property has more than one block.
+     */
+    List<BlockTbl> findByPropertyIdOrderBySortOrderAscNameAsc(UUID propertyId);
+
+    long countByPropertyId(UUID propertyId);
 
     Optional<BlockTbl> findFirstByPropertyIdAndIsDefaultTrue(UUID propertyId);
 

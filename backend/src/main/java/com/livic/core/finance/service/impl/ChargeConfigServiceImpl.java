@@ -8,7 +8,7 @@ import com.livic.core.finance.service.ChargeConfigService;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
 import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
-import com.livic.core.finance.service.interfaces.RentCycleChargeCrudService;
+import com.livic.core.finance.service.interfaces.BillLineCrudService;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
@@ -30,7 +30,7 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
     private final PropertyFacade propertyFacade;
     private final BillingWorksheetCrudService billingWorksheetCrudService;
     private final MeterReadingCrudService meterReadingCrudService;
-    private final RentCycleChargeCrudService rentCycleChargeCrudService;
+    private final BillLineCrudService billLineCrudService;
 
     @Override
     public ChargeConfigResponse createChargeConfig(ChargeConfigRequest request) {
@@ -91,7 +91,7 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
 
         if (billingWorksheetCrudService.existsByChargeConfigId(id) ||
                 meterReadingCrudService.existsByChargeConfigId(id) ||
-                rentCycleChargeCrudService.existsByCustomChargeConfigId(id)) {
+                billLineCrudService.existsByCustomChargeConfigId(id)) {
             throw new BusinessException(HttpStatus.CONFLICT, "Cannot permanently delete this charge configuration because it has historical billing records. Please keep it deactivated instead.");
         }
 

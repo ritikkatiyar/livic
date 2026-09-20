@@ -22,6 +22,11 @@ public record PublicPropertyListingDTO(
         String qrSlug
 ) {
     public static PublicPropertyListingDTO from(PropertyTbl p) {
+        return from(p, null);
+    }
+
+    /** {@code totalFloors} is derived from the property's blocks, so callers supply it. */
+    public static PublicPropertyListingDTO from(PropertyTbl p, Integer totalFloors) {
         if (p == null) {
             return null;
         }
@@ -31,7 +36,7 @@ public record PublicPropertyListingDTO(
                 p.getAddress(),
                 p.getCity(),
                 p.getLandmark(),
-                p.getTotalFloors(),
+                totalFloors,
                 p.getPropertyType(),
                 p.getDescription(),
                 p.getAmenities() != null ? List.copyOf(p.getAmenities()) : List.of(),

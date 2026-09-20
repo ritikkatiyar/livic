@@ -1,20 +1,16 @@
 package com.livic.core.finance.service.impl;
 
 import com.livic.platform.common.domain.CalculationStrategyType;
-import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.ChargeConfigTbl;
-import com.livic.core.finance.domain.LeaseTbl;
 import com.livic.core.finance.domain.MeterReadingTbl;
 import com.livic.core.finance.dto.MeterReadingDTOs.*;
 import com.livic.core.finance.service.MeterReadingService;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
-import com.livic.core.finance.service.interfaces.LeaseCrudService;
-import com.livic.core.finance.service.interfaces.LeaseQueryService;
+import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
-import com.livic.core.property.domain.PropertyTbl;
-import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.PropertySummaryDTO;
+import com.livic.core.property.dto.UnitMemberSummaryDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.facade.UnitFacade;
@@ -35,7 +31,7 @@ import java.util.stream.Collectors;
 public class MeterReadingServiceImpl implements MeterReadingService {
 
     private final MeterReadingCrudService meterReadingCrudService;
-    private final LeaseQueryService leaseQueryService;
+    private final UnitMemberFacade unitMemberFacade;
     private final ChargeConfigCrudService chargeConfigCrudService;
     private final PropertyFacade propertyFacade;
     private final UnitFacade unitFacade;
@@ -54,9 +50,13 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         }
 
         List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
-        List<LeaseTbl> activeLeases = leaseQueryService.findActiveLeasesByProperty(propertyId);
-        Map<UUID, List<LeaseTbl>> unitToLeasesMap = activeLeases.stream()
-                .collect(Collectors.groupingBy(LeaseTbl::getUnitId));
+        // Occupied means "has an active member", so a metered charge on an owner-occupied
+        // flat gets a reading row too; in a rental every occupied unit has a tenant member.
+        List<UnitMemberSummaryDTO> activeMembers =
+                unitMemberFacade.getActiveMembersByPropertyId(propertyId);
+        Map<UUID, List<UnitMemberSummaryDTO>> unitToMembersMap = activeMembers.stream()
+                .collect(Collectors.groupingBy(UnitMemberSummaryDTO::unitId));
+        Set<UUID> occupiedUnitIds = unitToMembersMap.keySet();
 
         List<MeterReadingTbl> existingEntries = meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
                 propertyId, chargeConfigId, month, year);
@@ -75,7 +75,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         List<MeterReadingTbl> newEntriesToSave = new ArrayList<>();
 
         for (UnitSummaryDTO unitSummary : units) {
-            if (!unitToLeasesMap.containsKey(unitSummary.id())) {
+            if (!occupiedUnitIds.contains(unitSummary.id())) {
                 continue;
             }
 
@@ -106,7 +106,10 @@ public class MeterReadingServiceImpl implements MeterReadingService {
             finalEntries.addAll(meterReadingCrudService.saveAll(newEntriesToSave));
         }
 
-        Set<UUID> userIds = activeLeases.stream().map(LeaseTbl::getUserId).collect(Collectors.toSet());
+        Set<UUID> userIds = activeMembers.stream()
+                .map(UnitMemberSummaryDTO::userId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
         Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(userIds);
 
         Set<UUID> unitIdsInResult = finalEntries.stream().map(MeterReadingTbl::getUnitId).collect(Collectors.toSet());
@@ -115,12 +118,13 @@ public class MeterReadingServiceImpl implements MeterReadingService {
                 .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
 
         return finalEntries.stream().map(r -> {
-            List<LeaseTbl> leases = unitToLeasesMap.getOrDefault(r.getUnitId(), List.of());
+            List<UnitMemberSummaryDTO> members =
+                    unitToMembersMap.getOrDefault(r.getUnitId(), List.of());
             String tenantName = "Vacant";
-            if (!leases.isEmpty()) {
-                tenantName = leases.stream()
-                        .map(l -> {
-                            UserSummaryDTO user = usersMap.get(l.getUserId());
+            if (!members.isEmpty()) {
+                tenantName = members.stream()
+                        .map(m -> {
+                            UserSummaryDTO user = usersMap.get(m.userId());
                             return user != null ? user.fullName() : "Unknown Tenant";
                         })
                         .collect(Collectors.joining(", "));

@@ -86,11 +86,21 @@ if ($Command -ieq "stop") {
     Push-Location $RootDir
     try {
         docker compose down
-
     } finally {
         Pop-Location
     }
+
+    Write-Step "Killing backend and frontend processes..."
+    # Kill powershell.exe wrappers that host the backend JAR (CIM gives us the full command line)
+    try {
+        Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" |
+            Where-Object { $_.CommandLine -match "livic-backend" } |
+            ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+    } catch {}
+
+    # Fallback: kill all remaining java and node processes
     Stop-Process -Name "java", "node" -Force -ErrorAction SilentlyContinue
+
     Write-Step "All services stopped successfully."
     exit 0
 }

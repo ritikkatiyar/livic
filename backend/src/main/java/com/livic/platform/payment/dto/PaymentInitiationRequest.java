@@ -12,7 +12,7 @@ import java.util.UUID;
 @ToString
 public class PaymentInitiationRequest {
     private final UUID payerUserId;
-    private final String referenceType; // e.g. "RENT_CYCLE", "SAAS_SUBSCRIPTION"
+    private final String referenceType; // e.g. "BILL", "SAAS_SUBSCRIPTION"
     private final UUID referenceId;
     private final BigDecimal amount;
     private final String paymentMethod; // e.g. "ONLINE", "CASH"

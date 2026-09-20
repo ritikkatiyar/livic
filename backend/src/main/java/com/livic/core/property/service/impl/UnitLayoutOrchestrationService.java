@@ -33,13 +33,17 @@ public class UnitLayoutOrchestrationService {
     private final UnitOccupancyProvider unitOccupancyProvider;
     private final UserFacade userFacade;
 
-    public List<UnitDTOs.UnitResponse> getFloorLayout(UUID propertyId, int floorNumber) {
-        List<UnitTbl> units = unitQueryService.getUnitsByFloor(propertyId, floorNumber);
+    public List<UnitDTOs.UnitResponse> getFloorLayout(UUID propertyId, UUID blockId, int floorNumber) {
+        List<UnitTbl> units = unitQueryService.getUnitsByFloor(propertyId, blockId, floorNumber);
         return enrichUnits(units);
     }
 
     public List<UnitDTOs.UnitResponse> getAllFloorsLayout(UUID propertyId) {
-        List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId);
+        return getAllFloorsLayout(propertyId, null);
+    }
+
+    public List<UnitDTOs.UnitResponse> getAllFloorsLayout(UUID propertyId, UUID blockId) {
+        List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId, blockId);
         return enrichUnits(units);
     }
 
@@ -54,10 +58,11 @@ public class UnitLayoutOrchestrationService {
 
     public List<UnitDTOs.UnitResponse> saveFloorLayout(
             UUID propertyId,
+            UUID blockId,
             int floorNumber,
             List<UnitDTOs.FloorLayoutUnitRequest> items) {
 
-        List<UnitTbl> existingUnits = unitQueryService.getUnitsByFloor(propertyId, floorNumber);
+        List<UnitTbl> existingUnits = unitQueryService.getUnitsByFloor(propertyId, blockId, floorNumber);
         Set<String> incomingNumbers = items.stream()
                 .map(UnitDTOs.FloorLayoutUnitRequest::unitNumber)
                 .collect(Collectors.toSet());
@@ -73,7 +78,7 @@ public class UnitLayoutOrchestrationService {
             }
         }
 
-        List<UnitTbl> saved = unitService.saveFloorLayout(propertyId, floorNumber, items);
+        List<UnitTbl> saved = unitService.saveFloorLayout(propertyId, blockId, floorNumber, items);
         return enrichUnits(saved);
     }
 
@@ -96,6 +101,7 @@ public class UnitLayoutOrchestrationService {
     private UnitDTOs.UnitResponse toResponse(UnitTbl u, List<UnitOccupant> occupants, Map<UUID, UserSummaryDTO> usersById) {
         return new UnitDTOs.UnitResponse(
                 u.getId(),
+                u.getBlock() != null ? u.getBlock().getId() : null,
                 u.getUnitNumber(),
                 u.getFloor(),
                 u.getGridX(),

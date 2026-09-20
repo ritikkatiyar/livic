@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 
+import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
@@ -87,8 +88,12 @@ export default function EditPropertyScreen({
     loading,
     saving,
     hasConfiguredFloor,
+    hasMultipleBlocks,
+    totalBlocks,
     handleUpdate,
   } = useEditProperty({ propertyId, userToken, onBack, onSave });
+
+  const router = useRouter();
 
   const [resetRotationTrigger, setResetRotationTrigger] = useState(0);
   const unitTypeDropdownRefDesktop = useRef<any>(null);
@@ -151,53 +156,77 @@ export default function EditPropertyScreen({
         />
       </View>
 
-      <View style={[styles.row, !isDesktop && { flexDirection: 'column', gap: 0 }]}>
-        <View style={[styles.inputGroup, { flex: 1 }]}>
-          <Text style={styles.label}>TOTAL FLOORS</Text>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.inputWithIcon}
-              placeholder="0"
-              value={totalFloors}
-              onChangeText={(val) => setTotalFloors(val.replace(/[^0-9]/g, ''))}
-              keyboardType="numeric"
-            />
-            <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIcon} />
+      {hasMultipleBlocks ? (
+        <View style={styles.multiBlockNoticeCard}>
+          <View style={styles.multiBlockNoticeIconWrapper}>
+            <MaterialIcons name="domain" size={24} color={theme.Colors.primary} />
           </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.multiBlockNoticeTitle}>
+              Floors & Units are managed per Block ({totalBlocks} Blocks configured)
+            </Text>
+            <Text style={styles.multiBlockNoticeSubtitle}>
+              Each block has its own physical floor count and layout. Configure them in Blocks & Floors.
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.multiBlockManageButton}
+            onPress={() => router.push(`/properties/${propertyId}/blocks`)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.multiBlockManageButtonText}>Manage Blocks</Text>
+            <MaterialIcons name="chevron-right" size={18} color={theme.Colors.primary} />
+          </TouchableOpacity>
         </View>
-
-        <View style={[styles.inputGroup, { flex: 1 }]}>
-          <Text style={styles.label}>GLOBAL UNITS/FLOOR</Text>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={[
-                styles.inputWithIcon,
-                hasConfiguredFloor && { opacity: 0.5, backgroundColor: 'rgba(230, 230, 230, 0.3)' },
-              ]}
-              placeholder={hasConfiguredFloor ? 'Disabled (Units exist)' : 'Optional'}
-              value={globalUnitsPerFloor}
-              onChangeText={(val) => setGlobalUnitsPerFloor(val.replace(/[^0-9]/g, ''))}
-              keyboardType="numeric"
-              editable={!hasConfiguredFloor}
-            />
-            <MaterialIcons name="grid-on" size={20} color="#bac9cc" style={styles.inputIcon} />
+      ) : (
+        <View style={[styles.row, !isDesktop && { flexDirection: 'column', gap: 0 }]}>
+          <View style={[styles.inputGroup, { flex: 1 }]}>
+            <Text style={styles.label}>TOTAL FLOORS</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.inputWithIcon}
+                placeholder="0"
+                value={totalFloors}
+                onChangeText={(val) => setTotalFloors(val.replace(/[^0-9]/g, ''))}
+                keyboardType="numeric"
+              />
+              <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIcon} />
+            </View>
           </View>
+
+          <View style={[styles.inputGroup, { flex: 1 }]}>
+            <Text style={styles.label}>GLOBAL UNITS/FLOOR</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={[
+                  styles.inputWithIcon,
+                  hasConfiguredFloor && { opacity: 0.5, backgroundColor: 'rgba(230, 230, 230, 0.3)' },
+                ]}
+                placeholder={hasConfiguredFloor ? 'Disabled (Units exist)' : 'Optional'}
+                value={globalUnitsPerFloor}
+                onChangeText={(val) => setGlobalUnitsPerFloor(val.replace(/[^0-9]/g, ''))}
+                keyboardType="numeric"
+                editable={!hasConfiguredFloor}
+              />
+              <MaterialIcons name="grid-on" size={20} color="#bac9cc" style={styles.inputIcon} />
+            </View>
+          </View>
+
+          {globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0 && (
+            <View style={[styles.inputGroup, { flex: 1.2 }]}>
+              <Text style={styles.label}>GLOBAL UNIT TYPE</Text>
+              <GlassDropdown
+                ref={isDesktop ? unitTypeDropdownRefDesktop : unitTypeDropdownRefMobile}
+                options={UNIT_TYPE_OPTIONS}
+                value={globalUnitType}
+                onChange={setGlobalUnitType}
+                placeholder="Select Unit Type"
+                icon="home"
+              />
+            </View>
+          )}
         </View>
-
-        {globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0 && (
-          <View style={[styles.inputGroup, { flex: 1.2 }]}>
-            <Text style={styles.label}>GLOBAL UNIT TYPE</Text>
-            <GlassDropdown
-              ref={isDesktop ? unitTypeDropdownRefDesktop : unitTypeDropdownRefMobile}
-              options={UNIT_TYPE_OPTIONS}
-              value={globalUnitType}
-              onChange={setGlobalUnitType}
-              placeholder="Select Unit Type"
-              icon="home"
-            />
-          </View>
-        )}
-      </View>
+      )}
 
       {/* Auto-Billing Cycle Day Selector */}
       <View style={styles.inputGroup}>

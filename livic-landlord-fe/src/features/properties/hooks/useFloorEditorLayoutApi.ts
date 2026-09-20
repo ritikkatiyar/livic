@@ -26,6 +26,8 @@ interface UnitBlock {
 interface UseFloorEditorLayoutApiProps {
   propertyId: string;
   floorNumber: number;
+  /** The building this floor is in; "blocks" here already means drawn rectangles. */
+  buildingBlockId?: string | null;
   userToken: string;
   onSave: () => void;
   blocks: UnitBlock[];
@@ -37,6 +39,7 @@ interface UseFloorEditorLayoutApiProps {
 export function useFloorEditorLayoutApi({
   propertyId,
   floorNumber,
+  buildingBlockId,
   userToken,
   onSave,
   blocks,
@@ -64,7 +67,7 @@ export function useFloorEditorLayoutApi({
   const fetchLayout = async () => {
     setLoading(true);
     try {
-      const units = await getFloorLayout(propertyId, floorNumber, userToken);
+      const units = await getFloorLayout(propertyId, floorNumber, userToken, buildingBlockId);
       const mappedBlocks: UnitBlock[] = units.map(u => {
         const leases = u.activeLeases || [];
         const primaryLease = leases[0] || null;
@@ -126,7 +129,7 @@ export function useFloorEditorLayoutApi({
         facing: 'NORTH'
       }));
 
-      await saveFloorLayout(propertyId, floorNumber, userToken, payload);
+      await saveFloorLayout(propertyId, floorNumber, userToken, payload, buildingBlockId);
 
       onSave();
     } catch (error: any) {
@@ -181,7 +184,7 @@ export function useFloorEditorLayoutApi({
 
   useEffect(() => {
     fetchLayout();
-  }, [propertyId, floorNumber]);
+  }, [propertyId, floorNumber, buildingBlockId]);
 
   return {
     loading,

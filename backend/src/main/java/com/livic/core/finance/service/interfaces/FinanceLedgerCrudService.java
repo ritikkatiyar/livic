@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public interface FinanceLedgerCrudService extends CrudService<FinanceLedgerTbl, UUID> {
     Page<FinanceLedgerTbl> findAll(Specification<FinanceLedgerTbl> spec, Pageable pageable);
-    BigDecimal getRunningBalanceForLeaseAtEntry(UUID leaseId, LocalDateTime createdAt, UUID id);
+    BigDecimal getRunningBalanceForMemberAtEntry(UUID memberId, LocalDateTime createdAt, UUID id);
     List<Object[]> getRunningBalancesForEntries(Collection<UUID> ids);
-    BigDecimal sumAmountByLeaseId(UUID leaseId);
+    BigDecimal sumAmountByMemberId(UUID memberId);
 }

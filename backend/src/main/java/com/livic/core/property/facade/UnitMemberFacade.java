@@ -33,6 +33,18 @@ public interface UnitMemberFacade {
     /** Active members of a property, with each unit's floor, for targeting notices. */
     List<UnitResidentDTO> getActiveResidentsByPropertyId(UUID propertyId);
 
+    /**
+     * A member by id, active or ended, with its unit and property. Bills outlive tenancies,
+     * so finance must be able to resolve the payer of an old bill.
+     */
+    Optional<UnitResidentDTO> getResidentByMemberId(UUID memberId);
+
+    /** The same, in bulk, for rent rolls and statements. */
+    List<UnitResidentDTO> getResidentsByMemberIds(Collection<UUID> memberIds);
+
+    /** The active tenant behind a lease, with unit and property, in one query. */
+    Optional<UnitResidentDTO> getResidentByLeaseId(UUID leaseId);
+
     /** Every unit a person is currently attached to, primary first. */
     List<UnitResidentDTO> getActiveResidencesByUserId(UUID userId);
 

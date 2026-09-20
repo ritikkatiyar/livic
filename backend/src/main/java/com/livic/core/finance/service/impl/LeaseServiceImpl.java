@@ -111,7 +111,7 @@ public class LeaseServiceImpl implements LeaseService {
 
         // The tenant becomes a member of the unit, in the same transaction as the lease, so
         // everything that asks "who is in this flat" sees them without reading leases.
-        unitMemberFacade.addTenant(unitSummary.id(), targetUserId, saved.getId(), saved.getMoveInDate(), assignedByUserId);
+        var tenantMember = unitMemberFacade.addTenant(unitSummary.id(), targetUserId, saved.getId(), saved.getMoveInDate(), assignedByUserId);
 
         // 3. Mark booking as converted
         if (booking != null) {
@@ -121,12 +121,13 @@ public class LeaseServiceImpl implements LeaseService {
         }
 
         // 4. Log Security Deposit Billing DEBIT in ledger
-        BigDecimal currentBalance = financeLedgerCrudService.sumAmountByLeaseId(saved.getId());
+        BigDecimal currentBalance = financeLedgerCrudService.sumAmountByMemberId(tenantMember.id());
         BigDecimal newBalance = currentBalance.add(request.securityDeposit());
 
         FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
                 .unitId(unitSummary.id())
-                .lease(saved)
+                .memberId(tenantMember.id())
+                .leaseId(saved.getId())
                 .transactionType(LedgerTransactionType.INVOICE_GENERATED)
                 .amount(request.securityDeposit())
                 .balance(newBalance)

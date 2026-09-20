@@ -7,7 +7,7 @@ import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.core.finance.controller.InvoiceController;
-import com.livic.core.finance.controller.RentCycleController;
+import com.livic.core.finance.controller.BillController;
 import com.livic.core.finance.controller.LeaseController;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -106,8 +106,8 @@ class LeaseAuthorizationTest {
 
     @Test
     @DisplayName("Listing rent cycles for a property requires RENT_ROLL_VIEW, rather than returning an empty page")
-    void rentCycleListIsAuthorized() throws NoSuchMethodException {
-        Method list = java.util.Arrays.stream(RentCycleController.class.getMethods())
+    void billListIsAuthorized() throws NoSuchMethodException {
+        Method list = java.util.Arrays.stream(BillController.class.getMethods())
                 .filter(m -> m.getName().equals("list"))
                 .findFirst()
                 .orElseThrow();
@@ -126,7 +126,7 @@ class LeaseAuthorizationTest {
 
         assertThat(preAuthorize).isNotNull();
         assertThat(preAuthorize.value()).doesNotContain("hasAnyRole");
-        assertThat(preAuthorize.value()).contains("RENT_CYCLE, #rentCycleId, 'LEASE_VIEW'");
-        assertThat(preAuthorize.value()).contains("RENT_CYCLE, #rentCycleId, 'LEASE_VIEW_OWN'");
+        assertThat(preAuthorize.value()).contains("BILL, #billId, 'LEASE_VIEW'");
+        assertThat(preAuthorize.value()).contains("BILL, #billId, 'LEASE_VIEW_OWN'");
     }
 }

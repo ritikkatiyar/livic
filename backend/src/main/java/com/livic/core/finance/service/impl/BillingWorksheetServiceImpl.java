@@ -2,19 +2,19 @@ package com.livic.core.finance.service.impl;
 
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.common.domain.LeaseStatus;
-import com.livic.core.finance.domain.RentCycleStatus;
+import com.livic.core.finance.domain.BillStatus;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.core.finance.domain.LeaseTbl;
-import com.livic.core.finance.domain.RentCycleTbl;
+import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.dto.BillingWorksheetDTOs.*;
 import com.livic.core.finance.service.BillingWorksheetService;
 import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
 import com.livic.core.finance.service.interfaces.LeaseCrudService;
 import com.livic.core.finance.service.interfaces.LeaseQueryService;
-import com.livic.core.finance.service.interfaces.RentCycleCrudService;
+import com.livic.core.finance.service.interfaces.BillCrudService;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.UnitSummaryDTO;
@@ -38,9 +38,10 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
 
     private final BillingWorksheetCrudService billingWorksheetCrudService;
     private final UnitFacade unitFacade;
+    private final com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
     private final LeaseQueryService leaseQueryService;
     private final ChargeConfigCrudService chargeConfigCrudService;
-    private final RentCycleCrudService rentCycleCrudService;
+    private final BillCrudService billCrudService;
     private final UserFacade userFacade;
 
     @Override
@@ -121,9 +122,14 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
         Map<UUID, UserSummaryDTO> userMap = tenantUserIds.isEmpty() ? Collections.emptyMap() :
                 userFacade.getUsersByIds(tenantUserIds);
 
-        List<RentCycleTbl> existingCycles = rentCycleCrudService.findByPropertyIdAndBillingMonth(propertyId, billingMonth);
-        Set<UUID> billedLeaseIds = existingCycles.stream()
-                .map(rc -> rc.getLease().getId())
+        List<BillTbl> existingCycles = billCrudService.findByPropertyIdAndBillingMonth(propertyId, billingMonth);
+        Set<UUID> billedMemberIds = existingCycles.stream()
+                .map(BillTbl::getMemberId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        Set<UUID> billedLeaseIds = unitMemberFacade.getResidentsByMemberIds(billedMemberIds).stream()
+                .map(com.livic.core.property.dto.UnitResidentDTO::leaseId)
+                .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toSet());
 
         Map<UUID, UnitSummaryDTO> unitSummaryMap = units.stream()
@@ -162,13 +168,13 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
     @Override
     @Transactional
     public void saveWorksheet(WorksheetSaveRequest request) {
-        List<RentCycleTbl> rentCycles = rentCycleCrudService.findByPropertyIdAndBillingMonth(
+        List<BillTbl> bills = billCrudService.findByPropertyIdAndBillingMonth(
                 request.getPropertyId(), request.getBillingMonth());
 
-        boolean isLocked = rentCycles.stream().anyMatch(rc ->
-                rc.getStatus() == RentCycleStatus.PUBLISHED ||
-                        rc.getStatus() == RentCycleStatus.PAID ||
-                        rc.getStatus() == RentCycleStatus.PARTIALLY_PAID
+        boolean isLocked = bills.stream().anyMatch(rc ->
+                rc.getStatus() == BillStatus.PUBLISHED ||
+                        rc.getStatus() == BillStatus.PAID ||
+                        rc.getStatus() == BillStatus.PARTIALLY_PAID
         );
 
         if (isLocked) {

@@ -1,19 +1,18 @@
 package com.livic.core.finance.service.impl;
 
-import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.platform.common.service.impl.AbstractCrudService;
-import com.livic.core.finance.domain.LeaseTbl;
-import com.livic.core.finance.domain.RentCycleStatus;
-import com.livic.core.finance.domain.RentCycleTbl;
+import com.livic.core.finance.domain.BillStatus;
+import com.livic.core.finance.domain.BillTbl;
+import com.livic.core.finance.domain.BillType;
 import com.livic.core.finance.dto.DefaulterRecordDTO;
-import com.livic.core.finance.dto.RentCycleDTOs;
-import com.livic.core.finance.dto.RentCycleDTOs.RentRollMetricsDTO;
+import com.livic.core.finance.dto.BillDTOs.RentRollMetricsDTO;
 import com.livic.core.finance.dto.RevenueMetricsDTO;
-import com.livic.core.finance.repository.LeaseRepository;
-import com.livic.core.finance.repository.RentCycleRepository;
-import com.livic.core.finance.service.interfaces.RentCycleCrudService;
+import com.livic.core.finance.repository.BillRepository;
+import com.livic.core.finance.service.interfaces.BillCrudService;
+import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
+import com.livic.core.property.facade.UnitMemberFacade;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,70 +29,75 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Bills are reached through the property id carried on the bill, not by first resolving a
+ * property to its active leases. That older path both excluded owners, who have no lease at
+ * all, and quietly dropped the unpaid bills of tenancies that had already ended.
+ */
 @Service
 @Transactional
-public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, UUID, RentCycleRepository> implements RentCycleCrudService {
+public class BillCrudServiceImpl extends AbstractCrudService<BillTbl, UUID, BillRepository> implements BillCrudService {
 
-    private final LeaseRepository leaseRepository;
     private final UnitFacade unitFacade;
+    private final UnitMemberFacade unitMemberFacade;
 
-    public RentCycleCrudServiceImpl(
-            RentCycleRepository rentCycleRepository,
-            LeaseRepository leaseRepository,
-            UnitFacade unitFacade) {
-        super(rentCycleRepository);
-        this.leaseRepository = leaseRepository;
+    public BillCrudServiceImpl(
+            BillRepository billRepository,
+            UnitFacade unitFacade,
+            UnitMemberFacade unitMemberFacade) {
+        super(billRepository);
         this.unitFacade = unitFacade;
+        this.unitMemberFacade = unitMemberFacade;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<RentCycleTbl> findByLease_IdAndBillingMonth(UUID leaseId, String billingMonth) {
-        return repository.findByLease_IdAndBillingMonth(leaseId, billingMonth);
+    public Optional<BillTbl> findByMemberIdAndBillingMonth(UUID memberId, String billingMonth, BillType billType) {
+        return repository.findByMemberIdAndBillingMonthAndBillType(memberId, billingMonth, billType);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<RentCycleTbl> findByLease_Id(UUID leaseId) {
-        return repository.findByLease_Id(leaseId);
+    public List<BillTbl> findByMemberId(UUID memberId) {
+        return repository.findByMemberId(memberId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<RentCycleTbl> findByLease_IdInAndBillingMonth(List<UUID> leaseIds, String billingMonth) {
-        if (leaseIds == null || leaseIds.isEmpty()) {
+    public List<BillTbl> findByMemberIdInAndBillingMonth(Collection<UUID> memberIds, String billingMonth) {
+        if (memberIds == null || memberIds.isEmpty()) {
             return Collections.emptyList();
         }
-        return repository.findByLease_IdInAndBillingMonth(leaseIds, billingMonth);
+        return repository.findByMemberIdInAndBillingMonth(memberIds, billingMonth);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<RentCycleTbl> findByBillingMonth(String billingMonth) {
+    public List<BillTbl> findByBillingMonth(String billingMonth) {
         return repository.findByBillingMonth(billingMonth);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<RentCycleTbl> findByPropertyIdAndBillingMonth(UUID propertyId, String billingMonth) {
-        List<UUID> leaseIds = getLeaseIdsForProperty(propertyId);
-        if (leaseIds.isEmpty()) {
+    public List<BillTbl> findByPropertyIdAndBillingMonth(UUID propertyId, String billingMonth) {
+        if (propertyId == null) {
             return Collections.emptyList();
         }
-        return repository.findByLease_IdInAndBillingMonth(leaseIds, billingMonth);
+        return repository.findByPropertyIdAndBillingMonth(propertyId, billingMonth);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<RentCycleTbl> findAll(Specification<RentCycleTbl> spec, Pageable pageable) {
+    public Page<BillTbl> findAll(Specification<BillTbl> spec, Pageable pageable) {
         return repository.findAll(spec, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<RentCycleTbl> findAll(Specification<RentCycleTbl> spec) {
+    public List<BillTbl> findAll(Specification<BillTbl> spec) {
         return repository.findAll(spec);
     }
 
@@ -103,11 +107,7 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
         if (propertyIds == null || propertyIds.isEmpty()) {
             return new RevenueMetricsDTO(BigDecimal.ZERO, BigDecimal.ZERO);
         }
-        List<UUID> leaseIds = getLeaseIdsForProperties(propertyIds);
-        if (leaseIds.isEmpty()) {
-            return new RevenueMetricsDTO(BigDecimal.ZERO, BigDecimal.ZERO);
-        }
-        RevenueMetricsDTO metrics = repository.calculateRevenueMetrics(leaseIds, billingMonth, RentCycleStatus.PAID);
+        RevenueMetricsDTO metrics = repository.calculateRevenueMetrics(propertyIds, billingMonth, BillStatus.PAID);
         return metrics != null ? metrics : new RevenueMetricsDTO(BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
@@ -117,37 +117,39 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
         if (propertyIds == null || propertyIds.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<UUID> leaseIds = getLeaseIdsForProperties(propertyIds);
-        if (leaseIds.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        Page<RentCycleTbl> defaulterCycles = repository.findDefaulterCycles(
-                leaseIds,
-                RentCycleStatus.OVERDUE,
-                RentCycleStatus.PENDING,
+        Page<BillTbl> defaulters = repository.findDefaulterBills(
+                propertyIds,
+                BillStatus.OVERDUE,
+                BillStatus.PENDING,
                 LocalDate.now(),
                 pageable
         );
 
-        Set<UUID> unitIds = defaulterCycles.getContent().stream()
-                .map(c -> c.getLease() != null ? c.getLease().getUnitId() : null)
+        Set<UUID> memberIds = defaulters.getContent().stream()
+                .map(BillTbl::getMemberId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+        Map<UUID, UnitResidentDTO> membersById = unitMemberFacade.getResidentsByMemberIds(memberIds).stream()
+                .collect(Collectors.toMap(UnitResidentDTO::memberId, Function.identity(), (a, b) -> a));
 
+        Set<UUID> unitIds = membersById.values().stream()
+                .map(UnitResidentDTO::unitId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
         Map<UUID, UnitSummaryDTO> unitsMap = unitIds.isEmpty() ? Map.of() : unitFacade.getUnitsByIds(unitIds);
 
-        return defaulterCycles.map(cycle -> {
-            LeaseTbl lease = cycle.getLease();
-            UnitSummaryDTO unitSummary = lease != null && lease.getUnitId() != null ? unitsMap.get(lease.getUnitId()) : null;
+        return defaulters.map(bill -> {
+            UnitResidentDTO payer = membersById.get(bill.getMemberId());
+            UnitSummaryDTO unitSummary = payer != null && payer.unitId() != null ? unitsMap.get(payer.unitId()) : null;
             String unitNumber = unitSummary != null ? unitSummary.unitNumber() : "Vacant";
             String propertyName = unitSummary != null ? unitSummary.propertyName() : "N/A";
             return new DefaulterRecordDTO(
-                    lease != null ? lease.getUserId() : null,
+                    payer != null ? payer.userId() : null,
                     unitNumber,
                     propertyName,
-                    cycle.getDueDate(),
-                    cycle.getTotalAmount(),
-                    cycle.getId()
+                    bill.getDueDate(),
+                    bill.getTotalAmount(),
+                    bill.getId()
             );
         });
     }
@@ -157,11 +159,11 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
     public RentRollMetricsDTO getRentRollMetrics(
             UUID propertyId,
             String billingMonth,
-            RentCycleStatus statusPending,
-            RentCycleStatus statusPublished,
-            RentCycleStatus statusPaid,
-            RentCycleStatus statusOverdue,
-            RentCycleStatus statusPartiallyPaid
+            BillStatus statusPending,
+            BillStatus statusPublished,
+            BillStatus statusPaid,
+            BillStatus statusOverdue,
+            BillStatus statusPartiallyPaid
     ) {
         return getRentRollMetricsForProperties(
                 propertyId != null ? List.of(propertyId) : Collections.emptyList(),
@@ -179,21 +181,17 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
     public RentRollMetricsDTO getRentRollMetricsForProperties(
             Collection<UUID> propertyIds,
             String billingMonth,
-            RentCycleStatus statusPending,
-            RentCycleStatus statusPublished,
-            RentCycleStatus statusPaid,
-            RentCycleStatus statusOverdue,
-            RentCycleStatus statusPartiallyPaid
+            BillStatus statusPending,
+            BillStatus statusPublished,
+            BillStatus statusPaid,
+            BillStatus statusOverdue,
+            BillStatus statusPartiallyPaid
     ) {
         if (propertyIds == null || propertyIds.isEmpty()) {
             return new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
         }
-        List<UUID> leaseIds = getLeaseIdsForProperties(propertyIds);
-        if (leaseIds.isEmpty()) {
-            return new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
-        }
         List<Object[]> metrics = repository.getRentRollMetrics(
-                leaseIds,
+                propertyIds,
                 billingMonth,
                 statusPending,
                 statusPublished,
@@ -218,26 +216,5 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
                 pendingDraftsCount,
                 publishedCount
         );
-    }
-
-    private List<UUID> getLeaseIdsForProperty(UUID propertyId) {
-        if (propertyId == null) {
-            return Collections.emptyList();
-        }
-        return getLeaseIdsForProperties(List.of(propertyId));
-    }
-
-    private List<UUID> getLeaseIdsForProperties(Collection<UUID> propertyIds) {
-        if (propertyIds == null || propertyIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyIds(propertyIds);
-        if (units.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
-        return leaseRepository.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE).stream()
-                .map(LeaseTbl::getId)
-                .toList();
     }
 }

@@ -40,6 +40,12 @@ public interface UnitMemberService {
     /** Active members of a property, with each unit's floor, for targeting notices. */
     List<UnitResidentDTO> findActiveResidentsByPropertyId(UUID propertyId);
 
+    /** Members by id, active or ended — bills outlive the tenancy that produced them. */
+    List<UnitResidentDTO> findResidentsByMemberIds(Collection<UUID> memberIds);
+
+    /** The active tenant behind a lease, with unit and property. */
+    Optional<UnitResidentDTO> findResidentByLeaseId(UUID leaseId);
+
     /** Every unit a person is currently attached to, primary first. */
     List<UnitResidentDTO> findActiveResidencesByUserId(UUID userId);
 

@@ -6,23 +6,23 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public class RentPublishedEvent extends ApplicationEvent {
-    private final UUID rentCycleId;
+    private final UUID billId;
     private final UUID tenantUserId;
     private final String billingMonth;
     private final BigDecimal totalAmount;
     private final LocalDate dueDate;
 
-    public RentPublishedEvent(Object source, UUID rentCycleId, UUID tenantUserId, String billingMonth, BigDecimal totalAmount, LocalDate dueDate) {
+    public RentPublishedEvent(Object source, UUID billId, UUID tenantUserId, String billingMonth, BigDecimal totalAmount, LocalDate dueDate) {
         super(source);
-        this.rentCycleId = rentCycleId;
+        this.billId = billId;
         this.tenantUserId = tenantUserId;
         this.billingMonth = billingMonth;
         this.totalAmount = totalAmount;
         this.dueDate = dueDate;
     }
 
-    public UUID getRentCycleId() {
-        return rentCycleId;
+    public UUID getBillId() {
+        return billId;
     }
 
     public UUID getTenantUserId() {

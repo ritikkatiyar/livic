@@ -56,6 +56,14 @@ public class PaymentFacadeImpl implements PaymentFacade {
     }
 
     @Override
+    public Optional<PaymentInitiationResponse> getLatestSuccessfulTransaction(String referenceType, UUID referenceId) {
+        if (referenceType == null || referenceId == null) {
+            return Optional.empty();
+        }
+        return paymentTransactionService.findLatestSuccessful(referenceType, referenceId).map(this::toResponse);
+    }
+
+    @Override
     public PaymentTransactionResponse initiateOnlinePaymentTransaction(UUID payerUserId, String referenceType, UUID referenceId, BigDecimal amount) {
         PaymentTransactionTbl tx = paymentTransactionService.initiateOnlinePayment(payerUserId, referenceType, referenceId, amount);
         return toTransactionResponse(tx);

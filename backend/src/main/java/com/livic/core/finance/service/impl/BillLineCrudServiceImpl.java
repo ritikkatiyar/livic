@@ -1,32 +1,32 @@
 package com.livic.core.finance.service.impl;
 
 import com.livic.platform.common.service.impl.AbstractCrudService;
-import com.livic.core.finance.domain.RentCycleChargeTbl;
-import com.livic.core.finance.repository.RentCycleChargeRepository;
-import com.livic.core.finance.service.interfaces.RentCycleChargeCrudService;
+import com.livic.core.finance.domain.BillLineTbl;
+import com.livic.core.finance.repository.BillLineRepository;
+import com.livic.core.finance.service.interfaces.BillLineCrudService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
-public class RentCycleChargeCrudServiceImpl extends AbstractCrudService<RentCycleChargeTbl, UUID, RentCycleChargeRepository> implements RentCycleChargeCrudService {
+public class BillLineCrudServiceImpl extends AbstractCrudService<BillLineTbl, UUID, BillLineRepository> implements BillLineCrudService {
 
-    public RentCycleChargeCrudServiceImpl(RentCycleChargeRepository repository) {
+    public BillLineCrudServiceImpl(BillLineRepository repository) {
         super(repository);
     }
 
     @Override
-    public List<RentCycleChargeTbl> findByRentCycle_Id(UUID rentCycleId) {
-        return repository.findByRentCycle_Id(rentCycleId);
+    public List<BillLineTbl> findByBill_Id(UUID billId) {
+        return repository.findByBill_Id(billId);
     }
 
     @Override
-    public List<RentCycleChargeTbl> findByRentCycle_IdIn(java.util.Collection<UUID> rentCycleIds) {
-        if (rentCycleIds == null || rentCycleIds.isEmpty()) {
+    public List<BillLineTbl> findByBill_IdIn(java.util.Collection<UUID> billIds) {
+        if (billIds == null || billIds.isEmpty()) {
             return java.util.Collections.emptyList();
         }
-        return repository.findByRentCycle_IdIn(rentCycleIds);
+        return repository.findByBill_IdIn(billIds);
     }
 
     @Override

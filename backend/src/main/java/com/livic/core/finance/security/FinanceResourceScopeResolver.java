@@ -19,7 +19,7 @@ public class FinanceResourceScopeResolver implements ResourceScopeResolver {
 
     @Override
     public Set<ResourceType> supportedTypes() {
-        return Set.of(ResourceType.LEASE, ResourceType.RENT_CYCLE, ResourceType.CHARGE_CONFIG);
+        return Set.of(ResourceType.LEASE, ResourceType.BILL, ResourceType.CHARGE_CONFIG);
     }
 
     @Override
@@ -29,7 +29,7 @@ public class FinanceResourceScopeResolver implements ResourceScopeResolver {
                     .map(lease -> new ResourceScope.Property(lease.propertyId(), lease.userId()));
             // A rent cycle inherits access from its lease, so the tenant it belongs to can see it
             // (LEASE_VIEW_OWN) while staff still need the property-level permission.
-            case RENT_CYCLE -> financeFacade.getLeaseIdByRentCycleId(resourceId)
+            case BILL -> financeFacade.getLeaseIdByBillId(resourceId)
                     .map(leaseId -> new ResourceScope.Delegated(ResourceType.LEASE, leaseId, null));
             case CHARGE_CONFIG -> Optional.ofNullable(financeFacade.getChargeConfigById(resourceId))
                     .map(chargeConfig -> new ResourceScope.Property(chargeConfig.getPropertyId(), null));

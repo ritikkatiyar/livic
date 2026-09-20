@@ -65,6 +65,27 @@ public class UnitMemberFacadeImpl implements UnitMemberFacade {
     }
 
     @Override
+    public Optional<UnitResidentDTO> getResidentByMemberId(UUID memberId) {
+        if (memberId == null) {
+            return Optional.empty();
+        }
+        return unitMemberService.findResidentsByMemberIds(List.of(memberId)).stream().findFirst();
+    }
+
+    @Override
+    public List<UnitResidentDTO> getResidentsByMemberIds(Collection<UUID> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return List.of();
+        }
+        return unitMemberService.findResidentsByMemberIds(memberIds);
+    }
+
+    @Override
+    public Optional<UnitResidentDTO> getResidentByLeaseId(UUID leaseId) {
+        return unitMemberService.findResidentByLeaseId(leaseId);
+    }
+
+    @Override
     public List<UnitResidentDTO> getActiveResidencesByUserId(UUID userId) {
         return unitMemberService.findActiveResidencesByUserId(userId);
     }

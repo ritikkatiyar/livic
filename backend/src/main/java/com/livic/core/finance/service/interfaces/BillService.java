@@ -1,33 +1,33 @@
 package com.livic.core.finance.service.interfaces;
 
-import com.livic.core.finance.domain.RentCycleStatus;
-import com.livic.core.finance.dto.RentCycleDTOs;
+import com.livic.core.finance.domain.BillStatus;
+import com.livic.core.finance.dto.BillDTOs;
 import com.livic.platform.payment.dto.PaymentInitiationResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-public interface RentCycleService {
-    RentCycleDTOs.RentCycleResponse generate(RentCycleDTOs.GenerateRentCycleRequest request);
+public interface BillService {
+    BillDTOs.BillResponse generate(BillDTOs.GenerateBillRequest request);
 
-    RentCycleDTOs.BatchGenerateResult batchGenerate(RentCycleDTOs.BatchGenerateRentCycleRequest request);
+    BillDTOs.BatchGenerateResult batchGenerate(BillDTOs.BatchGenerateBillRequest request);
 
-    RentCycleDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth);
+    BillDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth);
 
-    RentCycleDTOs.RentCycleListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, RentCycleStatus status, String search, Pageable pageable);
+    BillDTOs.BillListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, BillStatus status, String search, Pageable pageable);
 
-    RentCycleDTOs.RentCycleResponse markPaid(UUID id);
+    BillDTOs.BillResponse markPaid(UUID id);
 
-    RentCycleDTOs.RentCycleResponse publish(UUID id);
+    BillDTOs.BillResponse publish(UUID id);
 
-    RentCycleDTOs.RentCycleResponse unpublish(UUID id);
+    BillDTOs.BillResponse unpublish(UUID id);
 
-    RentCycleDTOs.BatchPublishResult batchPublish(UUID propertyId, String billingMonth);
+    BillDTOs.BatchPublishResult batchPublish(UUID propertyId, String billingMonth);
 
-    RentCycleDTOs.BatchUnpublishResult batchUnpublish(UUID propertyId, String billingMonth);
+    BillDTOs.BatchUnpublishResult batchUnpublish(UUID propertyId, String billingMonth);
 
-    PaymentInitiationResponse initiateOnlinePayment(UUID rentCycleId, UUID payerUserId);
+    PaymentInitiationResponse initiateOnlinePayment(UUID billId, UUID payerUserId);
 
-    PaymentInitiationResponse recordCashPayment(UUID rentCycleId, BigDecimal amount, String note, UUID payerUserId, UUID confirmedBy);
+    PaymentInitiationResponse recordCashPayment(UUID billId, BigDecimal amount, String note, UUID payerUserId, UUID confirmedBy);
 }

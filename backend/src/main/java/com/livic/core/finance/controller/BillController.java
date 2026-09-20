@@ -3,9 +3,9 @@ package com.livic.core.finance.controller;
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.common.enums.ResourceType;
 import com.livic.platform.common.response.ApiResponse;
-import com.livic.core.finance.domain.RentCycleStatus;
-import com.livic.core.finance.dto.RentCycleDTOs;
-import com.livic.core.finance.service.interfaces.RentCycleService;
+import com.livic.core.finance.domain.BillStatus;
+import com.livic.core.finance.dto.BillDTOs;
+import com.livic.core.finance.service.interfaces.BillService;
 import com.livic.platform.payment.dto.PaymentInitiationResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,114 +25,114 @@ import java.util.UUID;
 @RequestMapping("/api/v1/finance/rent-cycles")
 @RequiredArgsConstructor
 @Slf4j
-public class RentCycleController {
+public class BillController {
 
-    private final RentCycleService rentCycleService;
+    private final BillService billService;
 
     @PostMapping("/generate")
     @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #request.leaseId, 'LEASE_UPDATE')")
-    public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> generate(
-            @Valid @RequestBody RentCycleDTOs.GenerateRentCycleRequest request
+    public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> generate(
+            @Valid @RequestBody BillDTOs.GenerateBillRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(rentCycleService.generate(request)));
+                .body(ApiResponse.success(billService.generate(request)));
     }
 
     @PostMapping("/batch-generate")
     @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'RENT_ROLL_MANAGE')")
-    public ResponseEntity<ApiResponse<RentCycleDTOs.BatchGenerateResult>> batchGenerate(
-            @Valid @RequestBody RentCycleDTOs.BatchGenerateRentCycleRequest request
+    public ResponseEntity<ApiResponse<BillDTOs.BatchGenerateResult>> batchGenerate(
+            @Valid @RequestBody BillDTOs.BatchGenerateBillRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(rentCycleService.batchGenerate(request)));
+                .body(ApiResponse.success(billService.batchGenerate(request)));
     }
 
     @PostMapping("/{id}/publish")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #id, 'RENT_ROLL_MANAGE')")
-    public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> publish(
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'RENT_ROLL_MANAGE')")
+    public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> publish(
             @PathVariable UUID id
     ) {
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.publish(id)));
+        return ResponseEntity.ok(ApiResponse.success(billService.publish(id)));
     }
 
     @PostMapping("/{id}/unpublish")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #id, 'RENT_ROLL_MANAGE')")
-    public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> unpublish(
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'RENT_ROLL_MANAGE')")
+    public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> unpublish(
             @PathVariable UUID id
     ) {
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.unpublish(id)));
+        return ResponseEntity.ok(ApiResponse.success(billService.unpublish(id)));
     }
 
     @PostMapping("/batch-publish")
     @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'RENT_ROLL_MANAGE')")
-    public ResponseEntity<ApiResponse<RentCycleDTOs.BatchPublishResult>> batchPublish(
-            @Valid @RequestBody RentCycleDTOs.RentCyclePropertyBillingMonthRequest request
+    public ResponseEntity<ApiResponse<BillDTOs.BatchPublishResult>> batchPublish(
+            @Valid @RequestBody BillDTOs.BillPropertyBillingMonthRequest request
     ) {
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchPublish(request.propertyId(), request.billingMonth())));
+        return ResponseEntity.ok(ApiResponse.success(billService.batchPublish(request.propertyId(), request.billingMonth())));
     }
 
     @PostMapping("/batch-unpublish")
     @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'RENT_ROLL_MANAGE')")
-    public ResponseEntity<ApiResponse<RentCycleDTOs.BatchUnpublishResult>> batchUnpublish(
-            @Valid @RequestBody RentCycleDTOs.RentCyclePropertyBillingMonthRequest request
+    public ResponseEntity<ApiResponse<BillDTOs.BatchUnpublishResult>> batchUnpublish(
+            @Valid @RequestBody BillDTOs.BillPropertyBillingMonthRequest request
     ) {
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchUnpublish(request.propertyId(), request.billingMonth())));
+        return ResponseEntity.ok(ApiResponse.success(billService.batchUnpublish(request.propertyId(), request.billingMonth())));
     }
 
     @GetMapping({"/pre-flight", "/preflight"})
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'RENT_ROLL_VIEW')")
-    public ResponseEntity<ApiResponse<RentCycleDTOs.PreFlightChecklistResponse>> getPreFlightChecklist(
+    public ResponseEntity<ApiResponse<BillDTOs.PreFlightChecklistResponse>> getPreFlightChecklist(
             @RequestParam UUID propertyId,
             @RequestParam String billingMonth
     ) {
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.getPreFlightChecklist(propertyId, billingMonth)));
+        return ResponseEntity.ok(ApiResponse.success(billService.getPreFlightChecklist(propertyId, billingMonth)));
     }
 
     @GetMapping
     @PreAuthorize("#propertyId == null or @authorizationService.hasPermission(#propertyId, 'RENT_ROLL_VIEW')")
-    public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleListResponse>> list(
+    public ResponseEntity<ApiResponse<BillDTOs.BillListResponse>> list(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) UUID propertyId,
             @RequestParam(required = false) UUID leaseId,
             @RequestParam(required = false) String billingMonth,
-            @RequestParam(required = false) RentCycleStatus status,
+            @RequestParam(required = false) BillStatus status,
             @RequestParam(required = false) String search,
             @PageableDefault(sort = "dueDate", direction = Sort.Direction.DESC, size = 20) Pageable pageable
     ) {
         UUID currentUserId = currentUser != null ? UUID.fromString(currentUser.getId()) : null;
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.list(currentUserId, propertyId, leaseId, billingMonth, status, search, pageable)));
+        return ResponseEntity.ok(ApiResponse.success(billService.list(currentUserId, propertyId, leaseId, billingMonth, status, search, pageable)));
     }
 
     @PostMapping("/{id}/mark-paid")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #id, 'RENT_ROLL_MANAGE')")
-    public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> markPaid(
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'RENT_ROLL_MANAGE')")
+    public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> markPaid(
             @PathVariable UUID id
     ) {
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.markPaid(id)));
+        return ResponseEntity.ok(ApiResponse.success(billService.markPaid(id)));
     }
 
-    @PostMapping("/{rentCycleId}/online")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #rentCycleId, 'LEASE_VIEW_OWN')")
+    @PostMapping("/{billId}/online")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'LEASE_VIEW_OWN')")
     public ResponseEntity<ApiResponse<PaymentInitiationResponse>> initiateRentOnlinePayment(
-            @PathVariable UUID rentCycleId,
+            @PathVariable UUID billId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        log.info("API request: Initiate online rent payment for RentCycle: {}", rentCycleId);
+        log.info("API request: Initiate online rent payment for Bill: {}", billId);
         UUID payerUserId = UUID.fromString(userDetails.getId());
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.initiateOnlinePayment(rentCycleId, payerUserId)));
+        return ResponseEntity.ok(ApiResponse.success(billService.initiateOnlinePayment(billId, payerUserId)));
     }
 
-    @PostMapping("/{rentCycleId}/cash")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #rentCycleId, 'LEASE_UPDATE')")
+    @PostMapping("/{billId}/cash")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<PaymentInitiationResponse>> recordRentCashPayment(
-            @PathVariable UUID rentCycleId,
-            @Valid @RequestBody RentCycleDTOs.RecordRentCashPaymentRequest request,
+            @PathVariable UUID billId,
+            @Valid @RequestBody BillDTOs.RecordRentCashPaymentRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        log.info("API request: Record cash rent payment for RentCycle: {}", rentCycleId);
+        log.info("API request: Record cash rent payment for Bill: {}", billId);
         UUID confirmedBy = UUID.fromString(userDetails.getId());
         return ResponseEntity.ok(ApiResponse.success(
-                rentCycleService.recordCashPayment(rentCycleId, request.amount(), request.note(), request.payerUserId(), confirmedBy)
+                billService.recordCashPayment(billId, request.amount(), request.note(), request.payerUserId(), confirmedBy)
         ));
     }
 }

@@ -1,6 +1,6 @@
 package com.livic.core.finance.domain;
 
-public enum RentCycleStatus {
+public enum BillStatus {
     PENDING,
     PUBLISHED,
     PAID,

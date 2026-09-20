@@ -15,12 +15,12 @@ import java.util.List;
 @Repository
 public interface FinanceLedgerRepository extends JpaRepository<FinanceLedgerTbl, UUID>, JpaSpecificationExecutor<FinanceLedgerTbl> {
     
-    @Query("SELECT COALESCE(SUM(l.amount), 0) FROM FinanceLedgerTbl l WHERE l.lease.id = :leaseId AND (l.createdAt < :createdAt OR (l.createdAt = :createdAt AND l.id <= :id))")
-    BigDecimal getRunningBalanceForLeaseAtEntry(@Param("leaseId") UUID leaseId, @Param("createdAt") LocalDateTime createdAt, @Param("id") UUID id);
+    @Query("SELECT COALESCE(SUM(l.amount), 0) FROM FinanceLedgerTbl l WHERE l.memberId = :memberId AND (l.createdAt < :createdAt OR (l.createdAt = :createdAt AND l.id <= :id))")
+    BigDecimal getRunningBalanceForMemberAtEntry(@Param("memberId") UUID memberId, @Param("createdAt") LocalDateTime createdAt, @Param("id") UUID id);
 
-    @Query("SELECT l.id, COALESCE((SELECT SUM(l2.amount) FROM FinanceLedgerTbl l2 WHERE l2.lease.id = l.lease.id AND (l2.createdAt < l.createdAt OR (l2.createdAt = l.createdAt AND l2.id <= l.id))), 0) FROM FinanceLedgerTbl l WHERE l.id IN :ids")
+    @Query("SELECT l.id, COALESCE((SELECT SUM(l2.amount) FROM FinanceLedgerTbl l2 WHERE l2.memberId = l.memberId AND (l2.createdAt < l.createdAt OR (l2.createdAt = l.createdAt AND l2.id <= l.id))), 0) FROM FinanceLedgerTbl l WHERE l.id IN :ids")
     List<Object[]> getRunningBalancesForEntries(@Param("ids") java.util.Collection<UUID> ids);
 
-    @Query("SELECT COALESCE(SUM(l.amount), 0) FROM FinanceLedgerTbl l WHERE l.lease.id = :leaseId")
-    BigDecimal sumAmountByLeaseId(@Param("leaseId") UUID leaseId);
+    @Query("SELECT COALESCE(SUM(l.amount), 0) FROM FinanceLedgerTbl l WHERE l.memberId = :memberId")
+    BigDecimal sumAmountByMemberId(@Param("memberId") UUID memberId);
 }

@@ -9,27 +9,29 @@ import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.core.finance.domain.LeaseTbl;
 import com.livic.core.finance.domain.MeterReadingTbl;
-import com.livic.core.finance.domain.RentCycleChargeTbl;
-import com.livic.core.finance.domain.RentCycleStatus;
-import com.livic.core.finance.domain.RentCycleTbl;
-import com.livic.core.finance.dto.RentCycleDTOs;
-import com.livic.core.finance.mapper.RentCycleMapper;
+import com.livic.core.finance.domain.BillLineTbl;
+import com.livic.core.finance.domain.BillStatus;
+import com.livic.core.finance.domain.BillTbl;
+import com.livic.core.finance.dto.BillDTOs;
+import com.livic.core.finance.mapper.BillMapper;
 import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
 import com.livic.core.finance.service.interfaces.LeaseCrudService;
 import com.livic.core.finance.service.interfaces.LeaseQueryService;
 import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
-import com.livic.core.finance.service.interfaces.RentCycleChargeCrudService;
-import com.livic.core.finance.service.interfaces.RentCycleCrudService;
-import com.livic.core.finance.service.interfaces.RentCycleService;
-import com.livic.core.finance.specification.RentCycleSpecifications;
+import com.livic.core.finance.service.interfaces.BillLineCrudService;
+import com.livic.core.finance.service.interfaces.BillCrudService;
+import com.livic.core.finance.service.interfaces.BillService;
+import com.livic.core.finance.specification.BillSpecifications;
 import com.livic.platform.payment.dto.PaymentInitiationRequest;
 import com.livic.platform.payment.dto.PaymentInitiationResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.core.property.dto.PropertySummaryDTO;
+import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.facade.UnitFacade;
+import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -46,22 +48,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class RentCycleServiceImpl implements RentCycleService {
+public class BillServiceImpl implements BillService {
 
-    private final RentCycleCrudService rentCycleCrudService;
-    private final RentCycleChargeCrudService rentCycleChargeCrudService;
+    private final BillCrudService billCrudService;
+    private final BillLineCrudService billLineCrudService;
     private final LeaseQueryService leaseQueryService;
     private final LeaseCrudService leaseCrudService;
     private final BillingWorksheetCrudService billingWorksheetCrudService;
@@ -71,19 +76,20 @@ public class RentCycleServiceImpl implements RentCycleService {
     private final ApplicationEventPublisher eventPublisher;
     private final UserFacade userFacade;
     private final UnitFacade unitFacade;
+    private final UnitMemberFacade unitMemberFacade;
     private final PropertyFacade propertyFacade;
-    private final RentCycleTransactionHelper transactionHelper;
+    private final BillTransactionHelper transactionHelper;
 
     @Override
     @Transactional
-    public RentCycleDTOs.RentCycleResponse generate(RentCycleDTOs.GenerateRentCycleRequest request) {
+    public BillDTOs.BillResponse generate(BillDTOs.GenerateBillRequest request) {
         LeaseTbl lease = leaseQueryService.getLeaseById(request.leaseId());
-        RentCycleTbl cycle = transactionHelper.generateSingleInTransaction(lease, request.billingMonth(), request.dueDate(), null);
+        BillTbl cycle = transactionHelper.generateSingleInTransaction(lease, request.billingMonth(), request.dueDate(), null);
         return buildSingleResponse(cycle);
     }
 
     @Override
-    public RentCycleDTOs.BatchGenerateResult batchGenerate(RentCycleDTOs.BatchGenerateRentCycleRequest request) {
+    public BillDTOs.BatchGenerateResult batchGenerate(BillDTOs.BatchGenerateBillRequest request) {
         List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(request.propertyId());
         Map<UUID, String> unitNumbers = units.stream().collect(Collectors.toMap(UnitSummaryDTO::id, UnitSummaryDTO::unitNumber, (a, b) -> a));
         List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
@@ -96,13 +102,13 @@ public class RentCycleServiceImpl implements RentCycleService {
         List<BillingWorksheetEntryTbl> propertyWorksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(request.propertyId(), request.billingMonth());
         List<ChargeConfigTbl> propertyActiveConfigs = chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(request.propertyId());
 
-        List<RentCycleTbl> successes = new ArrayList<>();
-        List<RentCycleDTOs.BatchGenerateFailure> failures = new ArrayList<>();
+        List<BillTbl> successes = new ArrayList<>();
+        List<BillDTOs.BatchGenerateFailure> failures = new ArrayList<>();
 
         for (LeaseTbl lease : activeLeases) {
             String unitNum = unitNumbers.get(lease.getUnitId());
             try {
-                RentCycleTbl cycle = transactionHelper.generateSingleInTransaction(
+                BillTbl cycle = transactionHelper.generateSingleInTransaction(
                         lease,
                         request.billingMonth(),
                         request.dueDate(),
@@ -113,20 +119,20 @@ public class RentCycleServiceImpl implements RentCycleService {
                 );
                 successes.add(cycle);
             } catch (Exception e) {
-                log.error("[RentCycleServiceImpl] Failed to generate rent cycle for lease ID: {}, unit: {}", lease.getId(), unitNum, e);
-                failures.add(new RentCycleDTOs.BatchGenerateFailure(lease.getId(), unitNum, e.getMessage()));
+                log.error("[BillServiceImpl] Failed to generate rent cycle for lease ID: {}, unit: {}", lease.getId(), unitNum, e);
+                failures.add(new BillDTOs.BatchGenerateFailure(lease.getId(), unitNum, e.getMessage()));
             }
         }
 
-        List<RentCycleDTOs.RentCycleResponse> succeededResponses = new ArrayList<>(toResponses(successes));
-        succeededResponses.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
-                .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
-        return new RentCycleDTOs.BatchGenerateResult(succeededResponses, failures);
+        List<BillDTOs.BillResponse> succeededResponses = new ArrayList<>(toResponses(successes));
+        succeededResponses.sort(Comparator.comparing(BillDTOs.BillResponse::unitNumber)
+                .thenComparing(BillDTOs.BillResponse::tenantName));
+        return new BillDTOs.BatchGenerateResult(succeededResponses, failures);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public RentCycleDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth) {
+    public BillDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth) {
         List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
         List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
         List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
@@ -160,7 +166,7 @@ public class RentCycleServiceImpl implements RentCycleService {
         }
 
         boolean isReady = (meterReadingsEntered >= meterReadingsExpected) || activeLeasesCount == 0;
-        return new RentCycleDTOs.PreFlightChecklistResponse(
+        return new BillDTOs.PreFlightChecklistResponse(
             totalUnits,
             activeLeasesCount,
             meterReadingsExpected,
@@ -171,13 +177,13 @@ public class RentCycleServiceImpl implements RentCycleService {
 
     @Override
     @Transactional
-    public PaymentInitiationResponse initiateOnlinePayment(UUID rentCycleId, UUID payerUserId) {
-        log.info("Executing initiateOnlinePayment for RentCycle: {} by user: {}", rentCycleId, payerUserId);
-        RentCycleTbl rentCycle = rentCycleCrudService.findById(rentCycleId)
+    public PaymentInitiationResponse initiateOnlinePayment(UUID billId, UUID payerUserId) {
+        log.info("Executing initiateOnlinePayment for Bill: {} by user: {}", billId, payerUserId);
+        BillTbl bill = billCrudService.findById(billId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
 
-        BigDecimal amountPaid = rentCycle.getAmountPaid() != null ? rentCycle.getAmountPaid() : BigDecimal.ZERO;
-        BigDecimal remainingAmount = rentCycle.getTotalAmount().subtract(amountPaid);
+        BigDecimal amountPaid = bill.getAmountPaid() != null ? bill.getAmountPaid() : BigDecimal.ZERO;
+        BigDecimal remainingAmount = bill.getTotalAmount().subtract(amountPaid);
 
         if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Rent cycle is already fully paid");
@@ -185,8 +191,8 @@ public class RentCycleServiceImpl implements RentCycleService {
 
         PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
                 .payerUserId(payerUserId)
-                .referenceType("RENT_CYCLE")
-                .referenceId(rentCycleId)
+                .referenceType("BILL")
+                .referenceId(billId)
                 .amount(remainingAmount)
                 .paymentMethod("ONLINE")
                 .description("Rent Cycle Online Payment")
@@ -197,21 +203,21 @@ public class RentCycleServiceImpl implements RentCycleService {
 
     @Override
     @Transactional
-    public PaymentInitiationResponse recordCashPayment(UUID rentCycleId, BigDecimal amount, String note, UUID payerUserId, UUID confirmedBy) {
-        log.info("Executing recordCashPayment for RentCycle: {} amount: {}", rentCycleId, amount);
-        RentCycleTbl rentCycle = rentCycleCrudService.findById(rentCycleId)
+    public PaymentInitiationResponse recordCashPayment(UUID billId, BigDecimal amount, String note, UUID payerUserId, UUID confirmedBy) {
+        log.info("Executing recordCashPayment for Bill: {} amount: {}", billId, amount);
+        BillTbl bill = billCrudService.findById(billId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
 
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Valid positive amount is required");
         }
 
-        UUID finalPayerId = payerUserId != null ? payerUserId : (rentCycle.getLease() != null ? rentCycle.getLease().getUserId() : confirmedBy);
+        UUID finalPayerId = payerUserId != null ? payerUserId : (payerOf(bill) != null ? payerUserIdOf(bill) : confirmedBy);
 
         PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
                 .payerUserId(finalPayerId)
-                .referenceType("RENT_CYCLE")
-                .referenceId(rentCycleId)
+                .referenceType("BILL")
+                .referenceId(billId)
                 .amount(amount)
                 .paymentMethod("CASH")
                 .confirmedBy(confirmedBy)
@@ -224,7 +230,7 @@ public class RentCycleServiceImpl implements RentCycleService {
 
     @Override
     @Transactional(readOnly = true)
-    public RentCycleDTOs.RentCycleListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, RentCycleStatus status, String search, Pageable pageable) {
+    public BillDTOs.BillListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, BillStatus status, String search, Pageable pageable) {
         List<UUID> targetPropertyIds = new ArrayList<>();
 
         boolean isTenantView = false;
@@ -240,17 +246,17 @@ public class RentCycleServiceImpl implements RentCycleService {
 
                 if (propertyId != null) {
                     if (!ownedPropertyIds.contains(propertyId)) {
-                        return new RentCycleDTOs.RentCycleListResponse(
+                        return new BillDTOs.BillListResponse(
                                 List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                                new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                                new BillDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
                         );
                     }
                     targetPropertyIds.add(propertyId);
                 } else {
                     if (ownedPropertyIds.isEmpty()) {
-                        return new RentCycleDTOs.RentCycleListResponse(
+                        return new BillDTOs.BillListResponse(
                                 List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                                new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                                new BillDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
                         );
                     }
                     targetPropertyIds.addAll(ownedPropertyIds);
@@ -260,50 +266,50 @@ public class RentCycleServiceImpl implements RentCycleService {
             targetPropertyIds.add(propertyId);
         }
 
-        if (isTenantView && status == RentCycleStatus.PENDING) {
-            return new RentCycleDTOs.RentCycleListResponse(
+        if (isTenantView && status == BillStatus.PENDING) {
+            return new BillDTOs.BillListResponse(
                     List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                    new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                    new BillDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
             );
         }
 
-        Specification<RentCycleTbl> spec;
+        Specification<BillTbl> spec;
         if (leaseId != null) {
-            spec = Specification.where(RentCycleSpecifications.hasLeaseId(leaseId));
+            spec = Specification.where(BillSpecifications.hasLeaseId(leaseId));
         } else {
             List<UUID> targetUnitIds = targetPropertyIds.isEmpty() ? List.of() :
                     unitFacade.getUnitsByPropertyIds(targetPropertyIds).stream().map(UnitSummaryDTO::id).toList();
-            spec = Specification.where(RentCycleSpecifications.hasUnitIdIn(targetUnitIds));
+            spec = Specification.where(BillSpecifications.hasUnitIdIn(targetUnitIds));
         }
 
-        spec = spec.and(RentCycleSpecifications.hasBillingMonth(billingMonth))
-                .and(RentCycleSpecifications.hasStatus(status));
+        spec = spec.and(BillSpecifications.hasBillingMonth(billingMonth))
+                .and(BillSpecifications.hasStatus(status));
 
         if (isTenantView && status == null) {
-            spec = spec.and(RentCycleSpecifications.hasStatusNot(RentCycleStatus.PENDING));
+            spec = spec.and(BillSpecifications.hasStatusNot(BillStatus.PENDING));
         }
 
         if (search != null && !search.trim().isEmpty()) {
             List<UUID> matchingUnitIds = unitFacade.getUnitIdsByUnitNumberSearch(search);
             List<UUID> matchingUserIds = userFacade.getUserIdsBySearch(search);
-            spec = spec.and(RentCycleSpecifications.matchesSearch(matchingUnitIds, matchingUserIds));
+            spec = spec.and(BillSpecifications.matchesSearch(matchingUnitIds, matchingUserIds));
         }
 
-        Page<RentCycleTbl> page = rentCycleCrudService.findAll(spec, pageable);
-        List<RentCycleDTOs.RentCycleResponse> content = toResponses(page.getContent());
+        Page<BillTbl> page = billCrudService.findAll(spec, pageable);
+        List<BillDTOs.BillResponse> content = toResponses(page.getContent());
 
-        RentCycleDTOs.RentRollMetricsDTO rentRollMetrics = !targetPropertyIds.isEmpty() ?
-                rentCycleCrudService.getRentRollMetricsForProperties(
+        BillDTOs.RentRollMetricsDTO rentRollMetrics = !targetPropertyIds.isEmpty() ?
+                billCrudService.getRentRollMetricsForProperties(
                         targetPropertyIds,
                         billingMonth,
-                        RentCycleStatus.PENDING,
-                        RentCycleStatus.PUBLISHED,
-                        RentCycleStatus.PAID,
-                        RentCycleStatus.OVERDUE,
-                        RentCycleStatus.PARTIALLY_PAID
-                ) : new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
+                        BillStatus.PENDING,
+                        BillStatus.PUBLISHED,
+                        BillStatus.PAID,
+                        BillStatus.OVERDUE,
+                        BillStatus.PARTIALLY_PAID
+                ) : new BillDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
 
-        return new RentCycleDTOs.RentCycleListResponse(
+        return new BillDTOs.BillListResponse(
                 content,
                 page.getTotalElements(),
                 page.getTotalPages(),
@@ -315,11 +321,11 @@ public class RentCycleServiceImpl implements RentCycleService {
 
     @Override
     @Transactional
-    public RentCycleDTOs.RentCycleResponse markPaid(UUID id) {
-        RentCycleTbl cycle = rentCycleCrudService.findById(id)
+    public BillDTOs.BillResponse markPaid(UUID id) {
+        BillTbl cycle = billCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
 
-        if (cycle.getStatus() == RentCycleStatus.PAID) {
+        if (cycle.getStatus() == BillStatus.PAID) {
             return buildSingleResponse(cycle);
         }
 
@@ -329,31 +335,31 @@ public class RentCycleServiceImpl implements RentCycleService {
             confirmedBy = UUID.fromString(principal.getId());
         }
         if (confirmedBy == null) {
-            confirmedBy = cycle.getLease().getUserId();
+            confirmedBy = payerUserIdOf(cycle);
         }
 
         BigDecimal amountPaid = cycle.getAmountPaid() != null ? cycle.getAmountPaid() : BigDecimal.ZERO;
         BigDecimal remainingAmount = cycle.getTotalAmount().subtract(amountPaid);
 
-        recordCashPayment(id, remainingAmount, "Recorded via legacy markPaid", cycle.getLease().getUserId(), confirmedBy);
+        recordCashPayment(id, remainingAmount, "Recorded via legacy markPaid", payerUserIdOf(cycle), confirmedBy);
 
-        RentCycleTbl updated = rentCycleCrudService.findById(id).orElse(cycle);
-        log.info("rent_cycle_marked_paid rentCycleId={} leaseId={} paidAt={}",
-                updated.getId(), updated.getLease().getId(), updated.getPaidAt());
+        BillTbl updated = billCrudService.findById(id).orElse(cycle);
+        log.info("rent_cycle_marked_paid billId={} leaseId={} paidAt={}",
+                updated.getId(), payerLeaseIdOf(updated), updated.getPaidAt());
         return buildSingleResponse(updated);
     }
 
     @Override
     @Transactional
-    public RentCycleDTOs.RentCycleResponse publish(UUID id) {
-        RentCycleTbl cycle = rentCycleCrudService.findById(id)
+    public BillDTOs.BillResponse publish(UUID id) {
+        BillTbl cycle = billCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
-        if (cycle.getStatus() == RentCycleStatus.PENDING) {
-            cycle.setStatus(RentCycleStatus.PUBLISHED);
-            rentCycleCrudService.save(cycle);
+        if (cycle.getStatus() == BillStatus.PENDING) {
+            cycle.setStatus(BillStatus.PUBLISHED);
+            billCrudService.save(cycle);
 
-            if (cycle.getLease() != null && cycle.getLease().getUnitId() != null) {
-                UUID unitId = cycle.getLease().getUnitId();
+            if (payerOf(cycle) != null && payerUnitIdOf(cycle) != null) {
+                UUID unitId = payerUnitIdOf(cycle);
                 UnitSummaryDTO u = unitFacade.getUnitById(unitId).orElse(null);
                 UUID propertyId = u != null ? u.propertyId() : null;
                 String billingMonth = cycle.getBillingMonth();
@@ -389,14 +395,14 @@ public class RentCycleServiceImpl implements RentCycleService {
             eventPublisher.publishEvent(new RentPublishedEvent(
                     this,
                     cycle.getId(),
-                    cycle.getLease().getUserId(),
+                    payerUserIdOf(cycle),
                     cycle.getBillingMonth(),
                     cycle.getTotalAmount(),
                     cycle.getDueDate()
             ));
 
-            log.info("rent_cycle_published rentCycleId={} leaseId={} billingMonth={}",
-                    cycle.getId(), cycle.getLease().getId(), cycle.getBillingMonth());
+            log.info("rent_cycle_published billId={} leaseId={} billingMonth={}",
+                    cycle.getId(), payerLeaseIdOf(cycle), cycle.getBillingMonth());
         }
 
         return buildSingleResponse(cycle);
@@ -404,16 +410,16 @@ public class RentCycleServiceImpl implements RentCycleService {
 
     @Override
     @Transactional
-    public RentCycleDTOs.RentCycleResponse unpublish(UUID id) {
-        RentCycleTbl cycle = rentCycleCrudService.findById(id)
+    public BillDTOs.BillResponse unpublish(UUID id) {
+        BillTbl cycle = billCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
 
-        if (cycle.getStatus() == RentCycleStatus.PUBLISHED) {
-            cycle.setStatus(RentCycleStatus.PENDING);
-            rentCycleCrudService.save(cycle);
+        if (cycle.getStatus() == BillStatus.PUBLISHED) {
+            cycle.setStatus(BillStatus.PENDING);
+            billCrudService.save(cycle);
 
-            if (cycle.getLease() != null && cycle.getLease().getUnitId() != null) {
-                UUID unitId = cycle.getLease().getUnitId();
+            if (payerOf(cycle) != null && payerUnitIdOf(cycle) != null) {
+                UUID unitId = payerUnitIdOf(cycle);
                 UnitSummaryDTO u = unitFacade.getUnitById(unitId).orElse(null);
                 UUID propertyId = u != null ? u.propertyId() : null;
                 String billingMonth = cycle.getBillingMonth();
@@ -446,24 +452,19 @@ public class RentCycleServiceImpl implements RentCycleService {
                 }
             }
 
-            log.info("rent_cycle_unpublished rentCycleId={} leaseId={} billingMonth={}",
-                    cycle.getId(), cycle.getLease() != null ? cycle.getLease().getId() : null, cycle.getBillingMonth());
+            log.info("rent_cycle_unpublished billId={} leaseId={} billingMonth={}",
+                    cycle.getId(), payerLeaseIdOf(cycle), cycle.getBillingMonth());
         }
 
         return buildSingleResponse(cycle);
     }
 
     @Override
-    public RentCycleDTOs.BatchPublishResult batchPublish(UUID propertyId, String billingMonth) {
+    public BillDTOs.BatchPublishResult batchPublish(UUID propertyId, String billingMonth) {
         List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
         Map<UUID, String> unitNumbers = units.stream().collect(Collectors.toMap(UnitSummaryDTO::id, UnitSummaryDTO::unitNumber, (a, b) -> a));
         List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
-        List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
-                leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
-        List<UUID> activeLeaseIds = activeLeases.stream().map(LeaseTbl::getId).toList();
-
-        List<RentCycleTbl> propertyCycles = activeLeaseIds.isEmpty() ? List.of() :
-                rentCycleCrudService.findByLease_IdInAndBillingMonth(activeLeaseIds, billingMonth);
+        List<BillTbl> propertyCycles = billCrudService.findByPropertyIdAndBillingMonth(propertyId, billingMonth);
 
         if (propertyId != null) {
             List<BillingWorksheetEntryTbl> worksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
@@ -490,42 +491,37 @@ public class RentCycleServiceImpl implements RentCycleService {
             }
         }
 
-        List<RentCycleDTOs.RentCycleResponse> succeeded = new ArrayList<>();
-        List<RentCycleDTOs.BatchPublishFailure> failed = new ArrayList<>();
+        List<BillDTOs.BillResponse> succeeded = new ArrayList<>();
+        List<BillDTOs.BatchPublishFailure> failed = new ArrayList<>();
 
-        for (RentCycleTbl cycle : propertyCycles) {
-            String unitNum = (cycle.getLease() != null) ? unitNumbers.get(cycle.getLease().getUnitId()) : null;
+        for (BillTbl cycle : propertyCycles) {
+            String unitNum = (payerOf(cycle) != null) ? unitNumbers.get(payerUnitIdOf(cycle)) : null;
             try {
-                RentCycleDTOs.RentCycleResponse res = transactionHelper.publishSingleInTransaction(cycle.getId());
+                BillDTOs.BillResponse res = transactionHelper.publishSingleInTransaction(cycle.getId());
                 succeeded.add(res);
             } catch (Exception e) {
-                log.error("[RentCycleServiceImpl] Failed to publish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
-                failed.add(new RentCycleDTOs.BatchPublishFailure(cycle.getId(), unitNum, e.getMessage()));
+                log.error("[BillServiceImpl] Failed to publish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
+                failed.add(new BillDTOs.BatchPublishFailure(cycle.getId(), unitNum, e.getMessage()));
             }
         }
 
-        Comparator<RentCycleDTOs.RentCycleResponse> publishComp = Comparator.comparing(
-                (RentCycleDTOs.RentCycleResponse r) -> r.unitNumber() != null ? r.unitNumber() : "",
+        Comparator<BillDTOs.BillResponse> publishComp = Comparator.comparing(
+                (BillDTOs.BillResponse r) -> r.unitNumber() != null ? r.unitNumber() : "",
                 String.CASE_INSENSITIVE_ORDER
         ).thenComparing(
-                (RentCycleDTOs.RentCycleResponse r) -> r.tenantName() != null ? r.tenantName() : "",
+                (BillDTOs.BillResponse r) -> r.tenantName() != null ? r.tenantName() : "",
                 String.CASE_INSENSITIVE_ORDER
         );
         succeeded.sort(publishComp);
-        return new RentCycleDTOs.BatchPublishResult(succeeded, failed);
+        return new BillDTOs.BatchPublishResult(succeeded, failed);
     }
 
     @Override
-    public RentCycleDTOs.BatchUnpublishResult batchUnpublish(UUID propertyId, String billingMonth) {
+    public BillDTOs.BatchUnpublishResult batchUnpublish(UUID propertyId, String billingMonth) {
         List<UnitSummaryDTO> batchUnpublishUnits = unitFacade.getUnitsByPropertyId(propertyId);
         Map<UUID, String> unitNumbers = batchUnpublishUnits.stream().collect(Collectors.toMap(UnitSummaryDTO::id, UnitSummaryDTO::unitNumber, (a, b) -> a));
         List<UUID> unitIds = batchUnpublishUnits.stream().map(UnitSummaryDTO::id).toList();
-        List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
-                leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
-        List<UUID> activeLeaseIds = activeLeases.stream().map(LeaseTbl::getId).toList();
-
-        List<RentCycleTbl> propertyCycles = activeLeaseIds.isEmpty() ? List.of() :
-                rentCycleCrudService.findByLease_IdInAndBillingMonth(activeLeaseIds, billingMonth);
+        List<BillTbl> propertyCycles = billCrudService.findByPropertyIdAndBillingMonth(propertyId, billingMonth);
 
         if (propertyId != null) {
             List<BillingWorksheetEntryTbl> worksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
@@ -552,91 +548,134 @@ public class RentCycleServiceImpl implements RentCycleService {
             }
         }
 
-        List<RentCycleDTOs.RentCycleResponse> succeeded = new ArrayList<>();
-        List<RentCycleDTOs.BatchUnpublishFailure> failed = new ArrayList<>();
+        List<BillDTOs.BillResponse> succeeded = new ArrayList<>();
+        List<BillDTOs.BatchUnpublishFailure> failed = new ArrayList<>();
 
-        for (RentCycleTbl cycle : propertyCycles) {
-            String unitNum = (cycle.getLease() != null) ? unitNumbers.get(cycle.getLease().getUnitId()) : null;
+        for (BillTbl cycle : propertyCycles) {
+            String unitNum = (payerOf(cycle) != null) ? unitNumbers.get(payerUnitIdOf(cycle)) : null;
             try {
-                RentCycleDTOs.RentCycleResponse res = transactionHelper.unpublishSingleInTransaction(cycle.getId());
+                BillDTOs.BillResponse res = transactionHelper.unpublishSingleInTransaction(cycle.getId());
                 succeeded.add(res);
             } catch (Exception e) {
-                log.error("[RentCycleServiceImpl] Failed to unpublish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
-                failed.add(new RentCycleDTOs.BatchUnpublishFailure(cycle.getId(), unitNum, e.getMessage()));
+                log.error("[BillServiceImpl] Failed to unpublish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
+                failed.add(new BillDTOs.BatchUnpublishFailure(cycle.getId(), unitNum, e.getMessage()));
             }
         }
 
-        Comparator<RentCycleDTOs.RentCycleResponse> unpublishComp = Comparator.comparing(
-                (RentCycleDTOs.RentCycleResponse r) -> r.unitNumber() != null ? r.unitNumber() : "",
+        Comparator<BillDTOs.BillResponse> unpublishComp = Comparator.comparing(
+                (BillDTOs.BillResponse r) -> r.unitNumber() != null ? r.unitNumber() : "",
                 String.CASE_INSENSITIVE_ORDER
         ).thenComparing(
-                (RentCycleDTOs.RentCycleResponse r) -> r.tenantName() != null ? r.tenantName() : "",
+                (BillDTOs.BillResponse r) -> r.tenantName() != null ? r.tenantName() : "",
                 String.CASE_INSENSITIVE_ORDER
         );
         succeeded.sort(unpublishComp);
-        return new RentCycleDTOs.BatchUnpublishResult(succeeded, failed);
+        return new BillDTOs.BatchUnpublishResult(succeeded, failed);
     }
 
-    private RentCycleDTOs.RentCycleResponse buildSingleResponse(RentCycleTbl cycle) {
+    private BillDTOs.BillResponse buildSingleResponse(BillTbl bill) {
+        UnitResidentDTO payer = payerOf(bill);
+
         UserSummaryDTO user = null;
-        if (cycle.getLease() != null && cycle.getLease().getUserId() != null) {
-            user = userFacade.getUserById(cycle.getLease().getUserId()).orElse(null);
+        if (payer != null && payer.userId() != null) {
+            user = userFacade.getUserById(payer.userId()).orElse(null);
         }
 
         UnitSummaryDTO unit = null;
-        if (cycle.getLease() != null && cycle.getLease().getUnitId() != null) {
-            unit = unitFacade.getUnitById(cycle.getLease().getUnitId()).orElse(null);
+        if (payer != null && payer.unitId() != null) {
+            unit = unitFacade.getUnitById(payer.unitId()).orElse(null);
         }
 
-        List<RentCycleChargeTbl> charges = cycle.getId() != null ?
-                rentCycleChargeCrudService.findByRentCycle_Id(cycle.getId()) : Collections.emptyList();
+        List<BillLineTbl> charges = bill.getId() != null ?
+                billLineCrudService.findByBill_Id(bill.getId()) : Collections.emptyList();
 
-        return toResponse(cycle, user, unit, charges);
+        return toResponse(bill, payer, user, unit, charges);
     }
 
-    private List<RentCycleDTOs.RentCycleResponse> toResponses(List<RentCycleTbl> cycles) {
+    private List<BillDTOs.BillResponse> toResponses(List<BillTbl> cycles) {
         if (cycles == null || cycles.isEmpty()) {
             return Collections.emptyList();
         }
 
-        Set<UUID> userIds = cycles.stream()
-                .filter(c -> c.getLease() != null && c.getLease().getUserId() != null)
-                .map(c -> c.getLease().getUserId())
+        Map<UUID, UnitResidentDTO> payersByMemberId = payersOf(cycles);
+
+        Set<UUID> userIds = payersByMemberId.values().stream()
+                .map(UnitResidentDTO::userId)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        Set<UUID> rentCycleIds = cycles.stream()
+        Set<UUID> billIds = cycles.stream()
                 .filter(c -> c.getId() != null)
-                .map(RentCycleTbl::getId)
+                .map(BillTbl::getId)
                 .collect(Collectors.toSet());
 
         Map<UUID, UserSummaryDTO> usersMap = userIds.isEmpty() ? Collections.emptyMap() : userFacade.getUsersByIds(userIds);
 
-        Map<UUID, List<RentCycleChargeTbl>> chargesMap = rentCycleIds.isEmpty() ? Collections.emptyMap() :
-                rentCycleChargeCrudService.findByRentCycle_IdIn(rentCycleIds)
+        Map<UUID, List<BillLineTbl>> chargesMap = billIds.isEmpty() ? Collections.emptyMap() :
+                billLineCrudService.findByBill_IdIn(billIds)
                         .stream()
-                        .filter(c -> c.getRentCycle() != null && c.getRentCycle().getId() != null)
-                        .collect(Collectors.groupingBy(c -> c.getRentCycle().getId()));
+                        .filter(c -> c.getBill() != null && c.getBill().getId() != null)
+                        .collect(Collectors.groupingBy(c -> c.getBill().getId()));
 
-        Set<UUID> unitIds = cycles.stream()
-                .filter(c -> c.getLease() != null && c.getLease().getUnitId() != null)
-                .map(c -> c.getLease().getUnitId())
+        Set<UUID> unitIds = payersByMemberId.values().stream()
+                .map(UnitResidentDTO::unitId)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
         Map<UUID, UnitSummaryDTO> unitsMap = unitFacade.getUnitsByIds(unitIds);
 
         return cycles.stream()
-                .map(cycle -> {
-                    UserSummaryDTO user = cycle.getLease() != null ? usersMap.get(cycle.getLease().getUserId()) : null;
-                    UnitSummaryDTO unit = cycle.getLease() != null ? unitsMap.get(cycle.getLease().getUnitId()) : null;
-                    List<RentCycleChargeTbl> charges = chargesMap.getOrDefault(cycle.getId(), Collections.emptyList());
-                    return toResponse(cycle, user, unit, charges);
+                .map(bill -> {
+                    UnitResidentDTO payer = payersByMemberId.get(bill.getMemberId());
+                    UserSummaryDTO user = payer != null ? usersMap.get(payer.userId()) : null;
+                    UnitSummaryDTO unit = payer != null ? unitsMap.get(payer.unitId()) : null;
+                    List<BillLineTbl> charges = chargesMap.getOrDefault(bill.getId(), Collections.emptyList());
+                    return toResponse(bill, payer, user, unit, charges);
                 })
                 .toList();
     }
 
-    private RentCycleDTOs.RentCycleResponse toResponse(RentCycleTbl cycle, UserSummaryDTO user, UnitSummaryDTO unit, List<RentCycleChargeTbl> charges) {
+    private BillDTOs.BillResponse toResponse(BillTbl bill, UnitResidentDTO payer, UserSummaryDTO user,
+                                             UnitSummaryDTO unit, List<BillLineTbl> charges) {
         String tenantName = (user != null && user.fullName() != null) ? user.fullName() : "Unknown Tenant";
         String unitNumber = (unit != null) ? unit.unitNumber() : "Vacant";
-        return RentCycleMapper.toResponse(cycle, tenantName, unitNumber, charges);
+        UUID leaseId = payer != null ? payer.leaseId() : null;
+        return BillMapper.toResponse(bill, leaseId, tenantName, unitNumber, charges);
+    }
+
+    /** The member who owes a bill, active or not — a bill outlives the tenancy behind it. */
+    private UnitResidentDTO payerOf(BillTbl bill) {
+        if (bill == null || bill.getMemberId() == null) {
+            return null;
+        }
+        return unitMemberFacade.getResidentByMemberId(bill.getMemberId()).orElse(null);
+    }
+
+    /** The same in one query, keyed by member id, so list endpoints do not fan out per row. */
+    private Map<UUID, UnitResidentDTO> payersOf(Collection<BillTbl> bills) {
+        Set<UUID> memberIds = bills.stream()
+                .map(BillTbl::getMemberId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (memberIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return unitMemberFacade.getResidentsByMemberIds(memberIds).stream()
+                .collect(Collectors.toMap(UnitResidentDTO::memberId, Function.identity(), (a, b) -> a));
+    }
+
+    private UUID payerUserIdOf(BillTbl bill) {
+        UnitResidentDTO payer = payerOf(bill);
+        return payer != null ? payer.userId() : null;
+    }
+
+    private UUID payerUnitIdOf(BillTbl bill) {
+        UnitResidentDTO payer = payerOf(bill);
+        return payer != null ? payer.unitId() : null;
+    }
+
+    private UUID payerLeaseIdOf(BillTbl bill) {
+        UnitResidentDTO payer = payerOf(bill);
+        return payer != null ? payer.leaseId() : null;
     }
 }

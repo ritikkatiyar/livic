@@ -51,6 +51,27 @@ public interface UnitMemberRepository extends JpaRepository<UnitMemberTbl, UUID>
             """)
     List<UnitResidentDTO> findActiveResidencesByUserId(@Param("userId") UUID userId);
 
+    /**
+     * Members by id regardless of whether they are still active — a bill outlives the
+     * tenancy that produced it, so finance must still be able to name its payer.
+     */
+    @Query("""
+            SELECT new com.livic.core.property.dto.UnitResidentDTO(
+                m.id, m.userId, m.role, m.leaseId, u.id, u.unitNumber, u.floor, u.property.id)
+            FROM UnitMemberTbl m, UnitTbl u
+            WHERE m.unitId = u.id AND m.id IN :memberIds
+            """)
+    List<UnitResidentDTO> findResidentsByMemberIds(@Param("memberIds") Collection<UUID> memberIds);
+
+    /** The active tenant behind a lease, with its unit and property, in one query. */
+    @Query("""
+            SELECT new com.livic.core.property.dto.UnitResidentDTO(
+                m.id, m.userId, m.role, m.leaseId, u.id, u.unitNumber, u.floor, u.property.id)
+            FROM UnitMemberTbl m, UnitTbl u
+            WHERE m.unitId = u.id AND m.leaseId = :leaseId AND m.isActive = true
+            """)
+    List<UnitResidentDTO> findResidentsByLeaseId(@Param("leaseId") UUID leaseId);
+
     /** Active members of every unit in a property, for notices and resident lookups. */
     @Query("""
             SELECT m FROM UnitMemberTbl m

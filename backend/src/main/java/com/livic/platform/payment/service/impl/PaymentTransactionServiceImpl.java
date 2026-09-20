@@ -193,6 +193,14 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<PaymentTransactionTbl> findLatestSuccessful(String referenceType, UUID referenceId) {
+        return paymentTransactionRepository
+                .findFirstByReferenceTypeAndReferenceIdAndStatusOrderByCreatedAtDesc(
+                        referenceType, referenceId, "SUCCESS");
+    }
+
+    @Override
     @Transactional
     public void verifyAndCompletePayment(com.livic.platform.payment.dto.PaymentVerificationRequest request) {
         log.info("[RAZORPAY] Verifying client-side payment: paymentId={}, orderId={}", request.razorpayPaymentId(), request.razorpayOrderId());

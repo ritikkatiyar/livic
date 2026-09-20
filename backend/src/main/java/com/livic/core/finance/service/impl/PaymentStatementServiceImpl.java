@@ -1,11 +1,11 @@
 package com.livic.core.finance.service.impl;
 
 import com.livic.platform.common.exception.BusinessException;
-import com.livic.core.finance.domain.RentCycleChargeTbl;
-import com.livic.core.finance.domain.RentCycleTbl;
+import com.livic.core.finance.domain.BillLineTbl;
+import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.service.interfaces.PaymentStatementService;
-import com.livic.core.finance.service.interfaces.RentCycleChargeCrudService;
-import com.livic.core.finance.service.interfaces.RentCycleCrudService;
+import com.livic.core.finance.service.interfaces.BillLineCrudService;
+import com.livic.core.finance.service.interfaces.BillCrudService;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -26,38 +26,42 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class PaymentStatementServiceImpl implements PaymentStatementService {
 
-    private final RentCycleCrudService rentCycleCrudService;
-    private final RentCycleChargeCrudService rentCycleChargeCrudService;
+    private final BillCrudService billCrudService;
+    private final BillLineCrudService billLineCrudService;
     private final UserFacade userFacade;
     private final com.livic.core.property.facade.UnitFacade unitFacade;
+    private final com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
     private final com.livic.platform.payment.facade.PaymentFacade paymentFacade;
 
     @Override
-    public String generateStatementHtml(UUID rentCycleId) {
-        log.info("Generating payment statement HTML for RentCycle: {}", rentCycleId);
+    public String generateStatementHtml(UUID billId) {
+        log.info("Generating payment statement HTML for Bill: {}", billId);
 
-        RentCycleTbl rentCycle = rentCycleCrudService.findById(rentCycleId)
+        BillTbl bill = billCrudService.findById(billId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
 
-        if (rentCycle.getStatus() == com.livic.core.finance.domain.RentCycleStatus.PENDING) {
+        if (bill.getStatus() == com.livic.core.finance.domain.BillStatus.PENDING) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Rent cycle invoice has not been published yet");
         }
 
-        UserSummaryDTO tenant = userFacade.getUserById(rentCycle.getLease().getUserId()).orElse(null);
+        com.livic.core.property.dto.UnitResidentDTO payer = bill.getMemberId() == null ? null
+                : unitMemberFacade.getResidentByMemberId(bill.getMemberId()).orElse(null);
+        UserSummaryDTO tenant = payer == null ? null
+                : userFacade.getUserById(payer.userId()).orElse(null);
 
-        List<RentCycleChargeTbl> charges = rentCycleChargeCrudService.findByRentCycle_Id(rentCycleId);
+        List<BillLineTbl> charges = billLineCrudService.findByBill_Id(billId);
 
-        UUID unitId = rentCycle.getLease().getUnitId();
+        UUID unitId = payer != null ? payer.unitId() : null;
         com.livic.core.property.dto.UnitSummaryDTO unit = unitFacade.getUnitById(unitId).orElse(null);
         UUID propertyId = unit != null ? unit.propertyId() : null;
         String propertyName = unit != null ? unit.propertyName() : "N/A";
         String unitNumber = unit != null ? unit.unitNumber() : "N/A";
 
         String propertyIdShort = propertyId != null ? propertyId.toString().substring(0, 5).toUpperCase() : "PROP";
-        String rentCycleIdShort = rentCycleId.toString().substring(0, 5).toUpperCase();
-        String referenceNumber = String.format("%s-%s", propertyIdShort, rentCycleIdShort);
+        String billIdShort = billId.toString().substring(0, 5).toUpperCase();
+        String referenceNumber = String.format("%s-%s", propertyIdShort, billIdShort);
 
-        String statusStr = rentCycle.getStatus().name();
+        String statusStr = bill.getStatus().name();
         String statusColor = "#E2E8F0";
         String statusTextColor = "#475569";
 
@@ -75,11 +79,11 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
             statusTextColor = "#1E40AF";
         }
 
-        BigDecimal amountPaid = rentCycle.getAmountPaid() != null ? rentCycle.getAmountPaid() : BigDecimal.ZERO;
-        BigDecimal remainingBalance = rentCycle.getTotalAmount().subtract(amountPaid);
+        BigDecimal amountPaid = bill.getAmountPaid() != null ? bill.getAmountPaid() : BigDecimal.ZERO;
+        BigDecimal remainingBalance = bill.getTotalAmount().subtract(amountPaid);
 
         StringBuilder chargesRows = new StringBuilder();
-        for (RentCycleChargeTbl charge : charges) {
+        for (BillLineTbl charge : charges) {
             String amountFormatted = String.format("₹%,.2f", charge.getAmount());
             if (com.livic.platform.common.domain.RentChargeType.DISCOUNT.name().equals(charge.getChargeType().name())) {
                 amountFormatted = "-" + amountFormatted;
@@ -97,8 +101,12 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
         }
 
         String transactionDetailsHtml = "";
-        if (rentCycle.getPaymentTransactionId() != null) {
-            com.livic.platform.payment.dto.PaymentInitiationResponse tx = paymentFacade.getTransactionStatus(rentCycle.getPaymentTransactionId()).orElse(null);
+        {
+            com.livic.platform.payment.dto.PaymentInitiationResponse tx = paymentFacade
+                    .getLatestSuccessfulTransaction(
+                            com.livic.platform.payment.constant.PaymentConstants.ReferenceType.BILL,
+                            bill.getId())
+                    .orElse(null);
             if (tx != null) {
                 transactionDetailsHtml = String.format(
                         "<div class=\"section-title\">Transaction Details</div>" +
@@ -176,13 +184,13 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
                 "        <strong>Property Details:</strong><br>\n" +
                 "        " + propertyName + "<br>\n" +
                 "        Unit Number: " + unitNumber + "<br>\n" +
-                "        Billing Month: " + rentCycle.getBillingMonth() + "\n" +
+                "        Billing Month: " + bill.getBillingMonth() + "\n" +
                 "      </td>\n" +
                 "    </tr>\n" +
                 "    <tr>\n" +
                 "      <td>\n" +
                 "        <strong>Statement Date:</strong> " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy")) + "<br>\n" +
-                "        <strong>Due Date:</strong> " + rentCycle.getDueDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy")) + "\n" +
+                "        <strong>Due Date:</strong> " + bill.getDueDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy")) + "\n" +
                 "      </td>\n" +
                 "      <td style=\"text-align: right;\">\n" +
                 "        <strong>Status:</strong><br>\n" +
@@ -209,7 +217,7 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
                 "    <div class=\"summary-box\">\n" +
                 "      <div class=\"summary-row\">\n" +
                 "        <span>Total Billed Amount:</span>\n" +
-                "        <span>" + String.format("₹%,.2f", rentCycle.getTotalAmount()) + "</span>\n" +
+                "        <span>" + String.format("₹%,.2f", bill.getTotalAmount()) + "</span>\n" +
                 "      </div>\n" +
                 "      <div class=\"summary-row\">\n" +
                 "        <span>Total Amount Paid:</span>\n" +

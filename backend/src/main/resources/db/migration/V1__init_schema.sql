@@ -99,6 +99,49 @@ CREATE TABLE `billing_worksheet_entry_tbl` (
   CONSTRAINT `fk_meter_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`),
   CONSTRAINT `fk_meter_unit` FOREIGN KEY (`unit_id`) REFERENCES `unit_tbl` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `bill_tbl` (
+  `id` varchar(36) NOT NULL,
+  `property_id` varchar(36) NOT NULL,
+  `member_id` varchar(36) NOT NULL,
+  `issued_by_member_id` varchar(36) DEFAULT NULL,
+  `bill_type` varchar(32) NOT NULL,
+  `billing_month` char(7) DEFAULT NULL,
+  `due_date` date NOT NULL,
+  `status` varchar(32) NOT NULL,
+  `invoice_no` varchar(32) DEFAULT NULL,
+  `paid_at` datetime(6) DEFAULT NULL,
+  `total_amount` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `amount_paid` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_bill_member_month_type` (`member_id`,`billing_month`,`bill_type`),
+  UNIQUE KEY `uk_bill_property_invoice_no` (`property_id`,`invoice_no`),
+  KEY `idx_bill_member` (`member_id`),
+  KEY `idx_bill_issued_by` (`issued_by_member_id`),
+  KEY `idx_bill_property_month` (`property_id`,`billing_month`),
+  KEY `idx_bill_month_status_due` (`billing_month`,`status`,`due_date`),
+  CONSTRAINT `fk_bill_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_bill_member` FOREIGN KEY (`member_id`) REFERENCES `unit_member_tbl` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_bill_issued_by_member` FOREIGN KEY (`issued_by_member_id`) REFERENCES `unit_member_tbl` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+CREATE TABLE `bill_line_tbl` (
+  `id` varchar(36) NOT NULL,
+  `bill_id` varchar(36) NOT NULL,
+  `charge_type` varchar(50) NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `tax_rate` decimal(5,2) NOT NULL DEFAULT '0.00',
+  `tax_amount` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `description` varchar(255) DEFAULT NULL,
+  `charge_config_id` varchar(36) DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  KEY `idx_bill_line_bill_id` (`bill_id`),
+  KEY `fk_bill_line_charge_config` (`charge_config_id`),
+  CONSTRAINT `fk_bill_line_charge_config` FOREIGN KEY (`charge_config_id`) REFERENCES `charge_config_tbl` (`id`),
+  CONSTRAINT `fk_bill_line_bill` FOREIGN KEY (`bill_id`) REFERENCES `bill_tbl` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 CREATE TABLE `block_tbl` (
   `id` varchar(36) NOT NULL,
   `property_id` varchar(36) NOT NULL,
@@ -159,8 +202,9 @@ CREATE TABLE `failed_payment_event_tbl` (
 CREATE TABLE `finance_ledger_tbl` (
   `id` varchar(36) NOT NULL,
   `unit_id` varchar(36) NOT NULL,
+  `member_id` varchar(36) DEFAULT NULL,
   `lease_id` varchar(36) DEFAULT NULL,
-  `transaction_type` enum('INVOICE_GENERATED','PAYMENT_RECEIVED','LATE_FEE_APPLIED','REFUND','ADJUSTMENT') NOT NULL,
+  `transaction_type` varchar(32) NOT NULL,
   `amount` decimal(10,2) NOT NULL,
   `balance` decimal(10,2) NOT NULL,
   `reference_id` varchar(36) DEFAULT NULL,
@@ -169,8 +213,10 @@ CREATE TABLE `finance_ledger_tbl` (
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`),
   KEY `fk_ledger_unit` (`unit_id`),
+  KEY `fk_ledger_member` (`member_id`),
   KEY `fk_ledger_lease` (`lease_id`),
   CONSTRAINT `fk_ledger_lease` FOREIGN KEY (`lease_id`) REFERENCES `lease_tbl` (`id`),
+  CONSTRAINT `fk_ledger_member` FOREIGN KEY (`member_id`) REFERENCES `unit_member_tbl` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_ledger_unit` FOREIGN KEY (`unit_id`) REFERENCES `unit_tbl` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 CREATE TABLE `inventory_item_tbl` (
@@ -544,6 +590,7 @@ CREATE TABLE `property_tbl` (
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   `total_floors` int DEFAULT NULL,
+  `invoice_prefix` varchar(16) DEFAULT NULL,
   `auto_bill_day_of_month` int DEFAULT NULL,
   `auto_bill_time` time DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
@@ -567,44 +614,6 @@ CREATE TABLE `refreshtoken_tbl` (
   UNIQUE KEY `token_hash` (`token_hash`),
   KEY `idx_refreshtoken_user_id` (`user_id`),
   CONSTRAINT `fk_refreshtoken_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE `rent_cycle_charge_tbl` (
-  `id` varchar(36) NOT NULL,
-  `rent_cycle_id` varchar(36) NOT NULL,
-  `charge_type` enum('BASE_RENT','ELECTRICITY','FOOD','MAINTENANCE','PENALTY','DISCOUNT','CUSTOM') NOT NULL,
-  `amount` decimal(10,2) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-  `charge_config_id` varchar(36) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_rent_cycle_charge_cycle_id` (`rent_cycle_id`),
-  KEY `fk_rent_cycle_charge_config` (`charge_config_id`),
-  CONSTRAINT `fk_rent_cycle_charge_config` FOREIGN KEY (`charge_config_id`) REFERENCES `charge_config_tbl` (`id`),
-  CONSTRAINT `fk_rent_cycle_charge_cycle` FOREIGN KEY (`rent_cycle_id`) REFERENCES `rent_cycle_tbl` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-CREATE TABLE `rent_cycle_tbl` (
-  `id` varchar(36) NOT NULL,
-  `lease_id` varchar(36) NOT NULL,
-  `billing_month` char(7) NOT NULL,
-  `due_date` date NOT NULL,
-  `status` enum('PENDING','PAID','OVERDUE','PUBLISHED','PARTIALLY_PAID') NOT NULL,
-  `paid_at` datetime(6) DEFAULT NULL,
-  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-  `total_amount` decimal(10,2) NOT NULL DEFAULT '0.00',
-  `amount_paid` decimal(10,2) NOT NULL DEFAULT '0.00',
-  `payment_transaction_id` varchar(36) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_rent_cycle_lease_billing_month` (`lease_id`,`billing_month`),
-  KEY `idx_rent_cycle_lease_id` (`lease_id`),
-  KEY `idx_rent_cycle_month` (`billing_month`),
-  KEY `idx_rent_cycle_billing_month` (`billing_month`),
-  KEY `fk_rent_cycle_payment_tx` (`payment_transaction_id`),
-  KEY `idx_rent_cycle_month_status_due` (`billing_month`,`status`,`due_date`),
-  KEY `idx_rent_cycle_lease_month` (`lease_id`,`billing_month`),
-  CONSTRAINT `fk_rent_cycle_lease` FOREIGN KEY (`lease_id`) REFERENCES `lease_tbl` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_rent_cycle_payment_tx` FOREIGN KEY (`payment_transaction_id`) REFERENCES `payment_transaction_tbl` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 CREATE TABLE `resident_notification_preference_tbl` (
   `id` varchar(36) NOT NULL,

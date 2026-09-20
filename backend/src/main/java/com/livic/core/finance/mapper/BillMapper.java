@@ -1,24 +1,25 @@
 package com.livic.core.finance.mapper;
 
-import com.livic.core.finance.domain.RentCycleChargeTbl;
-import com.livic.core.finance.domain.RentCycleTbl;
-import com.livic.core.finance.dto.RentCycleDTOs;
+import com.livic.core.finance.domain.BillLineTbl;
+import com.livic.core.finance.domain.BillTbl;
+import com.livic.core.finance.dto.BillDTOs;
 
 import java.util.List;
 
-public final class RentCycleMapper {
-    private RentCycleMapper() {
+public final class BillMapper {
+    private BillMapper() {
     }
 
-    public static RentCycleDTOs.RentCycleResponse toResponse(
-            RentCycleTbl cycle,
+    public static BillDTOs.BillResponse toResponse(
+            BillTbl cycle,
+            java.util.UUID leaseId,
             String tenantName,
             String unitNumber,
-            List<RentCycleChargeTbl> charges
+            List<BillLineTbl> charges
     ) {
-        return new RentCycleDTOs.RentCycleResponse(
+        return new BillDTOs.BillResponse(
                 cycle.getId(),
-                cycle.getLease().getId(),
+                leaseId,
                 tenantName,
                 unitNumber,
                 cycle.getBillingMonth(),
@@ -28,12 +29,12 @@ public final class RentCycleMapper {
                 cycle.getPaidAt(),
                 cycle.getCreatedAt(),
                 cycle.getUpdatedAt(),
-                charges.stream().map(RentCycleMapper::toResponse).toList()
+                charges.stream().map(BillMapper::toResponse).toList()
         );
     }
 
-    public static RentCycleDTOs.ChargeResponse toResponse(RentCycleChargeTbl charge) {
-        return new RentCycleDTOs.ChargeResponse(
+    public static BillDTOs.ChargeResponse toResponse(BillLineTbl charge) {
+        return new BillDTOs.ChargeResponse(
                 charge.getId(),
                 charge.getChargeType(),
                 charge.getAmount(),

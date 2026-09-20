@@ -10,4 +10,8 @@ import java.util.UUID;
 @Repository
 public interface PaymentTransactionRepository extends JpaRepository<PaymentTransactionTbl, UUID> {
     Optional<PaymentTransactionTbl> findByGatewayTransactionId(String gatewayTransactionId);
+
+    /** Most recent transaction against a reference; a bill may have several part payments. */
+    Optional<PaymentTransactionTbl> findFirstByReferenceTypeAndReferenceIdAndStatusOrderByCreatedAtDesc(
+            String referenceType, UUID referenceId, String status);
 }

@@ -9,7 +9,8 @@ import com.livic.core.finance.mapper.UnitBookingMapper;
 import com.livic.core.finance.service.ChargeConfigQueryService;
 import com.livic.core.finance.service.interfaces.LeaseCrudService;
 import com.livic.core.finance.service.interfaces.LeaseQueryService;
-import com.livic.core.finance.service.interfaces.RentCycleCrudService;
+import com.livic.core.finance.domain.BillTbl;
+import com.livic.core.finance.service.interfaces.BillCrudService;
 import com.livic.core.finance.service.interfaces.UnitBookingCrudService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,24 +33,27 @@ public class FinanceFacadeImpl implements FinanceFacade {
 
     private final LeaseQueryService leaseQueryService;
     private final LeaseCrudService leaseCrudService;
-    private final RentCycleCrudService rentCycleCrudService;
+    private final BillCrudService billCrudService;
     private final ChargeConfigQueryService chargeConfigQueryService;
     private final UnitBookingCrudService unitBookingCrudService;
     private final com.livic.core.property.facade.UnitFacade unitFacade;
+    private final com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
 
     public FinanceFacadeImpl(
             LeaseQueryService leaseQueryService,
             LeaseCrudService leaseCrudService,
-            RentCycleCrudService rentCycleCrudService,
+            BillCrudService billCrudService,
             ChargeConfigQueryService chargeConfigQueryService,
             UnitBookingCrudService unitBookingCrudService,
-            com.livic.core.property.facade.UnitFacade unitFacade) {
+            com.livic.core.property.facade.UnitFacade unitFacade,
+            com.livic.core.property.facade.UnitMemberFacade unitMemberFacade) {
         this.leaseQueryService = leaseQueryService;
         this.leaseCrudService = leaseCrudService;
-        this.rentCycleCrudService = rentCycleCrudService;
+        this.billCrudService = billCrudService;
         this.chargeConfigQueryService = chargeConfigQueryService;
         this.unitBookingCrudService = unitBookingCrudService;
         this.unitFacade = unitFacade;
+        this.unitMemberFacade = unitMemberFacade;
     }
 
     @Override
@@ -112,19 +116,16 @@ public class FinanceFacadeImpl implements FinanceFacade {
     }
 
     @Override
-    public Optional<UUID> getPropertyIdByRentCycleId(UUID rentCycleId) {
-        return rentCycleCrudService.findById(rentCycleId)
-                .map(r -> {
-                    if (r.getLease() == null) return null;
-                    com.livic.core.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(r.getLease().getUnitId()).orElse(null);
-                    return u != null ? u.propertyId() : null;
-                });
+    public Optional<UUID> getPropertyIdByBillId(UUID billId) {
+        // The bill carries its property, so authorisation no longer walks lease -> unit.
+        return billCrudService.findById(billId).map(BillTbl::getPropertyId);
     }
 
     @Override
-    public Optional<UUID> getLeaseIdByRentCycleId(UUID rentCycleId) {
-        return rentCycleCrudService.findById(rentCycleId)
-                .map(r -> r.getLease() == null ? null : r.getLease().getId());
+    public Optional<UUID> getLeaseIdByBillId(UUID billId) {
+        return billCrudService.findById(billId)
+                .flatMap(bill -> unitMemberFacade.getResidentByMemberId(bill.getMemberId()))
+                .map(com.livic.core.property.dto.UnitResidentDTO::leaseId);
     }
 
     @Override
@@ -134,7 +135,7 @@ public class FinanceFacadeImpl implements FinanceFacade {
 
     @Override
     public RevenueMetricsDTO getRevenueMetrics(List<UUID> propertyIds, String billingMonth) {
-        com.livic.core.finance.dto.RevenueMetricsDTO m = rentCycleCrudService.getRevenueMetrics(propertyIds, billingMonth);
+        com.livic.core.finance.dto.RevenueMetricsDTO m = billCrudService.getRevenueMetrics(propertyIds, billingMonth);
         return new RevenueMetricsDTO(m.expected(), m.collected());
     }
 
@@ -145,8 +146,8 @@ public class FinanceFacadeImpl implements FinanceFacade {
 
     @Override
     public Page<DefaulterRecordDTO> getDefaulters(List<UUID> propertyIds, Pageable pageable) {
-        Page<com.livic.core.finance.dto.DefaulterRecordDTO> page = rentCycleCrudService.getDefaulters(propertyIds, pageable);
-        return page.map(d -> new DefaulterRecordDTO(d.tenantId(), d.unitNumber(), d.propertyName(), d.dueDate(), d.amountDue(), d.rentCycleId()));
+        Page<com.livic.core.finance.dto.DefaulterRecordDTO> page = billCrudService.getDefaulters(propertyIds, pageable);
+        return page.map(d -> new DefaulterRecordDTO(d.tenantId(), d.unitNumber(), d.propertyName(), d.dueDate(), d.amountDue(), d.billId()));
     }
 
     @Override

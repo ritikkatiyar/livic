@@ -1,12 +1,14 @@
 package com.livic.core.finance.listener;
 
 import com.livic.platform.common.domain.LedgerTransactionType;
-import com.livic.core.finance.domain.RentCycleStatus;
+import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.FinanceLedgerTbl;
-import com.livic.core.finance.domain.RentCycleTbl;
+import com.livic.core.property.dto.UnitResidentDTO;
+import com.livic.core.property.facade.UnitMemberFacade;
+import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.domain.UnitBookingTbl;
 import com.livic.core.finance.service.interfaces.FinanceLedgerCrudService;
-import com.livic.core.finance.service.interfaces.RentCycleCrudService;
+import com.livic.core.finance.service.interfaces.BillCrudService;
 import com.livic.core.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.platform.payment.constant.PaymentConstants;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
@@ -24,58 +26,62 @@ import java.time.LocalDateTime;
 @Slf4j
 public class FinancePaymentEventListener {
 
-    private final RentCycleCrudService rentCycleCrudService;
+    private final BillCrudService billCrudService;
     private final UnitBookingCrudService unitBookingCrudService;
     private final FinanceLedgerCrudService financeLedgerCrudService;
+    private final UnitMemberFacade unitMemberFacade;
 
     @EventListener
     @Transactional
     public void onPaymentCompleted(PaymentCompletedEvent event) {
-        if (PaymentConstants.ReferenceType.RENT_CYCLE.equalsIgnoreCase(event.getReferenceType())) {
-            handleRentCyclePayment(event);
+        if (PaymentConstants.ReferenceType.BILL.equalsIgnoreCase(event.getReferenceType())) {
+            handleBillPayment(event);
         } else if (PaymentConstants.ReferenceType.UNIT_BOOKING.equalsIgnoreCase(event.getReferenceType())) {
             handleUnitBookingPayment(event);
         }
     }
 
-    private void handleRentCyclePayment(PaymentCompletedEvent event) {
+    private void handleBillPayment(PaymentCompletedEvent event) {
         log.info("[OBSERVER: FINANCE] Processing PaymentCompletedEvent for Rent Cycle: {}", event);
 
-        RentCycleTbl rentCycle = rentCycleCrudService.findById(event.getReferenceId())
+        BillTbl bill = billCrudService.findById(event.getReferenceId())
                 .orElse(null);
 
-        if (rentCycle == null) {
-            log.warn("[OBSERVER: FINANCE] RentCycle not found for ID: {}", event.getReferenceId());
+        if (bill == null) {
+            log.warn("[OBSERVER: FINANCE] Bill not found for ID: {}", event.getReferenceId());
             return;
         }
 
         // Idempotent calculation
-        BigDecimal currentPaid = rentCycle.getAmountPaid() != null ? rentCycle.getAmountPaid() : BigDecimal.ZERO;
+        BigDecimal currentPaid = bill.getAmountPaid() != null ? bill.getAmountPaid() : BigDecimal.ZERO;
         BigDecimal newTotalPaid = currentPaid.add(event.getAmount());
 
-        rentCycle.setAmountPaid(newTotalPaid);
+        bill.setAmountPaid(newTotalPaid);
 
-        if (newTotalPaid.compareTo(rentCycle.getTotalAmount()) >= 0) {
-            rentCycle.setStatus(RentCycleStatus.PAID);
-            rentCycle.setPaidAt(LocalDateTime.now());
+        if (newTotalPaid.compareTo(bill.getTotalAmount()) >= 0) {
+            bill.setStatus(BillStatus.PAID);
+            bill.setPaidAt(LocalDateTime.now());
         } else {
-            rentCycle.setStatus(RentCycleStatus.PARTIALLY_PAID);
+            bill.setStatus(BillStatus.PARTIALLY_PAID);
         }
 
-        rentCycleCrudService.save(rentCycle);
+        billCrudService.save(bill);
 
-        // Update Finance Ledger if lease is present
-        if (rentCycle.getLease() != null) {
-            BigDecimal currentBalance = financeLedgerCrudService.sumAmountByLeaseId(rentCycle.getLease().getId());
+        // The ledger follows the payer, so it works for owners with no lease too.
+        UnitResidentDTO payer = bill.getMemberId() == null ? null
+                : unitMemberFacade.getResidentByMemberId(bill.getMemberId()).orElse(null);
+        if (payer != null) {
+            BigDecimal currentBalance = financeLedgerCrudService.sumAmountByMemberId(bill.getMemberId());
             BigDecimal ledgerAmount = event.getAmount().negate();
             BigDecimal newBalance = currentBalance.add(ledgerAmount);
 
-            boolean isFullPayment = rentCycle.getStatus() == RentCycleStatus.PAID;
+            boolean isFullPayment = bill.getStatus() == BillStatus.PAID;
             String description = (isFullPayment ? "Rent Payment (Full)" : "Rent Payment (Partial)") + " via " + event.getGatewayName();
 
             FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
-                    .unitId(rentCycle.getLease().getUnitId())
-                    .lease(rentCycle.getLease())
+                    .unitId(payer.unitId())
+                    .memberId(bill.getMemberId())
+                    .leaseId(payer.leaseId())
                     .transactionType(LedgerTransactionType.PAYMENT_RECEIVED)
                     .amount(ledgerAmount)
                     .balance(newBalance)
@@ -86,7 +92,7 @@ public class FinancePaymentEventListener {
             financeLedgerCrudService.save(ledgerEntry);
         }
 
-        log.info("[OBSERVER: FINANCE] Successfully updated RentCycle: {} status to: {}, totalPaid: {}", rentCycle.getId(), rentCycle.getStatus(), newTotalPaid);
+        log.info("[OBSERVER: FINANCE] Successfully updated Bill: {} status to: {}, totalPaid: {}", bill.getId(), bill.getStatus(), newTotalPaid);
     }
 
     private void handleUnitBookingPayment(PaymentCompletedEvent event) {

@@ -8,5 +8,5 @@ public record DefaulterResponse(
         String propertyName,
         int daysOverdue,
         BigDecimal amountDue,
-        String rentCycleId
+        String billId
 ) {}

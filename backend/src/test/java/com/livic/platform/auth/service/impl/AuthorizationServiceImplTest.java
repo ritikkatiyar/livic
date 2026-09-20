@@ -210,36 +210,36 @@ class AuthorizationServiceImplTest {
 
     @Test
     @DisplayName("Cross-Tenant Rent Cycle: User without property membership cannot access rent cycle")
-    void rentCycleCrossTenantAccessBlocked() {
+    void billCrossTenantAccessBlocked() {
         authenticateUser(userId, UserRole.USER);
-        UUID rentCycleId = UUID.randomUUID();
+        UUID billId = UUID.randomUUID();
         UUID foreignLeaseId = UUID.randomUUID();
         UUID foreignPropertyId = UUID.randomUUID();
         LeaseSummaryDTO foreignLease = new LeaseSummaryDTO(foreignLeaseId, UUID.randomUUID(), "101", 1,
                 foreignPropertyId, "Other Property", UUID.randomUUID(), "ACTIVE", null, null, null);
 
-        when(financeFacade.getLeaseIdByRentCycleId(rentCycleId)).thenReturn(Optional.of(foreignLeaseId));
+        when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(foreignLeaseId));
         when(financeFacade.getLeaseById(foreignLeaseId)).thenReturn(Optional.of(foreignLease));
         when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, foreignPropertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, foreignPropertyId))
                 .thenReturn(Set.of());
 
-        assertThat(authorizationService.hasPermission(ResourceType.RENT_CYCLE, rentCycleId, "PROPERTY_VIEW")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.RENT_CYCLE, rentCycleId, "PROPERTY_EDIT")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.RENT_CYCLE, rentCycleId, "LEASE_VIEW_OWN")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "PROPERTY_VIEW")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "PROPERTY_EDIT")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "LEASE_VIEW_OWN")).isFalse();
     }
 
     @Test
     @DisplayName("Rent cycle follows its lease: the tenant sees their own invoice, staff need LEASE_VIEW")
-    void rentCycleDelegatesToItsLease() {
+    void billDelegatesToItsLease() {
         authenticateUser(userId, UserRole.USER);
-        UUID rentCycleId = UUID.randomUUID();
+        UUID billId = UUID.randomUUID();
         UUID leaseId = UUID.randomUUID();
         LeaseSummaryDTO ownLease = new LeaseSummaryDTO(leaseId, UUID.randomUUID(), "101", 1, propertyId,
                 "Property A", userId, "ACTIVE", null, null, null);
 
-        when(financeFacade.getLeaseIdByRentCycleId(rentCycleId)).thenReturn(Optional.of(leaseId));
+        when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(leaseId));
         when(financeFacade.getLeaseById(leaseId)).thenReturn(Optional.of(ownLease));
         when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
@@ -247,29 +247,29 @@ class AuthorizationServiceImplTest {
                 .thenReturn(Set.of());
 
         // The tenant on the lease can view their own rent cycle …
-        assertThat(authorizationService.hasPermission(ResourceType.RENT_CYCLE, rentCycleId, "LEASE_VIEW_OWN")).isTrue();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "LEASE_VIEW_OWN")).isTrue();
         // … but ownership alone does not grant staff permissions on it
-        assertThat(authorizationService.hasPermission(ResourceType.RENT_CYCLE, rentCycleId, "LEASE_VIEW")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.RENT_CYCLE, rentCycleId, "RENT_ROLL_MANAGE")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "LEASE_VIEW")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "RENT_ROLL_MANAGE")).isFalse();
     }
 
     @Test
     @DisplayName("Staff with LEASE_VIEW on the property can view a rent cycle they do not own")
-    void rentCycleVisibleToStaffWithLeaseView() {
+    void billVisibleToStaffWithLeaseView() {
         authenticateUser(userId, UserRole.USER);
-        UUID rentCycleId = UUID.randomUUID();
+        UUID billId = UUID.randomUUID();
         UUID leaseId = UUID.randomUUID();
         LeaseSummaryDTO othersLease = new LeaseSummaryDTO(leaseId, UUID.randomUUID(), "102", 1, propertyId,
                 "Property A", UUID.randomUUID(), "ACTIVE", null, null, null);
 
-        when(financeFacade.getLeaseIdByRentCycleId(rentCycleId)).thenReturn(Optional.of(leaseId));
+        when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(leaseId));
         when(financeFacade.getLeaseById(leaseId)).thenReturn(Optional.of(othersLease));
         when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
                 .thenReturn(Set.of("LEASE_VIEW"));
 
-        assertThat(authorizationService.hasPermission(ResourceType.RENT_CYCLE, rentCycleId, "LEASE_VIEW")).isTrue();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "LEASE_VIEW")).isTrue();
     }
 
     @Test

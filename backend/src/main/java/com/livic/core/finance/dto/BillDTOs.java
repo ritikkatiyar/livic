@@ -1,7 +1,7 @@
 package com.livic.core.finance.dto;
 
 import com.livic.platform.common.domain.RentChargeType;
-import com.livic.core.finance.domain.RentCycleStatus;
+import com.livic.core.finance.domain.BillStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -12,15 +12,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-public class RentCycleDTOs {
+public class BillDTOs {
 
-    public record GenerateRentCycleRequest(
+    public record GenerateBillRequest(
             @NotNull UUID leaseId,
             @NotNull @Pattern(regexp = "\\d{4}-\\d{2}", message = "billingMonth must use yyyy-MM") String billingMonth,
             @NotNull LocalDate dueDate
     ) {}
 
-    public record BatchGenerateRentCycleRequest(
+    public record BatchGenerateBillRequest(
             @NotNull UUID propertyId,
             @NotNull @Pattern(regexp = "\\d{4}-\\d{2}", message = "billingMonth must use yyyy-MM") String billingMonth,
             @NotNull LocalDate dueDate
@@ -46,7 +46,7 @@ public class RentCycleDTOs {
             String description
     ) {}
 
-    public record RentCycleResponse(
+    public record BillResponse(
             UUID id,
             UUID leaseId,
             String tenantName,
@@ -54,7 +54,7 @@ public class RentCycleDTOs {
             String billingMonth,
             BigDecimal totalAmount,
             LocalDate dueDate,
-            RentCycleStatus status,
+            BillStatus status,
             LocalDateTime paidAt,
             LocalDateTime createdAt,
             LocalDateTime updatedAt,
@@ -69,8 +69,8 @@ public class RentCycleDTOs {
             LocalDateTime createdAt
     ) {}
 
-    public record RentCycleListResponse(
-            List<RentCycleResponse> content,
+    public record BillListResponse(
+            List<BillResponse> content,
             long totalElements,
             int totalPages,
             int size,
@@ -91,33 +91,33 @@ public class RentCycleDTOs {
     ) {}
 
     public record BatchGenerateResult(
-            List<RentCycleResponse> succeeded,
+            List<BillResponse> succeeded,
             List<BatchGenerateFailure> failed
     ) {}
 
     public record BatchPublishFailure(
-            UUID rentCycleId,
+            UUID billId,
             String unitNumber,
             String reason
     ) {}
 
     public record BatchPublishResult(
-            List<RentCycleResponse> succeeded,
+            List<BillResponse> succeeded,
             List<BatchPublishFailure> failed
     ) {}
 
     public record BatchUnpublishFailure(
-            UUID rentCycleId,
+            UUID billId,
             String unitNumber,
             String reason
     ) {}
 
     public record BatchUnpublishResult(
-            List<RentCycleResponse> succeeded,
+            List<BillResponse> succeeded,
             List<BatchUnpublishFailure> failed
     ) {}
 
-    public record RentCyclePropertyBillingMonthRequest(
+    public record BillPropertyBillingMonthRequest(
             @NotNull UUID propertyId,
             @NotNull @Pattern(regexp = "\\d{4}-\\d{2}", message = "billingMonth must use yyyy-MM") String billingMonth
     ) {}

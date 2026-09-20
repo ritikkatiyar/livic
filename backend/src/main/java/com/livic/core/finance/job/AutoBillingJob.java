@@ -3,11 +3,11 @@ package com.livic.core.finance.job;
 import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.core.finance.domain.LeaseTbl;
-import com.livic.core.finance.dto.RentCycleDTOs.GenerateRentCycleRequest;
+import com.livic.core.finance.dto.BillDTOs.GenerateBillRequest;
 import com.livic.core.finance.repository.ChargeConfigRepository;
 import com.livic.core.finance.repository.LeaseRepository;
 import com.livic.core.finance.service.BillingWorksheetService;
-import com.livic.core.finance.service.interfaces.RentCycleService;
+import com.livic.core.finance.service.interfaces.BillService;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class AutoBillingJob {
     private final ChargeConfigRepository chargeConfigRepository;
     private final BillingWorksheetService worksheetService;
     private final LeaseRepository leaseRepository;
-    private final RentCycleService rentCycleService;
+    private final BillService billService;
     private final com.livic.core.property.facade.UnitFacade unitFacade;
 
     /**
@@ -69,12 +69,12 @@ public class AutoBillingJob {
 
             for (LeaseTbl lease : activeLeases) {
                 try {
-                    GenerateRentCycleRequest request = new GenerateRentCycleRequest(
+                    GenerateBillRequest request = new GenerateBillRequest(
                             lease.getId(),
                             billingMonth,
                             dueDate
                     );
-                    rentCycleService.generate(request);
+                    billService.generate(request);
                     log.info("Successfully auto-generated rent cycle for Lease ID: {}", lease.getId());
                 } catch (Exception e) {
                     log.error("Failed to auto-generate rent cycle for Lease ID: {}", lease.getId(), e);

@@ -32,10 +32,10 @@ public class RentPublishedNotificationListenerTest {
     @Test
     public void testOnRentPublished_DispatchesAllThreeChannels() {
         UUID tenantId = UUID.randomUUID();
-        UUID rentCycleId = UUID.randomUUID();
+        UUID billId = UUID.randomUUID();
         RentPublishedEvent event = new RentPublishedEvent(
                 this,
-                rentCycleId,
+                billId,
                 tenantId,
                 "2026-09",
                 BigDecimal.valueOf(25000),
@@ -69,10 +69,10 @@ public class RentPublishedNotificationListenerTest {
     @Test
     public void testOnRentPublished_ContinuesWhenOneChannelFails() {
         UUID tenantId = UUID.randomUUID();
-        UUID rentCycleId = UUID.randomUUID();
+        UUID billId = UUID.randomUUID();
         RentPublishedEvent event = new RentPublishedEvent(
                 this,
-                rentCycleId,
+                billId,
                 tenantId,
                 "2026-09",
                 BigDecimal.valueOf(25000),

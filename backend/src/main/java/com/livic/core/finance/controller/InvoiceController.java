@@ -19,11 +19,11 @@ public class InvoiceController {
 
     private final PaymentStatementService paymentStatementService;
 
-    @GetMapping(value = "/{rentCycleId}/invoice", produces = MediaType.TEXT_HTML_VALUE)
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #rentCycleId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).RENT_CYCLE, #rentCycleId, 'LEASE_VIEW_OWN')")
-    public ResponseEntity<String> getPaymentStatementHtml(@PathVariable UUID rentCycleId) {
-        log.info("API request: Get payment statement HTML for RentCycle: {}", rentCycleId);
-        String html = paymentStatementService.generateStatementHtml(rentCycleId);
+    @GetMapping(value = "/{billId}/invoice", produces = MediaType.TEXT_HTML_VALUE)
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'LEASE_VIEW_OWN')")
+    public ResponseEntity<String> getPaymentStatementHtml(@PathVariable UUID billId) {
+        log.info("API request: Get payment statement HTML for Bill: {}", billId);
+        String html = paymentStatementService.generateStatementHtml(billId);
         return ResponseEntity.ok(html);
     }
 }

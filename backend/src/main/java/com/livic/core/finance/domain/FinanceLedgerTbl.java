@@ -20,10 +20,16 @@ public class FinanceLedgerTbl extends BaseEntity {
     @Column(name = "unit_id", nullable = false)
     private UUID unitId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lease_id")
-    @ToString.Exclude
-    private LeaseTbl lease;
+    /** The payer this entry belongs to; balances are per member as well as per unit. */
+    @Column(name = "member_id")
+    private UUID memberId;
+
+    /**
+     * Kept as a plain id, not a relation: leases move to the rental vertical, and a core
+     * table must not hold a mapping to one. Owner entries have no lease at all.
+     */
+    @Column(name = "lease_id")
+    private UUID leaseId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type", nullable = false)

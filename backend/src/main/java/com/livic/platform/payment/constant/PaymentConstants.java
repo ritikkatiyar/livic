@@ -15,7 +15,7 @@ public final class PaymentConstants {
     }
 
     public static final class ReferenceType {
-        public static final String RENT_CYCLE = "RENT_CYCLE";
+        public static final String BILL = "BILL";
         public static final String SAAS_SUBSCRIPTION = "SAAS_SUBSCRIPTION";
         public static final String WALLET_TOPUP = "WALLET_TOPUP";
         public static final String UNIT_BOOKING = "UNIT_BOOKING";

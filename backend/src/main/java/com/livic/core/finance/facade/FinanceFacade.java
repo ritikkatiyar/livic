@@ -32,17 +32,17 @@ public interface FinanceFacade {
 
     Optional<LeaseSummaryDTO> getLeaseById(UUID leaseId);
 
-    Optional<UUID> getPropertyIdByRentCycleId(UUID rentCycleId);
+    Optional<UUID> getPropertyIdByBillId(UUID billId);
 
     /** The lease a rent cycle belongs to, so access to the cycle can follow access to the lease. */
-    Optional<UUID> getLeaseIdByRentCycleId(UUID rentCycleId);
+    Optional<UUID> getLeaseIdByBillId(UUID billId);
 
     ChargeConfigResponse getChargeConfigById(UUID chargeConfigId);
 
     // Analytics Read Methods
     record RevenueMetricsDTO(BigDecimal expected, BigDecimal collected) {}
 
-    record DefaulterRecordDTO(UUID tenantId, String unitNumber, String propertyName, LocalDate dueDate, BigDecimal amountDue, UUID rentCycleId) {}
+    record DefaulterRecordDTO(UUID tenantId, String unitNumber, String propertyName, LocalDate dueDate, BigDecimal amountDue, UUID billId) {}
 
     RevenueMetricsDTO getRevenueMetrics(List<UUID> propertyIds, String billingMonth);
 

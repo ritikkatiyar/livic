@@ -50,8 +50,9 @@ public class UnitController {
     @GetMapping("/floors/layouts")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<List<UnitDTOs.UnitResponse>>> getAllFloorsLayout(
-            @PathVariable UUID propertyId) {
-        List<UnitDTOs.UnitResponse> layout = unitLayoutOrchestrationService.getAllFloorsLayout(propertyId);
+            @PathVariable UUID propertyId,
+            @RequestParam(required = false) UUID blockId) {
+        List<UnitDTOs.UnitResponse> layout = unitLayoutOrchestrationService.getAllFloorsLayout(propertyId, blockId);
         return ResponseEntity.ok(ApiResponse.success(layout));
     }
 

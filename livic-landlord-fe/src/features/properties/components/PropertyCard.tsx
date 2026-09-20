@@ -2,11 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Theme } from '@/src/theme/Theme';
+import { useQuery } from '@tanstack/react-query';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import Building3DView from '@/src/features/properties/components/Building3DView';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import type { PropertyResponse } from '@/src/types/property';
+import { getBlocks, BlockResponse } from '@/src/features/properties/api/block.api';
 
 interface PropertyCardProps {
   item: PropertyResponse;
@@ -37,6 +38,20 @@ export function PropertyCard({
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
+  const { data: blocks = [] } = useQuery<BlockResponse[]>({
+    queryKey: ['property-blocks', item.id],
+    queryFn: () => getBlocks(item.id, accessToken || ''),
+    enabled: Boolean(item.id && accessToken),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const hasMultipleBlocks = blocks.length > 1;
+  const totalBlocks = Math.max(blocks.length, 1);
+  const displayFloors = blocks[0]?.totalFloors ?? item.totalFloors ?? '-';
+
+  const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
+  const activeBlockId = selectedBlockId || (blocks.length > 0 ? blocks[0].id : null);
+
   if (isDesktop) {
     return (
       <View style={[styles.propertyCard, styles.propertyCardDesktop]}>
@@ -49,6 +64,7 @@ export function PropertyCard({
                   <Building3DView 
                     propertyId={item.id} 
                     token={accessToken} 
+                    blockId={activeBlockId}
                     onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
                     resetRotationTrigger={resetRotationTrigger}
                     maxContainerHeight={232}
@@ -70,6 +86,40 @@ export function PropertyCard({
                   {item.isActive === false ? 'INACTIVE' : 'ACTIVE'}
                 </Text>
               </View>
+
+              {hasMultipleBlocks && (
+                <View style={styles.blockSwitcherOverlay}>
+                  {blocks.map((block) => {
+                    const isSelected = block.id === activeBlockId;
+                    return (
+                      <TouchableOpacity
+                        key={block.id}
+                        style={[
+                          styles.blockPill,
+                          isSelected && styles.blockPillActive,
+                        ]}
+                        onPress={() => setSelectedBlockId(block.id)}
+                        activeOpacity={0.75}
+                      >
+                        <MaterialIcons
+                          name="domain"
+                          size={11}
+                          color={isSelected ? theme.Colors.onPrimary : theme.Colors.onSurfaceVariant}
+                        />
+                        <Text
+                          style={[
+                            styles.blockPillText,
+                            isSelected && styles.blockPillTextActive,
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {block.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
 
               <TouchableOpacity 
                 style={styles.deleteButtonOverlay}
@@ -96,10 +146,17 @@ export function PropertyCard({
                 <Text style={styles.propertyMetricLabel}>STATUS</Text>
                 <Text style={[styles.desktopMetricValue, styles.propertyMetricAccent]}>READY</Text>
               </View>
-              <View style={styles.desktopMetricRow}>
-                <Text style={styles.propertyMetricLabel}>FLOORS</Text>
-                <Text style={styles.desktopMetricValue}>{item.totalFloors ?? '-'}</Text>
-              </View>
+              {hasMultipleBlocks ? (
+                <View style={styles.desktopMetricRow}>
+                  <Text style={styles.propertyMetricLabel}>BLOCKS</Text>
+                  <Text style={[styles.desktopMetricValue, { fontWeight: '700' }]}>{totalBlocks} Blocks</Text>
+                </View>
+              ) : (
+                <View style={styles.desktopMetricRow}>
+                  <Text style={styles.propertyMetricLabel}>FLOORS</Text>
+                  <Text style={styles.desktopMetricValue}>{displayFloors} Floors</Text>
+                </View>
+              )}
               <View style={styles.desktopMetricRow}>
                 <Text style={styles.propertyMetricLabel}>PROPERTY LIFE CYCLE</Text>
                 <TouchableOpacity
@@ -129,10 +186,17 @@ export function PropertyCard({
 
             <View style={styles.desktopCardActions}>
               <ActionButton
-                label="MANAGE"
-                icon="arrow-forward"
+                label={hasMultipleBlocks ? "Blocks & Floors" : "Floors & Units"}
+                icon={hasMultipleBlocks ? "domain" : "layers"}
                 iconPosition="right"
                 variant="primary"
+                size="md"
+                onPress={() => router.push(`/properties/${item.id}/floors`)}
+              />
+              <ActionButton
+                label="Manage"
+                icon="settings"
+                variant="outline"
                 size="md"
                 onPress={() => router.push(`/properties/${item.id}`)}
               />
@@ -158,6 +222,7 @@ export function PropertyCard({
             <Building3DView 
               propertyId={item.id} 
               token={accessToken} 
+              blockId={activeBlockId}
               onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
               resetRotationTrigger={resetRotationTrigger}
               maxContainerHeight={180}
@@ -179,6 +244,40 @@ export function PropertyCard({
             {item.isActive === false ? 'INACTIVE' : 'ACTIVE'}
           </Text>
         </View>
+
+        {hasMultipleBlocks && (
+          <View style={styles.blockSwitcherOverlay}>
+            {blocks.map((block) => {
+              const isSelected = block.id === activeBlockId;
+              return (
+                <TouchableOpacity
+                  key={block.id}
+                  style={[
+                    styles.blockPill,
+                    isSelected && styles.blockPillActive,
+                  ]}
+                  onPress={() => setSelectedBlockId(block.id)}
+                  activeOpacity={0.75}
+                >
+                  <MaterialIcons
+                    name="domain"
+                    size={11}
+                    color={isSelected ? theme.Colors.onPrimary : theme.Colors.onSurfaceVariant}
+                  />
+                  <Text
+                    style={[
+                      styles.blockPillText,
+                      isSelected && styles.blockPillTextActive,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {block.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
 
         <TouchableOpacity 
           style={[styles.deleteButtonOverlay, { right: 60 }]}
@@ -220,12 +319,21 @@ export function PropertyCard({
       </View>
 
       <View style={[styles.propertyMetrics, styles.propertyMetricsMobile]}>
-        <View style={styles.propertyMetric}>
-          <Text style={styles.propertyMetricLabel}>FLOORS</Text>
-          <Text style={styles.propertyMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-            {item.totalFloors ?? '-'}
-          </Text>
-        </View>
+        {hasMultipleBlocks ? (
+          <View style={styles.propertyMetric}>
+            <Text style={styles.propertyMetricLabel}>BLOCKS</Text>
+            <Text style={styles.propertyMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+              {totalBlocks}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.propertyMetric}>
+            <Text style={styles.propertyMetricLabel}>FLOORS</Text>
+            <Text style={styles.propertyMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+              {displayFloors}
+            </Text>
+          </View>
+        )}
         <View style={styles.propertyMetric}>
           <Text style={styles.propertyMetricLabel}>STATUS</Text>
           <Text style={[styles.propertyMetricValue, styles.propertyMetricAccent]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -236,10 +344,18 @@ export function PropertyCard({
       
       <View style={{ gap: 10, marginTop: 14 }}>
         <ActionButton
-          label="Manage Property"
-          icon="arrow-forward"
+          label={hasMultipleBlocks ? "Blocks & Floors" : "Floors & Units"}
+          icon={hasMultipleBlocks ? "domain" : "layers"}
           iconPosition="right"
           variant="primary"
+          size="md"
+          fullWidth
+          onPress={() => router.push(`/properties/${item.id}/floors`)}
+        />
+        <ActionButton
+          label="Manage Property Settings"
+          icon="settings"
+          variant="outline"
           size="md"
           fullWidth
           onPress={() => router.push(`/properties/${item.id}`)}
@@ -335,6 +451,41 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
     color: theme.Colors.primary,
+  },
+  blockSwitcherOverlay: {
+    position: 'absolute',
+    right: 12,
+    top: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.9)',
+    padding: 3,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    zIndex: 15,
+  },
+  blockPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 14,
+  },
+  blockPillActive: {
+    backgroundColor: theme.Colors.primary,
+    ...theme.Shadows.low,
+  },
+  blockPillText: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.onSurfaceVariant,
+  },
+  blockPillTextActive: {
+    color: theme.Colors.onPrimary,
+    fontWeight: '700',
   },
   deleteButtonOverlay: {
     position: 'absolute',

@@ -39,7 +39,11 @@ public class UnitLayoutOrchestrationService {
     }
 
     public List<UnitDTOs.UnitResponse> getAllFloorsLayout(UUID propertyId) {
-        List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId);
+        return getAllFloorsLayout(propertyId, null);
+    }
+
+    public List<UnitDTOs.UnitResponse> getAllFloorsLayout(UUID propertyId, UUID blockId) {
+        List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId, blockId);
         return enrichUnits(units);
     }
 
@@ -97,6 +101,7 @@ public class UnitLayoutOrchestrationService {
     private UnitDTOs.UnitResponse toResponse(UnitTbl u, List<UnitOccupant> occupants, Map<UUID, UserSummaryDTO> usersById) {
         return new UnitDTOs.UnitResponse(
                 u.getId(),
+                u.getBlock() != null ? u.getBlock().getId() : null,
                 u.getUnitNumber(),
                 u.getFloor(),
                 u.getGridX(),

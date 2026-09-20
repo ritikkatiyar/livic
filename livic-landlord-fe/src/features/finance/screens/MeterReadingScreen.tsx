@@ -104,6 +104,48 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
     }
   });
 
+  const renderNoConfigEmptyState = () => (
+    <View style={styles.emptyConfigCard}>
+      <View style={styles.emptyConfigIconCircle}>
+        <MaterialIcons name="speed" size={38} color={theme.Colors.primary} />
+      </View>
+      <Text style={styles.emptyConfigTitle}>No Metered Utility Configured</Text>
+      <Text style={styles.emptyConfigDescription}>
+        To record meter readings, your property needs at least one utility charge with a metered calculation strategy (such as Electricity or Sub-metered Water).
+      </Text>
+      <View style={styles.emptyConfigActions}>
+        <TouchableOpacity
+          style={styles.emptyConfigPrimaryBtn}
+          activeOpacity={0.8}
+          onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
+        >
+          <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
+          <Text style={styles.emptyConfigPrimaryBtnText}>CONFIGURE ELECTRICITY / UTILITY</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.emptyConfigSecondaryBtn}
+          activeOpacity={0.75}
+          onPress={() => router.push(`/expenses/charge-config?propertyId=${propertyId}`)}
+        >
+          <MaterialIcons name="receipt-long" size={18} color={theme.Colors.primary} />
+          <Text style={styles.emptyConfigSecondaryBtnText}>View Charge Settings</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderNoUnitsEmptyState = () => (
+    <View style={styles.emptyConfigCard}>
+      <View style={styles.emptyConfigIconCircle}>
+        <MaterialIcons name="receipt-long" size={38} color={theme.Colors.onSurfaceVariant} />
+      </View>
+      <Text style={styles.emptyConfigTitle}>No Units Found for Reading</Text>
+      <Text style={styles.emptyConfigDescription}>
+        No active units were found under {selectedConfig?.chargeName || 'this configuration'} for {getMonthName(month)} {year}. Ensure units are configured in floor plans.
+      </Text>
+    </View>
+  );
+
   const renderDesktopShell = () => (
     <View style={styles.desktopShell}>
       <View style={styles.desktopMain}>
@@ -151,7 +193,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                   options={configs.map(c => ({ label: c.chargeName, value: c.id }))}
                   value={selectedConfigId}
                   onChange={setSelectedConfigId}
-                  placeholder="Select Utility"
+                  placeholder={configs.length === 0 ? "No Metered Utilities Configured" : "Select Utility"}
                   icon="receipt-long"
                 />
               </View>
@@ -182,11 +224,10 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
               />
             ) : isLoading ? (
               <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />
+            ) : configs.length === 0 ? (
+              renderNoConfigEmptyState()
             ) : worksheet.length === 0 ? (
-              <View style={styles.emptyStateCard}>
-                <MaterialIcons name="receipt-long" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
-                <Text style={styles.emptyText}>No metered units found for this configuration.</Text>
-              </View>
+              renderNoUnitsEmptyState()
             ) : (
               <View style={styles.desktopGrid}>
                 {/* Left Column: Floor Cards */}
@@ -296,7 +337,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
             options={configs.map(c => ({ label: c.chargeName, value: c.id }))}
             value={selectedConfigId}
             onChange={setSelectedConfigId}
-            placeholder="Select Utility"
+            placeholder={configs.length === 0 ? "No Metered Utilities Configured" : "Select Utility"}
             icon="receipt-long"
           />
           
@@ -338,10 +379,10 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
             </View>
           ) : isLoading ? (
             <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 50 }} />
+          ) : configs.length === 0 ? (
+            renderNoConfigEmptyState()
           ) : worksheet.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No metered units found for this configuration.</Text>
-            </View>
+            renderNoUnitsEmptyState()
           ) : (
             <>
               <View style={styles.listControlsRowMobile}>

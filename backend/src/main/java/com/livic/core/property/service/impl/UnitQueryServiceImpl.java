@@ -46,7 +46,12 @@ public class UnitQueryServiceImpl implements UnitQueryService {
         int blockTotalFloors = block.getTotalFloors() != null ? block.getTotalFloors() : 0;
         int requestedTop = throughFloor != null ? throughFloor : 0;
         
-        int topFloor = Math.max(Math.max(requestedTop, maxFromUnits), blockTotalFloors);
+        int topFloor;
+        if (block.getTotalFloors() != null && block.getTotalFloors() > 0) {
+            topFloor = Math.max(block.getTotalFloors(), maxFromUnits);
+        } else {
+            topFloor = Math.max(requestedTop, maxFromUnits);
+        }
         if (topFloor < 1) {
             topFloor = 1;
         }
@@ -76,8 +81,17 @@ public class UnitQueryServiceImpl implements UnitQueryService {
 
     @Override
     public List<UnitTbl> getUnitsByProperty(UUID propertyId) {
+        return getUnitsByProperty(propertyId, null);
+    }
+
+    @Override
+    public List<UnitTbl> getUnitsByProperty(UUID propertyId, UUID blockId) {
         if (!propertyQueryService.existsById(propertyId)) {
             throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
+        }
+        if (blockId != null) {
+            BlockTbl block = blockService.resolveBlock(propertyId, blockId);
+            return unitCrudService.findByBlockId(block.getId());
         }
         return unitCrudService.findByPropertyId(propertyId);
     }

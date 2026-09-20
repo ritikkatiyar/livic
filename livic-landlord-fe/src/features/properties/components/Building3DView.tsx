@@ -37,9 +37,11 @@ const SHADOW_OPACITY_LIGHT = 0.08;
 interface Building3DViewProps {
   propertyId: string;
   token: string;
+  blockId?: string | null;
   onFloorClick?: (floorNum: number) => void;
   resetRotationTrigger?: number;
   maxContainerHeight?: number;
+  hideLegend?: boolean;
 }
 
 function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: AppTheme }) {
@@ -117,16 +119,18 @@ const createStyles3DSkeleton = (theme: AppTheme) => StyleSheet.create({
 export default function Building3DView({
   propertyId,
   token,
+  blockId,
   onFloorClick,
   resetRotationTrigger,
   maxContainerHeight = DEFAULT_MAX_CONTAINER_HEIGHT,
+  hideLegend = false,
 }: Building3DViewProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const { data: units = [], isLoading: loading } = useQuery<UnitResponse[]>({
-    queryKey: ['property-layouts', propertyId],
-    queryFn: () => getAllFloorsLayout(propertyId, token),
+    queryKey: ['property-layouts', propertyId, blockId ?? 'all'],
+    queryFn: () => getAllFloorsLayout(propertyId, token, blockId),
     enabled: !!propertyId && !!token,
     staleTime: 1000 * 60 * 5,
   });
@@ -389,20 +393,22 @@ export default function Building3DView({
       ) : (
         <>
           {/* Glassmorphic Occupancy Status Legend Badge */}
-          <View style={styles.legendContainer} pointerEvents="none">
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: theme.Colors.primary }]} />
-              <Text style={styles.legendText}>Vacant</Text>
+          {!hideLegend && (
+            <View style={styles.legendContainer} pointerEvents="none">
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: theme.Colors.primary }]} />
+                <Text style={styles.legendText}>Vacant</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: theme.Colors.tertiary }]} />
+                <Text style={styles.legendText}>Partial</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: theme.Colors.error }]} />
+                <Text style={styles.legendText}>Occupied</Text>
+              </View>
             </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: theme.Colors.tertiary }]} />
-              <Text style={styles.legendText}>Partial</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: theme.Colors.error }]} />
-              <Text style={styles.legendText}>Occupied</Text>
-            </View>
-          </View>
+          )}
 
           <View 
             ref={containerRef}
@@ -606,12 +612,12 @@ const createStyles = (theme: AppTheme, isDark: boolean) => StyleSheet.create({
   },
   legendContainer: {
     position: 'absolute',
-    top: theme.Spacing.sm,
-    right: theme.Spacing.sm,
+    top: 38,
+    left: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.Spacing.sm,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.75)',
     borderColor: theme.Colors.glassStroke,
     borderWidth: theme.Borders.card,
     borderRadius: theme.Rounded.default,

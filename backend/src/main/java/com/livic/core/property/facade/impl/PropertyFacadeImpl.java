@@ -48,7 +48,7 @@ public class PropertyFacadeImpl implements PropertyFacade {
             return Collections.emptyMap();
         }
         return propertyQueryService.getPropertiesByIds(propertyIds).stream()
-                .map(PropertySummaryDTO::from)
+                .map(p -> PropertySummaryDTO.from(p, blockService.totalFloorsForProperty(p.getId())))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(PropertySummaryDTO::id, p -> p, (a, b) -> a));
     }
@@ -56,20 +56,20 @@ public class PropertyFacadeImpl implements PropertyFacade {
     @Override
     public Page<PropertySummaryDTO> getPropertiesByUserId(UUID userId, Pageable pageable) {
         return propertyQueryService.getPropertiesByUserId(userId, pageable)
-                .map(PropertySummaryDTO::from);
+                .map(p -> PropertySummaryDTO.from(p, blockService.totalFloorsForProperty(p.getId())));
     }
 
     @Override
     public List<PropertySummaryDTO> getPropertiesByUserId(UUID userId) {
         return propertyQueryService.getPropertiesByUserId(userId).stream()
-                .map(PropertySummaryDTO::from)
+                .map(p -> PropertySummaryDTO.from(p, blockService.totalFloorsForProperty(p.getId())))
                 .toList();
     }
 
     @Override
     public List<PropertySummaryDTO> getPropertiesByAutoBillDayOfMonth(int day) {
         return propertyQueryService.getPropertiesByAutoBillDayOfMonth(day).stream()
-                .map(PropertySummaryDTO::from)
+                .map(p -> PropertySummaryDTO.from(p, blockService.totalFloorsForProperty(p.getId())))
                 .toList();
     }
 

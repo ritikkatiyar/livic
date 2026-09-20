@@ -48,6 +48,7 @@ public class UnitDTOs {
 
         public record UnitResponse(
             UUID id,
+            UUID blockId,
             String unitNumber,
             int floor,
             int gridX,

@@ -51,6 +51,8 @@ interface FloorEditorScreenProps {
   userToken: string;
   onBack: () => void;
   onSave: () => void;
+  /** The building this floor sits in; "blocks" in this editor means drawn rectangles. */
+  buildingBlockId?: string | null;
 }
 
 export default function FloorEditorScreen({
@@ -58,7 +60,8 @@ export default function FloorEditorScreen({
   floorNumber,
   userToken,
   onBack,
-  onSave
+  onSave,
+  buildingBlockId
 }: FloorEditorScreenProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
@@ -116,6 +119,7 @@ export default function FloorEditorScreen({
   } = useFloorEditorLayoutApi({
     propertyId,
     floorNumber,
+    buildingBlockId,
     userToken,
     onSave,
     blocks,
@@ -155,6 +159,7 @@ export default function FloorEditorScreen({
     updateUnitDetails,
     propertyId,
     floorNumber,
+    buildingBlockId,
     userToken,
     sheetScrollRef,
     setParentScrollEnabled,

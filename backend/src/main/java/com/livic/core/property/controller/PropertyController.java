@@ -77,7 +77,8 @@ public class PropertyController {
             @PageableDefault(size = 20) Pageable pageable) {
         UUID userId = UUID.fromString(currentUser.getId());
         Page<PropertyTbl> properties = propertyQueryService.getPropertiesByUserId(userId, search, pageable);
-        return ResponseEntity.ok(ApiResponse.success(properties.map(PropertyMapper::toResponse)));
+        return ResponseEntity.ok(ApiResponse.success(properties.map(
+                p -> PropertyMapper.toResponse(p, blockService.totalFloorsForProperty(p.getId())))));
     }
 
     @DeleteMapping("/{propertyId}")

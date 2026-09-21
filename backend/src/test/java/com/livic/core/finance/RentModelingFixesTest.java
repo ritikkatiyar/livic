@@ -33,6 +33,7 @@ import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
 import com.livic.core.finance.service.interfaces.BillLineCrudService;
 import com.livic.core.finance.service.interfaces.BillCrudService;
+import com.livic.core.finance.service.interfaces.BillService;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.PropertySummaryDTO;
@@ -420,6 +421,78 @@ public class RentModelingFixesTest {
         verify(unitFacade, times(1)).getUnitsByPropertyIds(any());
         verify(billCrudService, times(1)).getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any());
         verify(unitFacade, never()).getUnitsByPropertyId(any());
+    }
+
+    @Test
+    @DisplayName("Verification: RentGenerationServiceImpl.batchGenerate uses billService.toResponses and avoids N+1 getById")
+    void testBatchGenerate_UsesBulkToResponses() {
+        BillService mockBillService = mock(BillService.class);
+        BillTransactionHelper mockTxHelper = mock(BillTransactionHelper.class);
+        RentGenerationServiceImpl service = new RentGenerationServiceImpl(
+                leaseQueryService,
+                leaseCrudService,
+                chargeConfigCrudService,
+                meterReadingCrudService,
+                unitFacade,
+                billingWorksheetCrudService,
+                mockTxHelper,
+                mockBillService
+        );
+
+        UUID propId = UUID.randomUUID();
+        UUID u1 = UUID.randomUUID();
+        UUID u2 = UUID.randomUUID();
+
+        when(unitFacade.getUnitsByPropertyId(propId)).thenReturn(List.of(
+                new UnitSummaryDTO(u1, propId, "Test Property", "101", 1, 1, 0, 0, 1, 1, null, null),
+                new UnitSummaryDTO(u2, propId, "Test Property", "102", 1, 1, 0, 0, 1, 1, null, null)
+        ));
+
+        LeaseTbl lease1 = new LeaseTbl();
+        lease1.setId(UUID.randomUUID());
+        lease1.setUnitId(u1);
+        lease1.setStatus(LeaseStatus.ACTIVE);
+
+        LeaseTbl lease2 = new LeaseTbl();
+        lease2.setId(UUID.randomUUID());
+        lease2.setUnitId(u2);
+        lease2.setStatus(LeaseStatus.ACTIVE);
+
+        when(leaseCrudService.findByUnitIdInAndStatus(any(), eq(LeaseStatus.ACTIVE)))
+                .thenReturn(List.of(lease1, lease2));
+
+        BillTbl bill1 = new BillTbl();
+        bill1.setId(UUID.randomUUID());
+        BillTbl bill2 = new BillTbl();
+        bill2.setId(UUID.randomUUID());
+
+        when(mockTxHelper.generateSingleInTransaction(eq(lease1), any(), any(), any(), any(), any(), any()))
+                .thenReturn(bill1);
+        when(mockTxHelper.generateSingleInTransaction(eq(lease2), any(), any(), any(), any(), any(), any()))
+                .thenReturn(bill2);
+
+        BillDTOs.BillResponse response1 = new BillDTOs.BillResponse(
+                bill1.getId(), lease1.getId(), "Tenant 1", "101", "2026-08",
+                BigDecimal.valueOf(1000), LocalDate.now(), BillStatus.PENDING, null, null, null, List.of()
+        );
+        BillDTOs.BillResponse response2 = new BillDTOs.BillResponse(
+                bill2.getId(), lease2.getId(), "Tenant 2", "102", "2026-08",
+                BigDecimal.valueOf(1200), LocalDate.now(), BillStatus.PENDING, null, null, null, List.of()
+        );
+
+        when(mockBillService.toResponses(List.of(bill1, bill2))).thenReturn(List.of(response1, response2));
+
+        BillDTOs.BatchGenerateResult result = service.batchGenerate(
+                new BillDTOs.BatchGenerateBillRequest(propId, "2026-08", LocalDate.now().plusDays(5))
+        );
+
+        assertNotNull(result);
+        assertEquals(2, result.succeeded().size());
+        assertEquals(0, result.failed().size());
+
+        // Verify bulk mapping was invoked once with all generated bills, and getById was NEVER called
+        verify(mockBillService, times(1)).toResponses(List.of(bill1, bill2));
+        verify(mockBillService, never()).getById(any());
     }
 }
 

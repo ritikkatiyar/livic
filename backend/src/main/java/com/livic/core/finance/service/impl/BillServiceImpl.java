@@ -504,7 +504,8 @@ public class BillServiceImpl implements BillService {
         return toResponse(bill, payer, user, unit, charges);
     }
 
-    private List<BillDTOs.BillResponse> toResponses(List<BillTbl> cycles) {
+    @Override
+    public List<BillDTOs.BillResponse> toResponses(List<BillTbl> cycles) {
         if (cycles == null || cycles.isEmpty()) {
             return Collections.emptyList();
         }

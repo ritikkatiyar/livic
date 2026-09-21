@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.UUID;
 
 public interface MeterReadingService {
-    List<MeterReadingResponse> getOrCreateWorksheet(UUID propertyId, UUID chargeConfigId, Integer month, Integer year);
+    List<MeterReadingResponse> getOrCreateWorksheet(UUID propertyId, UUID chargeConfigId, UUID blockId, Integer month, Integer year);
+    default List<MeterReadingResponse> getOrCreateWorksheet(UUID propertyId, UUID chargeConfigId, Integer month, Integer year) {
+        return getOrCreateWorksheet(propertyId, chargeConfigId, null, month, year);
+    }
     void batchSaveReadings(MeterReadingRequest request);
 }

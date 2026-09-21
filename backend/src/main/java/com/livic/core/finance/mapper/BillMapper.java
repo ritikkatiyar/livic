@@ -5,6 +5,7 @@ import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.dto.BillDTOs;
 
 import java.util.List;
+import java.util.UUID;
 
 public final class BillMapper {
     private BillMapper() {
@@ -12,7 +13,9 @@ public final class BillMapper {
 
     public static BillDTOs.BillResponse toResponse(
             BillTbl cycle,
-            java.util.UUID leaseId,
+            UUID leaseId,
+            UUID blockId,
+            String blockName,
             String tenantName,
             String unitNumber,
             List<BillLineTbl> charges
@@ -20,6 +23,8 @@ public final class BillMapper {
         return new BillDTOs.BillResponse(
                 cycle.getId(),
                 leaseId,
+                blockId,
+                blockName,
                 tenantName,
                 unitNumber,
                 cycle.getBillingMonth(),

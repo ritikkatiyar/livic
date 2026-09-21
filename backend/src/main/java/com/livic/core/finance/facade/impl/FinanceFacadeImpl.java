@@ -82,7 +82,7 @@ public class FinanceFacadeImpl implements FinanceFacade {
     @Override
     public Page<DefaulterRecordDTO> getDefaulters(List<UUID> propertyIds, Pageable pageable) {
         Page<com.livic.core.finance.dto.DefaulterRecordDTO> page = billCrudService.getDefaulters(propertyIds, pageable);
-        return page.map(d -> new DefaulterRecordDTO(d.tenantId(), d.unitNumber(), d.propertyName(), d.dueDate(), d.amountDue(), d.billId()));
+        return page.map(d -> new DefaulterRecordDTO(d.tenantId(), d.unitNumber(), d.propertyName(), d.blockId(), d.blockName(), d.dueDate(), d.amountDue(), d.billId()));
     }
 
     @Override

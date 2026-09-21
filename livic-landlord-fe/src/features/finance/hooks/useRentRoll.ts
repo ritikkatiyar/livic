@@ -16,13 +16,14 @@ export function useRentRoll(
   debouncedSearchQuery: string,
   page: number,
   pageSize: number,
-  explicitToken?: string | null
+  explicitToken?: string | null,
+  blockId?: string | null
 ) {
   const { accessToken } = useAuth();
   const token = explicitToken ?? accessToken;
   const queryClient = useQueryClient();
 
-  const queryKey = ['rentCycles', propertyId, billingMonth, debouncedSearchQuery, page, pageSize];
+  const queryKey = ['rentCycles', propertyId, billingMonth, debouncedSearchQuery, page, pageSize, blockId];
 
   const { data: rentCyclesData = null, isLoading: isListLoading, refetch: refetchList } = useQuery({
     queryKey,
@@ -33,7 +34,8 @@ export function useRentRoll(
       page,
       pageSize,
       undefined,
-      debouncedSearchQuery
+      debouncedSearchQuery,
+      blockId
     ),
     enabled: !!propertyId && !!token,
   });
@@ -45,7 +47,7 @@ export function useRentRoll(
   });
 
   const generateMutation = useMutation({
-    mutationFn: (dueDate: string) => batchGenerateRentCycle(propertyId!, billingMonth, dueDate, token!),
+    mutationFn: (dueDate: string) => batchGenerateRentCycle(propertyId!, billingMonth, dueDate, token!, blockId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentCycles'] });
       queryClient.invalidateQueries({ queryKey: ['preFlightChecklist'] });

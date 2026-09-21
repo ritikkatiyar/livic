@@ -38,6 +38,11 @@ public class IssueCrudServiceImpl extends AbstractCrudService<IssueTbl, UUID, Is
     }
 
     @Override
+    public Page<IssueTbl> findByUnitIdInOrBlockId(Collection<UUID> unitIds, UUID blockId, Pageable pageable) {
+        return repository.findByUnitIdInOrBlockId(unitIds, blockId, pageable);
+    }
+
+    @Override
     public Page<IssueTbl> findByPropertyIdIn(Collection<UUID> propertyIds, Pageable pageable) {
         return repository.findByPropertyIdIn(propertyIds, pageable);
     }

@@ -19,6 +19,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import Pagination from '@/src/components/common/navigation/Pagination';
+import { BlockFilterPills } from '@/src/components/common/inputs/BlockFilterPills';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useProperties } from '@/src/hooks/useProperties';
 import { TrajectoryChart } from '../components/TrajectoryChart';
@@ -39,7 +40,7 @@ export default function AnalyticsDashboardScreen() {
   const [eventsLoading, setEventsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { selectedPropertyId } = useGlobalPropertySelection();
+  const { selectedPropertyId, selectedBlockId, setSelectedBlockId } = useGlobalPropertySelection();
   const { properties } = useProperties();
   const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
 
@@ -51,9 +52,19 @@ export default function AnalyticsDashboardScreen() {
   }, [selectedPropertyId, occupancy, selectedProperty]);
 
   const filteredDefaulters = useMemo(() => {
-    if (!selectedPropertyId) return defaulters;
-    return defaulters.filter((d) => d.propertyName === selectedProperty?.name);
-  }, [selectedPropertyId, defaulters, selectedProperty]);
+    let list = defaulters;
+    if (selectedPropertyId) {
+      list = list.filter((d) => d.propertyName === selectedProperty?.name);
+    }
+    if (selectedBlockId) {
+      list = list.filter((d) => d.blockId === selectedBlockId);
+    }
+    return list;
+  }, [selectedPropertyId, selectedBlockId, defaulters, selectedProperty]);
+
+  useEffect(() => {
+    setDefaultersPage(0);
+  }, [selectedPropertyId, selectedBlockId]);
 
   // Occupancy Pagination
   const [occupancyPage, setOccupancyPage] = useState(0);
@@ -352,7 +363,7 @@ export default function AnalyticsDashboardScreen() {
         </GlassCard>
 
         {/* Overdue Rent Accounts */}
-        {filteredDefaulters.length > 0 && (
+        {defaulters.length > 0 && (
           <GlassCard style={styles.sectionCard} contentStyle={styles.sectionCardContent}>
             <View style={styles.sectionHeaderRow}>
               <Text style={[styles.sectionTitle, { color: theme.Colors.error }]}>
@@ -360,51 +371,81 @@ export default function AnalyticsDashboardScreen() {
               </Text>
             </View>
 
-            {/* Desktop Table Header */}
-            {isDesktop && (
-              <View style={styles.tableHeaderRow}>
-                <Text style={[styles.tableHeaderCell, { flex: 2 }]}>RESIDENT / UNIT</Text>
-                <Text style={[styles.tableHeaderCell, { flex: 1.2, textAlign: 'center' }]}>
-                  DAYS OVERDUE
-                </Text>
-                <Text style={[styles.tableHeaderCell, { flex: 1, textAlign: 'right' }]}>AMOUNT</Text>
+            {selectedPropertyId && (
+              <View style={{ marginBottom: 16 }}>
+                <BlockFilterPills
+                  propertyId={selectedPropertyId}
+                  selectedBlockId={selectedBlockId}
+                  onSelectBlockId={setSelectedBlockId}
+                />
               </View>
             )}
 
-            {isDesktop ? (
-              paginatedDefaulters.map((def, idx) => (
-                <View key={def.rentCycleId || idx} style={styles.tableRow}>
-                  <View style={{ flex: 2 }}>
-                    <Text style={styles.tableCellName} numberOfLines={1}>
-                      {def.tenantName}
-                    </Text>
-                    <Text style={styles.tableCellSub} numberOfLines={1}>
-                      Unit {def.unitNumber} • {def.propertyName}
-                    </Text>
-                  </View>
-
-                  <View style={{ flex: 1.2, alignItems: 'center' }}>
-                    <Text style={[styles.tableCellText, { color: theme.Colors.error }]}>
-                      {def.daysOverdue} days
-                    </Text>
-                  </View>
-
-                  <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                    <Text style={[styles.tableCellText, { fontWeight: '600' }]}>
-                      ₹{def.amountDue?.toLocaleString()}
-                    </Text>
-                  </View>
+            {filteredDefaulters.length === 0 ? (
+              <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+                <Text style={{ fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant }}>
+                  No overdue accounts found for this selection.
+                </Text>
+              </View>
+            ) : isDesktop ? (
+              <>
+                {/* Desktop Table Header */}
+                <View style={styles.tableHeaderRow}>
+                  <Text style={[styles.tableHeaderCell, { flex: 2 }]}>RESIDENT / UNIT</Text>
+                  <Text style={[styles.tableHeaderCell, { flex: 1.2, textAlign: 'center' }]}>
+                    DAYS OVERDUE
+                  </Text>
+                  <Text style={[styles.tableHeaderCell, { flex: 1, textAlign: 'right' }]}>AMOUNT</Text>
                 </View>
-              ))
+
+                {paginatedDefaulters.map((def, idx) => (
+                  <View key={def.rentCycleId || idx} style={styles.tableRow}>
+                    <View style={{ flex: 2 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.tableCellName} numberOfLines={1}>
+                          {def.tenantName}
+                        </Text>
+                        {Boolean(def.blockName) && (
+                          <View style={styles.blockBadge}>
+                            <Text style={styles.blockBadgeText}>{def.blockName}</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.tableCellSub} numberOfLines={1}>
+                        Unit {def.unitNumber} • {def.propertyName}
+                      </Text>
+                    </View>
+
+                    <View style={{ flex: 1.2, alignItems: 'center' }}>
+                      <Text style={[styles.tableCellText, { color: theme.Colors.error }]}>
+                        {def.daysOverdue} days
+                      </Text>
+                    </View>
+
+                    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                      <Text style={[styles.tableCellText, { fontWeight: '600' }]}>
+                        ₹{def.amountDue?.toLocaleString()}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </>
             ) : (
               /* Mobile Overdue Entity Cards */
               <View style={styles.mobileCardList}>
                 {paginatedDefaulters.map((def, idx) => (
                   <View key={def.rentCycleId || idx} style={styles.mobileCard}>
                     <View style={styles.mobileCardHeader}>
-                      <Text style={styles.mobileCardTitle} numberOfLines={1}>
-                        {def.tenantName}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                        <Text style={styles.mobileCardTitle} numberOfLines={1}>
+                          {def.tenantName}
+                        </Text>
+                        {Boolean(def.blockName) && (
+                          <View style={styles.blockBadge}>
+                            <Text style={styles.blockBadgeText}>{def.blockName}</Text>
+                          </View>
+                        )}
+                      </View>
                       <Text style={[styles.mobileCardTitle, { color: theme.Colors.primary }]}>
                         ₹{def.amountDue?.toLocaleString()}
                       </Text>

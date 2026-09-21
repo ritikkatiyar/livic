@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
@@ -46,10 +47,11 @@ public class IssueController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<IssueResponse>>> listIssues(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
+            @RequestParam(required = false) UUID blockId,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 20) Pageable pageable
     ) {
         UUID callerUserId = UUID.fromString(currentUser.getId());
-        Page<IssueResponse> response = issueService.listIssues(callerUserId, pageable);
+        Page<IssueResponse> response = issueService.listIssues(callerUserId, blockId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

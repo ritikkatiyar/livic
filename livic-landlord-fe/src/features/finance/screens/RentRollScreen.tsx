@@ -25,6 +25,7 @@ import { SectionHeader } from '@/src/components/common/display/SectionHeader';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
 import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
+import { BlockFilterPills } from '@/src/components/common/inputs/BlockFilterPills';
 import { useRentRoll } from '@/src/features/finance/hooks/useRentRoll';
 import type { RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -45,7 +46,7 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
-  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
+  const { selectedPropertyId, setSelectedPropertyId, selectedBlockId, setSelectedBlockId } = useGlobalPropertySelection();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
   const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
@@ -102,7 +103,7 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
 
   useEffect(() => {
     setPage(0);
-  }, [billingMonth, propertyId, debouncedSearchQuery]);
+  }, [billingMonth, propertyId, selectedBlockId, debouncedSearchQuery]);
 
   // Custom hook wrapping react-query queries and mutations
   const {
@@ -118,7 +119,7 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
     isUnpublishing,
     recordCashPayment,
     isRecordingCash,
-  } = useRentRoll(propertyId, billingMonth, debouncedSearchQuery, page, pageSize, token);
+  } = useRentRoll(propertyId, billingMonth, debouncedSearchQuery, page, pageSize, token, selectedBlockId);
 
   const [selectedInvoice, setSelectedInvoice] = useState<RentCycleResponse | null>(null);
   const [cashAmount, setCashAmount] = useState<string>('');
@@ -423,6 +424,13 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
                 />
               )}
             </GlassCard>
+
+            {/* Multi-Block Filter Pills */}
+            <BlockFilterPills
+              propertyId={propertyId}
+              selectedBlockId={selectedBlockId}
+              onSelectBlockId={setSelectedBlockId}
+            />
 
             <View style={styles.searchBox}>
               <MaterialIcons name="search" size={20} color={theme.Colors.onSurfaceVariant} />

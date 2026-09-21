@@ -24,10 +24,11 @@ public class MeterReadingController {
     public ResponseEntity<ApiResponse<List<MeterReadingResponse>>> getWorksheet(
             @RequestParam UUID propertyId,
             @RequestParam UUID chargeConfigId,
+            @RequestParam(required = false) UUID blockId,
             @RequestParam Integer month,
             @RequestParam Integer year) {
         
-        return ResponseEntity.ok(ApiResponse.success(meterReadingService.getOrCreateWorksheet(propertyId, chargeConfigId, month, year)));
+        return ResponseEntity.ok(ApiResponse.success(meterReadingService.getOrCreateWorksheet(propertyId, chargeConfigId, blockId, month, year)));
     }
 
     @PostMapping("/batch-save")

@@ -22,9 +22,14 @@ public class BillDTOs {
 
     public record BatchGenerateBillRequest(
             @NotNull UUID propertyId,
+            UUID blockId,
             @NotNull @Pattern(regexp = "\\d{4}-\\d{2}", message = "billingMonth must use yyyy-MM") String billingMonth,
             @NotNull LocalDate dueDate
-    ) {}
+    ) {
+        public BatchGenerateBillRequest(UUID propertyId, String billingMonth, LocalDate dueDate) {
+            this(propertyId, null, billingMonth, dueDate);
+        }
+    }
 
     public record RecordRentCashPaymentRequest(
             @NotNull BigDecimal amount,
@@ -49,6 +54,8 @@ public class BillDTOs {
     public record BillResponse(
             UUID id,
             UUID leaseId,
+            UUID blockId,
+            String blockName,
             String tenantName,
             String unitNumber,
             String billingMonth,
@@ -59,7 +66,24 @@ public class BillDTOs {
             LocalDateTime createdAt,
             LocalDateTime updatedAt,
             List<ChargeResponse> charges
-    ) {}
+    ) {
+        public BillResponse(
+                UUID id,
+                UUID leaseId,
+                String tenantName,
+                String unitNumber,
+                String billingMonth,
+                BigDecimal totalAmount,
+                LocalDate dueDate,
+                BillStatus status,
+                LocalDateTime paidAt,
+                LocalDateTime createdAt,
+                LocalDateTime updatedAt,
+                List<ChargeResponse> charges
+        ) {
+            this(id, leaseId, null, null, tenantName, unitNumber, billingMonth, totalAmount, dueDate, status, paidAt, createdAt, updatedAt, charges);
+        }
+    }
 
     public record ChargeResponse(
             UUID id,

@@ -11,6 +11,7 @@ import java.util.UUID;
 public interface LeaseOrchestrationService {
     Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID propertyId, Pageable pageable);
     Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID currentUserId, UUID propertyId, Pageable pageable);
+    Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID currentUserId, UUID propertyId, UUID blockId, Pageable pageable);
     Optional<LeaseDTOs.LeaseResponse> getActiveTenantLease(UUID userId);
     LeaseDTOs.LeaseResponse createLease(LeaseDTOs.CreateLeaseRequest request, UUID assignedByUserId);
     LeaseDTOs.LeaseResponse getLeaseById(UUID id);

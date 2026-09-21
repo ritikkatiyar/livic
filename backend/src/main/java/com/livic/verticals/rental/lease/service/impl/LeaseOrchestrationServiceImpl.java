@@ -45,15 +45,18 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
 
     @Override
     public Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID propertyId, Pageable pageable) {
-        Page<LeaseTbl> page = leaseQueryService.findActiveLeasesByProperty(propertyId, pageable);
-        List<LeaseDTOs.LeaseResponse> content = enrichLeases(page.getContent());
-        return new PageImpl<>(content, pageable, page.getTotalElements());
+        return getActiveLeasesByProperty(null, propertyId, null, pageable);
     }
 
     @Override
     public Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID currentUserId, UUID propertyId, Pageable pageable) {
+        return getActiveLeasesByProperty(currentUserId, propertyId, null, pageable);
+    }
+
+    @Override
+    public Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID currentUserId, UUID propertyId, UUID blockId, Pageable pageable) {
         if (propertyId != null) {
-            return getActiveLeasesByProperty(propertyId, pageable);
+            return getActiveLeasesByPropertyAndBlock(propertyId, blockId, pageable);
         }
         if (currentUserId == null) {
             return Page.empty(pageable);
@@ -77,6 +80,22 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
             return Page.empty(pageable);
         }
 
+        Page<LeaseTbl> page = leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE, pageable);
+        List<LeaseDTOs.LeaseResponse> content = enrichLeases(page.getContent());
+        return new PageImpl<>(content, pageable, page.getTotalElements());
+    }
+
+    private Page<LeaseDTOs.LeaseResponse> getActiveLeasesByPropertyAndBlock(UUID propertyId, UUID blockId, Pageable pageable) {
+        if (blockId == null) {
+            Page<LeaseTbl> page = leaseQueryService.findActiveLeasesByProperty(propertyId, pageable);
+            List<LeaseDTOs.LeaseResponse> content = enrichLeases(page.getContent());
+            return new PageImpl<>(content, pageable, page.getTotalElements());
+        }
+        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyIdAndBlockId(propertyId, blockId);
+        List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
+        if (unitIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
         Page<LeaseTbl> page = leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE, pageable);
         List<LeaseDTOs.LeaseResponse> content = enrichLeases(page.getContent());
         return new PageImpl<>(content, pageable, page.getTotalElements());

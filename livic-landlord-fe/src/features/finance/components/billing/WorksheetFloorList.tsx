@@ -87,7 +87,14 @@ export function WorksheetFloorList({
                     return (
                       <View key={entry.id} style={[styles.rowCard, isLast && { borderBottomWidth: 0 }]}>
                         <View style={styles.rowLeft}>
-                          <Text style={styles.unitName}>{entry.unitName}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            {Boolean(entry.blockName) && (
+                              <View style={styles.blockBadge}>
+                                <Text style={styles.blockBadgeText}>{entry.blockName}</Text>
+                              </View>
+                            )}
+                            <Text style={styles.unitName}>{entry.unitName}</Text>
+                          </View>
                           <Text style={styles.tenantName} numberOfLines={1}>{entry.tenantName}</Text>
                         </View>
                         
@@ -201,6 +208,19 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
+  },
+  blockBadge: {
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 104, 117, 0.2)',
+  },
+  blockBadgeText: {
+    color: theme.Colors.primary,
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '600',
   },
   tenantName: {
     fontSize: theme.Typography.bodySmall.fontSize,

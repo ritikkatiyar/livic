@@ -16,6 +16,8 @@ export interface LeaseResponse {
   id: string;
   userId: string;
   unitId: string;
+  blockId?: string | null;
+  blockName?: string | null;
   unitNumber: string;
   monthlyRentAmount: number;
   securityDeposit: number;
@@ -62,10 +64,15 @@ export function listActiveLeasesByProperty(
   propertyId: string | null | undefined,
   token: string,
   page: number = 0,
-  size: number = 20
+  size: number = 20,
+  blockId?: string | null
 ): Promise<PageResponse<LeaseResponse>> {
-  const queryStr = propertyId ? `propertyId=${propertyId}&page=${page}&size=${size}` : `page=${page}&size=${size}`;
-  return apiRequest<PageResponse<LeaseResponse>>(`/api/v1/finance/leases?${queryStr}`, {
+  const params = new URLSearchParams();
+  if (propertyId) params.append('propertyId', propertyId);
+  if (blockId) params.append('blockId', blockId);
+  params.append('page', String(page));
+  params.append('size', String(size));
+  return apiRequest<PageResponse<LeaseResponse>>(`/api/v1/finance/leases?${params.toString()}`, {
     method: 'GET',
     token,
   });

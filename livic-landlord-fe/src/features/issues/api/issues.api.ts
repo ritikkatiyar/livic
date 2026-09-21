@@ -20,6 +20,8 @@ export interface IssueTimelineResponse {
 export interface IssueResponse {
   id: string;
   propertyId: string;
+  blockId?: string;
+  blockName?: string;
   unitId?: string;
   leaseId?: string;
   tenantId?: string;
@@ -43,9 +45,12 @@ export interface IssueResponse {
 export const getIssues = async (
   token: string,
   page: number = 0,
-  size: number = 20
+  size: number = 20,
+  blockId?: string | null
 ): Promise<PaginatedResponse<IssueResponse>> => {
-  return await apiRequest<PaginatedResponse<IssueResponse>>(`/api/v1/issues?page=${page}&size=${size}`, {
+  let url = `/api/v1/issues?page=${page}&size=${size}`;
+  if (blockId) url += `&blockId=${blockId}`;
+  return await apiRequest<PaginatedResponse<IssueResponse>>(url, {
     method: 'GET',
     token
   });

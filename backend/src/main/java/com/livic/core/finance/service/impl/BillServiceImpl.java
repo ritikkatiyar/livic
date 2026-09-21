@@ -553,7 +553,9 @@ public class BillServiceImpl implements BillService {
         String tenantName = (user != null && user.fullName() != null) ? user.fullName() : "Unknown Tenant";
         String unitNumber = (unit != null) ? unit.unitNumber() : "Vacant";
         UUID leaseId = payer != null ? payer.leaseId() : null;
-        return BillMapper.toResponse(bill, leaseId, tenantName, unitNumber, charges);
+        UUID blockId = unit != null ? unit.blockId() : null;
+        String blockName = unit != null ? unit.blockName() : null;
+        return BillMapper.toResponse(bill, leaseId, blockId, blockName, tenantName, unitNumber, charges);
     }
 
     /** The member who owes a bill, active or not — a bill outlives the tenancy behind it. */

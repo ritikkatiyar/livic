@@ -38,8 +38,13 @@ public class MeterReadingServiceImpl implements MeterReadingService {
     private final UserFacade userFacade;
 
     @Override
-    @Transactional
     public List<MeterReadingResponse> getOrCreateWorksheet(UUID propertyId, UUID chargeConfigId, Integer month, Integer year) {
+        return getOrCreateWorksheet(propertyId, chargeConfigId, null, month, year);
+    }
+
+    @Override
+    @Transactional
+    public List<MeterReadingResponse> getOrCreateWorksheet(UUID propertyId, UUID chargeConfigId, UUID blockId, Integer month, Integer year) {
         PropertySummaryDTO property = propertyFacade.getPropertyById(propertyId)
                 .orElseThrow(() -> new BusinessException("Property not found"));
         ChargeConfigTbl chargeConfig = chargeConfigCrudService.findById(chargeConfigId)
@@ -49,7 +54,9 @@ public class MeterReadingServiceImpl implements MeterReadingService {
             throw new BusinessException("Charge config is not a metered strategy");
         }
 
-        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        List<UnitSummaryDTO> units = blockId != null
+                ? unitFacade.getUnitsByPropertyIdAndBlockId(propertyId, blockId)
+                : unitFacade.getUnitsByPropertyId(propertyId);
         // Occupied means "has an active member", so a metered charge on an owner-occupied
         // flat gets a reading row too; in a rental every occupied unit has a tenant member.
         List<UnitMemberSummaryDTO> activeMembers =
@@ -133,10 +140,14 @@ public class MeterReadingServiceImpl implements MeterReadingService {
             UnitSummaryDTO unit = unitMap.get(r.getUnitId());
             String unitName = unit != null ? unit.unitNumber() : "N/A";
             Integer floor = unit != null && unit.floor() != null ? unit.floor() : 0;
+            UUID blkId = unit != null ? unit.blockId() : null;
+            String blkName = unit != null ? unit.blockName() : null;
 
             return MeterReadingResponse.builder()
                     .id(r.getId())
                     .unitId(r.getUnitId())
+                    .blockId(blkId)
+                    .blockName(blkName)
                     .unitName(unitName)
                     .tenantName(tenantName)
                     .floor(floor)

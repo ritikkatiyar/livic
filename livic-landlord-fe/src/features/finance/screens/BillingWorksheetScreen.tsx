@@ -28,6 +28,7 @@ import { SkeletonRow } from '@/src/components/common/feedback/Skeleton';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
 import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
+import { BlockFilterPills } from '@/src/components/common/inputs/BlockFilterPills';
 
 // Sub-components
 import { WorksheetFloorList } from '../components/billing/WorksheetFloorList';
@@ -38,7 +39,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
 
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
-  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
+  const { selectedPropertyId, setSelectedPropertyId, selectedBlockId, setSelectedBlockId } = useGlobalPropertySelection();
   const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
   const insets = useSafeAreaInsets();
@@ -85,7 +86,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
     isLoading,
     isSaving,
     saveWorksheet,
-  } = useBillingWorksheet(propertyId, selectedChargeId, billingMonth, token);
+  } = useBillingWorksheet(propertyId, selectedChargeId, billingMonth, token, selectedBlockId);
 
   useEffect(() => {
     if (charges.length > 0 && !selectedChargeId) {
@@ -234,6 +235,13 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
               </TouchableOpacity>
             </View>
 
+            {/* Multi-Block Filter Pills */}
+            <BlockFilterPills
+              propertyId={propertyId}
+              selectedBlockId={selectedBlockId}
+              onSelectBlockId={setSelectedBlockId}
+            />
+
             <View style={styles.desktopFilterRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.filterLabelCaps}>Charge Configuration</Text>
@@ -280,6 +288,14 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
             Billing Worksheets
           </Text>
         </View>
+
+        {/* Multi-Block Filter Pills */}
+        <BlockFilterPills
+          propertyId={propertyId}
+          selectedBlockId={selectedBlockId}
+          onSelectBlockId={setSelectedBlockId}
+        />
+
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={[styles.mobileDropdownWrapper, { flex: 1, marginBottom: 0 }]}>
             <GlassDropdown 

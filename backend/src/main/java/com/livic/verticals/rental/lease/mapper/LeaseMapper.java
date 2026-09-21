@@ -50,14 +50,30 @@ public final class LeaseMapper {
         String tenantPhone = (user != null && user.phoneNumber() != null)
                 ? user.phoneNumber()
                 : "";
-        return toResponse(lease, unitNumber, propertyName, tenantName, tenantPhone);
+        UUID blockId = unit != null ? unit.blockId() : null;
+        String blockName = unit != null ? unit.blockName() : null;
+        return toResponse(lease, blockId, blockName, unitNumber, propertyName, tenantName, tenantPhone);
     }
 
     public static LeaseDTOs.LeaseResponse toResponse(LeaseTbl lease, String unitNumber, String propertyName, String tenantName, String tenantPhone) {
+        return toResponse(lease, null, null, unitNumber, propertyName, tenantName, tenantPhone);
+    }
+
+    public static LeaseDTOs.LeaseResponse toResponse(
+            LeaseTbl lease,
+            UUID blockId,
+            String blockName,
+            String unitNumber,
+            String propertyName,
+            String tenantName,
+            String tenantPhone
+    ) {
         return new LeaseDTOs.LeaseResponse(
                 lease.getId(),
                 lease.getUserId(),
                 lease.getUnitId(),
+                blockId,
+                blockName,
                 unitNumber,
                 propertyName,
                 tenantName,

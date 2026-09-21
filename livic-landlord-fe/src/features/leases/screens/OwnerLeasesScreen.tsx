@@ -18,6 +18,7 @@ import { formatCurrency, formatCompactCurrency } from '@/src/utils/formatters';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
+import { BlockFilterPills } from '@/src/components/common/inputs/BlockFilterPills';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { createStyles } from './OwnerLeasesScreen.styles';
 import { useOwnerLeases } from '../hooks/useOwnerLeases';
@@ -43,6 +44,7 @@ export default function OwnerLeasesScreen() {
   const data = useOwnerLeases();
   const {
     properties, selectedPropertyId, setSelectedPropertyId,
+    selectedBlockId, setSelectedBlockId,
     activeTab, setActiveTab, searchQuery, setSearchQuery,
     filteredLeases, filteredBookings, vacatingUnits, availableUnits,
     isLoadingData, isFetchingMore, hasMoreLeases, handleLoadMoreLeases,
@@ -176,6 +178,13 @@ export default function OwnerLeasesScreen() {
               />
             ))}
           </ScrollView>
+
+          {/* Multi-Block Filter Pills */}
+          <BlockFilterPills
+            propertyId={selectedPropertyId}
+            selectedBlockId={selectedBlockId}
+            onSelectBlockId={setSelectedBlockId}
+          />
 
           {/* Search */}
           <View style={styles.searchBar}>
@@ -329,6 +338,14 @@ function LeasesTab({
 
             {/* Sub-row: Unit & Property Scope Badge */}
             <View style={styles.propertyUnitRow}>
+              {Boolean(l.blockName) && (
+                <View style={[styles.unitBadge, { marginRight: 6 }]}>
+                  <MaterialIcons name="location-city" size={13} color={theme.Colors.primary} />
+                  <Text style={styles.unitBadgeText} numberOfLines={1}>
+                    {l.blockName}
+                  </Text>
+                </View>
+              )}
               <View style={styles.unitBadge}>
                 <MaterialIcons name="meeting-room" size={13} color={theme.Colors.primary} />
                 <Text style={styles.unitBadgeText} numberOfLines={1}>

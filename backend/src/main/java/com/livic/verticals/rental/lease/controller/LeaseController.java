@@ -32,10 +32,11 @@ public class LeaseController {
     public ResponseEntity<ApiResponse<Page<LeaseDTOs.LeaseResponse>>> getActiveLeasesByProperty(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) UUID propertyId,
+            @RequestParam(required = false) UUID blockId,
             @PageableDefault(size = 20) Pageable pageable
     ) {
         UUID currentUserId = currentUser != null ? UUID.fromString(currentUser.getId()) : null;
-        return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.getActiveLeasesByProperty(currentUserId, propertyId, pageable)));
+        return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.getActiveLeasesByProperty(currentUserId, propertyId, blockId, pageable)));
     }
 
     @GetMapping("/tenant/active")

@@ -147,6 +147,8 @@ public class BillCrudServiceImpl extends AbstractCrudService<BillTbl, UUID, Bill
                     payer != null ? payer.userId() : null,
                     unitNumber,
                     propertyName,
+                    unitSummary != null ? unitSummary.blockId() : null,
+                    unitSummary != null ? unitSummary.blockName() : null,
                     bill.getDueDate(),
                     bill.getTotalAmount(),
                     bill.getId()

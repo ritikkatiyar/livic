@@ -29,6 +29,8 @@ public class LeaseDTOs {
             UUID id,
             UUID userId,
             UUID unitId,
+            UUID blockId,
+            String blockName,
             String unitNumber,
             String propertyName,
             String tenantName,
@@ -41,7 +43,27 @@ public class LeaseDTOs {
             LeaseStatus status,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
-    ) {}
+    ) {
+        public LeaseResponse(
+                UUID id,
+                UUID userId,
+                UUID unitId,
+                String unitNumber,
+                String propertyName,
+                String tenantName,
+                String tenantPhone,
+                BigDecimal monthlyRentAmount,
+                BigDecimal securityDeposit,
+                LeaseSplitStrategy splitStrategy,
+                LocalDate moveInDate,
+                LocalDate moveOutDate,
+                LeaseStatus status,
+                LocalDateTime createdAt,
+                LocalDateTime updatedAt
+        ) {
+            this(id, userId, unitId, null, null, unitNumber, propertyName, tenantName, tenantPhone, monthlyRentAmount, securityDeposit, splitStrategy, moveInDate, moveOutDate, status, createdAt, updatedAt);
+        }
+    }
 
     public record UpdateLeaseTermsRequest(
             @NotNull(message = "Monthly rent amount is required") @PositiveOrZero(message = "Monthly rent amount must be zero or positive") BigDecimal monthlyRentAmount,

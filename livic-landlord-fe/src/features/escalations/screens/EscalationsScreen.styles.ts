@@ -212,6 +212,19 @@ export const createStyles = (theme: any, isDark: boolean) =>
       fontWeight: '600',
       color: theme.Colors.onSurface,
     },
+    blockBadge: {
+      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+      paddingVertical: 2,
+      paddingHorizontal: 6,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: 'rgba(0, 104, 117, 0.2)',
+    },
+    blockBadgeText: {
+      color: theme.Colors.primary,
+      fontSize: theme.Typography.labelSmall.fontSize,
+      fontWeight: '600',
+    },
     cardTitleText: {
       fontSize: theme.Typography.bodyLarge.fontSize,
       fontWeight: '600',

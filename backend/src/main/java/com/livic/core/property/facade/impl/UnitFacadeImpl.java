@@ -41,6 +41,16 @@ public class UnitFacadeImpl implements UnitFacade {
     }
 
     @Override
+    public List<UnitSummaryDTO> getUnitsByPropertyIdAndBlockId(UUID propertyId, UUID blockId) {
+        if (blockId == null) {
+            return getUnitsByPropertyId(propertyId);
+        }
+        return unitQueryService.getUnitsByProperty(propertyId, blockId).stream()
+                .map(UnitSummaryDTO::from)
+                .toList();
+    }
+
+    @Override
     public List<UnitSummaryDTO> getUnitsByPropertyIds(Collection<UUID> propertyIds) {
         if (propertyIds == null || propertyIds.isEmpty()) {
             return List.of();

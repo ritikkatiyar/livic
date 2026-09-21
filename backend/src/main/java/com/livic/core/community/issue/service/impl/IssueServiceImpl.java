@@ -149,7 +149,7 @@ public class IssueServiceImpl implements IssueService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<IssueResponse> listIssues(UUID callerUserId, Pageable pageable) {
+    public Page<IssueResponse> listIssues(UUID callerUserId, UUID blockId, Pageable pageable) {
         List<UUID> staffPropertyIds = authFacade.getEffectivePermissionCodes(callerUserId).entrySet().stream()
                 .filter(e -> e.getValue().contains(StaffPermission.ISSUE_VIEW.name()))
                 .map(Map.Entry::getKey)
@@ -157,7 +157,21 @@ public class IssueServiceImpl implements IssueService {
 
         Page<IssueTbl> issuesPage;
         if (!staffPropertyIds.isEmpty()) {
-            issuesPage = issueCrudService.findByPropertyIdIn(staffPropertyIds, pageable);
+            if (blockId != null) {
+                // Collect unit IDs from the requested block across staff properties
+                Set<UUID> blockUnitIds = staffPropertyIds.stream()
+                        .flatMap(propId -> unitFacade.getUnitsByPropertyIdAndBlockId(propId, blockId).stream()
+                                .map(com.livic.core.property.dto.UnitSummaryDTO::id))
+                        .collect(Collectors.toSet());
+                // Return issues that either belong to those units OR are explicitly tagged with this block
+                if (blockUnitIds.isEmpty()) {
+                    issuesPage = Page.empty(pageable);
+                } else {
+                    issuesPage = issueCrudService.findByUnitIdInOrBlockId(blockUnitIds, blockId, pageable);
+                }
+            } else {
+                issuesPage = issueCrudService.findByPropertyIdIn(staffPropertyIds, pageable);
+            }
         } else {
             List<UUID> myUnitIds = unitMemberFacade.getActiveResidencesByUserId(callerUserId).stream()
                     .map(UnitResidentDTO::unitId)
@@ -374,7 +388,11 @@ public class IssueServiceImpl implements IssueService {
         Map<UUID, String> authorNamesMap = usersMap.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().fullName()));
 
-        return IssueMapper.toResponse(issue, timeline, authorNamesMap);
+        UnitSummaryDTO unit = issue.getUnitId() != null
+                ? unitFacade.getUnitById(issue.getUnitId()).orElse(null)
+                : null;
+
+        return IssueMapper.toResponse(issue, unit, timeline, authorNamesMap);
     }
 
     private void checkIssueAccess(IssueTbl issue, UUID userId, StaffPermission staffPermission) {

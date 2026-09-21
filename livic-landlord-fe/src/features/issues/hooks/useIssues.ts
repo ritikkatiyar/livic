@@ -16,13 +16,14 @@ export function useIssues(token: string | null) {
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [propertyFilter, setPropertyFilter] = useState<string | null>(null);
+  const [blockFilter, setBlockFilter] = useState<string | null>(null);
 
   const fetchIssues = useCallback(async () => {
     if (!token) return;
     try {
       setIsLoading(true);
       setError(null);
-      const data = await getIssues(token, page, 20);
+      const data = await getIssues(token, page, 20, blockFilter);
       setIssues(data.content || []);
       setTotalPages(data.totalPages || 1);
     } catch (err: any) {
@@ -30,7 +31,7 @@ export function useIssues(token: string | null) {
     } finally {
       setIsLoading(false);
     }
-  }, [token, page]);
+  }, [token, page, blockFilter]);
 
   useEffect(() => {
     fetchIssues();
@@ -41,6 +42,11 @@ export function useIssues(token: string | null) {
     return issues.filter(issue => {
       // 0. Property Match
       if (propertyFilter && issue.propertyId !== propertyFilter) {
+        return false;
+      }
+
+      // 0b. Block Match
+      if (blockFilter && issue.blockId && issue.blockId !== blockFilter) {
         return false;
       }
 
@@ -91,7 +97,7 @@ export function useIssues(token: string | null) {
     const resolved = scopedIssues.filter(i => i.status === 'RESOLVED' || i.status === 'CLOSED').length;
 
     return { total, open, inProgress, escalated, resolved };
-  }, [issues, propertyFilter]);
+  }, [issues, propertyFilter, blockFilter]);
 
   return {
     issues: filteredIssues,
@@ -111,6 +117,8 @@ export function useIssues(token: string | null) {
     setCategoryFilter,
     propertyFilter,
     setPropertyFilter,
+    blockFilter,
+    setBlockFilter,
     metrics,
     refresh: fetchIssues
   };

@@ -15,6 +15,7 @@ import { useIssues } from '@/src/features/issues/hooks/useIssues';
 import { useProperties } from '@/src/hooks/useProperties';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
+import { BlockFilterPills } from '@/src/components/common/inputs/BlockFilterPills';
 import IssueDetailModal from '@/src/features/issues/components/IssueDetailModal';
 import Pagination from '@/src/components/common/navigation/Pagination';
 import { useResponsive } from '@/src/hooks/useResponsive';
@@ -45,6 +46,8 @@ export default function EscalationsScreen() {
     setCategoryFilter,
     propertyFilter,
     setPropertyFilter,
+    blockFilter,
+    setBlockFilter,
     metrics,
     refresh,
   } = useIssues(accessToken);
@@ -143,6 +146,13 @@ export default function EscalationsScreen() {
             />
           </View>
 
+          {/* Multi-Block Filter Pills */}
+          <BlockFilterPills
+            propertyId={propertyFilter}
+            selectedBlockId={blockFilter}
+            onSelectBlockId={setBlockFilter}
+          />
+
           {/* Search Box */}
           <View style={styles.searchBox}>
             <MaterialIcons name="search" size={20} color={theme.Colors.onSurfaceVariant} />
@@ -226,7 +236,14 @@ export default function EscalationsScreen() {
                 >
                   <View style={styles.mobileCard}>
                     <View style={styles.cardHeaderRow}>
-                      <Text style={styles.cardUnitText}>{item.ticketNumber}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.cardUnitText}>{item.ticketNumber}</Text>
+                        {Boolean(item.blockName) && (
+                          <View style={styles.blockBadge}>
+                            <Text style={styles.blockBadgeText}>{item.blockName}</Text>
+                          </View>
+                        )}
+                      </View>
                       <View
                         style={[
                           styles.pill,

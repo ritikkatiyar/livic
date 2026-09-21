@@ -3,6 +3,8 @@ import { apiRequest } from '@/src/api/client';
 export interface MeterReadingResponse {
     id: string;
     unitId: string;
+    blockId?: string | null;
+    blockName?: string | null;
     unitName: string;
     tenantName: string;
     floor: number;
@@ -25,8 +27,17 @@ export interface MeterReadingRequest {
     readings: UnitReading[];
 }
 
-export const getWorksheet = async (propertyId: string, chargeConfigId: string, month: number, year: number, token: string): Promise<MeterReadingResponse[]> => {
-    return apiRequest<MeterReadingResponse[]>(`/api/v1/finance/meter-readings/worksheet?propertyId=${propertyId}&chargeConfigId=${chargeConfigId}&month=${month}&year=${year}`, {
+export const getWorksheet = async (
+    propertyId: string,
+    chargeConfigId: string,
+    month: number,
+    year: number,
+    token: string,
+    blockId?: string | null
+): Promise<MeterReadingResponse[]> => {
+    let url = `/api/v1/finance/meter-readings/worksheet?propertyId=${propertyId}&chargeConfigId=${chargeConfigId}&month=${month}&year=${year}`;
+    if (blockId) url += `&blockId=${blockId}`;
+    return apiRequest<MeterReadingResponse[]>(url, {
         method: 'GET',
         token
     });

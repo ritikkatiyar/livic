@@ -25,6 +25,9 @@ public class IssueTbl extends BaseEntity {
     @Column(name = "property_id", nullable = false)
     private UUID propertyId;
 
+    @Column(name = "block_id")
+    private UUID blockId;
+
     @Column(name = "unit_id")
     private UUID unitId;
 

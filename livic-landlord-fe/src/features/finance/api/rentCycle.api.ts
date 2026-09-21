@@ -11,6 +11,8 @@ export interface ChargeResponse {
 export interface RentCycleResponse {
   id: string;
   leaseId: string;
+  blockId?: string | null;
+  blockName?: string | null;
   tenantName: string;
   unitNumber: string;
   billingMonth: string;
@@ -68,13 +70,16 @@ export const batchGenerateRentCycle = async (
   propertyId: string,
   billingMonth: string,
   dueDate: string,
-  token: string
+  token: string,
+  blockId?: string | null
 ): Promise<BatchGenerateResult> => {
+  const body: Record<string, any> = { propertyId, billingMonth, dueDate };
+  if (blockId) body.blockId = blockId;
   return await apiRequest<BatchGenerateResult>(
     '/api/v1/finance/rent-cycles/batch-generate',
     {
       method: 'POST',
-      body: JSON.stringify({ propertyId, billingMonth, dueDate }),
+      body: JSON.stringify(body),
       token
     }
   );
@@ -125,11 +130,13 @@ export const listRentCycles = async (
   page: number = 0,
   size: number = 20,
   status?: string,
-  search?: string
+  search?: string,
+  blockId?: string | null
 ): Promise<RentCycleListResponse> => {
   const params = new URLSearchParams();
   if (billingMonth) params.append('billingMonth', billingMonth);
   if (propertyId && propertyId !== 'ALL') params.append('propertyId', propertyId);
+  if (blockId) params.append('blockId', blockId);
   if (status && status !== 'ALL') params.append('status', status);
   if (search && search.trim()) params.append('search', search.trim());
   params.append('page', String(page));

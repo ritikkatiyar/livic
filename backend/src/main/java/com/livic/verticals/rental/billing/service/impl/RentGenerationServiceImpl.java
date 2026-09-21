@@ -87,8 +87,7 @@ public class RentGenerationServiceImpl implements RentGenerationService {
             }
         }
 
-        List<BillDTOs.BillResponse> succeededResponses = new ArrayList<>(
-                successes.stream().map(b -> billService.getById(b.getId())).toList());
+        List<BillDTOs.BillResponse> succeededResponses = new ArrayList<>(billService.toResponses(successes));
         succeededResponses.sort(Comparator.comparing(BillDTOs.BillResponse::unitNumber)
                 .thenComparing(BillDTOs.BillResponse::tenantName));
         return new BillDTOs.BatchGenerateResult(succeededResponses, failures);

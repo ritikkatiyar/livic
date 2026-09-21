@@ -70,6 +70,8 @@ public final class AnalyticsMapper {
                 tenantName,
                 row.unitNumber(),
                 row.propertyName(),
+                row.blockId(),
+                row.blockName(),
                 (int) daysOverdue,
                 row.amountDue(),
                 row.billId()

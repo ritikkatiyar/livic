@@ -5,6 +5,7 @@ import com.livic.core.community.issue.domain.IssueTimelineTbl;
 import com.livic.core.community.issue.dto.IssueDTOs.CreateIssueRequest;
 import com.livic.core.community.issue.dto.IssueDTOs.IssueResponse;
 import com.livic.core.community.issue.dto.IssueDTOs.IssueTimelineResponse;
+import com.livic.core.property.dto.UnitSummaryDTO;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -35,6 +36,10 @@ public final class IssueMapper {
     }
 
     public static IssueResponse toResponse(IssueTbl entity, List<IssueTimelineTbl> timeline, Map<UUID, String> authorNamesMap) {
+        return toResponse(entity, null, timeline, authorNamesMap);
+    }
+
+    public static IssueResponse toResponse(IssueTbl entity, UnitSummaryDTO unit, List<IssueTimelineTbl> timeline, Map<UUID, String> authorNamesMap) {
         if (entity == null) {
             return null;
         }
@@ -56,11 +61,15 @@ public final class IssueMapper {
                     .toList();
         }
 
+        UUID blockId = unit != null ? unit.blockId() : entity.getBlockId();
+        String blockName = unit != null ? unit.blockName() : null;
         String ticketNumber = "ISS-" + entity.getId().toString().substring(0, 8).toUpperCase();
 
         return new IssueResponse(
                 entity.getId(),
                 entity.getPropertyId(),
+                blockId,
+                blockName,
                 entity.getUnitId(),
                 entity.getLeaseId(),
                 entity.getTenantId(),

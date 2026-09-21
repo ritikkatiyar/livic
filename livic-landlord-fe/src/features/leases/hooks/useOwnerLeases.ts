@@ -31,7 +31,7 @@ export function useOwnerLeases() {
   const { properties, isLoading: isPropsLoading } = useProperties();
   const { showToast } = useToast();
 
-  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
+  const { selectedPropertyId, setSelectedPropertyId, selectedBlockId, setSelectedBlockId } = useGlobalPropertySelection();
   // Deep links (e.g. /leases?tab=tours from a notification) open the requested tab
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   const [activeTab, setActiveTab] = useState<LeasesTab>(
@@ -81,7 +81,7 @@ export function useOwnerLeases() {
       setIsLoadingData(true);
       setCurrentLeasesPage(0);
       const [leasesRes, bookingsData, vacatingData, allUnits] = await Promise.all([
-        listActiveLeasesByProperty(selectedPropertyId, accessToken, 0, 20),
+        listActiveLeasesByProperty(selectedPropertyId, accessToken, 0, 20, selectedBlockId),
         listUnitBookings(accessToken),
         selectedPropertyId ? getVacatingUnits(selectedPropertyId, accessToken) : Promise.resolve([]),
         selectedPropertyId ? getAllFloorsLayout(selectedPropertyId, accessToken).catch(() => []) : Promise.resolve([]),
@@ -97,7 +97,7 @@ export function useOwnerLeases() {
     } finally {
       setIsLoadingData(false);
     }
-  }, [accessToken, selectedPropertyId, showToast]);
+  }, [accessToken, selectedPropertyId, selectedBlockId, showToast]);
 
   useEffect(() => {
     loadScreenData();
@@ -110,7 +110,7 @@ export function useOwnerLeases() {
     const nextPage = currentLeasesPage + 1;
     try {
       setIsFetchingMore(true);
-      const leasesRes = await listActiveLeasesByProperty(selectedPropertyId, accessToken, nextPage, 20);
+      const leasesRes = await listActiveLeasesByProperty(selectedPropertyId, accessToken, nextPage, 20, selectedBlockId);
       const newItems = leasesRes.content || [];
       setLeases(prev => {
         const existingIds = new Set(prev.map(l => l.id));
@@ -125,7 +125,7 @@ export function useOwnerLeases() {
     } finally {
       setIsFetchingMore(false);
     }
-  }, [activeTab, isLoadingData, isFetchingMore, currentLeasesPage, totalLeasesPages, selectedPropertyId, accessToken, showToast]);
+  }, [activeTab, isLoadingData, isFetchingMore, currentLeasesPage, totalLeasesPages, selectedPropertyId, selectedBlockId, accessToken, showToast]);
 
   const handleServeNotice = async () => {
     if (!selectedLeaseId || !noticeMoveOutDate.trim() || !accessToken) {
@@ -271,6 +271,7 @@ export function useOwnerLeases() {
 
   return {
     properties, isPropsLoading, selectedPropertyId, setSelectedPropertyId,
+    selectedBlockId, setSelectedBlockId,
     activeTab, setActiveTab, searchQuery, setSearchQuery,
     leases, bookings, vacatingUnits, availableUnits, isLoadingData,
     isFetchingMore, hasMoreLeases: currentLeasesPage + 1 < totalLeasesPages,

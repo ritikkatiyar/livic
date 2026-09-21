@@ -58,7 +58,7 @@ class LeaseAuthorizationTest {
     @Test
     @DisplayName("Listing leases by property requires LEASE_VIEW on that property")
     void listLeasesByPropertyIsAuthorized() throws NoSuchMethodException {
-        Method list = LeaseController.class.getMethod("getActiveLeasesByProperty", UserDetailsImpl.class, UUID.class, Pageable.class);
+        Method list = LeaseController.class.getMethod("getActiveLeasesByProperty", UserDetailsImpl.class, UUID.class, UUID.class, Pageable.class);
         PreAuthorize preAuthorize = list.getAnnotation(PreAuthorize.class);
 
         assertThat(preAuthorize).isNotNull();

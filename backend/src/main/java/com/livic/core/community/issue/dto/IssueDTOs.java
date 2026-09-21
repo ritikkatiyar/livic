@@ -44,6 +44,8 @@ public class IssueDTOs {
     public record IssueResponse(
             UUID id,
             UUID propertyId,
+            UUID blockId,
+            String blockName,
             UUID unitId,
             UUID leaseId,
             UUID tenantId,

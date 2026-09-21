@@ -3,6 +3,8 @@ import { apiRequest } from '@/src/api/client';
 export interface WorksheetEntryResponse {
   id: string;
   unitId: string;
+  blockId?: string | null;
+  blockName?: string | null;
   unitName: string;
   tenantName: string;
   floor: number;
@@ -26,10 +28,17 @@ export const getOrCreateWorksheet = async (
   propertyId: string, 
   chargeConfigId: string, 
   billingMonth: string,
-  token: string
+  token: string,
+  blockId?: string | null
 ): Promise<WorksheetEntryResponse[]> => {
+  const params = new URLSearchParams({
+    propertyId,
+    chargeConfigId,
+    billingMonth,
+  });
+  if (blockId) params.append('blockId', blockId);
   return apiRequest<WorksheetEntryResponse[]>(
-    `/api/v1/finance/billing-worksheets?propertyId=${propertyId}&chargeConfigId=${chargeConfigId}&billingMonth=${billingMonth}`,
+    `/api/v1/finance/billing-worksheets?${params.toString()}`,
     {
       method: 'GET',
       token

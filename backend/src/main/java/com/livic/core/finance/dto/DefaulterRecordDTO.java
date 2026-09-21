@@ -8,6 +8,8 @@ public record DefaulterRecordDTO(
         UUID tenantId,
         String unitNumber,
         String propertyName,
+        UUID blockId,
+        String blockName,
         LocalDate dueDate,
         BigDecimal amountDue,
         UUID billId

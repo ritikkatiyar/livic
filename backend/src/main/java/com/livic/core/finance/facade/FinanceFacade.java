@@ -25,7 +25,7 @@ public interface FinanceFacade {
     // Analytics Read Methods
     record RevenueMetricsDTO(BigDecimal expected, BigDecimal collected) {}
 
-    record DefaulterRecordDTO(UUID tenantId, String unitNumber, String propertyName, LocalDate dueDate, BigDecimal amountDue, UUID billId) {}
+    record DefaulterRecordDTO(UUID tenantId, String unitNumber, String propertyName, UUID blockId, String blockName, LocalDate dueDate, BigDecimal amountDue, UUID billId) {}
 
     RevenueMetricsDTO getRevenueMetrics(List<UUID> propertyIds, String billingMonth);
 

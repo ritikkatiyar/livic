@@ -9,7 +9,10 @@ import java.util.UUID;
 
 public interface IssueService {
     IssueResponse createIssue(CreateIssueRequest request, UUID callerUserId);
-    Page<IssueResponse> listIssues(UUID callerUserId, Pageable pageable);
+    Page<IssueResponse> listIssues(UUID callerUserId, UUID blockId, Pageable pageable);
+    default Page<IssueResponse> listIssues(UUID callerUserId, Pageable pageable) {
+        return listIssues(callerUserId, null, pageable);
+    }
     IssueResponse getIssue(UUID issueId, UUID callerUserId);
     IssueResponse addComment(UUID issueId, String content, UUID callerUserId);
     IssueResponse updateStatus(UUID issueId, UpdateStatusRequest request, UUID callerUserId);

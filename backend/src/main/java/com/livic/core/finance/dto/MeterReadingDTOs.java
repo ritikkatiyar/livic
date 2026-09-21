@@ -17,6 +17,8 @@ public class MeterReadingDTOs {
     public static class MeterReadingResponse {
         private UUID id;
         private UUID unitId;
+        private UUID blockId;
+        private String blockName;
         private String unitName;
         private String tenantName;
         private Integer floor;

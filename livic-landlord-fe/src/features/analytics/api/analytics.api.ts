@@ -28,6 +28,8 @@ export interface DefaulterResponse {
   amountDue: number;
   billId?: string;
   rentCycleId?: string;
+  blockId?: string;
+  blockName?: string;
 }
 
 export interface ExpensesBreakdownResponse {

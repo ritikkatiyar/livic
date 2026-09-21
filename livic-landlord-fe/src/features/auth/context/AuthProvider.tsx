@@ -127,8 +127,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 }
 
+export function useAuthOptional(): AuthContextValue | null {
+  return useContext(AuthContext);
+}
+
 export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext);
+  const context = useAuthOptional();
 
   if (!context) {
     throw new Error('useAuth must be used inside AuthProvider.');

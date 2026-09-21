@@ -67,7 +67,14 @@ export function RentRollInvoiceList({
         <GlassCard style={styles.invoiceCard}>
           <View style={styles.invoiceHeader}>
             <View>
-              <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                {Boolean(invoice.blockName) && (
+                  <View style={styles.blockBadge}>
+                    <Text style={styles.blockBadgeText}>{invoice.blockName}</Text>
+                  </View>
+                )}
+                <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
+              </View>
               <Text style={styles.invoiceIdText}>ID: #{invoice.id?.substring(0, 8)}</Text>
             </View>
             <Text style={styles.invoiceTotal}>₹ {invoice.totalAmount?.toFixed(2)}</Text>
@@ -133,6 +140,19 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurface,
+  },
+  blockBadge: {
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 104, 117, 0.2)',
+  },
+  blockBadgeText: {
+    color: theme.Colors.primary,
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '600',
   },
   invoiceIdText: {
     fontSize: theme.Typography.bodySmall.fontSize,

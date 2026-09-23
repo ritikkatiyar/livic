@@ -52,11 +52,12 @@ const PRESET_BILLING_DAYS = [
 interface CreatePropertyScreenProps {
   onBack?: () => void;
   onSaveAndConfigure?: (propertyId: string, totalFloors?: number) => void;
+  onSaveAndAddBlocks?: (propertyId: string) => void;
   userToken: string;
   ownerId?: string | null;
 }
 
-export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userToken, ownerId }: CreatePropertyScreenProps) {
+export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, onSaveAndAddBlocks, userToken, ownerId }: CreatePropertyScreenProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
@@ -74,6 +75,8 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
     landmark,
     setLandmark,
     totalFloors,
+    hasMultipleBlocks,
+    setHasMultipleBlocks,
     setTotalFloors,
     autoBillDayOfMonth,
     setAutoBillDayOfMonth,
@@ -95,7 +98,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
     shakeCity,
     shakeFloors,
     handleSave,
-  } = useCreateProperty({ userToken, onSaveAndConfigure });
+  } = useCreateProperty({ userToken, onSaveAndConfigure, onSaveAndAddBlocks });
 
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
@@ -223,6 +226,31 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
           </View>
         </View>
 
+        {/* One building or several. Off is the common case and keeps blocks invisible. */}
+        <TouchableOpacity
+          style={styles.inputGroup}
+          onPress={() => setHasMultipleBlocks(!hasMultipleBlocks)}
+          activeOpacity={0.8}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: hasMultipleBlocks }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <MaterialIcons
+              name={hasMultipleBlocks ? 'check-box' : 'check-box-outline-blank'}
+              size={24}
+              color={hasMultipleBlocks ? theme.Colors.primary : '#bac9cc'}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>This property has multiple blocks</Text>
+              <Text style={{ color: '#bac9cc', fontSize: 12 }}>
+                Several buildings or towers on one plot, sharing staff and charges. You will name
+                them next, each with its own floors.
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {hasMultipleBlocks ? null : (
         <View style={[styles.row, !isDesktop && { flexDirection: 'column', gap: 0 }]}>
           {/* Total Floors Input */}
           <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -262,8 +290,9 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
             </View>
           </View>
         </View>
+        )}
 
-        {globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0 ? (
+        {!hasMultipleBlocks && globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0 ? (
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Unit Layout Class</Text>
             <GlassDropdown

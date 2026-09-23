@@ -1,7 +1,7 @@
 package com.livic.core.finance.specification;
 
 import com.livic.core.finance.domain.FinanceLedgerTbl;
-import com.livic.verticals.rental.lease.domain.LeaseTbl;
+import com.livic.core.property.domain.UnitMemberTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.platform.user.domain.UserTbl;
 import jakarta.persistence.criteria.Join;
@@ -62,13 +62,18 @@ public class FinanceLedgerSpecifications {
             userSubquery.select(userRoot.get("id"));
             userSubquery.where(cb.like(cb.lower(userRoot.get("fullName")), pattern));
 
-            Join<FinanceLedgerTbl, LeaseTbl> leaseJoin = root.join("lease", JoinType.LEFT);
+            // The ledger carries its payer, not a lease relation: leases live in the rental
+            // vertical, and an owner's entries have no lease at all.
+            Subquery<UUID> memberSubquery = query.subquery(UUID.class);
+            Root<UnitMemberTbl> memberRoot = memberSubquery.from(UnitMemberTbl.class);
+            memberSubquery.select(memberRoot.get("id"));
+            memberSubquery.where(cb.in(memberRoot.get("userId")).value(userSubquery));
 
             return cb.or(
                     cb.like(cb.lower(root.get("description")), pattern),
                     cb.like(cb.lower(root.get("transactionType").as(String.class)), pattern),
                     cb.in(root.get("unitId")).value(unitSubquery),
-                    cb.in(leaseJoin.get("userId")).value(userSubquery)
+                    cb.in(root.get("memberId")).value(memberSubquery)
             );
         };
     }

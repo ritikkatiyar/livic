@@ -144,12 +144,15 @@ public class BillServiceImpl implements BillService {
         List<UUID> targetPropertyIds = new ArrayList<>();
 
         boolean isTenantView = false;
+        // Set when the caller is themselves a tenant: we already hold their member row, so
+        // there is no need to go back through the lease to find it again.
+        UUID scopedMemberId = null;
         if (currentUserId != null) {
             Optional<UnitResidentDTO> tenancyOpt = unitMemberFacade.getActiveResidencesByUserId(currentUserId).stream()
                     .filter(r -> r.role() == com.livic.core.property.domain.UnitMemberRole.TENANT)
                     .findFirst();
             if (tenancyOpt.isPresent()) {
-                leaseId = tenancyOpt.get().leaseId();
+                scopedMemberId = tenancyOpt.get().memberId();
                 propertyId = null;
                 isTenantView = true;
             } else {
@@ -185,13 +188,24 @@ public class BillServiceImpl implements BillService {
             );
         }
 
+        // A bill carries its property and payer, so a lease is resolved to its member and a
+        // property filters directly — no walk through units any more.
         Specification<BillTbl> spec;
-        if (leaseId != null) {
-            spec = Specification.where(BillSpecifications.hasLeaseId(leaseId));
+        if (scopedMemberId != null) {
+            spec = Specification.where(BillSpecifications.hasMemberId(scopedMemberId));
+        } else if (leaseId != null) {
+            UUID payerMemberId = unitMemberFacade.getResidentByLeaseId(leaseId)
+                    .map(UnitResidentDTO::memberId)
+                    .orElse(null);
+            spec = Specification.where(BillSpecifications.hasMemberId(payerMemberId));
+            if (payerMemberId == null) {
+                return new BillDTOs.BillListResponse(
+                        List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
+                        new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                );
+            }
         } else {
-            List<UUID> targetUnitIds = targetPropertyIds.isEmpty() ? List.of() :
-                    unitFacade.getUnitsByPropertyIds(targetPropertyIds).stream().map(UnitSummaryDTO::id).toList();
-            spec = Specification.where(BillSpecifications.hasUnitIdIn(targetUnitIds));
+            spec = Specification.where(BillSpecifications.hasPropertyIdIn(targetPropertyIds));
         }
 
         spec = spec.and(BillSpecifications.hasBillingMonth(billingMonth))
@@ -204,7 +218,10 @@ public class BillServiceImpl implements BillService {
         if (search != null && !search.trim().isEmpty()) {
             List<UUID> matchingUnitIds = unitFacade.getUnitIdsByUnitNumberSearch(search);
             List<UUID> matchingUserIds = userFacade.getUserIdsBySearch(search);
-            spec = spec.and(BillSpecifications.matchesSearch(matchingUnitIds, matchingUserIds));
+            Set<UUID> matchingMemberIds = new java.util.HashSet<>();
+            matchingMemberIds.addAll(unitMemberFacade.getMemberIdsByUnitIds(matchingUnitIds));
+            matchingMemberIds.addAll(unitMemberFacade.getMemberIdsByUserIds(matchingUserIds));
+            spec = spec.and(BillSpecifications.hasMemberIdIn(matchingMemberIds));
         }
 
         Page<BillTbl> page = billCrudService.findAll(spec, pageable);

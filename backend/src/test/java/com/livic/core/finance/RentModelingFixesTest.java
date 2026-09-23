@@ -397,11 +397,6 @@ public class RentModelingFixesTest {
                 new PropertySummaryDTO(propertyId2, "Property 2", "Addr 2", "City", "Landmark", 5, true)
         ));
 
-        when(unitFacade.getUnitsByPropertyIds(any())).thenReturn(List.of(
-                new UnitSummaryDTO(UUID.randomUUID(), propertyId1, "Property 1", "101", 1, 2, 0, 0, 1, 1, null, null),
-                new UnitSummaryDTO(UUID.randomUUID(), propertyId2, "Property 2", "201", 2, 2, 0, 0, 1, 1, null, null)
-        ));
-
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
         org.springframework.data.domain.Page<BillTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
         when(billCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
@@ -417,10 +412,11 @@ public class RentModelingFixesTest {
         assertEquals(2L, result.metrics().pendingDraftsCount());
         assertEquals(8L, result.metrics().publishedCount());
 
-        // Verify bulk calls executed exactly ONCE across all properties
-        verify(unitFacade, times(1)).getUnitsByPropertyIds(any());
-        verify(billCrudService, times(1)).getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any());
+        // Bills carry their property, so listing them resolves no units at all now — not per
+        // property, and not in bulk either.
+        verify(unitFacade, never()).getUnitsByPropertyIds(any());
         verify(unitFacade, never()).getUnitsByPropertyId(any());
+        verify(billCrudService, times(1)).getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any());
     }
 
     @Test

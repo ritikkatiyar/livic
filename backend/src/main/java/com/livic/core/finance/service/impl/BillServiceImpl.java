@@ -28,6 +28,7 @@ import com.livic.platform.payment.dto.PaymentInitiationRequest;
 import com.livic.platform.payment.dto.PaymentInitiationResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.core.property.dto.PropertySummaryDTO;
+import com.livic.core.property.domain.UnitMemberRole;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
@@ -52,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -149,7 +151,7 @@ public class BillServiceImpl implements BillService {
         UUID scopedMemberId = null;
         if (currentUserId != null) {
             Optional<UnitResidentDTO> tenancyOpt = unitMemberFacade.getActiveResidencesByUserId(currentUserId).stream()
-                    .filter(r -> r.role() == com.livic.core.property.domain.UnitMemberRole.TENANT)
+                    .filter(r -> r.role() == UnitMemberRole.TENANT)
                     .findFirst();
             if (tenancyOpt.isPresent()) {
                 scopedMemberId = tenancyOpt.get().memberId();
@@ -218,7 +220,7 @@ public class BillServiceImpl implements BillService {
         if (search != null && !search.trim().isEmpty()) {
             List<UUID> matchingUnitIds = unitFacade.getUnitIdsByUnitNumberSearch(search);
             List<UUID> matchingUserIds = userFacade.getUserIdsBySearch(search);
-            Set<UUID> matchingMemberIds = new java.util.HashSet<>();
+            Set<UUID> matchingMemberIds = new HashSet<>();
             matchingMemberIds.addAll(unitMemberFacade.getMemberIdsByUnitIds(matchingUnitIds));
             matchingMemberIds.addAll(unitMemberFacade.getMemberIdsByUserIds(matchingUserIds));
             spec = spec.and(BillSpecifications.hasMemberIdIn(matchingMemberIds));

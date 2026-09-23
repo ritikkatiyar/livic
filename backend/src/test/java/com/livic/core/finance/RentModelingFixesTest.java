@@ -13,6 +13,14 @@ import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.domain.BillLineTbl;
+import com.livic.core.property.facade.UnitMemberFacade;
+import com.livic.core.property.dto.UnitResidentDTO;
+import com.livic.core.property.domain.UnitMemberRole;
+import java.util.concurrent.atomic.AtomicReference;
+import com.livic.core.finance.service.interfaces.UnitBookingCrudService;
+import com.livic.core.finance.service.interfaces.FinanceLedgerCrudService;
+import com.livic.core.finance.strategy.ChargeCalculationService;
+import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.domain.BillType;
 import com.livic.core.finance.dto.BillingWorksheetDTOs.WorksheetEntryResponse;
@@ -88,17 +96,17 @@ public class RentModelingFixesTest {
     @Mock
     private UserFacade userFacade;
     @Mock
-    private com.livic.core.finance.service.interfaces.UnitBookingCrudService unitBookingCrudService;
+    private UnitBookingCrudService unitBookingCrudService;
     @Mock
-    private com.livic.core.finance.service.interfaces.FinanceLedgerCrudService financeLedgerCrudService;
+    private FinanceLedgerCrudService financeLedgerCrudService;
     @Mock
-    private com.livic.core.finance.strategy.ChargeCalculationService chargeCalculationService;
+    private ChargeCalculationService chargeCalculationService;
     @Mock
-    private com.livic.platform.payment.facade.PaymentFacade paymentFacade;
+    private PaymentFacade paymentFacade;
     @Mock
     private BillTransactionHelper transactionHelper;
     @Mock
-    private com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
+    private UnitMemberFacade unitMemberFacade;
 
     @InjectMocks
     private ChargeConfigServiceImpl chargeConfigService;
@@ -116,7 +124,7 @@ public class RentModelingFixesTest {
     private UUID leaseId;
     private UUID chargeConfigId;
     private UUID memberId;
-    private com.livic.core.property.dto.UnitResidentDTO payerResident;
+    private UnitResidentDTO payerResident;
     private PropertyTbl property;
     private UnitTbl unit;
     private LeaseTbl lease;
@@ -163,8 +171,8 @@ public class RentModelingFixesTest {
                 .build();
         rentConfig.setId(chargeConfigId);
 
-        payerResident = new com.livic.core.property.dto.UnitResidentDTO(
-                memberId, UUID.randomUUID(), com.livic.core.property.domain.UnitMemberRole.TENANT,
+        payerResident = new UnitResidentDTO(
+                memberId, UUID.randomUUID(), UnitMemberRole.TENANT,
                 leaseId, unitId, "101", 1, propertyId);
 
         transactionHelper = new BillTransactionHelper(
@@ -226,7 +234,7 @@ public class RentModelingFixesTest {
         when(leaseQueryService.getLeaseById(leaseId)).thenReturn(lease);
         when(unitMemberFacade.getResidentByLeaseId(leaseId)).thenReturn(Optional.of(payerResident));
         when(billCrudService.findByMemberIdAndBillingMonth(memberId, "2026-08", BillType.RENT)).thenReturn(Optional.empty());
-        java.util.concurrent.atomic.AtomicReference<BillTbl> saved = new java.util.concurrent.atomic.AtomicReference<>();
+        AtomicReference<BillTbl> saved = new AtomicReference<>();
         when(billCrudService.save(any(BillTbl.class))).thenAnswer(i -> {
             BillTbl c = i.getArgument(0);
             if (c.getId() == null) c.setId(UUID.randomUUID());

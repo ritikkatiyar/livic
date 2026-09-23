@@ -42,6 +42,11 @@ public interface UnitMemberFacade {
     /** The same, in bulk, for rent rolls and statements. */
     List<UnitResidentDTO> getResidentsByMemberIds(Collection<UUID> memberIds);
 
+    /** Member ids for these units or people, past and present, for filtering bills. */
+    List<UUID> getMemberIdsByUnitIds(Collection<UUID> unitIds);
+
+    List<UUID> getMemberIdsByUserIds(Collection<UUID> userIds);
+
     /** The active tenant behind a lease, with unit and property, in one query. */
     Optional<UnitResidentDTO> getResidentByLeaseId(UUID leaseId);
 

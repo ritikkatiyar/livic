@@ -130,6 +130,20 @@ public class UnitMemberServiceImpl implements UnitMemberService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<UUID> findMemberIdsByUnitIds(Collection<UUID> unitIds) {
+        return unitIds == null || unitIds.isEmpty() ? List.of()
+                : unitMemberRepository.findMemberIdsByUnitIds(unitIds);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UUID> findMemberIdsByUserIds(Collection<UUID> userIds) {
+        return userIds == null || userIds.isEmpty() ? List.of()
+                : unitMemberRepository.findMemberIdsByUserIds(userIds);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<UnitResidentDTO> findResidentByLeaseId(UUID leaseId) {
         if (leaseId == null) {
             return Optional.empty();

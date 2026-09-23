@@ -1,13 +1,10 @@
 package com.livic.core.finance.specification;
 
 import com.livic.core.finance.domain.FinanceLedgerTbl;
-import com.livic.core.property.domain.UnitMemberTbl;
-import com.livic.core.property.domain.UnitTbl;
-import com.livic.platform.user.domain.UserTbl;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
+import java.util.List;
+import java.util.Collection;
+import java.util.ArrayList;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
@@ -19,17 +16,16 @@ public class FinanceLedgerSpecifications {
         // Private constructor to prevent instantiation
     }
 
-    public static Specification<FinanceLedgerTbl> hasPropertyId(UUID propertyId) {
+    /** The property's units, resolved by the service rather than subqueried from here. */
+    public static Specification<FinanceLedgerTbl> hasUnitIdIn(Collection<UUID> unitIds) {
         return (root, query, cb) -> {
-            if (propertyId == null) {
+            if (unitIds == null) {
                 return null;
             }
-            jakarta.persistence.criteria.Subquery<UUID> subquery = query.subquery(UUID.class);
-            jakarta.persistence.criteria.Root<com.livic.core.property.domain.UnitTbl> unitRoot = subquery.from(com.livic.core.property.domain.UnitTbl.class);
-            subquery.select(unitRoot.get("id"));
-            subquery.where(cb.equal(unitRoot.get("property").get("id"), propertyId));
-
-            return cb.in(root.get("unitId")).value(subquery);
+            if (unitIds.isEmpty()) {
+                return cb.disjunction();
+            }
+            return root.get("unitId").in(unitIds);
         };
     }
 
@@ -45,36 +41,29 @@ public class FinanceLedgerSpecifications {
                 : cb.lessThanOrEqualTo(root.get("createdAt"), toDate);
     }
 
-    public static Specification<FinanceLedgerTbl> searchStringFields(String search) {
+    /**
+     * Free-text search over the ledger's own columns, plus whichever units and payers the
+     * caller has already matched. The ids are resolved by the service through the property
+     * facade: a finance query has no business selecting from another module's tables.
+     */
+    public static Specification<FinanceLedgerTbl> matchesSearch(
+            String search, Collection<UUID> matchingUnitIds, Collection<UUID> matchingMemberIds) {
         return (root, query, cb) -> {
             if (search == null || search.trim().isEmpty()) {
                 return null;
             }
             String pattern = "%" + search.trim().toLowerCase() + "%";
 
-            Subquery<UUID> unitSubquery = query.subquery(UUID.class);
-            Root<UnitTbl> unitRoot = unitSubquery.from(UnitTbl.class);
-            unitSubquery.select(unitRoot.get("id"));
-            unitSubquery.where(cb.like(cb.lower(unitRoot.get("unitNumber")), pattern));
-
-            Subquery<UUID> userSubquery = query.subquery(UUID.class);
-            Root<UserTbl> userRoot = userSubquery.from(UserTbl.class);
-            userSubquery.select(userRoot.get("id"));
-            userSubquery.where(cb.like(cb.lower(userRoot.get("fullName")), pattern));
-
-            // The ledger carries its payer, not a lease relation: leases live in the rental
-            // vertical, and an owner's entries have no lease at all.
-            Subquery<UUID> memberSubquery = query.subquery(UUID.class);
-            Root<UnitMemberTbl> memberRoot = memberSubquery.from(UnitMemberTbl.class);
-            memberSubquery.select(memberRoot.get("id"));
-            memberSubquery.where(cb.in(memberRoot.get("userId")).value(userSubquery));
-
-            return cb.or(
-                    cb.like(cb.lower(root.get("description")), pattern),
-                    cb.like(cb.lower(root.get("transactionType").as(String.class)), pattern),
-                    cb.in(root.get("unitId")).value(unitSubquery),
-                    cb.in(root.get("memberId")).value(memberSubquery)
-            );
+            List<Predicate> any = new ArrayList<>();
+            any.add(cb.like(cb.lower(root.get("description")), pattern));
+            any.add(cb.like(cb.lower(root.get("transactionType").as(String.class)), pattern));
+            if (matchingUnitIds != null && !matchingUnitIds.isEmpty()) {
+                any.add(root.get("unitId").in(matchingUnitIds));
+            }
+            if (matchingMemberIds != null && !matchingMemberIds.isEmpty()) {
+                any.add(root.get("memberId").in(matchingMemberIds));
+            }
+            return cb.or(any.toArray(new Predicate[0]));
         };
     }
 }

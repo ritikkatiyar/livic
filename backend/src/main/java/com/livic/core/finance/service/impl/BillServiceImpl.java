@@ -420,19 +420,43 @@ public class BillServiceImpl implements BillService {
             }
         }
 
-        List<BillDTOs.BillResponse> succeeded = new ArrayList<>();
+        // Deliberately not calling publish() per bill: it reloads the bill, re-resolves the
+        // payer and re-scans the whole property's worksheets and meter readings every time.
+        // The property-wide part is already done once above, so the loop only moves status.
+        Map<UUID, UnitResidentDTO> payers = payersOf(propertyCycles);
+        List<BillTbl> transitioned = new ArrayList<>();
         List<BillDTOs.BatchPublishFailure> failed = new ArrayList<>();
 
         for (BillTbl cycle : propertyCycles) {
-            String unitNum = (payerOf(cycle) != null) ? unitNumbers.get(payerUnitIdOf(cycle)) : null;
+            UnitResidentDTO payer = payers.get(cycle.getMemberId());
+            String unitNum = payer != null ? unitNumbers.get(payer.unitId()) : null;
             try {
-                BillDTOs.BillResponse res = publish(cycle.getId());
-                succeeded.add(res);
+                if (cycle.getStatus() == BillStatus.PENDING) {
+                    cycle.setStatus(BillStatus.PUBLISHED);
+                    transitioned.add(cycle);
+                }
             } catch (Exception e) {
                 log.error("[BillServiceImpl] Failed to publish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
                 failed.add(new BillDTOs.BatchPublishFailure(cycle.getId(), unitNum, e.getMessage()));
             }
         }
+
+        if (!transitioned.isEmpty()) {
+            billCrudService.saveAll(transitioned);
+        }
+        for (BillTbl cycle : transitioned) {
+            UnitResidentDTO payer = payers.get(cycle.getMemberId());
+            eventPublisher.publishEvent(new RentPublishedEvent(
+                    this,
+                    cycle.getId(),
+                    payer != null ? payer.userId() : null,
+                    cycle.getBillingMonth(),
+                    cycle.getTotalAmount(),
+                    cycle.getDueDate()
+            ));
+        }
+
+        List<BillDTOs.BillResponse> succeeded = new ArrayList<>(toResponses(propertyCycles));
 
         Comparator<BillDTOs.BillResponse> publishComp = Comparator.comparing(
                 (BillDTOs.BillResponse r) -> r.unitNumber() != null ? r.unitNumber() : "",
@@ -477,19 +501,31 @@ public class BillServiceImpl implements BillService {
             }
         }
 
-        List<BillDTOs.BillResponse> succeeded = new ArrayList<>();
+        // Same reasoning as batchPublish: the property-wide reset above happens once, and the
+        // loop only moves status rather than re-running it per bill.
+        Map<UUID, UnitResidentDTO> payers = payersOf(propertyCycles);
+        List<BillTbl> transitioned = new ArrayList<>();
         List<BillDTOs.BatchUnpublishFailure> failed = new ArrayList<>();
 
         for (BillTbl cycle : propertyCycles) {
-            String unitNum = (payerOf(cycle) != null) ? unitNumbers.get(payerUnitIdOf(cycle)) : null;
+            UnitResidentDTO payer = payers.get(cycle.getMemberId());
+            String unitNum = payer != null ? unitNumbers.get(payer.unitId()) : null;
             try {
-                BillDTOs.BillResponse res = unpublish(cycle.getId());
-                succeeded.add(res);
+                if (cycle.getStatus() == BillStatus.PUBLISHED) {
+                    cycle.setStatus(BillStatus.PENDING);
+                    transitioned.add(cycle);
+                }
             } catch (Exception e) {
                 log.error("[BillServiceImpl] Failed to unpublish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
                 failed.add(new BillDTOs.BatchUnpublishFailure(cycle.getId(), unitNum, e.getMessage()));
             }
         }
+
+        if (!transitioned.isEmpty()) {
+            billCrudService.saveAll(transitioned);
+        }
+
+        List<BillDTOs.BillResponse> succeeded = new ArrayList<>(toResponses(propertyCycles));
 
         Comparator<BillDTOs.BillResponse> unpublishComp = Comparator.comparing(
                 (BillDTOs.BillResponse r) -> r.unitNumber() != null ? r.unitNumber() : "",

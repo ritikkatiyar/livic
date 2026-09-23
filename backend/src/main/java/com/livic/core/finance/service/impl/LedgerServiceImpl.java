@@ -43,16 +43,25 @@ public class LedgerServiceImpl implements LedgerService {
     @Override
     @Transactional(readOnly = true)
     public Page<LedgerEntryResponse> getLedgerForProperty(UUID propertyId, String search, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable) {
+        // The units are needed for display anyway, so resolving them here also keeps the
+        // specification from selecting out of the property module's tables.
+        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        List<UUID> propertyUnitIds = units.stream().map(UnitSummaryDTO::id).toList();
+
+        List<UUID> matchingUnitIds = List.of();
+        List<UUID> matchingMemberIds = List.of();
+        if (search != null && !search.trim().isEmpty()) {
+            matchingUnitIds = unitFacade.getUnitIdsByUnitNumberSearch(search);
+            matchingMemberIds = unitMemberFacade.getMemberIdsByUserIds(userFacade.getUserIdsBySearch(search));
+        }
+
         Specification<FinanceLedgerTbl> spec = Specification
-                .where(FinanceLedgerSpecifications.hasPropertyId(propertyId))
+                .where(FinanceLedgerSpecifications.hasUnitIdIn(propertyId == null ? null : propertyUnitIds))
                 .and(FinanceLedgerSpecifications.createdAfter(fromDate))
                 .and(FinanceLedgerSpecifications.createdBefore(toDate))
-                .and(FinanceLedgerSpecifications.searchStringFields(search));
+                .and(FinanceLedgerSpecifications.matchesSearch(search, matchingUnitIds, matchingMemberIds));
 
         Page<FinanceLedgerTbl> entriesPage = financeLedgerCrudService.findAll(spec, pageable);
-
-        // Fetch units for mapping unit names
-        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
         Map<UUID, UnitSummaryDTO> unitMap = units.stream()
                 .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
 

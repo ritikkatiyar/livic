@@ -159,6 +159,10 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(229, 57, 53, 0.15)',
     marginBottom: 20,
   },
+  toggleHelperText: {
+    fontSize: theme.Typography.bodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+  },
   errorText: {
     fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.error,

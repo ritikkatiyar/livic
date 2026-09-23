@@ -238,11 +238,11 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, onSav
             <MaterialIcons
               name={hasMultipleBlocks ? 'check-box' : 'check-box-outline-blank'}
               size={24}
-              color={hasMultipleBlocks ? theme.Colors.primary : '#bac9cc'}
+              color={hasMultipleBlocks ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
             />
             <View style={{ flex: 1 }}>
               <Text style={styles.label}>This property has multiple blocks</Text>
-              <Text style={{ color: '#bac9cc', fontSize: 12 }}>
+              <Text style={styles.toggleHelperText}>
                 Several buildings or towers on one plot, sharing staff and charges. You will name
                 them next, each with its own floors.
               </Text>

@@ -1,8 +1,8 @@
 package com.livic.verticals.rental.lease.service.impl;
 
-import com.livic.platform.common.domain.LeaseStatus;
-import com.livic.platform.common.domain.LedgerTransactionType;
-import com.livic.platform.common.domain.UnitBookingStatus;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.core.finance.domain.LedgerTransactionType;
+import com.livic.core.finance.domain.UnitBookingStatus;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.FinanceLedgerTbl;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;

@@ -3,7 +3,6 @@ package com.livic.core.finance.mapper;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.core.finance.dto.ChargeConfigRequest;
 import com.livic.core.finance.dto.ChargeConfigResponse;
-import com.livic.core.property.domain.PropertyTbl;
 
 import java.util.UUID;
 
@@ -33,9 +32,9 @@ public final class ChargeConfigMapper {
         return ChargeConfigTbl.builder()
                 .propertyId(propertyId)
                 .chargeName("Base Rent")
-                .chargeCategory(com.livic.platform.common.domain.ChargeCategory.RENT)
-                .billingFrequency(com.livic.platform.common.domain.BillingFrequency.MONTHLY)
-                .calculationStrategy(com.livic.platform.common.domain.CalculationStrategyType.FIXED_RATE)
+                .chargeCategory(com.livic.core.finance.domain.ChargeCategory.RENT)
+                .billingFrequency(com.livic.core.finance.domain.BillingFrequency.MONTHLY)
+                .calculationStrategy(com.livic.core.finance.domain.CalculationStrategyType.FIXED_RATE)
                 .baseRate(null)
                 .applySalesTax(false)
                 .autoCarryForward(false)

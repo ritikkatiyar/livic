@@ -22,7 +22,6 @@ public interface UnitMemberRepository extends JpaRepository<UnitMemberTbl, UUID>
 
     List<UnitMemberTbl> findByUserIdAndIsActiveTrue(UUID userId);
 
-    List<UnitMemberTbl> findByUserIdAndRoleAndIsActiveTrue(UUID userId, UnitMemberRole role);
 
     List<UnitMemberTbl> findByUnitIdAndRoleAndIsActiveTrue(UUID unitId, UnitMemberRole role);
 

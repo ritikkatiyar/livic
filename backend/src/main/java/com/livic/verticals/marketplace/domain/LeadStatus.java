@@ -1,4 +1,4 @@
-package com.livic.platform.common.domain;
+package com.livic.verticals.marketplace.domain;
 
 public enum LeadStatus {
     /** Just created. For tour requests this means pending landlord approval. */

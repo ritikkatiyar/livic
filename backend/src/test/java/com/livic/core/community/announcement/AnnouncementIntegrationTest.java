@@ -6,7 +6,11 @@ import com.livic.core.community.announcement.dto.AnnouncementDTOs.AnnouncementRe
 import com.livic.core.community.announcement.repository.AnnouncementReceiptRepository;
 import com.livic.core.community.announcement.repository.AnnouncementRepository;
 import com.livic.core.community.announcement.service.interfaces.AnnouncementService;
-import com.livic.platform.common.domain.*;
+import com.livic.core.property.domain.FacingDirection;
+import com.livic.core.property.domain.UnitType;
+import com.livic.platform.common.domain.UserRole;
+import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import com.livic.core.property.domain.PropertyTbl;

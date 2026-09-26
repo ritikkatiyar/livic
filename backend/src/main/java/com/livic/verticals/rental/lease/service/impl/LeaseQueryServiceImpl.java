@@ -1,6 +1,6 @@
 package com.livic.verticals.rental.lease.service.impl;
 
-import com.livic.platform.common.domain.LeaseStatus;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;

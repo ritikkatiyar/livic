@@ -1,6 +1,6 @@
 package com.livic.core.property.service.impl;
 
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.core.property.domain.PropertyType;
 import com.livic.platform.common.service.impl.AbstractCrudService;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.repository.PropertyRepository;

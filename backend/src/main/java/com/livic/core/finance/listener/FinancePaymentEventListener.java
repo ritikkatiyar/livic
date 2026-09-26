@@ -1,6 +1,6 @@
 package com.livic.core.finance.listener;
 
-import com.livic.platform.common.domain.LedgerTransactionType;
+import com.livic.core.finance.domain.LedgerTransactionType;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.FinanceLedgerTbl;
 import com.livic.core.property.dto.UnitResidentDTO;

@@ -1,11 +1,10 @@
 package com.livic.verticals.marketplace.dto;
 
-import com.livic.platform.common.domain.LeadStatus;
+import com.livic.verticals.marketplace.domain.LeadStatus;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 public class TourRequestDTOs {

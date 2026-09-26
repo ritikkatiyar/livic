@@ -1,6 +1,6 @@
 package com.livic.verticals.rental.lease.mapper;
 
-import com.livic.platform.common.domain.LeaseStatus;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.verticals.rental.lease.dto.LeaseDTOs;
 import com.livic.core.property.dto.PropertySummaryDTO;

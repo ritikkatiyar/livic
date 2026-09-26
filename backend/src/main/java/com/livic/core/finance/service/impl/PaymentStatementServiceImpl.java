@@ -93,7 +93,7 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
         StringBuilder chargesRows = new StringBuilder();
         for (BillLineTbl charge : charges) {
             String amountFormatted = String.format("₹%,.2f", charge.getAmount());
-            if (com.livic.platform.common.domain.RentChargeType.DISCOUNT.name().equals(charge.getChargeType().name())) {
+            if (com.livic.core.finance.domain.RentChargeType.DISCOUNT.name().equals(charge.getChargeType().name())) {
                 amountFormatted = "-" + amountFormatted;
             }
             chargesRows.append(String.format(

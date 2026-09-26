@@ -1,4 +1,4 @@
-package com.livic.platform.common.domain;
+package com.livic.core.finance.domain;
 
 public enum UnitBookingStatus {
     BOOKED,

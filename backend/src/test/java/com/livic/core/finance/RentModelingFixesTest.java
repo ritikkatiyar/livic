@@ -1,11 +1,11 @@
 package com.livic.core.finance;
 
-import com.livic.platform.common.domain.BillingFrequency;
-import com.livic.platform.common.domain.CalculationStrategyType;
-import com.livic.platform.common.domain.ChargeCategory;
-import com.livic.platform.common.domain.LeaseSplitStrategy;
-import com.livic.platform.common.domain.LeaseStatus;
-import com.livic.platform.common.domain.RentChargeType;
+import com.livic.core.finance.domain.BillingFrequency;
+import com.livic.core.finance.domain.CalculationStrategyType;
+import com.livic.core.finance.domain.ChargeCategory;
+import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.core.finance.domain.RentChargeType;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.platform.common.event.RentPublishedEvent;
 import com.livic.platform.common.exception.BusinessException;

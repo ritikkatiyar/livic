@@ -1,6 +1,6 @@
 package com.livic.core.property.dto;
 
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.core.property.domain.PropertyType;
 import com.livic.core.property.domain.PropertyTbl;
 
 import java.util.List;

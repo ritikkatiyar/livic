@@ -1,6 +1,6 @@
 package com.livic.verticals.rental.billing.job;
 
-import com.livic.platform.common.domain.LeaseStatus;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.dto.BillDTOs.GenerateBillRequest;

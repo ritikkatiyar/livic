@@ -3,7 +3,6 @@ package com.livic.platform.subscription.service.impl;
 import com.livic.platform.subscription.constant.BillingConstants;
 import com.livic.platform.payment.constant.PaymentConstants;
 import com.livic.platform.subscription.domain.BillingWalletTbl;
-import com.livic.platform.payment.dto.PaymentGatewayType;
 import com.livic.platform.subscription.domain.SaasSubscriptionTbl;
 import com.livic.platform.subscription.domain.SubscriptionPlanTbl;
 import com.livic.platform.subscription.domain.WalletTransactionTbl;

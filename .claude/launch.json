@@ -27,6 +27,36 @@
       "cwd": "backend",
       "port": 8080,
       "url": "http://localhost:8080"
+    },
+    {
+      "name": "ai-verify-backend",
+      "runtimeExecutable": "java",
+      "runtimeArgs": [
+        "-jar",
+        "C:/Users/ritik/AppData/Local/Temp/claude/D--TenantApp/885b85ea-cb1f-4313-83cf-a46b4980dd4a/scratchpad/ai-verify/backend/target/livic-backend-0.0.1-SNAPSHOT.jar",
+        "--spring.profiles.active=dev",
+        "--DB_URL=jdbc:mysql://localhost:3307/livic_ai_verify?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
+        "--SERVER_PORT=8080"
+      ],
+      "cwd": "backend",
+      "port": 8080,
+      "url": "http://localhost:8080"
+    },
+    {
+      "name": "ai-verify-ai-service",
+      "runtimeExecutable": "java",
+      "runtimeArgs": [
+        "-jar",
+        "C:/Users/ritik/AppData/Local/Temp/claude/D--TenantApp/885b85ea-cb1f-4313-83cf-a46b4980dd4a/scratchpad/ai-verify/ai-service/target/livic-ai-service-0.0.1-SNAPSHOT.jar",
+        "--spring.config.import=optional:file:D:/TenantApp/.env[.properties]",
+        "--DB_URL=jdbc:mysql://localhost:3307/livic_ai_verify?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
+        "--SERVER_PORT=8082",
+        "--APP_AI_ENABLED=true",
+        "--SPRING_AI_MODEL_CHAT=google-genai"
+      ],
+      "cwd": "ai-service",
+      "port": 8082,
+      "url": "http://localhost:8082"
     }
   ]
 }

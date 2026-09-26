@@ -2,7 +2,7 @@ package com.livic.verticals.rental.lease.facade.impl;
 
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
-import com.livic.platform.common.domain.LeaseStatus;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
 import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;

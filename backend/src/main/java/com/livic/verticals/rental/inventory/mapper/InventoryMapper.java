@@ -14,8 +14,6 @@ import com.livic.verticals.rental.inventory.dto.InventoryPropertyMetricsDTO;
 
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.UUID;
 
 public final class InventoryMapper {
 

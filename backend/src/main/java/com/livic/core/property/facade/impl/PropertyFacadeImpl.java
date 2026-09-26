@@ -1,11 +1,15 @@
 package com.livic.core.property.facade.impl;
 
-import com.livic.platform.common.domain.LeaseStatus;
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.core.property.domain.PropertyType;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.dto.PublicPropertyListingDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.service.interfaces.PropertyCrudService;
+import com.livic.core.property.domain.UnitTbl;
+import com.livic.core.property.service.interfaces.UnitCrudService;
+import com.livic.core.property.spi.UnitOccupancyProvider;
+import java.util.Map;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -30,6 +34,8 @@ public class PropertyFacadeImpl implements PropertyFacade {
     private EntityManager entityManager;
 
     private final PropertyQueryService propertyQueryService;
+    private final UnitCrudService unitCrudService;
+    private final UnitOccupancyProvider unitOccupancyProvider;
     private final com.livic.core.property.service.interfaces.BlockService blockService;
     private final PropertyCrudService propertyCrudService;
 
@@ -84,24 +90,27 @@ public class PropertyFacadeImpl implements PropertyFacade {
             return Collections.emptyList();
         }
 
-        String jpql = "SELECT p.id, p.name, " +
-                      "(SELECT COUNT(u) FROM UnitTbl u WHERE u.property.id = p.id), " +
-                      "(SELECT COUNT(l) FROM LeaseTbl l, UnitTbl u WHERE l.unitId = u.id AND u.property.id = p.id AND l.status = :statusActive) " +
-                      "FROM PropertyTbl p WHERE p.id IN :propertyIds";
+        // This used to run JPQL over LeaseTbl from here, which is core reading a vertical's
+        // table. The entity name was a string, so no architecture test could see it. Occupancy
+        // now comes through the SPI that rental implements for exactly this.
+        List<UnitTbl> units = unitCrudService.findByPropertyIdIn(propertyIds);
+        Map<UUID, List<UnitOccupancyProvider.UnitOccupant>> occupantsByUnit =
+                unitOccupancyProvider.activeOccupantsByUnitIds(units.stream().map(UnitTbl::getId).toList());
 
-        Query query = entityManager.createQuery(jpql);
-        query.setParameter("propertyIds", propertyIds);
-        query.setParameter("statusActive", LeaseStatus.ACTIVE);
+        Map<UUID, List<UnitTbl>> unitsByProperty = units.stream()
+                .filter(u -> u.getProperty() != null)
+                .collect(Collectors.groupingBy(u -> u.getProperty().getId()));
 
-        List<Object[]> rows = query.getResultList();
         List<PropertyOccupancySummaryDTO> result = new ArrayList<>();
-        for (Object[] row : rows) {
-            UUID propId = (UUID) row[0];
-            String propName = (String) row[1];
-            int totalUnits = ((Number) row[2]).intValue();
-            int occupiedUnits = ((Number) row[3]).intValue();
-
-            result.add(new PropertyOccupancySummaryDTO(propId, propName, totalUnits, occupiedUnits));
+        for (UUID propertyId : propertyIds) {
+            List<UnitTbl> propertyUnits = unitsByProperty.getOrDefault(propertyId, List.of());
+            long occupied = propertyUnits.stream()
+                    .filter(u -> !occupantsByUnit.getOrDefault(u.getId(), List.of()).isEmpty())
+                    .count();
+            String name = propertyUnits.isEmpty()
+                    ? propertyQueryService.getPropertyById(propertyId).getName()
+                    : propertyUnits.get(0).getProperty().getName();
+            result.add(new PropertyOccupancySummaryDTO(propertyId, name, propertyUnits.size(), (int) occupied));
         }
         return result;
     }

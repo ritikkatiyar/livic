@@ -5,7 +5,7 @@ import com.livic.platform.common.service.interfaces.CrudService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import com.livic.platform.common.domain.ChargeCategory;
+import com.livic.core.finance.domain.ChargeCategory;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

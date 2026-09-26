@@ -1,7 +1,7 @@
 package com.livic.core.property.domain;
 
 import com.livic.platform.common.domain.BaseEntity;
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.core.property.domain.PropertyType;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalTime;

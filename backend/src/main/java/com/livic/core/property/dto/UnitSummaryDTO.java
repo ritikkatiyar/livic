@@ -1,7 +1,7 @@
 package com.livic.core.property.dto;
 
-import com.livic.platform.common.domain.FacingDirection;
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.property.domain.FacingDirection;
+import com.livic.core.property.domain.UnitType;
 import com.livic.core.property.domain.UnitTbl;
 
 import java.util.UUID;

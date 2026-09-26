@@ -1,8 +1,8 @@
 package com.livic.verticals.marketplace.dto;
 
 import com.livic.verticals.marketplace.dto.MarketplacePropertyDTOs.PropertySummaryResponse;
-import com.livic.platform.common.domain.FacingDirection;
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.property.domain.FacingDirection;
+import com.livic.core.property.domain.UnitType;
 
 import java.math.BigDecimal;
 import java.util.List;

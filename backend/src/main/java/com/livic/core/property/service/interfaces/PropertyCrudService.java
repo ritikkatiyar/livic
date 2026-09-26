@@ -1,6 +1,6 @@
 package com.livic.core.property.service.interfaces;
 
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.core.property.domain.PropertyType;
 import com.livic.platform.common.service.interfaces.CrudService;
 import com.livic.core.property.domain.PropertyTbl;
 

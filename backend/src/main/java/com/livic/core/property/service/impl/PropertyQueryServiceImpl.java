@@ -2,11 +2,9 @@ package com.livic.core.property.service.impl;
 
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
-import com.livic.platform.common.enums.AccessType;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.service.interfaces.PropertyCrudService;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

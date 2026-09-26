@@ -29,7 +29,6 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItemTbl,
 
     List<InventoryItemTbl> findAllByPropertyIdAndUnitId(UUID propertyId, UUID unitId);
 
-    List<InventoryItemTbl> findAllByPropertyIdAndStatus(UUID propertyId, InventoryStatus status);
 
     @Query("SELECT COALESCE(SUM(i.replacementValue), 0) FROM InventoryItemTbl i WHERE i.propertyId = :propertyId")
     BigDecimal sumReplacementValueByPropertyId(@Param("propertyId") UUID propertyId);

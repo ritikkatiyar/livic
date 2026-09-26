@@ -8,7 +8,7 @@ import com.livic.verticals.marketplace.mapper.MarketplacePropertyMapper;
 import com.livic.verticals.marketplace.mapper.MarketplaceUnitMapper;
 import com.livic.verticals.marketplace.qr.QrCodeService;
 import com.livic.verticals.marketplace.service.interfaces.MarketplaceSearchService;
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.core.property.domain.PropertyType;
 import com.livic.platform.common.enums.OwnerModule;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.storage.dto.MediaDTOs;

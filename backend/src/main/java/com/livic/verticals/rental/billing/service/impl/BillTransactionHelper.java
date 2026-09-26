@@ -1,11 +1,10 @@
 package com.livic.verticals.rental.billing.service.impl;
 
-import com.livic.platform.common.domain.CalculationStrategyType;
-import com.livic.platform.common.domain.ChargeCategory;
-import com.livic.platform.common.domain.LedgerTransactionType;
-import com.livic.platform.common.domain.LeaseStatus;
-import com.livic.platform.common.domain.RentChargeType;
-import com.livic.platform.common.domain.UnitBookingStatus;
+import com.livic.core.finance.domain.ChargeCategory;
+import com.livic.core.finance.domain.LedgerTransactionType;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.core.finance.domain.RentChargeType;
+import com.livic.core.finance.domain.UnitBookingStatus;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.core.finance.domain.ChargeConfigTbl;

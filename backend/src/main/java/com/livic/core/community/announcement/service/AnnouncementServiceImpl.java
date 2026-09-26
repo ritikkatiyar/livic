@@ -7,7 +7,6 @@ import com.livic.core.community.announcement.mapper.AnnouncementMapper;
 import com.livic.core.community.announcement.service.interfaces.AnnouncementService;
 import com.livic.platform.common.event.AnnouncementBroadcastEvent;
 import com.livic.core.property.dto.PropertySummaryDTO;
-import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.facade.UnitFacade;

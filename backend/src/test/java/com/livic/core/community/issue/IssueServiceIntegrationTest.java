@@ -138,7 +138,7 @@ public class IssueServiceIntegrationTest {
                 .capacity(2)
                 .gridX(0)
                 .gridY(0)
-                .type(com.livic.platform.common.domain.UnitType.ONE_BHK)
+                .type(com.livic.core.property.domain.UnitType.ONE_BHK)
                 .build();
         unitRepository.save(unit);
 
@@ -149,8 +149,8 @@ public class IssueServiceIntegrationTest {
                 .moveOutDate(LocalDate.now().plusMonths(11))
                 .monthlyRentAmount(BigDecimal.valueOf(15000))
                 .securityDeposit(BigDecimal.valueOf(30000))
-                .status(com.livic.platform.common.domain.LeaseStatus.ACTIVE)
-                .splitStrategy(com.livic.platform.common.domain.LeaseSplitStrategy.FULL_UNIT)
+                .status(com.livic.verticals.rental.lease.domain.LeaseStatus.ACTIVE)
+                .splitStrategy(com.livic.verticals.rental.lease.domain.LeaseSplitStrategy.FULL_UNIT)
                 .build();
         leaseRepository.save(lease);
         // The lease is saved directly here, so add the unit member the lease service would create.

@@ -1,8 +1,7 @@
 package com.livic.core.finance.strategy;
 
-import com.livic.platform.common.domain.CalculationStrategyType;
+import com.livic.core.finance.domain.CalculationStrategyType;
 import com.livic.core.finance.domain.ChargeConfigTbl;
-import com.livic.core.finance.domain.MeterReadingTbl;
 import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

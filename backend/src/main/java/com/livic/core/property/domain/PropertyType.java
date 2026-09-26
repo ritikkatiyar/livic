@@ -1,4 +1,4 @@
-package com.livic.platform.common.domain;
+package com.livic.core.property.domain;
 
 public enum PropertyType {
     /** A landlord rents rooms or flats to tenants. */

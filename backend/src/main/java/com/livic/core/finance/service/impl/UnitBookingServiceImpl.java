@@ -1,7 +1,7 @@
 package com.livic.core.finance.service.impl;
 
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
-import com.livic.platform.common.domain.UnitBookingStatus;
+import com.livic.core.finance.domain.UnitBookingStatus;
 import com.livic.platform.common.enums.ResourceType;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.UnitBookingTbl;

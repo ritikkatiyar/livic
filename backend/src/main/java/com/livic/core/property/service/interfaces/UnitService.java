@@ -1,6 +1,5 @@
 package com.livic.core.property.service.interfaces;
 
-import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.PropertyDTOs;
 import com.livic.core.property.dto.UnitDTOs;

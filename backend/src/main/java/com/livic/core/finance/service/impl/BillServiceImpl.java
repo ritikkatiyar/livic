@@ -1,13 +1,9 @@
 package com.livic.core.finance.service.impl;
 
 import com.livic.platform.security.UserDetailsImpl;
-import com.livic.platform.common.domain.CalculationStrategyType;
-import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.platform.common.event.RentPublishedEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
-import com.livic.core.finance.domain.ChargeConfigTbl;
-import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.domain.MeterReadingTbl;
 import com.livic.core.finance.domain.BillLineTbl;
 import com.livic.core.finance.domain.BillStatus;
@@ -17,8 +13,6 @@ import com.livic.core.finance.dto.RentRollMetricsDTO;
 import com.livic.core.finance.mapper.BillMapper;
 import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
 import com.livic.core.finance.service.interfaces.BillLineCrudService;
 import com.livic.core.finance.service.interfaces.BillCrudService;

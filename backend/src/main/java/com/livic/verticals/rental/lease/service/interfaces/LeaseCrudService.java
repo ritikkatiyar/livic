@@ -1,6 +1,6 @@
 package com.livic.verticals.rental.lease.service.interfaces;
 
-import com.livic.platform.common.domain.LeaseStatus;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.platform.common.service.interfaces.CrudService;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import org.springframework.data.domain.Page;

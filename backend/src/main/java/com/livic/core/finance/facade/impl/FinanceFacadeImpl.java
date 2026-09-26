@@ -1,26 +1,19 @@
 package com.livic.core.finance.facade.impl;
 
-import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.core.finance.dto.ChargeConfigResponse;
-import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
 import com.livic.core.finance.dto.UnitBookingDTOs;
 import com.livic.core.finance.facade.FinanceFacade;
 import com.livic.core.finance.mapper.UnitBookingMapper;
 import com.livic.core.finance.service.ChargeConfigQueryService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.service.interfaces.BillCrudService;
 import com.livic.core.finance.service.interfaces.UnitBookingCrudService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

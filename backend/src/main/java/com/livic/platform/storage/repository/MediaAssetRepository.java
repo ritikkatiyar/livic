@@ -16,5 +16,4 @@ public interface MediaAssetRepository extends JpaRepository<MediaAssetTbl, UUID>
 
     List<MediaAssetTbl> findAllByOwnerModuleAndReferenceIdIn(OwnerModule ownerModule, Collection<UUID> referenceIds);
 
-    void deleteAllByOwnerModuleAndReferenceId(OwnerModule ownerModule, UUID referenceId);
 }

@@ -1,6 +1,6 @@
 package com.livic.core.property;
 
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.property.domain.UnitType;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.security.UserDetailsImpl;

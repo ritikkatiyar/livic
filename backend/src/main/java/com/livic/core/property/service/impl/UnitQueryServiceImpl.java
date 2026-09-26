@@ -1,7 +1,6 @@
 package com.livic.core.property.service.impl;
 
 import com.livic.platform.common.exception.BusinessException;
-import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.UnitDTOs;
 import com.livic.core.property.domain.BlockTbl;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 @Service

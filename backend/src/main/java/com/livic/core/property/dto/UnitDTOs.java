@@ -1,7 +1,7 @@
 package com.livic.core.property.dto;
 
-import com.livic.platform.common.domain.FacingDirection;
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.property.domain.FacingDirection;
+import com.livic.core.property.domain.UnitType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

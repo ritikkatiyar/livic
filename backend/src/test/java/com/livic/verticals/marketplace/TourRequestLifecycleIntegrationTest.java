@@ -17,11 +17,11 @@ import com.livic.verticals.marketplace.service.interfaces.MarketplaceLeadService
 import com.livic.verticals.marketplace.service.interfaces.MyTourRequestService;
 import com.livic.verticals.marketplace.service.interfaces.TourRequestManagementService;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
-import com.livic.platform.common.domain.FacingDirection;
-import com.livic.platform.common.domain.LeadStatus;
-import com.livic.platform.common.domain.LeadType;
-import com.livic.platform.common.domain.PropertyType;
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.property.domain.FacingDirection;
+import com.livic.verticals.marketplace.domain.LeadStatus;
+import com.livic.verticals.marketplace.domain.LeadType;
+import com.livic.core.property.domain.PropertyType;
+import com.livic.core.property.domain.UnitType;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.repository.PropertyRepository;

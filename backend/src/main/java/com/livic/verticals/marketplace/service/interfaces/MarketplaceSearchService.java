@@ -4,7 +4,7 @@ import com.livic.verticals.marketplace.dto.MarketplacePropertyDTOs.PropertyDetai
 import com.livic.verticals.marketplace.dto.MarketplacePropertyDTOs.PropertySummaryResponse;
 import com.livic.verticals.marketplace.dto.MarketplaceUnitDTOs.UnitDetailCompositeResponse;
 import com.livic.verticals.marketplace.dto.MarketplaceUnitDTOs.UnitSummaryResponse;
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.core.property.domain.PropertyType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

@@ -1,4 +1,4 @@
-package com.livic.platform.common.domain;
+package com.livic.core.property.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;

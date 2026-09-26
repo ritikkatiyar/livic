@@ -1,7 +1,6 @@
 package com.livic.verticals.rental.billing.service.impl;
 
 import com.livic.platform.security.UserDetailsImpl;
-import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
@@ -12,11 +11,8 @@ import com.livic.core.finance.dto.BillingWorksheetDTOs.*;
 import com.livic.verticals.rental.billing.service.interfaces.BillingWorksheetService;
 import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import com.livic.core.finance.service.interfaces.BillCrudService;
-import com.livic.core.property.domain.PropertyTbl;
-import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.platform.user.facade.UserFacade;
@@ -85,7 +81,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
             BillingWorksheetEntryTbl entry = existingEntriesMap.get(unitSummary.id());
             if (entry == null) {
                 BigDecimal initialValue = BigDecimal.ZERO;
-                if (chargeConfig.getChargeCategory() == com.livic.platform.common.domain.ChargeCategory.RENT) {
+                if (chargeConfig.getChargeCategory() == com.livic.core.finance.domain.ChargeCategory.RENT) {
                     List<LeaseTbl> leasesForUnit = unitToLeasesMap.get(unitSummary.id());
                     if (leasesForUnit != null && !leasesForUnit.isEmpty() && leasesForUnit.get(0).getMonthlyRentAmount() != null) {
                         initialValue = leasesForUnit.get(0).getMonthlyRentAmount();

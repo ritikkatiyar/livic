@@ -3,6 +3,7 @@ package com.livic.core.property.service.impl;
 import com.livic.core.property.domain.BlockTbl;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.dto.PropertyDTOs;
+import com.livic.core.property.service.interfaces.UnitMemberService;
 import com.livic.core.property.service.interfaces.BlockService;
 import com.livic.core.property.service.interfaces.PropertyCrudService;
 import com.livic.core.property.service.interfaces.PropertyService;
@@ -37,6 +38,7 @@ public class PropertyServiceImpl implements PropertyService {
     private final com.livic.core.property.repository.BlockRepository blockRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final UnitOccupancyProvider unitOccupancyProvider;
+    private final UnitMemberService unitMemberService;
 
     @Override
     public PropertyTbl createProperty(PropertyDTOs.CreatePropertyRequest request, UUID creatorId) {
@@ -77,6 +79,12 @@ public class PropertyServiceImpl implements PropertyService {
     public void deleteProperty(UUID propertyId) {
         if (unitOccupancyProvider.hasLeasesForProperty(propertyId)) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot delete property because it has assigned tenants or leases.");
+        }
+        // Leases only cover tenants. Owners and family have none, and their bills hang off the
+        // member row, so the property has to be empty of members too.
+        if (!unitMemberService.findActiveByPropertyId(propertyId).isEmpty()) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST,
+                    "Cannot delete property because units still have owners or residents assigned.");
         }
 
         PropertyTbl property = propertyCrudService.findById(propertyId)

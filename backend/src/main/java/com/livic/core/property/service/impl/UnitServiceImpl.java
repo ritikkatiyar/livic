@@ -1,6 +1,5 @@
 package com.livic.core.property.service.impl;
 
-import com.livic.platform.common.domain.FacingDirection;
 import com.livic.platform.common.event.UnitsCreationRequestedEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.property.domain.BlockTbl;
@@ -9,9 +8,10 @@ import com.livic.core.property.dto.PropertyDTOs;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.UnitDTOs;
 import com.livic.core.property.mapper.UnitMapper;
-import com.livic.core.property.repository.UnitRepository;
 import com.livic.core.property.service.interfaces.UnitCrudService;
 import com.livic.core.property.service.interfaces.UnitService;
+import com.livic.core.property.domain.UnitMemberTbl;
+import com.livic.core.property.service.interfaces.UnitMemberService;
 import com.livic.core.property.service.interfaces.BlockService;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
 
@@ -38,6 +38,7 @@ public class UnitServiceImpl implements UnitService {
     private final UnitCrudService unitCrudService;
     private final PropertyQueryService propertyQueryService;
     private final BlockService blockService;
+    private final UnitMemberService unitMemberService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -81,7 +82,26 @@ public class UnitServiceImpl implements UnitService {
             eventPublisher.publishEvent(new UnitsCreationRequestedEvent(this, propertyId, netAdditionalUnits));
         }
 
-        // Optimized: batch delete
+        // Removing a unit would take its members with it, and their bills with them. A
+        // tenant is refused by lease_tbl's foreign key anyway, but an owner has no lease, so
+        // without this an owner's maintenance history disappears on a layout edit.
+        if (!toRemove.isEmpty()) {
+            List<UUID> removedIds = toRemove.stream().map(UnitTbl::getId).toList();
+            List<UnitMemberTbl> stillOccupied = unitMemberService.findActiveByUnitIds(removedIds);
+            if (!stillOccupied.isEmpty()) {
+                Set<UUID> occupiedUnitIds = stillOccupied.stream()
+                        .map(UnitMemberTbl::getUnitId)
+                        .collect(Collectors.toSet());
+                String numbers = toRemove.stream()
+                        .filter(u -> occupiedUnitIds.contains(u.getId()))
+                        .map(UnitTbl::getUnitNumber)
+                        .sorted()
+                        .collect(Collectors.joining(", "));
+                throw new BusinessException(HttpStatus.CONFLICT,
+                        "Cannot remove unit " + numbers + ": someone still belongs to it. "
+                                + "End the owner or tenancy first.");
+            }
+        }
         unitCrudService.deleteAll(toRemove);
 
         // Optimized: bulk cache unit numbers to avoid exists queries inside loops

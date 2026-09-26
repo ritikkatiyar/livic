@@ -75,9 +75,9 @@ public class AutoBillingJob {
                             dueDate
                     );
                     rentGenerationService.generate(request);
-                    log.info("Successfully auto-generated rent cycle for Lease ID: {}", lease.getId());
+                    log.info("Successfully auto-generated bill for Lease ID: {}", lease.getId());
                 } catch (Exception e) {
-                    log.error("Failed to auto-generate rent cycle for Lease ID: {}", lease.getId(), e);
+                    log.error("Failed to auto-generate bill for Lease ID: {}", lease.getId(), e);
                 }
             }
         } catch (Exception e) {

@@ -46,10 +46,10 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
         log.info("Generating payment statement HTML for Bill: {}", billId);
 
         BillTbl bill = billCrudService.findById(billId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
 
         if (bill.getStatus() == BillStatus.PENDING) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Rent cycle invoice has not been published yet");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "This bill has not been published yet");
         }
 
         UnitResidentDTO payer = bill.getMemberId() == null ? null

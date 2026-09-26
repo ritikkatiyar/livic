@@ -86,7 +86,7 @@ public class BillServiceImpl implements BillService {
     public PaymentInitiationResponse initiateOnlinePayment(UUID billId, UUID payerUserId) {
         log.info("Executing initiateOnlinePayment for Bill: {} by user: {}", billId, payerUserId);
         BillTbl bill = billCrudService.findById(billId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
 
         BigDecimal amountPaid = bill.getAmountPaid() != null ? bill.getAmountPaid() : BigDecimal.ZERO;
         BigDecimal remainingAmount = bill.getTotalAmount().subtract(amountPaid);
@@ -112,7 +112,7 @@ public class BillServiceImpl implements BillService {
     public PaymentInitiationResponse recordCashPayment(UUID billId, BigDecimal amount, String note, UUID payerUserId, UUID confirmedBy) {
         log.info("Executing recordCashPayment for Bill: {} amount: {}", billId, amount);
         BillTbl bill = billCrudService.findById(billId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
 
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Valid positive amount is required");
@@ -248,7 +248,7 @@ public class BillServiceImpl implements BillService {
     @Transactional
     public BillDTOs.BillResponse markPaid(UUID id) {
         BillTbl cycle = billCrudService.findById(id)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
 
         if (cycle.getStatus() == BillStatus.PAID) {
             return buildSingleResponse(cycle);
@@ -269,7 +269,7 @@ public class BillServiceImpl implements BillService {
         recordCashPayment(id, remainingAmount, "Recorded via legacy markPaid", payerUserIdOf(cycle), confirmedBy);
 
         BillTbl updated = billCrudService.findById(id).orElse(cycle);
-        log.info("rent_cycle_marked_paid billId={} leaseId={} paidAt={}",
+        log.info("bill_marked_paid billId={} leaseId={} paidAt={}",
                 updated.getId(), payerLeaseIdOf(updated), updated.getPaidAt());
         return buildSingleResponse(updated);
     }
@@ -278,7 +278,7 @@ public class BillServiceImpl implements BillService {
     @Transactional
     public BillDTOs.BillResponse publish(UUID id) {
         BillTbl cycle = billCrudService.findById(id)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
         if (cycle.getStatus() == BillStatus.PENDING) {
             cycle.setStatus(BillStatus.PUBLISHED);
             billCrudService.save(cycle);
@@ -326,7 +326,7 @@ public class BillServiceImpl implements BillService {
                     cycle.getDueDate()
             ));
 
-            log.info("rent_cycle_published billId={} leaseId={} billingMonth={}",
+            log.info("bill_published billId={} leaseId={} billingMonth={}",
                     cycle.getId(), payerLeaseIdOf(cycle), cycle.getBillingMonth());
         }
 
@@ -337,7 +337,7 @@ public class BillServiceImpl implements BillService {
     @Transactional
     public BillDTOs.BillResponse unpublish(UUID id) {
         BillTbl cycle = billCrudService.findById(id)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
 
         if (cycle.getStatus() == BillStatus.PUBLISHED) {
             cycle.setStatus(BillStatus.PENDING);
@@ -377,7 +377,7 @@ public class BillServiceImpl implements BillService {
                 }
             }
 
-            log.info("rent_cycle_unpublished billId={} leaseId={} billingMonth={}",
+            log.info("bill_unpublished billId={} leaseId={} billingMonth={}",
                     cycle.getId(), payerLeaseIdOf(cycle), cycle.getBillingMonth());
         }
 
@@ -432,7 +432,7 @@ public class BillServiceImpl implements BillService {
                     transitioned.add(cycle);
                 }
             } catch (Exception e) {
-                log.error("[BillServiceImpl] Failed to publish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
+                log.error("[BillServiceImpl] Failed to publish bill: {}, unit: {}", cycle.getId(), unitNum, e);
                 failed.add(new BillDTOs.BatchPublishFailure(cycle.getId(), unitNum, e.getMessage()));
             }
         }
@@ -512,7 +512,7 @@ public class BillServiceImpl implements BillService {
                     transitioned.add(cycle);
                 }
             } catch (Exception e) {
-                log.error("[BillServiceImpl] Failed to unpublish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
+                log.error("[BillServiceImpl] Failed to unpublish bill: {}, unit: {}", cycle.getId(), unitNum, e);
                 failed.add(new BillDTOs.BatchUnpublishFailure(cycle.getId(), unitNum, e.getMessage()));
             }
         }

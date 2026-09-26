@@ -48,7 +48,7 @@ import java.util.UUID;
 
 /**
  * Dedicated helper component providing {@code REQUIRES_NEW} transactional boundaries
- * for batch operations and encapsulating core rent cycle generation logic.
+ * for batch operations and encapsulating rent generation logic.
  * Uses strict constructor injection.
  */
 @Service
@@ -148,7 +148,7 @@ public class BillTransactionHelper {
                 String unitNum = (unitNumbers != null && unitNumbers.containsKey(lease.getUnitId()))
                         ? unitNumbers.get(lease.getUnitId())
                         : unitFacade.getUnitById(lease.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse("N/A");
-                throw new BusinessException(HttpStatus.CONFLICT, "Cannot regenerate a paid rent cycle for unit " + unitNum);
+                throw new BusinessException(HttpStatus.CONFLICT, "Cannot regenerate a paid bill for unit " + unitNum);
             }
             previousTotal = cycle.getTotalAmount();
             List<BillLineTbl> existingCharges = billLineCrudService.findByBill_Id(cycle.getId());
@@ -295,7 +295,7 @@ public class BillTransactionHelper {
             financeLedgerCrudService.save(ledgerEntry);
         }
 
-        log.info("rent_cycle_generated billId={} leaseId={} billingMonth={} totalAmount={}",
+        log.info("bill_generated billId={} leaseId={} billingMonth={} totalAmount={}",
                 savedCycle.getId(), lease.getId(), savedCycle.getBillingMonth(), savedCycle.getTotalAmount());
 
         return savedCycle;

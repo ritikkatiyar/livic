@@ -159,7 +159,7 @@ export async function getRecentSystemEvents(token: string): Promise<SystemEventI
     const d = new Date();
     const currentMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const cyclesRes = await apiRequest<PageResponse<any>>(
-      `/api/v1/finance/rent-cycles?billingMonth=${currentMonth}&page=0&size=6`,
+      `/api/v1/finance/bills?billingMonth=${currentMonth}&page=0&size=6`,
       { method: 'GET', token }
     ).catch(() => null);
 

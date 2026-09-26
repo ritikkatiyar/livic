@@ -82,7 +82,7 @@ public class RentGenerationServiceImpl implements RentGenerationService {
                 );
                 successes.add(cycle);
             } catch (Exception e) {
-                log.error("[BillServiceImpl] Failed to generate rent cycle for lease ID: {}, unit: {}", lease.getId(), unitNum, e);
+                log.error("[BillServiceImpl] Failed to generate bill for lease ID: {}, unit: {}", lease.getId(), unitNum, e);
                 failures.add(new BillDTOs.BatchGenerateFailure(lease.getId(), unitNum, e.getMessage()));
             }
         }

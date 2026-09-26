@@ -1,6 +1,6 @@
--- V4__ai_execution_tables.sql
+-- V5__ai_execution_tables.sql
 -- ai-service moves from the prototype job queue to audited agent executions
--- (docs/AI_ARCHITECTURE_DESIGN.md §13-14, §26). ai_job_tbl stored user JWTs in
+-- (docs/AI_ARCHITECTURE_DESIGN.md Â§13-14, Â§26). ai_job_tbl stored user JWTs in
 -- plaintext and no client used it.
 
 DROP TABLE IF EXISTS `ai_job_tbl`;

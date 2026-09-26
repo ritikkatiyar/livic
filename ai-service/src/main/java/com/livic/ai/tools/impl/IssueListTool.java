@@ -22,13 +22,15 @@ public class IssueListTool implements AiTool<IssueListTool.Input> {
     }
 
     record IssueItem(String issueId, String ticketNumber, String propertyId, String blockName, String title,
-                     String category, String priority, String status, String escalationStatus, String createdAt) {
+                     String category, String priority, String status, String escalationStatus, String createdAt,
+                     String latestUpdate, String latestUpdateAt) {
     }
 
     private static final ToolDefinition DEFINITION = new ToolDefinition(
             "issue_list",
             "Lists the most recent maintenance issues and complaints across the user's properties, newest first, "
-                    + "with ticket number, category, priority, status and escalation. Use issue_get for full details of one issue.",
+                    + "with ticket number, category, priority, status, escalation and the latest update on each. "
+                    + "Use issue_get for the full description and history of one issue.",
             Input.class,
             ToolCapability.READ,
             "ISSUE_VIEW");
@@ -43,17 +45,23 @@ public class IssueListTool implements AiTool<IssueListTool.Input> {
     @Override
     public ToolResult execute(ToolExecutionContext context, Input input) {
         JsonNode page = backend.get("/api/v1/issues", params("size", PAGE_SIZE), context.userToken());
-        var view = ToolSupport.ListView.of(page, node -> new IssueItem(
-                text(node, "id"),
-                text(node, "ticketNumber"),
-                text(node, "propertyId"),
-                text(node, "blockName"),
-                text(node, "title"),
-                text(node, "category"),
-                text(node, "priority"),
-                text(node, "status"),
-                text(node, "escalationStatus"),
-                text(node, "createdAt")));
+        var view = ToolSupport.ListView.of(page, node -> {
+            JsonNode timeline = node.path("timeline");
+            JsonNode latest = timeline.isEmpty() ? timeline : timeline.get(timeline.size() - 1);
+            return new IssueItem(
+                    text(node, "id"),
+                    text(node, "ticketNumber"),
+                    text(node, "propertyId"),
+                    text(node, "blockName"),
+                    text(node, "title"),
+                    text(node, "category"),
+                    text(node, "priority"),
+                    text(node, "status"),
+                    text(node, "escalationStatus"),
+                    text(node, "createdAt"),
+                    text(latest, "content"),
+                    text(latest, "createdAt"));
+        });
         return ToolResult.success(view.totalCount() + " issues in total; showing the " + view.shown() + " most recent.", view);
     }
 }

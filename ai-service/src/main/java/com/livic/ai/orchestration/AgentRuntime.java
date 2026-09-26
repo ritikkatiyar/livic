@@ -50,6 +50,8 @@ public class AgentRuntime {
 
     static final String FAILURE_REPLY = "Sorry, I couldn't complete that right now. Please try again in a moment.";
     static final String EMPTY_REPLY = "I couldn't find an answer to that.";
+    static final String NO_ACCESS_REPLY = "I can't help with this account yet. The assistant currently answers "
+            + "property managers' questions about their properties, rent collection, issues and announcements.";
 
     private final LlmGateway llm;
     private final ToolRegistry toolRegistry;
@@ -64,6 +66,11 @@ public class AgentRuntime {
         Map<String, AiTool<?>> tools = new LinkedHashMap<>();
         toolRegistry.availableFor(agent, context).forEach(tool -> tools.put(tool.definition().name(), tool));
         List<ToolDefinition> definitions = tools.values().stream().map(AiTool::definition).toList();
+        if (!agent.allowedToolNames().isEmpty() && definitions.isEmpty()) {
+            // With no tool to ground it, the model invents answers (it made up defaulters for a resident),
+            // so the caller gets a fixed reply and the model is never called.
+            return finish(execution, ExecutionStatus.COMPLETED, NO_ACCESS_REPLY, null, 0, TokenUsage.ZERO, null);
+        }
 
         List<ModelMessage> messages = new ArrayList<>();
         messages.add(new ModelMessage.SystemPrompt(systemPrompt(agent, context)));

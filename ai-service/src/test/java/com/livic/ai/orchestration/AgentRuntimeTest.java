@@ -128,18 +128,32 @@ class AgentRuntimeTest {
 
     @Test
     void refusesAToolTheCallerWasNotOffered() {
-        llm.respond(() -> toolCalls(new ToolCall("c1", "echo", "{\"text\":\"hi\"}")));
+        llm.respond(() -> toolCalls(new ToolCall("c1", "delete_everything", "{}")));
         llm.respond(() -> answer("I can't do that."));
-        var residentContext = new AgentContext(USER_ID, "jwt", "req-1", Map.of());
 
-        AgentResult result = runtime.run(agent, residentContext, "Say hi");
+        AgentResult result = runtime.run(agent, landlordContext(), "Delete everything");
 
-        assertThat(llm.requests.getFirst().tools()).isEmpty();
-        assertThat(echo.inputs).isEmpty();
-        assertThat(savedRecords).singleElement()
-                .extracting(ToolExecutionRecord::getStatus).isEqualTo(ToolResult.Status.DENIED);
+        assertThat(llm.requests.getFirst().tools()).extracting(ToolDefinition::name)
+                .doesNotContain("delete_everything");
+        assertThat(savedRecords).singleElement().satisfies(record -> {
+            assertThat(record.getToolName()).isEqualTo("delete_everything");
+            assertThat(record.getStatus()).isEqualTo(ToolResult.Status.DENIED);
+        });
         assertThat(lastToolResultSentToModel()).contains("DENIED");
         assertThat(result.status()).isEqualTo(ExecutionStatus.COMPLETED);
+    }
+
+    @Test
+    void answersACallerWhoCanUseNoToolWithoutCallingTheModel() {
+        var residentContext = new AgentContext(USER_ID, "jwt", "req-1", Map.of());
+
+        AgentResult result = runtime.run(agent, residentContext, "Which residents have overdue payments?");
+
+        assertThat(llm.requests).isEmpty();
+        assertThat(result.status()).isEqualTo(ExecutionStatus.COMPLETED);
+        assertThat(result.responseText()).isEqualTo(AgentRuntime.NO_ACCESS_REPLY);
+        assertThat(result.steps()).isZero();
+        assertThat(savedExecutions.getLast().getFinalResponse()).isEqualTo(AgentRuntime.NO_ACCESS_REPLY);
     }
 
     @Test

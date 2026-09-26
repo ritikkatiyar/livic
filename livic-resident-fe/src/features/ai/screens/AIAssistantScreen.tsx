@@ -17,7 +17,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { getJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
+import { runAICommand } from '@/src/features/ai/api/ai.api';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
@@ -95,61 +95,6 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
     })
   ).current;
 
-  const pollJobStatus = async (jobId: string, assistantMsgId: string) => {
-    const maxAttempts = 30;
-    const intervalMs = 2000;
-    let attempts = 0;
-
-    const interval = setInterval(async () => {
-      attempts++;
-      try {
-        const job = await getJobStatus(jobId, token);
-        if (job.status === 'COMPLETED') {
-          clearInterval(interval);
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMsgId
-                ? { ...msg, text: job.response || (job as any).result?.message || 'Operation executed successfully.' }
-                : msg
-            )
-          );
-          setIsSending(false);
-        } else if (job.status === 'FAILED') {
-          clearInterval(interval);
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMsgId
-                ? { ...msg, text: job.errorMessage || (job as any).error || 'Failed to process AI command.' }
-                : msg
-            )
-          );
-          setIsSending(false);
-        } else if (attempts >= maxAttempts) {
-          clearInterval(interval);
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMsgId
-                ? { ...msg, text: 'AI processing timed out. Please review active tasks later.' }
-                : msg
-            )
-          );
-          setIsSending(false);
-        }
-      } catch (err: any) {
-        clearInterval(interval);
-        logger.error('[AIAssistantScreen] Polling error:', err);
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMsgId
-              ? { ...msg, text: 'Network disturbance while awaiting AI response.' }
-              : msg
-          )
-        );
-        setIsSending(false);
-      }
-    }, intervalMs);
-  };
-
   const sendMessage = React.useCallback(async (textToSend?: string) => {
     const query = (textToSend || input).trim();
     if (!query || isSending) return;
@@ -167,23 +112,12 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
 
     try {
       const response = await runAICommand({ message: query }, token);
-      if (response?.jobId) {
-        pollJobStatus(response.jobId, assistantMsgId);
-      } else if (response?.message) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMsgId ? { ...msg, text: response.message } : msg
-          )
-        );
-        setIsSending(false);
-      } else {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMsgId ? { ...msg, text: 'Command processed.' } : msg
-          )
-        );
-        setIsSending(false);
-      }
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMsgId ? { ...msg, text: response?.message || 'Command processed.' } : msg
+        )
+      );
+      setIsSending(false);
     } catch (err: any) {
       logger.error('[AIAssistantScreen] Send error:', err);
       setMessages((prev) =>

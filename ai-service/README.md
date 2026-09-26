@@ -4,6 +4,9 @@ Runs Livic's AI assistant. A stateless agent loop gives the model a set of read-
 calls it asks for against the backend as the signed-in user, and records every run and tool call in
 `ai_execution_tbl` and `ai_tool_execution_record_tbl`. Design: `docs/AI_ARCHITECTURE_DESIGN.md`.
 
+**Start with [`docs/README.md`](docs/README.md)**: the code map, request flow, runtime, tools, model
+adapter, security and audit, and how to run and test it.
+
 - `agent/` - agent definitions and the per-request context
 - `orchestration/` - `AgentRuntime`, the tool loop
 - `tools/` - tool contracts and registry; `tools/impl/` holds the tools

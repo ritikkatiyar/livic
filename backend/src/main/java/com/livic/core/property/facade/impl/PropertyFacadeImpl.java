@@ -118,14 +118,14 @@ public class PropertyFacadeImpl implements PropertyFacade {
     @Override
     public Page<PublicPropertyListingDTO> searchPublicListings(String city, PropertyType type, Pageable pageable) {
         return propertyCrudService.searchPublicProperties(city, type, pageable)
-                .map(PublicPropertyListingDTO::from);
+                .map(p -> PublicPropertyListingDTO.from(p, blockService.totalFloorsForProperty(p.getId())));
     }
 
     @Override
     public Optional<PublicPropertyListingDTO> getPublicListing(UUID propertyId) {
         return propertyCrudService.findById(propertyId)
                 .filter(p -> p.isPubliclyListed() && p.isActive())
-                .map(PublicPropertyListingDTO::from);
+                .map(p -> PublicPropertyListingDTO.from(p, blockService.totalFloorsForProperty(p.getId())));
     }
 
     @Override

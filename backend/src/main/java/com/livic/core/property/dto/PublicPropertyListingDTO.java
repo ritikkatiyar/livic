@@ -21,9 +21,6 @@ public record PublicPropertyListingDTO(
         List<String> amenities,
         String qrSlug
 ) {
-    public static PublicPropertyListingDTO from(PropertyTbl p) {
-        return from(p, null);
-    }
 
     /** {@code totalFloors} is derived from the property's blocks, so callers supply it. */
     public static PublicPropertyListingDTO from(PropertyTbl p, Integer totalFloors) {

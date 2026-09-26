@@ -18,9 +18,6 @@ public record PropertySummaryDTO(
         this(id, name, address, city, landmark, totalFloors, active, null);
     }
 
-    public static PropertySummaryDTO from(PropertyTbl p) {
-        return from(p, null);
-    }
 
     /** {@code totalFloors} is derived from the property's blocks, so callers supply it. */
     public static PropertySummaryDTO from(PropertyTbl p, Integer totalFloors) {

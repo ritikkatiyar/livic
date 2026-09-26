@@ -37,9 +37,6 @@ public final class PropertyMapper {
         }
     }
 
-    public static PropertyDTOs.PropertyResponse toResponse(PropertyTbl property) {
-        return toResponse(property, null);
-    }
 
     /**
      * {@code totalFloors} is derived from the property's blocks, not stored on the property:

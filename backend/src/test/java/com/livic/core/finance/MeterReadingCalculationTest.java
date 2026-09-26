@@ -97,7 +97,7 @@ class MeterReadingCalculationTest {
                 .build();
         electricityConfig.setId(chargeConfigId);
 
-        propertySummary = new PropertySummaryDTO(propertyId, "Test Property", "Address", "City", "Landmark", 4, true);
+        propertySummary = new PropertySummaryDTO(propertyId, "Test Property", "Address", "City", "Landmark", true);
         unitSummary = new UnitSummaryDTO(unitId, propertyId, "Test Property", "401", 4, 1, 0, 0, 1, 1, UnitType.SINGLE_UNIT, FacingDirection.NORTH);
         userSummary = new UserSummaryDTO(userId, "ritik@example.com", "ritik katiyar", "+919999999999", UserRole.USER);
 

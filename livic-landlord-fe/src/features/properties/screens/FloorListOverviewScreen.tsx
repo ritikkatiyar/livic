@@ -70,22 +70,26 @@ export default function FloorListOverviewScreen({
     try {
       const [property, allBlocks] = await Promise.all([
         getProperty(propertyId, userToken),
-        blockId ? getBlocks(propertyId, userToken) : Promise.resolve([]),
+        getBlocks(propertyId, userToken).catch(() => []),
       ]);
 
       let resolvedBlockName = blockName;
       let resolvedFloorCount = blockTotalFloors;
 
-      if (blockId && (!resolvedBlockName || resolvedFloorCount === undefined || resolvedFloorCount === null)) {
-        const currentBlock = allBlocks.find((b) => b.id === blockId);
+      if (!resolvedBlockName || resolvedFloorCount === undefined || resolvedFloorCount === null) {
+        const currentBlock = blockId
+          ? allBlocks.find((b) => b.id === blockId)
+          : allBlocks.find((b) => b.isDefault) ?? allBlocks[0];
         if (currentBlock) {
-          resolvedBlockName = currentBlock.name;
+          if (blockId) {
+            resolvedBlockName = currentBlock.name;
+          }
           resolvedFloorCount = currentBlock.totalFloors ?? undefined;
         }
       }
 
       setPropertyName(resolvedBlockName ? `${property.name} · ${resolvedBlockName}` : property.name);
-      const floorCount = resolvedFloorCount ?? (blockId ? undefined : property.totalFloors);
+      const floorCount = resolvedFloorCount ?? undefined;
       setTotalFloorsFromProperty(floorCount);
 
       const floorData = await getFloorSummaries(propertyId, userToken, floorCount, blockId);

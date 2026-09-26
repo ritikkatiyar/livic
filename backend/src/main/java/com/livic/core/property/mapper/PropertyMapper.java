@@ -38,12 +38,7 @@ public final class PropertyMapper {
     }
 
 
-    /**
-     * {@code totalFloors} is derived from the property's blocks, not stored on the property:
-     * two towers on one plot can differ in height. Clients that have not learned about blocks
-     * still get the tallest one here.
-     */
-    public static PropertyDTOs.PropertyResponse toResponse(PropertyTbl property, Integer totalFloors) {
+    public static PropertyDTOs.PropertyResponse toResponse(PropertyTbl property) {
         if (property == null) {
             return null;
         }
@@ -53,7 +48,6 @@ public final class PropertyMapper {
                 property.getAddress(),
                 property.getCity(),
                 property.getLandmark(),
-                totalFloors,
                 null,
                 property.isActive(),
                 property.getAmenities() != null ? property.getAmenities() : List.of(),

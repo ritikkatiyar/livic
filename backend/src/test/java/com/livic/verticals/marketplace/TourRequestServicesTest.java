@@ -214,7 +214,7 @@ class TourRequestServicesTest {
             when(leadRepository.findByProspectPhoneAndLeadType(eq(PHONE), eq(LeadType.TOUR_REQUEST), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of(upcoming, past)));
             when(propertyFacade.getPropertiesByIds(anySet())).thenReturn(Map.of(propertyId,
-                    new PropertySummaryDTO(propertyId, "Test Residency", "1 Test Road", "Pune", null, 3, true)));
+                    new PropertySummaryDTO(propertyId, "Test Residency", "1 Test Road", "Pune", null, true)));
             when(unitFacade.getUnitsByIds(anySet())).thenReturn(Map.of(unitId, unit(unitId, propertyId)));
 
             List<TourRequestDTOs.MyTourRequestResponse> rows = service.listMyTourRequests(TOKEN, PageRequest.of(0, 20)).getContent();

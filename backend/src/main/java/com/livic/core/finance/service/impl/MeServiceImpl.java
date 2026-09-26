@@ -4,7 +4,6 @@ import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.dto.MeDTOs;
-import com.livic.core.finance.spi.ActiveTenancyProvider;
 import com.livic.core.finance.service.interfaces.MeService;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
@@ -30,7 +29,6 @@ public class MeServiceImpl implements MeService {
 
     private final UserFacade userFacade;
     private final AuthFacade authFacade;
-    private final ActiveTenancyProvider activeTenancyProvider;
     private final UnitMemberFacade unitMemberFacade;
     private final PropertyFacade propertyFacade;
 
@@ -64,10 +62,6 @@ public class MeServiceImpl implements MeService {
 
         List<MeDTOs.MembershipSummary> tenantProperties = List.of();
 
-        List<MeDTOs.ActiveLeaseSummary> activeLeases = activeTenancyProvider.findActiveTenancy(userId)
-                .map(tenancy -> List.of(MeDTOs.ActiveLeaseSummary.from(tenancy)))
-                .orElse(List.of());
-
         List<MeDTOs.UnitMembershipSummary> unitMemberships = residences.stream()
                 .map(residence -> new MeDTOs.UnitMembershipSummary(
                         residence.memberId(),
@@ -84,7 +78,6 @@ public class MeServiceImpl implements MeService {
                 user.globalRole(),
                 managedProperties,
                 tenantProperties,
-                activeLeases,
                 unitMemberships
         );
     }

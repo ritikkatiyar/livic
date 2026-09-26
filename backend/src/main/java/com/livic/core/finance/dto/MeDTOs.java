@@ -16,7 +16,6 @@ public class MeDTOs {
             UserRole globalRole,
             List<MembershipSummary> managedProperties,
             List<MembershipSummary> tenantProperties,
-            List<ActiveLeaseSummary> activeLeases,
             boolean isLandlord,
             boolean isTenant,
             List<UnitMembershipSummary> unitMemberships
@@ -25,16 +24,18 @@ public class MeDTOs {
                 UserRole globalRole,
                 List<MembershipSummary> managedProperties,
                 List<MembershipSummary> tenantProperties,
-                List<ActiveLeaseSummary> activeLeases,
                 List<UnitMembershipSummary> unitMemberships
         ) {
+            // Being a tenant is a unit membership, not a lease. An owner renting their own
+            // flat out is a landlord here and a tenant nowhere.
+            boolean tenant = unitMemberships.stream()
+                    .anyMatch(m -> m.role() == UnitMemberRole.TENANT);
             return new MyContextResponse(
                     globalRole,
                     managedProperties,
                     tenantProperties,
-                    activeLeases,
                     !managedProperties.isEmpty(),
-                    !activeLeases.isEmpty(),
+                    tenant,
                     unitMemberships
             );
         }
@@ -71,25 +72,4 @@ public class MeDTOs {
         }
     }
 
-    public record ActiveLeaseSummary(
-            UUID leaseId,
-            UUID propertyId,
-            String propertyName,
-            UUID unitId,
-            String unitNumber,
-            BigDecimal rentAmount,
-            String status
-    ) {
-        public static ActiveLeaseSummary from(com.livic.core.finance.spi.ActiveTenancyProvider.ActiveTenancy lease) {
-            return new ActiveLeaseSummary(
-                    lease.leaseId(),
-                    lease.propertyId(),
-                    lease.propertyName(),
-                    lease.unitId(),
-                    lease.unitNumber(),
-                    lease.rentAmount(),
-                    lease.status()
-            );
-        }
-    }
 }

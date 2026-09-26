@@ -42,7 +42,7 @@ public class PropertyFacadeImpl implements PropertyFacade {
     @Override
     public Optional<PropertySummaryDTO> getPropertyById(UUID propertyId) {
         try {
-            return Optional.ofNullable(PropertySummaryDTO.from(propertyQueryService.getPropertyById(propertyId), blockService.totalFloorsForProperty(propertyId)));
+            return Optional.ofNullable(PropertySummaryDTO.from(propertyQueryService.getPropertyById(propertyId)));
         } catch (Exception e) {
             return Optional.empty();
         }
@@ -54,7 +54,7 @@ public class PropertyFacadeImpl implements PropertyFacade {
             return Collections.emptyMap();
         }
         return propertyQueryService.getPropertiesByIds(propertyIds).stream()
-                .map(p -> PropertySummaryDTO.from(p, blockService.totalFloorsForProperty(p.getId())))
+                .map(PropertySummaryDTO::from)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(PropertySummaryDTO::id, p -> p, (a, b) -> a));
     }
@@ -62,20 +62,20 @@ public class PropertyFacadeImpl implements PropertyFacade {
     @Override
     public Page<PropertySummaryDTO> getPropertiesByUserId(UUID userId, Pageable pageable) {
         return propertyQueryService.getPropertiesByUserId(userId, pageable)
-                .map(p -> PropertySummaryDTO.from(p, blockService.totalFloorsForProperty(p.getId())));
+                .map(PropertySummaryDTO::from);
     }
 
     @Override
     public List<PropertySummaryDTO> getPropertiesByUserId(UUID userId) {
         return propertyQueryService.getPropertiesByUserId(userId).stream()
-                .map(p -> PropertySummaryDTO.from(p, blockService.totalFloorsForProperty(p.getId())))
+                .map(PropertySummaryDTO::from)
                 .toList();
     }
 
     @Override
     public List<PropertySummaryDTO> getPropertiesByAutoBillDayOfMonth(int day) {
         return propertyQueryService.getPropertiesByAutoBillDayOfMonth(day).stream()
-                .map(p -> PropertySummaryDTO.from(p, blockService.totalFloorsForProperty(p.getId())))
+                .map(PropertySummaryDTO::from)
                 .toList();
     }
 

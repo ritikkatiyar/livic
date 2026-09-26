@@ -42,6 +42,9 @@ public interface BlockService {
     /** Removes a property's blocks; units must already be gone. */
     void deleteByPropertyId(UUID propertyId);
 
-    /** Total floors across a property's blocks, for the property API's derived value. */
+    /**
+     * The tallest block, for the public marketplace listing only. Management clients read the
+     * blocks themselves, because no single number is honest once two buildings differ in height.
+     */
     Integer totalFloorsForProperty(UUID propertyId);
 }

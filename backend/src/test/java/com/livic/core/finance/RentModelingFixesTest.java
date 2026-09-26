@@ -339,8 +339,8 @@ public class RentModelingFixesTest {
 
         when(unitMemberFacade.getActiveResidencesByUserId(landlordId)).thenReturn(List.of());
         when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of(
-                new PropertySummaryDTO(myProperty1, "My PG 1", "Address 1", "City", "Landmark", 3, true),
-                new PropertySummaryDTO(myProperty2, "My PG 2", "Address 2", "City", "Landmark", 3, true)
+                new PropertySummaryDTO(myProperty1, "My PG 1", "Address 1", "City", "Landmark", true),
+                new PropertySummaryDTO(myProperty2, "My PG 2", "Address 2", "City", "Landmark", true)
         ));
 
 
@@ -401,8 +401,8 @@ public class RentModelingFixesTest {
 
         when(unitMemberFacade.getActiveResidencesByUserId(landlordId)).thenReturn(List.of());
         when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of(
-                new PropertySummaryDTO(propertyId1, "Property 1", "Addr 1", "City", "Landmark", 5, true),
-                new PropertySummaryDTO(propertyId2, "Property 2", "Addr 2", "City", "Landmark", 5, true)
+                new PropertySummaryDTO(propertyId1, "Property 1", "Addr 1", "City", "Landmark", true),
+                new PropertySummaryDTO(propertyId2, "Property 2", "Addr 2", "City", "Landmark", true)
         ));
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);

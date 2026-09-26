@@ -191,6 +191,7 @@ public class PropertyJoinCodeServiceIntegrationTest {
                 .findFirst()
                 .orElseThrow();
         assertEquals(StaffPermission.allCodes(), ownerContext.permissionCodes());
+        assertEquals(property.getName(), ownerContext.propertyName());
 
         authenticate(newStaff);
         try {

@@ -59,10 +59,11 @@ public class MeDTOs {
             AccessType accessType,
             Set<String> permissionCodes
     ) {
-        public static MembershipSummary from(MembershipSummaryDTO membership, Set<String> permissionCodes) {
+        /** auth cannot see property names, so the caller supplies it. */
+        public static MembershipSummary from(MembershipSummaryDTO membership, String propertyName, Set<String> permissionCodes) {
             return new MembershipSummary(
                     membership.propertyId(),
-                    membership.propertyName(),
+                    propertyName,
                     membership.title(),
                     membership.accessType(),
                     permissionCodes

@@ -23,10 +23,6 @@ public class SaasSubscriptionCrudServiceImpl
         return repository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, status);
     }
 
-    @Override
-    public Optional<SaasSubscriptionTbl> findLatestByUserId(UUID userId) {
-        return repository.findFirstByUserIdOrderByCreatedAtDesc(userId);
-    }
 
     @Override
     public Optional<SaasSubscriptionTbl> findLatestByUserIdAndStatus(UUID userId, String status) {

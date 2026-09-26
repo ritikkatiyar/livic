@@ -43,11 +43,6 @@ public class FinanceFacadeImpl implements FinanceFacade {
         this.unitMemberFacade = unitMemberFacade;
     }
 
-    @Override
-    public Optional<UUID> getPropertyIdByBillId(UUID billId) {
-        // The bill carries its property, so authorisation no longer walks lease -> unit.
-        return billCrudService.findById(billId).map(BillTbl::getPropertyId);
-    }
 
     @Override
     public Optional<UUID> getLeaseIdByBillId(UUID billId) {

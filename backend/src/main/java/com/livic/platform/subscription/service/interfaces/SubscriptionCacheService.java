@@ -12,9 +12,4 @@ public interface SubscriptionCacheService {
      */
     UserSubscriptionContext getUserSubscriptionContext(UUID userId);
 
-    /**
-     * Evicts the cached subscription context for a user.
-     * Triggered on subscription upgrade, downgrade, or payment webhook.
-     */
-    void evictUserSubscriptionContext(UUID userId);
 }

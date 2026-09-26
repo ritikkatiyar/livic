@@ -11,9 +11,6 @@ import java.util.UUID;
 @Repository
 public interface TourBlackoutRepository extends JpaRepository<TourBlackoutTbl, UUID> {
 
-    List<TourBlackoutTbl> findByPropertyIdAndBlackoutDateBetweenOrderByBlackoutDateAscStartTimeAsc(
-            UUID propertyId, LocalDate from, LocalDate to);
-
     List<TourBlackoutTbl> findByPropertyIdAndBlackoutDateGreaterThanEqualOrderByBlackoutDateAscStartTimeAsc(
             UUID propertyId, LocalDate from);
 }

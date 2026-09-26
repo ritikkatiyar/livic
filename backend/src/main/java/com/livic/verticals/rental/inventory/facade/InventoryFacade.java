@@ -10,12 +10,6 @@ public interface InventoryFacade {
 
     InventoryPropertyMetricsDTO getPropertyMetrics(UUID propertyId);
 
-    BigDecimal getTotalValuationForProperty(UUID propertyId);
-
-    long getInventoryCountForProperty(UUID propertyId);
-
-    long getAssignedInventoryCountForLease(UUID leaseId);
-
     Optional<UUID> getLeaseIdForAssignment(UUID assignmentId);
 
     Optional<UUID> getPropertyIdForInventoryItem(UUID itemId);

@@ -67,10 +67,6 @@ public class UnitFacadeImpl implements UnitFacade {
                 .toList();
     }
 
-    @Override
-    public boolean existsUnitById(UUID unitId) {
-        return unitCrudService.existsById(unitId);
-    }
 
     @Override
     public long getTotalUnitsForPropertyIds(List<UUID> propertyIds) {

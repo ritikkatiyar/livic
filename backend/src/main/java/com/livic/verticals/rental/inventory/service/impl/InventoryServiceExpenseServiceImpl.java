@@ -76,10 +76,4 @@ public class InventoryServiceExpenseServiceImpl implements InventoryServiceExpen
                 .collect(Collectors.toList());
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ServiceExpenseResponse> listExpensesByProperty(UUID propertyId, Pageable pageable) {
-        return expenseRepository.findAllByPropertyId(propertyId, pageable)
-                .map(InventoryMapper::toServiceExpenseResponse);
-    }
 }

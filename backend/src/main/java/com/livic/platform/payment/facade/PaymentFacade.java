@@ -14,8 +14,6 @@ public interface PaymentFacade {
 
     PaymentInitiationResponse recordCashPayment(PaymentInitiationRequest request);
 
-    Optional<PaymentInitiationResponse> getTransactionStatus(UUID transactionId);
-
     /**
      * The latest successful transaction against a reference. Bills no longer carry a single
      * transaction id: a part-paid bill has several, and the link lives on the payment side.

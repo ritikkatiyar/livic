@@ -13,6 +13,4 @@ public interface InventoryServiceExpenseService {
     ServiceExpenseResponse recordExpense(UUID itemId, ServiceExpenseRequest request, UUID userId);
 
     List<ServiceExpenseResponse> listExpensesByItem(UUID itemId);
-
-    Page<ServiceExpenseResponse> listExpensesByProperty(UUID propertyId, Pageable pageable);
 }

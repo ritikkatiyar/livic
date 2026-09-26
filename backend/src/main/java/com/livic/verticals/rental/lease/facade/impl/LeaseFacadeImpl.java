@@ -49,13 +49,6 @@ public class LeaseFacadeImpl implements LeaseFacade {
                 .toList();
     }
 
-    @Override
-    public List<LeaseSummaryDTO> getActiveLeasesByUnitId(UUID unitId) {
-        UnitSummaryDTO u = unitFacade.getUnitById(unitId).orElse(null);
-        return leaseQueryService.findByUnitIdAndStatus(unitId, LeaseStatus.ACTIVE).stream()
-                .map(lease -> LeaseSummaryDTO.from(lease, u))
-                .toList();
-    }
 
     @Override
     public Map<UUID, List<LeaseSummaryDTO>> getActiveLeasesByUnitIds(Collection<UUID> unitIds) {

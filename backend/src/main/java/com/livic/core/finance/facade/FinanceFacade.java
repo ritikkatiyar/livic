@@ -14,8 +14,6 @@ import java.util.UUID;
 
 public interface FinanceFacade {
 
-    Optional<UUID> getPropertyIdByBillId(UUID billId);
-
     /** The lease a bill's payer is on, for the rental vertical's own scope resolution. */
     Optional<UUID> getLeaseIdByBillId(UUID billId);
 

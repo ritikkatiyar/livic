@@ -17,8 +17,4 @@ public class PaymentWebhookEventCrudServiceImpl
         super(repository);
     }
 
-    @Override
-    public boolean existsByEventId(String eventId) {
-        return repository.existsByGatewayEventId(eventId);
-    }
 }

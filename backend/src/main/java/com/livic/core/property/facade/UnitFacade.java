@@ -23,8 +23,6 @@ public interface UnitFacade {
 
     List<UnitSummaryDTO> getUnitsByFloor(UUID propertyId, int floorNumber);
 
-    boolean existsUnitById(UUID unitId);
-
     long getTotalUnitsForPropertyIds(List<UUID> propertyIds);
 
     Map<UUID, UnitSummaryDTO> getUnitsByIds(Collection<UUID> unitIds);

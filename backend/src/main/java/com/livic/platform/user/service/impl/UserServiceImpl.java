@@ -31,10 +31,6 @@ public class UserServiceImpl implements UserService {
         return userCrudService.save(user);
     }
 
-    @Override
-    public UserTbl saveUser(UserTbl user) {
-        return userCrudService.save(user);
-    }
 
     @Override
     public UserDTOs.UserSearchResponse createTenant(UserDTOs.CreateTenantRequest request) {

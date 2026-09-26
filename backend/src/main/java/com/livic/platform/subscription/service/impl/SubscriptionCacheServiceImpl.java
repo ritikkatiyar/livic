@@ -76,9 +76,4 @@ public class SubscriptionCacheServiceImpl implements SubscriptionCacheService {
                 .build();
     }
 
-    @Override
-    @CacheEvict(value = "userSubscription", key = "#userId")
-    public void evictUserSubscriptionContext(UUID userId) {
-        log.info("[SUBSCRIPTION CACHE EVICT] Evicting subscription cache for user: {}", userId);
-    }
 }

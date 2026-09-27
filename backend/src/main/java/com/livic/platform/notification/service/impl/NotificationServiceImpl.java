@@ -1,11 +1,11 @@
 package com.livic.platform.notification.service.impl;
 
+import com.livic.platform.notification.repository.NotificationLogRepository;
 import com.livic.platform.notification.domain.NotificationChannel;
 import com.livic.platform.notification.domain.NotificationLogTbl;
 import com.livic.platform.notification.domain.NotificationStatus;
-import com.livic.platform.notification.service.interfaces.NotificationLogCrudService;
-import com.livic.platform.notification.service.NotificationChannelSender;
-import com.livic.platform.notification.service.NotificationService;
+import com.livic.platform.notification.service.interfaces.NotificationChannelSender;
+import com.livic.platform.notification.service.interfaces.NotificationService;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     /** All NotificationChannelSender @Component beans are auto-injected here by Spring */
     private final List<NotificationChannelSender> senders;
-    private final NotificationLogCrudService notificationLogCrudService;
+    private final NotificationLogRepository notificationLogRepository;
     private final UserFacade userFacade;
 
     private static final String REDACTED_BODY = "[redacted]";
@@ -87,7 +87,7 @@ public class NotificationServiceImpl implements NotificationService {
                     .body(loggedBody)
                     .status(NotificationStatus.PENDING)
                     .build();
-            notificationLogCrudService.save(logEntry);
+            notificationLogRepository.save(logEntry);
 
             // Dispatch and update audit log status
             try {
@@ -98,7 +98,7 @@ public class NotificationServiceImpl implements NotificationService {
                 logEntry.setStatus(NotificationStatus.FAILED);
                 logEntry.setErrorMessage(e.getMessage());
             } finally {
-                notificationLogCrudService.save(logEntry);
+                notificationLogRepository.save(logEntry);
             }
         }
     }
@@ -143,7 +143,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         if (logs.isEmpty()) return;
 
-        notificationLogCrudService.saveAll(logs);
+        notificationLogRepository.saveAll(logs);
 
         NotificationChannelSender sender = senders.stream()
                 .filter(s -> s.supports(channel))
@@ -161,7 +161,7 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
 
-        notificationLogCrudService.saveAll(logs);
+        notificationLogRepository.saveAll(logs);
     }
 
     private List<String> resolveAddresses(UserSummaryDTO user, NotificationChannel channel) {

@@ -1,5 +1,8 @@
 package com.livic.verticals.rental.billing.service.impl;
 
+import com.livic.core.finance.repository.ChargeConfigRepository;
+import com.livic.core.finance.repository.BillingWorksheetRepository;
+import com.livic.core.finance.repository.BillRepository;
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.platform.common.exception.BusinessException;
@@ -9,10 +12,7 @@ import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.dto.BillingWorksheetDTOs.*;
 import com.livic.verticals.rental.billing.service.interfaces.BillingWorksheetService;
-import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
-import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
-import com.livic.core.finance.service.interfaces.BillCrudService;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.platform.user.facade.UserFacade;
@@ -32,18 +32,18 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BillingWorksheetServiceImpl implements BillingWorksheetService {
 
-    private final BillingWorksheetCrudService billingWorksheetCrudService;
+    private final BillingWorksheetRepository billingWorksheetRepository;
     private final UnitFacade unitFacade;
     private final com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
     private final LeaseQueryService leaseQueryService;
-    private final ChargeConfigCrudService chargeConfigCrudService;
-    private final BillCrudService billCrudService;
+    private final ChargeConfigRepository chargeConfigRepository;
+    private final BillRepository billRepository;
     private final UserFacade userFacade;
 
     @Override
     @Transactional
     public List<WorksheetEntryResponse> getOrCreateWorksheetForMonth(UUID propertyId, UUID chargeConfigId, String billingMonth) {
-        ChargeConfigTbl chargeConfig = chargeConfigCrudService.findById(chargeConfigId)
+        ChargeConfigTbl chargeConfig = chargeConfigRepository.findById(chargeConfigId)
                 .orElseThrow(() -> new BusinessException("Charge config not found"));
 
         List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
@@ -51,7 +51,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
         Map<UUID, List<LeaseTbl>> unitToLeasesMap = activeLeases.stream()
                 .collect(Collectors.groupingBy(LeaseTbl::getUnitId));
 
-        List<BillingWorksheetEntryTbl> existingEntries = billingWorksheetCrudService.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(
+        List<BillingWorksheetEntryTbl> existingEntries = billingWorksheetRepository.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(
                 propertyId, chargeConfigId, billingMonth);
         Map<UUID, BillingWorksheetEntryTbl> existingEntriesMap = existingEntries.stream()
                 .collect(Collectors.toMap(BillingWorksheetEntryTbl::getUnitId, r -> r));
@@ -67,7 +67,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
 
         Map<UUID, BigDecimal> carryForwardValues = new HashMap<>();
         if (Boolean.TRUE.equals(chargeConfig.getAutoCarryForward())) {
-            List<Object[]> results = billingWorksheetCrudService.findLatestValuesForPropertyAndConfig(propertyId, chargeConfigId, billingMonth);
+            List<Object[]> results = billingWorksheetRepository.findLatestValuesForPropertyAndConfig(propertyId, chargeConfigId, billingMonth);
             for (Object[] row : results) {
                 carryForwardValues.put((UUID) row[0], (BigDecimal) row[1]);
             }
@@ -108,7 +108,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
         }
 
         if (!toSave.isEmpty()) {
-            billingWorksheetCrudService.saveAll(toSave);
+            billingWorksheetRepository.saveAll(toSave);
         }
 
         List<UUID> tenantUserIds = activeLeases.stream()
@@ -118,7 +118,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
         Map<UUID, UserSummaryDTO> userMap = tenantUserIds.isEmpty() ? Collections.emptyMap() :
                 userFacade.getUsersByIds(tenantUserIds);
 
-        List<BillTbl> existingCycles = billCrudService.findByPropertyIdAndBillingMonth(propertyId, billingMonth);
+        List<BillTbl> existingCycles = billRepository.findByPropertyIdAndBillingMonth(propertyId, billingMonth);
         Set<UUID> billedMemberIds = existingCycles.stream()
                 .map(BillTbl::getMemberId)
                 .filter(java.util.Objects::nonNull)
@@ -164,7 +164,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
     @Override
     @Transactional
     public void saveWorksheet(WorksheetSaveRequest request) {
-        List<BillTbl> bills = billCrudService.findByPropertyIdAndBillingMonth(
+        List<BillTbl> bills = billRepository.findByPropertyIdAndBillingMonth(
                 request.getPropertyId(), request.getBillingMonth());
 
         boolean isLocked = bills.stream().anyMatch(rc ->
@@ -177,7 +177,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
             throw new BusinessException("Cannot update worksheet entries because rent bills for this month have already been published or paid");
         }
 
-        List<BillingWorksheetEntryTbl> existing = billingWorksheetCrudService.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(
+        List<BillingWorksheetEntryTbl> existing = billingWorksheetRepository.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(
                 request.getPropertyId(), request.getChargeConfigId(), request.getBillingMonth());
         Map<UUID, BillingWorksheetEntryTbl> entryMap = existing.stream()
                 .collect(Collectors.toMap(BillingWorksheetEntryTbl::getUnitId, e -> e));
@@ -192,7 +192,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
         }
 
         if (!toUpdate.isEmpty()) {
-            billingWorksheetCrudService.saveAll(toUpdate);
+            billingWorksheetRepository.saveAll(toUpdate);
         }
     }
 }

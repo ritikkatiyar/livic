@@ -1,19 +1,19 @@
 package com.livic.core.property.facade.impl;
 
-import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.core.property.domain.PropertyTbl;
+import com.livic.core.property.repository.UnitRepository;
+import com.livic.core.property.repository.PropertyRepository;
 import com.livic.core.property.domain.PropertyType;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.dto.PublicPropertyListingDTO;
 import com.livic.core.property.facade.PropertyFacade;
-import com.livic.core.property.service.interfaces.PropertyCrudService;
 import com.livic.core.property.domain.UnitTbl;
-import com.livic.core.property.service.interfaces.UnitCrudService;
 import com.livic.core.property.spi.UnitOccupancyProvider;
 import java.util.Map;
+import com.livic.core.property.service.interfaces.BlockService;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,10 +34,10 @@ public class PropertyFacadeImpl implements PropertyFacade {
     private EntityManager entityManager;
 
     private final PropertyQueryService propertyQueryService;
-    private final UnitCrudService unitCrudService;
+    private final UnitRepository unitRepository;
     private final UnitOccupancyProvider unitOccupancyProvider;
-    private final com.livic.core.property.service.interfaces.BlockService blockService;
-    private final PropertyCrudService propertyCrudService;
+    private final BlockService blockService;
+    private final PropertyRepository propertyRepository;
 
     @Override
     public Optional<PropertySummaryDTO> getPropertyById(UUID propertyId) {
@@ -93,7 +93,7 @@ public class PropertyFacadeImpl implements PropertyFacade {
         // This used to run JPQL over LeaseTbl from here, which is core reading a vertical's
         // table. The entity name was a string, so no architecture test could see it. Occupancy
         // now comes through the SPI that rental implements for exactly this.
-        List<UnitTbl> units = unitCrudService.findByPropertyIdIn(propertyIds);
+        List<UnitTbl> units = unitRepository.findByPropertyIdIn(propertyIds);
         Map<UUID, List<UnitOccupancyProvider.UnitOccupant>> occupantsByUnit =
                 unitOccupancyProvider.activeOccupantsByUnitIds(units.stream().map(UnitTbl::getId).toList());
 
@@ -101,29 +101,29 @@ public class PropertyFacadeImpl implements PropertyFacade {
                 .filter(u -> u.getProperty() != null)
                 .collect(Collectors.groupingBy(u -> u.getProperty().getId()));
 
+        Map<UUID, String> namesById = propertyQueryService.getPropertiesByIds(propertyIds).stream()
+                .collect(Collectors.toMap(PropertyTbl::getId, PropertyTbl::getName, (a, b) -> a));
+
         List<PropertyOccupancySummaryDTO> result = new ArrayList<>();
         for (UUID propertyId : propertyIds) {
             List<UnitTbl> propertyUnits = unitsByProperty.getOrDefault(propertyId, List.of());
             long occupied = propertyUnits.stream()
                     .filter(u -> !occupantsByUnit.getOrDefault(u.getId(), List.of()).isEmpty())
                     .count();
-            String name = propertyUnits.isEmpty()
-                    ? propertyQueryService.getPropertyById(propertyId).getName()
-                    : propertyUnits.get(0).getProperty().getName();
-            result.add(new PropertyOccupancySummaryDTO(propertyId, name, propertyUnits.size(), (int) occupied));
+            result.add(new PropertyOccupancySummaryDTO(propertyId, namesById.get(propertyId), propertyUnits.size(), (int) occupied));
         }
         return result;
     }
 
     @Override
     public Page<PublicPropertyListingDTO> searchPublicListings(String city, PropertyType type, Pageable pageable) {
-        return propertyCrudService.searchPublicProperties(city, type, pageable)
+        return propertyRepository.searchPublicProperties(city, type, pageable)
                 .map(p -> PublicPropertyListingDTO.from(p, blockService.totalFloorsForProperty(p.getId())));
     }
 
     @Override
     public Optional<PublicPropertyListingDTO> getPublicListing(UUID propertyId) {
-        return propertyCrudService.findById(propertyId)
+        return propertyRepository.findById(propertyId)
                 .filter(p -> p.isPubliclyListed() && p.isActive())
                 .map(p -> PublicPropertyListingDTO.from(p, blockService.totalFloorsForProperty(p.getId())));
     }
@@ -131,10 +131,10 @@ public class PropertyFacadeImpl implements PropertyFacade {
     @Override
     @Transactional
     public Optional<String> getOrCreateQrSlug(UUID propertyId) {
-        return propertyCrudService.findById(propertyId).map(property -> {
+        return propertyRepository.findById(propertyId).map(property -> {
             if (property.getQrSlug() == null || property.getQrSlug().isBlank()) {
                 property.setQrSlug("qr_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12));
-                propertyCrudService.save(property);
+                propertyRepository.save(property);
             }
             return property.getQrSlug();
         });

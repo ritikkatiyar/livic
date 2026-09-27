@@ -26,7 +26,6 @@ public interface FinanceFacade {
 
     RevenueMetricsDTO getRevenueMetrics(List<UUID> propertyIds, String billingMonth);
 
-    List<DefaulterRecordDTO> getDefaulters(List<UUID> propertyIds);
 
     Page<DefaulterRecordDTO> getDefaulters(List<UUID> propertyIds, Pageable pageable);
 

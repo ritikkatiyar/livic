@@ -1,5 +1,6 @@
 package com.livic.core.property.service.impl;
 
+import com.livic.core.property.repository.UnitRepository;
 import com.livic.platform.common.event.UnitsCreationRequestedEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.property.domain.BlockTbl;
@@ -8,7 +9,6 @@ import com.livic.core.property.dto.PropertyDTOs;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.UnitDTOs;
 import com.livic.core.property.mapper.UnitMapper;
-import com.livic.core.property.service.interfaces.UnitCrudService;
 import com.livic.core.property.service.interfaces.UnitService;
 import com.livic.core.property.domain.UnitMemberTbl;
 import com.livic.core.property.service.interfaces.UnitMemberService;
@@ -35,7 +35,7 @@ import org.springframework.http.HttpStatus;
 @Transactional
 public class UnitServiceImpl implements UnitService {
 
-    private final UnitCrudService unitCrudService;
+    private final UnitRepository unitRepository;
     private final PropertyQueryService propertyQueryService;
     private final BlockService blockService;
     private final UnitMemberService unitMemberService;
@@ -43,7 +43,7 @@ public class UnitServiceImpl implements UnitService {
 
     @Override
     public List<UnitTbl> saveAll(List<UnitTbl> units) {
-        return unitCrudService.saveAll(units);
+        return unitRepository.saveAll(units);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class UnitServiceImpl implements UnitService {
             }
         }
 
-        List<UnitTbl> onFloor = unitCrudService.findByBlockIdAndFloor(block.getId(), floorNumber);
+        List<UnitTbl> onFloor = unitRepository.findByBlockIdAndFloor(block.getId(), floorNumber);
         Set<String> incomingNumbers = items.stream()
                 .map(UnitDTOs.FloorLayoutUnitRequest::unitNumber)
                 .collect(Collectors.toSet());
@@ -102,16 +102,16 @@ public class UnitServiceImpl implements UnitService {
                                 + "End the owner or tenancy first.");
             }
         }
-        unitCrudService.deleteAll(toRemove);
+        unitRepository.deleteAll(toRemove);
 
         // Optimized: bulk cache unit numbers to avoid exists queries inside loops
         // Unit numbers are unique per block, not per property: Building A and Building B
         // both having a 101 is the point of blocks.
-        Set<String> allExistingUnitNumbers = unitCrudService.findByBlockId(block.getId()).stream()
+        Set<String> allExistingUnitNumbers = unitRepository.findByBlockId(block.getId()).stream()
                 .map(UnitTbl::getUnitNumber)
                 .collect(Collectors.toSet());
 
-        Map<String, UnitTbl> existingOnFloorByNumber = unitCrudService.findByBlockIdAndFloor(block.getId(), floorNumber)
+        Map<String, UnitTbl> existingOnFloorByNumber = unitRepository.findByBlockIdAndFloor(block.getId(), floorNumber)
                 .stream()
                 .collect(Collectors.toMap(UnitTbl::getUnitNumber, u -> u, (a, b) -> a));
 
@@ -133,7 +133,7 @@ public class UnitServiceImpl implements UnitService {
             }
         }
         // Optimized: batch save
-        return unitCrudService.saveAll(toSave);
+        return unitRepository.saveAll(toSave);
     }
 
     @Override
@@ -144,7 +144,7 @@ public class UnitServiceImpl implements UnitService {
         if (request.totalFloors() > 1 || (blockFloors != null && request.totalFloors() == blockFloors && request.startingFloorNumber() == 1)) {
             // Scoped to the block: filling Building B wholesale must not be refused because
             // Building A already has floors.
-            boolean hasExistingUnits = !unitCrudService.findByBlockId(block.getId()).isEmpty();
+            boolean hasExistingUnits = !unitRepository.findByBlockId(block.getId()).isEmpty();
             if (hasExistingUnits) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot configure units globally because this block already has configured floors.");
             }

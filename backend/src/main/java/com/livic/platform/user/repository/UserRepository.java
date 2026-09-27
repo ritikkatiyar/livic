@@ -14,7 +14,6 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<UserTbl, UUID> {
     Optional<UserTbl> findByAuthUid(String authUid);
     Optional<UserTbl> findByPhoneNumber(String phoneNumber);
-    List<UserTbl> findTop10ByPhoneNumberContaining(String phoneNumber);
 
     @Query("SELECT u.id FROM UserTbl u WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :pattern, '%')) OR LOWER(u.phoneNumber) LIKE LOWER(CONCAT('%', :pattern, '%'))")
     List<UUID> findIdsByFullNameOrPhonePattern(@Param("pattern") String pattern);

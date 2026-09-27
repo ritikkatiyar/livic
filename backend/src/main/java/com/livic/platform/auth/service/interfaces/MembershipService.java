@@ -1,5 +1,6 @@
 package com.livic.platform.auth.service.interfaces;
 
+import com.livic.platform.auth.dto.MembershipDTOs;
 import com.livic.platform.auth.domain.MembershipTbl;
 import com.livic.platform.common.enums.AccessType;
 
@@ -11,7 +12,7 @@ public interface MembershipService {
     
     MembershipTbl createMembership(UUID propertyId, UUID userId, String title, AccessType accessType, Set<String> permissionCodes, UUID assignedByUserId);
 
-    MembershipTbl updateMembership(UUID propertyId, UUID membershipId, String title, AccessType accessType, Boolean isActive, Set<String> permissionCodes, UUID actorUserId);
+    MembershipDTOs.MembershipResponse updateMembership(UUID propertyId, UUID membershipId, String title, AccessType accessType, Boolean isActive, Set<String> permissionCodes, UUID actorUserId);
 
     void toggleMembershipActive(UUID propertyId, UUID membershipId, boolean isActive, UUID actorUserId);
 

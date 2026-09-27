@@ -80,7 +80,7 @@ export function useFloorEditorTenantAssignment({
     const delayDebounceFn = setTimeout(async () => {
       setSuggestionsLoading(true);
       try {
-        const results = await searchUserByPhone(query, userToken);
+        const results = await searchUserByPhone(query, propertyId, userToken);
         setSuggestions(results || []);
       } catch (error) {
         logger.error('Error fetching suggestions:', error);
@@ -90,7 +90,7 @@ export function useFloorEditorTenantAssignment({
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [tenantPhoneSearch, userToken]);
+  }, [tenantPhoneSearch, propertyId, userToken]);
 
   // Handle auto-scroll to view suggestions
   useEffect(() => {
@@ -136,7 +136,7 @@ export function useFloorEditorTenantAssignment({
     setTenantSearchError(null);
     setTenantSearchResult(null);
     try {
-      const users = await searchUserByPhone(phone, userToken);
+      const users = await searchUserByPhone(phone, propertyId, userToken);
       if (!users || users.length === 0) {
         setTenantSearchError('Tenant not found with this number.');
         return;
@@ -263,7 +263,7 @@ export function useFloorEditorTenantAssignment({
     setTenantCreating(true);
     setTenantSearchError(null);
     try {
-      const createdUser = await quickCreateTenant({ email, fullName: name, phoneNumber: phone }, userToken);
+      const createdUser = await quickCreateTenant({ email, fullName: name, phoneNumber: phone }, propertyId, userToken);
       setTenantSearchResult(createdUser);
       setTenantPhoneSearch(createdUser.phoneNumber || '');
       setIsCreatingNewTenant(false);

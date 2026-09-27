@@ -1,12 +1,12 @@
 package com.livic.core.finance.service.impl;
 
+import com.livic.core.finance.repository.BillLineRepository;
+import com.livic.core.finance.repository.BillRepository;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.BillLineTbl;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.service.interfaces.PaymentStatementService;
-import com.livic.core.finance.service.interfaces.BillLineCrudService;
-import com.livic.core.finance.service.interfaces.BillCrudService;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
@@ -34,8 +34,8 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class PaymentStatementServiceImpl implements PaymentStatementService {
 
-    private final BillCrudService billCrudService;
-    private final BillLineCrudService billLineCrudService;
+    private final BillRepository billRepository;
+    private final BillLineRepository billLineRepository;
     private final UserFacade userFacade;
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
@@ -45,7 +45,7 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
     public String generateStatementHtml(UUID billId) {
         log.info("Generating payment statement HTML for Bill: {}", billId);
 
-        BillTbl bill = billCrudService.findById(billId)
+        BillTbl bill = billRepository.findById(billId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
 
         if (bill.getStatus() == BillStatus.PENDING) {
@@ -57,7 +57,7 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
         UserSummaryDTO tenant = payer == null ? null
                 : userFacade.getUserById(payer.userId()).orElse(null);
 
-        List<BillLineTbl> charges = billLineCrudService.findByBill_Id(billId);
+        List<BillLineTbl> charges = billLineRepository.findByBill_Id(billId);
 
         UUID unitId = payer != null ? payer.unitId() : null;
         UnitSummaryDTO unit = unitFacade.getUnitById(unitId).orElse(null);

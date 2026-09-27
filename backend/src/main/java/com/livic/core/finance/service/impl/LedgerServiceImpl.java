@@ -1,8 +1,8 @@
 package com.livic.core.finance.service.impl;
 
+import com.livic.core.finance.repository.FinanceLedgerRepository;
 import com.livic.core.finance.domain.FinanceLedgerTbl;
 import com.livic.core.finance.dto.LedgerDTOs.LedgerEntryResponse;
-import com.livic.core.finance.service.interfaces.FinanceLedgerCrudService;
 import com.livic.core.finance.specification.FinanceLedgerSpecifications;
 import com.livic.core.finance.service.interfaces.LedgerService;
 import com.livic.core.property.dto.UnitResidentDTO;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LedgerServiceImpl implements LedgerService {
 
-    private final FinanceLedgerCrudService financeLedgerCrudService;
+    private final FinanceLedgerRepository financeLedgerRepository;
     private final UserFacade userFacade;
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
@@ -61,7 +61,7 @@ public class LedgerServiceImpl implements LedgerService {
                 .and(FinanceLedgerSpecifications.createdBefore(toDate))
                 .and(FinanceLedgerSpecifications.matchesSearch(search, matchingUnitIds, matchingMemberIds));
 
-        Page<FinanceLedgerTbl> entriesPage = financeLedgerCrudService.findAll(spec, pageable);
+        Page<FinanceLedgerTbl> entriesPage = financeLedgerRepository.findAll(spec, pageable);
         Map<UUID, UnitSummaryDTO> unitMap = units.stream()
                 .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
 
@@ -87,7 +87,7 @@ public class LedgerServiceImpl implements LedgerService {
 
         Map<UUID, BigDecimal> runningBalancesMap = Collections.emptyMap();
         if (!entryIds.isEmpty()) {
-            runningBalancesMap = financeLedgerCrudService.getRunningBalancesForEntries(entryIds).stream()
+            runningBalancesMap = financeLedgerRepository.getRunningBalancesForEntries(entryIds).stream()
                     .filter(row -> row[0] != null)
                     .collect(Collectors.toMap(
                             row -> toUuid(row[0]),

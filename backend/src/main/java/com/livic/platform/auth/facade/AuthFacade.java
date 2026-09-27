@@ -36,15 +36,7 @@ public interface AuthFacade {
 
     MembershipSummaryDTO createMembership(UUID propertyId, UUID userId, String title, AccessType accessType, Set<String> permissionCodes, UUID assignedByUserId);
 
-    MembershipSummaryDTO updateMembership(UUID propertyId, UUID membershipId, String title, AccessType accessType, Boolean isActive, Set<String> permissionCodes, UUID actorUserId);
-
     void toggleMembershipActive(UUID propertyId, UUID membershipId, boolean active, UUID actorId);
-
-    void removeMembership(UUID propertyId, UUID membershipId, UUID actorId);
-
-    void transferOwnership(UUID propertyId, UUID currentOwnerId, UUID toUserId);
-
-    Set<String> getMembershipPermissions(UUID membershipId);
 
     Map<UUID, Set<String>> getPermissionsByMembershipIds(Collection<UUID> membershipIds);
 

@@ -3,7 +3,7 @@ package com.livic.platform.user.controller;
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.platform.user.dto.UserNotificationPreferencesDTO;
-import com.livic.platform.user.facade.UserFacade;
+import com.livic.platform.user.service.interfaces.UserPreferenceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,14 +16,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ResidentNotificationPreferenceController {
 
-    private final UserFacade userFacade;
+    private final UserPreferenceService userPreferenceService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<UserNotificationPreferencesDTO>> getPreferences(
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {
         UUID userId = UUID.fromString(currentUser.getId());
-        return ResponseEntity.ok(ApiResponse.success(userFacade.getNotificationPreferences(userId)));
+        return ResponseEntity.ok(ApiResponse.success(userPreferenceService.getNotificationPreferences(userId)));
     }
 
     @PutMapping
@@ -32,6 +32,6 @@ public class ResidentNotificationPreferenceController {
             @RequestBody UserNotificationPreferencesDTO request
     ) {
         UUID userId = UUID.fromString(currentUser.getId());
-        return ResponseEntity.ok(ApiResponse.success(userFacade.updateNotificationPreferences(userId, request)));
+        return ResponseEntity.ok(ApiResponse.success(userPreferenceService.updateNotificationPreferences(userId, request)));
     }
 }

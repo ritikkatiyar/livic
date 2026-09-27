@@ -1,5 +1,9 @@
 package com.livic.platform.subscription.service.impl;
 
+import com.livic.platform.subscription.repository.WalletTransactionRepository;
+import com.livic.platform.subscription.repository.SubscriptionPlanRepository;
+import com.livic.platform.subscription.repository.SaasSubscriptionRepository;
+import com.livic.platform.subscription.repository.BillingWalletRepository;
 import com.livic.platform.subscription.constant.BillingConstants;
 import com.livic.platform.payment.constant.PaymentConstants;
 import com.livic.platform.subscription.domain.BillingWalletTbl;
@@ -9,11 +13,7 @@ import com.livic.platform.subscription.domain.WalletTransactionTbl;
 import com.livic.platform.payment.dto.PaymentIntentRequest;
 import com.livic.platform.payment.dto.PaymentIntentResponse;
 import com.livic.platform.payment.dto.SubscriptionRequest;
-import com.livic.platform.subscription.service.interfaces.BillingWalletCrudService;
 import com.livic.platform.subscription.service.interfaces.BillingWalletService;
-import com.livic.platform.subscription.service.interfaces.SaasSubscriptionCrudService;
-import com.livic.platform.subscription.service.interfaces.SubscriptionPlanCrudService;
-import com.livic.platform.subscription.service.interfaces.WalletTransactionCrudService;
 import com.livic.platform.payment.dto.PaymentInitiationRequest;
 import com.livic.platform.payment.dto.PaymentInitiationResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
@@ -33,10 +33,10 @@ import java.util.UUID;
 @Slf4j
 public class BillingWalletServiceImpl implements BillingWalletService {
 
-    private final BillingWalletCrudService walletCrudService;
-    private final WalletTransactionCrudService transactionCrudService;
-    private final SaasSubscriptionCrudService subscriptionCrudService;
-    private final SubscriptionPlanCrudService planCrudService;
+    private final BillingWalletRepository billingWalletRepository;
+    private final WalletTransactionRepository walletTransactionRepository;
+    private final SaasSubscriptionRepository saasSubscriptionRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final PaymentFacade paymentFacade;
 
     @Override
@@ -45,7 +45,7 @@ public class BillingWalletServiceImpl implements BillingWalletService {
         if (requiredCredits <= 0) {
             return true;
         }
-        BillingWalletTbl wallet = walletCrudService.findByUserId(userId).orElse(null);
+        BillingWalletTbl wallet = billingWalletRepository.findByUserId(userId).orElse(null);
         if (wallet == null) {
             return 50.0 >= requiredCredits;
         }
@@ -59,7 +59,7 @@ public class BillingWalletServiceImpl implements BillingWalletService {
             return;
         }
 
-        BillingWalletTbl wallet = walletCrudService.findByUserIdForUpdate(userId)
+        BillingWalletTbl wallet = billingWalletRepository.findByUserIdForUpdate(userId)
                 .orElseGet(() -> getOrCreateWallet(userId));
 
         BigDecimal required = BigDecimal.valueOf(requiredCredits);
@@ -69,7 +69,7 @@ public class BillingWalletServiceImpl implements BillingWalletService {
         }
 
         wallet.setCreditBalance(wallet.getCreditBalance().subtract(required));
-        walletCrudService.save(wallet);
+        billingWalletRepository.save(wallet);
 
         WalletTransactionTbl transaction = WalletTransactionTbl.builder()
                 .walletId(wallet.getId())
@@ -77,7 +77,7 @@ public class BillingWalletServiceImpl implements BillingWalletService {
                 .transactionType(BillingConstants.WalletTxType.DEBIT)
                 .reason(reason)
                 .build();
-        transactionCrudService.save(transaction);
+        walletTransactionRepository.save(transaction);
 
         log.info("[WALLET DEBIT] Successfully debited {} credits from user: {}. New balance: {}",
                 requiredCredits, userId, wallet.getCreditBalance());
@@ -90,17 +90,17 @@ public class BillingWalletServiceImpl implements BillingWalletService {
             return;
         }
 
-        BillingWalletTbl wallet = walletCrudService.findByUserIdForUpdate(userId)
+        BillingWalletTbl wallet = billingWalletRepository.findByUserIdForUpdate(userId)
                 .orElseGet(() -> {
                     BillingWalletTbl newWallet = BillingWalletTbl.builder()
                             .userId(userId)
                             .creditBalance(BigDecimal.ZERO)
                             .currency(BillingConstants.Currency.DEFAULT_CURRENCY)
                             .build();
-                    return walletCrudService.save(newWallet);
+                    return billingWalletRepository.save(newWallet);
                 });
 
-        if (referenceId != null && transactionCrudService.existsByWalletIdAndReferenceId(wallet.getId(), referenceId)) {
+        if (referenceId != null && walletTransactionRepository.existsByWalletIdAndReferenceId(wallet.getId(), referenceId)) {
             log.info("[WALLET CREDIT] Transaction with referenceId {} already credited for wallet: {}. Skipping.", referenceId, wallet.getId());
             return;
         }
@@ -108,7 +108,7 @@ public class BillingWalletServiceImpl implements BillingWalletService {
         BigDecimal addition = BigDecimal.valueOf(credits);
         wallet.setCreditBalance(wallet.getCreditBalance().add(addition));
         wallet.setLastToppedUp(LocalDateTime.now());
-        walletCrudService.save(wallet);
+        billingWalletRepository.save(wallet);
 
         WalletTransactionTbl transaction = WalletTransactionTbl.builder()
                 .walletId(wallet.getId())
@@ -117,7 +117,7 @@ public class BillingWalletServiceImpl implements BillingWalletService {
                 .reason(reason)
                 .referenceId(referenceId)
                 .build();
-        transactionCrudService.save(transaction);
+        walletTransactionRepository.save(transaction);
 
         log.info("[WALLET CREDIT] Successfully credited {} credits to user: {}. New balance: {}", 
                 credits, userId, wallet.getCreditBalance());
@@ -126,7 +126,7 @@ public class BillingWalletServiceImpl implements BillingWalletService {
     @Override
     @Transactional(readOnly = true)
     public double getRemainingBalance(UUID userId) {
-        BillingWalletTbl wallet = walletCrudService.findByUserId(userId).orElse(null);
+        BillingWalletTbl wallet = billingWalletRepository.findByUserId(userId).orElse(null);
         if (wallet == null) {
             return 50.0;
         }
@@ -136,19 +136,19 @@ public class BillingWalletServiceImpl implements BillingWalletService {
     @Override
     @Transactional
     public BillingWalletTbl getOrCreateWallet(UUID userId) {
-        return walletCrudService.findByUserId(userId)
+        return billingWalletRepository.findByUserId(userId)
                 .orElseGet(() -> {
                     BillingWalletTbl newWallet = BillingWalletTbl.builder()
                             .userId(userId)
                             .creditBalance(BigDecimal.valueOf(50.0))
                             .currency(BillingConstants.Currency.DEFAULT_CURRENCY)
                             .build();
-                    return walletCrudService.save(newWallet);
+                    return billingWalletRepository.save(newWallet);
                 });
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public com.livic.platform.subscription.dto.BillingStatusResponse getBillingStatus(UUID userId) {
         SaasSubscriptionTbl subscription = getActiveSubscription(userId);
         BillingWalletTbl wallet = getOrCreateWallet(userId);
@@ -158,9 +158,9 @@ public class BillingWalletServiceImpl implements BillingWalletService {
     @Override
     @Transactional(readOnly = true)
     public SaasSubscriptionTbl getActiveSubscription(UUID userId) {
-        return subscriptionCrudService.findLatestByUserIdAndStatus(userId, BillingConstants.SubscriptionStatus.ACTIVE)
+        return saasSubscriptionRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, BillingConstants.SubscriptionStatus.ACTIVE)
                 .orElseGet(() -> {
-                    SubscriptionPlanTbl starterPlan = planCrudService.findByPlanKey(BillingConstants.PlanKey.STARTER).orElse(null);
+                    SubscriptionPlanTbl starterPlan = subscriptionPlanRepository.findByPlanKey(BillingConstants.PlanKey.STARTER).orElse(null);
                     return SaasSubscriptionTbl.builder()
                             .userId(userId)
                             .plan(starterPlan)
@@ -207,11 +207,11 @@ public class BillingWalletServiceImpl implements BillingWalletService {
 
         String targetPlanKey = request.planName() != null ? request.planName().trim().toUpperCase() : BillingConstants.PlanKey.STARTER;
 
-        SubscriptionPlanTbl plan = planCrudService.findByPlanKey(targetPlanKey)
+        SubscriptionPlanTbl plan = subscriptionPlanRepository.findByPlanKey(targetPlanKey)
                 .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Plan not found: " + request.planName()));
 
         // Create or update the pending subscription record safely
-        SaasSubscriptionTbl subscription = subscriptionCrudService.findLatestByUserIdAndStatus(userId, BillingConstants.SubscriptionStatus.PENDING)
+        SaasSubscriptionTbl subscription = saasSubscriptionRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, BillingConstants.SubscriptionStatus.PENDING)
                 .orElse(null);
 
         LocalDateTime now = LocalDateTime.now();
@@ -237,7 +237,7 @@ public class BillingWalletServiceImpl implements BillingWalletService {
             subscription.setStatus(BillingConstants.SubscriptionStatus.PENDING);
         }
 
-        subscription = subscriptionCrudService.saveAndFlush(subscription);
+        subscription = saasSubscriptionRepository.saveAndFlush(subscription);
 
         // Build payment request with the subscription's ID as referenceId
         PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()

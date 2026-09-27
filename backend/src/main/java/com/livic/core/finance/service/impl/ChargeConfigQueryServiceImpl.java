@@ -1,11 +1,11 @@
 package com.livic.core.finance.service.impl;
 
+import com.livic.core.finance.repository.ChargeConfigRepository;
 import com.livic.core.finance.domain.ChargeCategory;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.core.finance.dto.ChargeConfigResponse;
 import com.livic.core.finance.mapper.ChargeConfigMapper;
-import com.livic.core.finance.service.ChargeConfigQueryService;
-import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
+import com.livic.core.finance.service.interfaces.ChargeConfigQueryService;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import com.livic.platform.user.domain.UserMode;
@@ -24,13 +24,13 @@ import java.util.UUID;
 @Transactional
 public class ChargeConfigQueryServiceImpl implements ChargeConfigQueryService {
 
-    private final ChargeConfigCrudService chargeConfigCrudService;
+    private final ChargeConfigRepository chargeConfigRepository;
     private final PropertyFacade propertyFacade;
     private final UserFacade userFacade;
 
     @Override
     public Page<ChargeConfigResponse> getChargesForProperty(UUID propertyId, boolean includeInactive, UUID userId, Pageable pageable) {
-        boolean hasRentConfig = chargeConfigCrudService.existsByPropertyIdAndChargeCategory(propertyId, ChargeCategory.RENT);
+        boolean hasRentConfig = chargeConfigRepository.existsByPropertyIdAndChargeCategory(propertyId, ChargeCategory.RENT);
 
         if (!hasRentConfig) {
             PropertySummaryDTO propSummary = propertyFacade.getPropertyById(propertyId).orElse(null);
@@ -38,21 +38,21 @@ public class ChargeConfigQueryServiceImpl implements ChargeConfigQueryService {
                 UserMode activeMode = userFacade.getActiveModeForUser(userId);
                 if (activeMode == UserMode.RENTAL) {
                     ChargeConfigTbl systemRentConfig = ChargeConfigMapper.createSystemRentConfig(propSummary.id());
-                    chargeConfigCrudService.save(systemRentConfig);
+                    chargeConfigRepository.save(systemRentConfig);
                 }
             }
         }
 
         Page<ChargeConfigTbl> configPage = includeInactive ? 
-                chargeConfigCrudService.findAllByPropertyId(propertyId, pageable) : 
-                chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId, pageable);
+                chargeConfigRepository.findAllByPropertyId(propertyId, pageable) : 
+                chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(propertyId, pageable);
 
         return configPage.map(this::mapToResponse);
     }
 
     @Override
     public ChargeConfigResponse getChargeConfigById(UUID id) {
-        ChargeConfigTbl config = chargeConfigCrudService.findById(id)
+        ChargeConfigTbl config = chargeConfigRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Charge Config not found"));
         return mapToResponse(config);
     }

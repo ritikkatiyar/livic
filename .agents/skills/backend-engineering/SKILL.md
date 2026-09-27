@@ -21,8 +21,11 @@ Module structure:
 module/
 ├── controller/
 ├── service/
-│   ├── interface/
+│   ├── interfaces/
 │   └── impl/
+├── facade/          (only when other modules need something from this one)
+│   └── impl/
+├── spi/             (implementations of SPIs declared by lower layers)
 ├── domain/
 ├── repository/
 ├── dto/
@@ -54,10 +57,11 @@ module/
 * Dependencies flow `verticals` -> `core` -> `platform`, and modules must stay free of cycles (enforced by `ModuleBoundaryTest`). Never the reverse: `platform` must not reference `core` or `verticals`, `core` must not reference `verticals`, and one vertical must not reference another.
 * **Core must never know about a vertical.** This is what keeps residential, society and hostel additive rather than rewrites. Anything that needs to know "who is in this unit" reads `unit_member` in `core.property`, never leases in `verticals.rental`.
 * When a lower layer needs something from a higher one, declare an SPI in the lower layer and implement it in the higher one (e.g. `platform.subscription.spi.PropertyUsageProvider` implemented by `core.property`), or publish a synchronous event.
-* No direct repository access across modules
+* No direct repository access across modules. The one exception is `core.finance`, whose repositories, entities and service interfaces are open to verticals because verticals build their billing on them.
 * Modules communicate ONLY via facade or service interfaces (e.g. `com.livic.core.finance.facade` or `com.livic.core.finance.service.interfaces`)
-* Controllers must remain thin
+* Controllers must remain thin: a controller calls only its own module's services and gets DTOs back. It never touches a repository, an entity, a mapper or a facade. Facades are for one module's services to reach another's.
 * Business logic only inside services
+* These layer rules are enforced by `ModuleBoundaryTest`; fix the code, not the test.
 
 ---
 
@@ -149,7 +153,8 @@ Avoid:
   * Batch execute database modifications (e.g., `saveAll()`, `deleteAll()`) outside the loop.
 * **N+1 Query Avoidance**: Never lazy-load relational collections in loops or iterate over parent entities fetching children one-by-one. Always use `@EntityGraph`, `JOIN FETCH` JPQL queries (e.g., `@Query("SELECT p FROM SubscriptionPlanTbl p JOIN FETCH p.features")`), or bulk `IN` fetch queries mapped in-memory using `Map<UUID, List<T>>`.
 * **Mandatory Pagination for Dynamic Lists**: Any query or endpoint returning collections that grow dynamically over time (e.g., Ledger entries, Expenses, Rent Cycles, Announcements, Audit logs) MUST implement pagination using Spring's `Pageable` and return `Page<T>` instead of raw lists (`List<T>`).
-* **Decoupled CRUD Service Layer**: Direct repository injection in high-level business services is discouraged. Abstraction interfaces (`CrudService<T, ID>`) and domain CRUD services (e.g., `UserCrudService`) must be used to wrap direct database repository calls.
+* **Repositories Are the Data Layer**: Services and facades inject their own module's Spring Data repositories directly. Do not wrap a repository in a pass-through CRUD service; Spring Data already is that abstraction. Guards such as an empty `IN` list or a blank search pattern belong in the service method that calls the query.
+* **Transactions Live on Services**: Put `@Transactional` on the service method that performs the business operation, so all of its writes commit or roll back together.
 
 ---
 

@@ -1,8 +1,8 @@
 package com.livic.platform.auth.service.impl;
 
+import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.AuthorizationTestSupport;
 import com.livic.platform.security.UserDetailsImpl;
-import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.core.property.domain.FacingDirection;
 import com.livic.core.property.domain.UnitType;
 import com.livic.platform.common.domain.UserRole;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 class AuthorizationServiceImplTest {
 
     @Mock
-    private MembershipCrudService membershipCrudService;
+    private MembershipRepository membershipRepository;
 
     @Mock
     private UnitFacade unitFacade;
@@ -62,7 +62,7 @@ class AuthorizationServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, unitFacade, financeFacade, leaseFacade, inventoryFacade, storageFacade);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, unitFacade, financeFacade, leaseFacade, inventoryFacade, storageFacade);
         propertyId = UUID.randomUUID();
         userId = UUID.randomUUID();
     }
@@ -96,7 +96,7 @@ class AuthorizationServiceImplTest {
     @DisplayName("User with FULL_ACCESS role automatically passes any property permission check")
     void userWithFullAccessRoleBypassesIndividualPermissionChecks() {
         authenticateUser(userId, UserRole.USER);
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(true);
 
         assertThat(authorizationService.hasFullAccess(propertyId)).isTrue();
@@ -109,9 +109,9 @@ class AuthorizationServiceImplTest {
     @DisplayName("User with CUSTOM_ACCESS role only passes granted permissions")
     void userWithCustomAccessRoleRespectsPermissionMatrix() {
         authenticateUser(userId, UserRole.USER);
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
                 .thenReturn(Set.of("PROPERTY_VIEW", "MAINTENANCE_VIEW"));
 
         assertThat(authorizationService.hasFullAccess(propertyId)).isFalse();
@@ -129,7 +129,7 @@ class AuthorizationServiceImplTest {
         // 1. Unit -> Property
         UnitSummaryDTO unit = new UnitSummaryDTO(unitId, propertyId, "Test Property", "101", 1, 2, 0, 0, 1, 1, UnitType.SINGLE_UNIT, FacingDirection.NORTH);
         when(unitFacade.getUnitById(unitId)).thenReturn(Optional.of(unit));
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(true);
 
         assertThat(authorizationService.hasPermission(ResourceType.UNIT, unitId, "LEASE_CREATE")).isTrue();
@@ -152,9 +152,9 @@ class AuthorizationServiceImplTest {
         UUID propertyBId = UUID.randomUUID();
 
         // User only has membership in propertyId, NOT propertyBId
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyBId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyBId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyBId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyBId))
                 .thenReturn(Set.of());
 
         assertThat(authorizationService.hasFullAccess(propertyBId)).isFalse();
@@ -168,9 +168,9 @@ class AuthorizationServiceImplTest {
     void customAccessDeniedForUngrantedStaffAndFinancePermissions() {
         authenticateUser(userId, UserRole.USER);
 
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
                 .thenReturn(Set.of("PROPERTY_VIEW"));
 
         assertThat(authorizationService.hasPermission(propertyId, "PROPERTY_VIEW")).isTrue();
@@ -202,9 +202,9 @@ class AuthorizationServiceImplTest {
         assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseAId, "LEASE_VIEW_OWN")).isTrue();
 
         // Tenant A accessing Tenant B lease -> Denied
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
                 .thenReturn(Set.of());
 
         assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseBId, "LEASE_VIEW_OWN")).isFalse();
@@ -223,9 +223,9 @@ class AuthorizationServiceImplTest {
 
         when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(foreignLeaseId));
         when(leaseFacade.getLeaseById(foreignLeaseId)).thenReturn(Optional.of(foreignLease));
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, foreignPropertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, foreignPropertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, foreignPropertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, foreignPropertyId))
                 .thenReturn(Set.of());
 
         assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "PROPERTY_VIEW")).isFalse();
@@ -244,9 +244,9 @@ class AuthorizationServiceImplTest {
 
         when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(leaseId));
         when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(ownLease));
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
                 .thenReturn(Set.of());
 
         // The tenant on the lease can view their own rent cycle …
@@ -267,9 +267,9 @@ class AuthorizationServiceImplTest {
 
         when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(leaseId));
         when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(othersLease));
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
                 .thenReturn(Set.of("LEASE_VIEW"));
 
         assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "LEASE_VIEW")).isTrue();
@@ -284,9 +284,9 @@ class AuthorizationServiceImplTest {
                 userId, "ACTIVE", null, null, null);
 
         when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(lease));
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
                 .thenReturn(Set.of());
 
         assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_VIEW_OWN")).isTrue();
@@ -304,7 +304,7 @@ class AuthorizationServiceImplTest {
 
         when(inventoryFacade.getLeaseIdForAssignment(assignmentId)).thenReturn(Optional.of(leaseId));
         when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(lease));
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(true);
 
         assertThat(authorizationService.hasFullAccess(ResourceType.INVENTORY_ASSIGNMENT, assignmentId)).isTrue();

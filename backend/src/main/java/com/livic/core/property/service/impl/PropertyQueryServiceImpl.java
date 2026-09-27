@@ -1,9 +1,11 @@
 package com.livic.core.property.service.impl;
 
+import com.livic.core.property.repository.PropertyRepository;
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.core.property.domain.PropertyTbl;
-import com.livic.core.property.service.interfaces.PropertyCrudService;
+import com.livic.core.property.dto.PropertyDTOs;
+import com.livic.core.property.mapper.PropertyMapper;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,21 +21,25 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class PropertyQueryServiceImpl implements PropertyQueryService {
 
-    private final PropertyCrudService propertyCrudService;
+    private final PropertyRepository propertyRepository;
     private final AuthFacade authFacade;
 
-    public PropertyQueryServiceImpl(PropertyCrudService propertyCrudService, AuthFacade authFacade) {
-        this.propertyCrudService = propertyCrudService;
+    public PropertyQueryServiceImpl(PropertyRepository propertyRepository, AuthFacade authFacade) {
+        this.propertyRepository = propertyRepository;
         this.authFacade = authFacade;
     }
 
     @Override
     public Page<PropertyTbl> getPropertiesByUserId(UUID userId, Pageable pageable) {
-        return getPropertiesByUserId(userId, null, pageable);
+        return findPropertiesByUserId(userId, null, pageable);
     }
 
     @Override
-    public Page<PropertyTbl> getPropertiesByUserId(UUID userId, String search, Pageable pageable) {
+    public Page<PropertyDTOs.PropertyResponse> getMyProperties(UUID userId, String search, Pageable pageable) {
+        return findPropertiesByUserId(userId, search, pageable).map(PropertyMapper::toResponse);
+    }
+
+    private Page<PropertyTbl> findPropertiesByUserId(UUID userId, String search, Pageable pageable) {
         List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(userId);
         List<UUID> propertyIds = memberships.stream()
                 .filter(MembershipSummaryDTO::isActive)
@@ -41,10 +47,13 @@ public class PropertyQueryServiceImpl implements PropertyQueryService {
                 .filter(Objects::nonNull)
                 .distinct()
                 .toList();
-        if (search == null || search.trim().isEmpty()) {
-            return propertyCrudService.findDistinctByIdIn(propertyIds, pageable);
+        if (propertyIds.isEmpty()) {
+            return Page.empty(pageable);
         }
-        return propertyCrudService.findDistinctByIdInAndSearch(propertyIds, search, pageable);
+        if (search == null || search.trim().isEmpty()) {
+            return propertyRepository.findDistinctByIdIn(propertyIds, pageable);
+        }
+        return propertyRepository.findDistinctByIdInAndSearch(propertyIds, search, pageable);
     }
 
     @Override
@@ -64,22 +73,27 @@ public class PropertyQueryServiceImpl implements PropertyQueryService {
         if (propertyIds == null || propertyIds.isEmpty()) {
             return List.of();
         }
-        return propertyCrudService.findDistinctByIdIn(propertyIds);
+        return propertyRepository.findDistinctByIdIn(propertyIds);
     }
 
     @Override
     public PropertyTbl getPropertyById(UUID propertyId) {
-        return propertyCrudService.findById(propertyId)
+        return propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
     }
 
     @Override
+    public PropertyDTOs.PropertyResponse getProperty(UUID propertyId) {
+        return PropertyMapper.toResponse(getPropertyById(propertyId));
+    }
+
+    @Override
     public boolean existsById(UUID propertyId) {
-        return propertyCrudService.existsById(propertyId);
+        return propertyRepository.existsById(propertyId);
     }
 
     @Override
     public List<PropertyTbl> getPropertiesByAutoBillDayOfMonth(int day) {
-        return propertyCrudService.findByAutoBillDayOfMonth(day);
+        return propertyRepository.findByAutoBillDayOfMonth(day);
     }
 }

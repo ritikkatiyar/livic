@@ -10,7 +10,7 @@ import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.dto.UnitDTOs;
-import com.livic.core.property.service.impl.UnitLayoutOrchestrationService;
+import com.livic.core.property.service.interfaces.UnitLayoutOrchestrationService;
 import com.livic.core.property.repository.PropertyRepository;
 import com.livic.core.property.repository.UnitRepository;
 import com.livic.core.property.service.interfaces.PropertyService;

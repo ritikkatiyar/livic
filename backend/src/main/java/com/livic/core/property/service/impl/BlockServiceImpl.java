@@ -56,7 +56,6 @@ public class BlockServiceImpl implements BlockService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public BlockTbl resolveBlock(UUID propertyId, UUID blockId) {
         if (blockId == null) {
             // Creates the default block if the property predates blocks, which is what keeps

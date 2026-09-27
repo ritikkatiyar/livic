@@ -15,13 +15,13 @@ import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -94,23 +94,21 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             return Page.empty(pageable);
         }
 
-        List<DefaulterRecordDTO> defaulterData = financeFacade.getDefaulters(propertyIds);
+        // Only the requested page is read, in the query's own order (earliest due first); the
+        // whole portfolio's overdue bills used to be loaded on every page.
+        Page<DefaulterRecordDTO> defaulters = financeFacade.getDefaulters(
+                propertyIds, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         LocalDate today = LocalDate.now();
 
-        List<UUID> tenantIds = defaulterData.stream()
+        List<UUID> tenantIds = defaulters.getContent().stream()
                 .map(DefaulterRecordDTO::tenantId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
         Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(tenantIds);
 
-        List<DefaulterResponse> all = new ArrayList<>();
-        for (DefaulterRecordDTO row : defaulterData) {
-            UserSummaryDTO user = row.tenantId() != null ? usersMap.get(row.tenantId()) : null;
-            all.add(AnalyticsMapper.toDefaulterResponse(row, user, today));
-        }
-
-        return paginateList(all, pageable);
+        return defaulters.map(row -> AnalyticsMapper.toDefaulterResponse(
+                row, row.tenantId() != null ? usersMap.get(row.tenantId()) : null, today));
     }
 
     @Override

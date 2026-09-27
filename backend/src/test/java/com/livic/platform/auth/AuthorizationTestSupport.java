@@ -1,8 +1,8 @@
 package com.livic.platform.auth;
 
+import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.service.impl.AuthorizationServiceImpl;
 import com.livic.platform.auth.service.impl.ResourceScopeRegistry;
-import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.core.finance.facade.FinanceFacade;
 import com.livic.core.finance.security.FinanceResourceScopeResolver;
 import com.livic.verticals.rental.lease.facade.LeaseFacade;
@@ -27,13 +27,13 @@ public final class AuthorizationTestSupport {
     private AuthorizationTestSupport() {
     }
 
-    public static AuthorizationServiceImpl authorizationService(MembershipCrudService membershipCrudService,
+    public static AuthorizationServiceImpl authorizationService(MembershipRepository membershipRepository,
                                                                 UnitFacade unitFacade,
                                                                 FinanceFacade financeFacade,
                                                                 LeaseFacade leaseFacade,
                                                                 InventoryFacade inventoryFacade,
                                                                 StorageFacade storageFacade) {
-        return new AuthorizationServiceImpl(membershipCrudService, resourceScopeRegistry(
+        return new AuthorizationServiceImpl(membershipRepository, resourceScopeRegistry(
                 unitFacade, financeFacade, leaseFacade, inventoryFacade, storageFacade));
     }
 

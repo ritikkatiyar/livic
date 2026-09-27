@@ -1,23 +1,22 @@
 package com.livic.core.community.issue.service.impl;
 
+import com.livic.core.community.issue.repository.IssueTimelineRepository;
 import com.livic.core.community.issue.domain.IssueEscalationStatus;
 import com.livic.core.community.issue.domain.IssuePriority;
 import com.livic.core.community.issue.domain.IssueStatus;
 import com.livic.core.community.issue.domain.IssueTbl;
 import com.livic.core.community.issue.domain.IssueTimelineTbl;
 import com.livic.core.community.issue.service.interfaces.EscalationStrategy;
-import com.livic.core.community.issue.service.interfaces.IssueTimelineCrudService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class SlaAutoEscalationStrategy implements EscalationStrategy {
 
-    private final IssueTimelineCrudService issueTimelineCrudService;
+    private final IssueTimelineRepository issueTimelineRepository;
 
     @Override
     public boolean shouldEscalate(IssueTbl issue) {
@@ -33,11 +32,9 @@ public class SlaAutoEscalationStrategy implements EscalationStrategy {
             return false;
         }
 
-        List<IssueTimelineTbl> timeline = issueTimelineCrudService.findByIssueIdOrderByCreatedAtAsc(issue.getId());
-        LocalDateTime latestActivity = issue.getCreatedAt();
-        if (timeline != null && !timeline.isEmpty()) {
-            latestActivity = timeline.get(timeline.size() - 1).getCreatedAt();
-        }
+        LocalDateTime latestActivity = issueTimelineRepository.findFirstByIssueIdOrderByCreatedAtDesc(issue.getId())
+                .map(IssueTimelineTbl::getCreatedAt)
+                .orElse(issue.getCreatedAt());
 
         long hoursElapsed = ChronoUnit.HOURS.between(latestActivity, LocalDateTime.now());
         return hoursElapsed >= 48;

@@ -1,9 +1,8 @@
 package com.livic.platform.auth.service.impl;
 
+import com.livic.platform.auth.repository.EmailVerificationRepository;
 import com.livic.platform.auth.domain.EmailVerificationTbl;
 import com.livic.platform.auth.dto.AuthResponses.TokenBundle;
-import com.livic.platform.auth.service.TokenIssuer;
-import com.livic.platform.auth.service.interfaces.EmailVerificationCrudService;
 import com.livic.platform.auth.service.interfaces.EmailVerificationService;
 import com.livic.platform.common.event.EmailVerificationRequestedEvent;
 import com.livic.platform.common.exception.BusinessException;
@@ -30,7 +29,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private static final int MAX_ATTEMPTS = 5;
     private static final String INVALID_CODE = "Invalid or expired verification code";
 
-    private final EmailVerificationCrudService emailVerificationCrudService;
+    private final EmailVerificationRepository emailVerificationRepository;
     private final UserFacade userFacade;
     private final PasswordEncoder passwordEncoder;
     private final TokenIssuer tokenIssuer;
@@ -40,7 +39,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     @Transactional
     public void issueCode(UUID userId) {
         Instant now = Instant.now();
-        EmailVerificationTbl verification = emailVerificationCrudService.findByUserId(userId)
+        EmailVerificationTbl verification = emailVerificationRepository.findByUserId(userId)
                 .orElseGet(() -> EmailVerificationTbl.builder().userId(userId).build());
 
         if (verification.getLastSentAt() != null && verification.getLastSentAt().plus(RESEND_COOLDOWN).isAfter(now)) {
@@ -52,7 +51,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         verification.setExpiresAt(now.plus(CODE_TTL));
         verification.setAttemptCount(0);
         verification.setLastSentAt(now);
-        emailVerificationCrudService.save(verification);
+        emailVerificationRepository.save(verification);
 
         eventPublisher.publishEvent(new EmailVerificationRequestedEvent(this, userId.toString(), code, CODE_TTL.toMinutes()));
         log.info("email_verification_code_issued userId={}", userId);
@@ -63,7 +62,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     public TokenBundle verify(String email, String code) {
         UserSummaryDTO user = userFacade.getUserByEmail(email.trim().toLowerCase())
                 .orElseThrow(() -> new BusinessException(INVALID_CODE));
-        EmailVerificationTbl verification = emailVerificationCrudService.findByUserId(user.id())
+        EmailVerificationTbl verification = emailVerificationRepository.findByUserId(user.id())
                 .orElseThrow(() -> new BusinessException(INVALID_CODE));
 
         if (verification.getExpiresAt().isBefore(Instant.now())) {
@@ -74,12 +73,12 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         }
         if (!passwordEncoder.matches(code, verification.getCodeHash())) {
             verification.setAttemptCount(verification.getAttemptCount() + 1);
-            emailVerificationCrudService.save(verification);
+            emailVerificationRepository.save(verification);
             throw new BusinessException(INVALID_CODE);
         }
 
         userFacade.markEmailVerified(user.id());
-        emailVerificationCrudService.delete(verification);
+        emailVerificationRepository.delete(verification);
         log.info("email_verified userId={}", user.id());
         return tokenIssuer.issueFor(user);
     }

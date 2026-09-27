@@ -25,6 +25,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * MAX_TEAM_MEMBERS is per property, includes the owner, and uses the owner's plan:
@@ -78,6 +79,19 @@ class TeamMemberLimitIntegrationTest {
 
         assertEquals(HttpStatus.FORBIDDEN, denied.getStatus());
         assertFalse(membershipRepository.existsByUserIdAndPropertyId(extra.getId(), property.getId()));
+    }
+
+    @Test
+    void upgradeTakesEffectWithoutARestart() {
+        // The plan used to be cached per user and never evicted, so after upgrading the owner
+        // kept the starter limits until the server restarted.
+        assertThrows(BusinessException.class, () -> addMember(newUser("before-upgrade")));
+
+        subscribeOwnerToBasic();
+        UserTbl staff = newUser("after-upgrade");
+        addMember(staff);
+
+        assertTrue(membershipRepository.existsByUserIdAndPropertyId(staff.getId(), property.getId()));
     }
 
     @Test

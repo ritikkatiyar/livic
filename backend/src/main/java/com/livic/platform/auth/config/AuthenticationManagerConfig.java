@@ -1,6 +1,6 @@
 package com.livic.platform.auth.config;
 
-import com.livic.platform.auth.service.CustomUserDetailsService;
+import com.livic.platform.auth.service.impl.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.ProviderManager;

@@ -1,5 +1,6 @@
 package com.livic.core.property.service.impl;
 
+import com.livic.core.property.repository.PropertyJoinCodeRepository;
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.common.constant.StaffPermission;
@@ -9,7 +10,6 @@ import com.livic.core.property.domain.PropertyJoinCodeTbl;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.dto.PropertyJoinCodeDTOs;
 import com.livic.core.property.mapper.PropertyJoinCodeMapper;
-import com.livic.core.property.service.interfaces.PropertyJoinCodeCrudService;
 import com.livic.core.property.service.interfaces.PropertyJoinCodeService;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
 import com.livic.platform.user.domain.UserMode;
@@ -37,18 +37,18 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
     private static final String ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final PropertyJoinCodeCrudService propertyJoinCodeCrudService;
+    private final PropertyJoinCodeRepository propertyJoinCodeRepository;
     private final PropertyQueryService propertyQueryService;
     private final AuthFacade authFacade;
     private final UserFacade userFacade;
 
     public PropertyJoinCodeServiceImpl(
-            PropertyJoinCodeCrudService propertyJoinCodeCrudService,
+            PropertyJoinCodeRepository propertyJoinCodeRepository,
             PropertyQueryService propertyQueryService,
             AuthFacade authFacade,
             UserFacade userFacade
     ) {
-        this.propertyJoinCodeCrudService = propertyJoinCodeCrudService;
+        this.propertyJoinCodeRepository = propertyJoinCodeRepository;
         this.propertyQueryService = propertyQueryService;
         this.authFacade = authFacade;
         this.userFacade = userFacade;
@@ -72,7 +72,7 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
         }
 
         String code = generateRandomCode(property.getName(), effectiveTitle);
-        while (propertyJoinCodeCrudService.findByCode(code).isPresent()) {
+        while (propertyJoinCodeRepository.findByCode(code).isPresent()) {
             code = generateRandomCode(property.getName(), effectiveTitle);
         }
 
@@ -89,14 +89,14 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
                 .expiresAt(Instant.now().plusSeconds(172800)) // 48 hours
                 .build();
 
-        PropertyJoinCodeTbl saved = propertyJoinCodeCrudService.save(joinCode);
+        PropertyJoinCodeTbl saved = propertyJoinCodeRepository.save(joinCode);
         return PropertyJoinCodeMapper.toResponse(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PropertyJoinCodeDTOs.JoinCodeResponse> getPropertyJoinCodes(UUID propertyId, Pageable pageable) {
-        Page<PropertyJoinCodeTbl> page = propertyJoinCodeCrudService.findByPropertyId(propertyId, pageable);
+        Page<PropertyJoinCodeTbl> page = propertyJoinCodeRepository.findByPropertyId(propertyId, pageable);
         return page.map(PropertyJoinCodeMapper::toResponse);
     }
 
@@ -104,7 +104,7 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
     public PropertyJoinCodeDTOs.JoinCodeResultResponse validateAndApplyJoinCode(String code, UUID userId) {
         String cleanCode = code != null ? code.trim().toUpperCase() : "";
 
-        PropertyJoinCodeTbl joinCode = propertyJoinCodeCrudService.findByCode(cleanCode)
+        PropertyJoinCodeTbl joinCode = propertyJoinCodeRepository.findByCode(cleanCode)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Invalid join code."));
 
         if (!joinCode.isActive()) {
@@ -113,13 +113,13 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
 
         if (joinCode.getExpiresAt().isBefore(Instant.now())) {
             joinCode.setActive(false);
-            propertyJoinCodeCrudService.save(joinCode);
+            propertyJoinCodeRepository.save(joinCode);
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code has expired.");
         }
 
         if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
             joinCode.setActive(false);
-            propertyJoinCodeCrudService.save(joinCode);
+            propertyJoinCodeRepository.save(joinCode);
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code has reached its maximum uses.");
         }
 
@@ -144,7 +144,7 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
         if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
             joinCode.setActive(false);
         }
-        propertyJoinCodeCrudService.save(joinCode);
+        propertyJoinCodeRepository.save(joinCode);
 
         log.info("join_code_applied userId={} propertyId={} title={} accessType={} code={}",
                 userId, property.getId(), joinCode.getTitle(), joinCode.getAccessType(), cleanCode);

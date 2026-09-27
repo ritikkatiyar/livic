@@ -1,15 +1,14 @@
 package com.livic.platform.auth.service.impl;
 
+import com.livic.platform.auth.repository.RefreshTokenRepository;
+import com.livic.platform.auth.repository.EmailVerificationRepository;
+import com.livic.platform.auth.repository.AuthIdentityRepository;
 import com.livic.platform.auth.domain.AuthIdentityTbl;
 import com.livic.platform.auth.dto.AuthResponses.TokenBundle;
 import com.livic.platform.auth.provider.AuthProviderType;
 import com.livic.platform.auth.provider.ExternalIdentityProvider;
 import com.livic.platform.auth.provider.ResolvedIdentity;
-import com.livic.platform.auth.service.TokenIssuer;
-import com.livic.platform.auth.service.interfaces.AuthIdentityCrudService;
-import com.livic.platform.auth.service.interfaces.EmailVerificationCrudService;
 import com.livic.platform.auth.service.interfaces.OAuthLoginService;
-import com.livic.platform.auth.service.interfaces.RefreshTokenCrudService;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
@@ -29,24 +28,24 @@ import java.util.Optional;
 public class OAuthLoginServiceImpl implements OAuthLoginService {
 
     private final Map<AuthProviderType, ExternalIdentityProvider> providers = new EnumMap<>(AuthProviderType.class);
-    private final AuthIdentityCrudService authIdentityCrudService;
-    private final EmailVerificationCrudService emailVerificationCrudService;
+    private final AuthIdentityRepository authIdentityRepository;
+    private final EmailVerificationRepository emailVerificationRepository;
     private final UserFacade userFacade;
     private final TokenIssuer tokenIssuer;
-    private final RefreshTokenCrudService refreshTokenCrudService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public OAuthLoginServiceImpl(List<ExternalIdentityProvider> providers,
-                                 AuthIdentityCrudService authIdentityCrudService,
-                                 EmailVerificationCrudService emailVerificationCrudService,
+                                 AuthIdentityRepository authIdentityRepository,
+                                 EmailVerificationRepository emailVerificationRepository,
                                  UserFacade userFacade,
                                  TokenIssuer tokenIssuer,
-                                 RefreshTokenCrudService refreshTokenCrudService) {
+                                 RefreshTokenRepository refreshTokenRepository) {
         providers.forEach(provider -> this.providers.put(provider.type(), provider));
-        this.authIdentityCrudService = authIdentityCrudService;
-        this.emailVerificationCrudService = emailVerificationCrudService;
+        this.authIdentityRepository = authIdentityRepository;
+        this.emailVerificationRepository = emailVerificationRepository;
         this.userFacade = userFacade;
         this.tokenIssuer = tokenIssuer;
-        this.refreshTokenCrudService = refreshTokenCrudService;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     @Override
@@ -58,7 +57,7 @@ public class OAuthLoginServiceImpl implements OAuthLoginService {
 
         ResolvedIdentity identity = identityProvider.verify(idToken);
 
-        Optional<AuthIdentityTbl> linked = authIdentityCrudService.findByProviderAndProviderSubject(type, identity.subject());
+        Optional<AuthIdentityTbl> linked = authIdentityRepository.findByProviderAndProviderSubject(type, identity.subject());
         if (linked.isPresent()) {
             UserSummaryDTO user = userFacade.getUserById(linked.get().getUserId())
                     .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "Account no longer available"));
@@ -76,15 +75,15 @@ public class OAuthLoginServiceImpl implements OAuthLoginService {
             // An unverified account may have been registered by someone who does not own this mailbox.
             // Drop any password and sessions created before ownership was proven, so they cannot be reused.
             userFacade.clearPassword(user.id());
-            refreshTokenCrudService.revokeAllForUser(user.id());
+            refreshTokenRepository.revokeAllByUserId(user.id());
             log.warn("unverified_account_claimed_via_provider userId={} provider={}", user.id(), type);
         }
 
         // The provider has proven mailbox ownership, so any pending signup code is no longer needed.
         userFacade.markEmailVerified(user.id());
-        emailVerificationCrudService.findByUserId(user.id()).ifPresent(emailVerificationCrudService::delete);
+        emailVerificationRepository.findByUserId(user.id()).ifPresent(emailVerificationRepository::delete);
 
-        authIdentityCrudService.save(AuthIdentityTbl.builder()
+        authIdentityRepository.save(AuthIdentityTbl.builder()
                 .userId(user.id())
                 .provider(type)
                 .providerSubject(identity.subject())

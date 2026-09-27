@@ -1,5 +1,6 @@
 package com.livic.verticals.rental.lease.service.impl;
 
+import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.verticals.rental.lease.dto.LeaseDTOs;
@@ -7,7 +8,6 @@ import com.livic.verticals.rental.lease.mapper.LeaseMapper;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseOrchestrationService;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
@@ -41,7 +41,7 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
 
     private final PropertyFacade propertyFacade;
     private final UnitFacade unitFacade;
-    private final LeaseCrudService leaseCrudService;
+    private final LeaseRepository leaseRepository;
 
     @Override
     public Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID propertyId, Pageable pageable) {
@@ -80,7 +80,7 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
             return Page.empty(pageable);
         }
 
-        Page<LeaseTbl> page = leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE, pageable);
+        Page<LeaseTbl> page = leaseRepository.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE, pageable);
         List<LeaseDTOs.LeaseResponse> content = enrichLeases(page.getContent());
         return new PageImpl<>(content, pageable, page.getTotalElements());
     }
@@ -96,7 +96,7 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
         if (unitIds.isEmpty()) {
             return Page.empty(pageable);
         }
-        Page<LeaseTbl> page = leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE, pageable);
+        Page<LeaseTbl> page = leaseRepository.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE, pageable);
         List<LeaseDTOs.LeaseResponse> content = enrichLeases(page.getContent());
         return new PageImpl<>(content, pageable, page.getTotalElements());
     }

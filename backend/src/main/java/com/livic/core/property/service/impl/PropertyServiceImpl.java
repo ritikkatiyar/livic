@@ -1,17 +1,18 @@
 package com.livic.core.property.service.impl;
 
+import com.livic.core.property.repository.BlockRepository;
+import com.livic.core.property.repository.UnitRepository;
+import com.livic.core.property.repository.PropertyRepository;
 import com.livic.core.property.domain.BlockTbl;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.dto.PropertyDTOs;
 import com.livic.core.property.service.interfaces.UnitMemberService;
 import com.livic.core.property.service.interfaces.BlockService;
-import com.livic.core.property.service.interfaces.PropertyCrudService;
 import com.livic.core.property.service.interfaces.PropertyService;
 import com.livic.core.property.mapper.PropertyMapper;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import com.livic.platform.auth.facade.AuthFacade;
-import com.livic.core.property.service.interfaces.UnitCrudService;
 import com.livic.platform.common.event.PropertyDeletionEvent;
 import com.livic.core.property.spi.UnitOccupancyProvider;
 import com.livic.platform.common.exception.BusinessException;
@@ -30,23 +31,23 @@ import java.util.UUID;
 @Slf4j
 @Transactional
 public class PropertyServiceImpl implements PropertyService {
-    private final PropertyCrudService propertyCrudService;
+    private final PropertyRepository propertyRepository;
     private final UserFacade userFacade;
     private final AuthFacade authFacade;
-    private final UnitCrudService unitCrudService;
+    private final UnitRepository unitRepository;
     private final BlockService blockService;
-    private final com.livic.core.property.repository.BlockRepository blockRepository;
+    private final BlockRepository blockRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final UnitOccupancyProvider unitOccupancyProvider;
     private final UnitMemberService unitMemberService;
 
     @Override
-    public PropertyTbl createProperty(PropertyDTOs.CreatePropertyRequest request, UUID creatorId) {
+    public PropertyDTOs.PropertyResponse createProperty(PropertyDTOs.CreatePropertyRequest request, UUID creatorId) {
         UserSummaryDTO creator = userFacade.getUserById(creatorId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
 
         PropertyTbl property = PropertyMapper.toEntity(request);
-        PropertyTbl savedProperty = propertyCrudService.save(property);
+        PropertyTbl savedProperty = propertyRepository.save(property);
         // Create still takes totalFloors, which now belongs to the building rather than the
         // plot, so it lands on the default block.
         BlockTbl defaultBlock = blockService.getOrCreateDefaultBlock(savedProperty);
@@ -59,12 +60,12 @@ public class PropertyServiceImpl implements PropertyService {
         authFacade.createOwnerMembership(savedProperty.getId(), creatorId);
         
         log.info("[PROPERTY] User {} created property: {}", creatorId, savedProperty.getId());
-        return savedProperty;
+        return PropertyMapper.toResponse(savedProperty);
     }
 
     @Override
-    public PropertyTbl updateProperty(UUID propertyId, PropertyDTOs.UpdatePropertyRequest request) {
-        PropertyTbl property = propertyCrudService.findById(propertyId)
+    public PropertyDTOs.PropertyResponse updateProperty(UUID propertyId, PropertyDTOs.UpdatePropertyRequest request) {
+        PropertyTbl property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
         PropertyMapper.updateEntity(request, property);
         if (request.totalFloors() != null) {
@@ -72,7 +73,7 @@ public class PropertyServiceImpl implements PropertyService {
             defaultBlock.setTotalFloors(request.totalFloors());
             blockRepository.save(defaultBlock);
         }
-        return propertyCrudService.save(property);
+        return PropertyMapper.toResponse(propertyRepository.save(property));
     }
 
     @Override
@@ -87,23 +88,23 @@ public class PropertyServiceImpl implements PropertyService {
                     "Cannot delete property because units still have owners or residents assigned.");
         }
 
-        PropertyTbl property = propertyCrudService.findById(propertyId)
+        PropertyTbl property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
         
         // Publish synchronous deletion event to let other modules validate/veto/cleanup if necessary
         eventPublisher.publishEvent(new PropertyDeletionEvent(this, propertyId));
         
-        unitCrudService.deleteByPropertyId(propertyId);
+        unitRepository.deleteByPropertyId(propertyId);
         blockService.deleteByPropertyId(propertyId);
-        propertyCrudService.delete(property);
+        propertyRepository.delete(property);
     }
 
     @Override
-    public PropertyTbl togglePropertyActiveStatus(UUID propertyId, boolean active) {
-        PropertyTbl property = propertyCrudService.findById(propertyId)
+    public PropertyDTOs.PropertyResponse togglePropertyActiveStatus(UUID propertyId, boolean active) {
+        PropertyTbl property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Property not found"));
         property.setActive(active);
-        return propertyCrudService.save(property);
+        return PropertyMapper.toResponse(propertyRepository.save(property));
     }
 
 }

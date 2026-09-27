@@ -18,6 +18,22 @@
       "url": "http://localhost:8081"
     },
     {
+      "name": "resident-web",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--max-old-space-size=8192",
+        "node_modules/expo/bin/cli",
+        "start",
+        "--web",
+        "--offline",
+        "--port",
+        "3001"
+      ],
+      "cwd": "livic-resident-fe",
+      "port": 3001,
+      "url": "http://localhost:3001"
+    },
+    {
       "name": "backend",
       "runtimeExecutable": "mvn",
       "runtimeArgs": [
@@ -39,6 +55,17 @@
       "cwd": "backend",
       "port": 8090,
       "url": "http://localhost:8090"
+    },
+    {
+      "name": "ai-service",
+      "runtimeExecutable": "mvn",
+      "runtimeArgs": [
+        "spring-boot:run",
+        "-Dspring-boot.run.arguments=--spring.config.import=optional:file:../.env[.properties] --SERVER_PORT=8082 --APP_AI_ENABLED=true --SPRING_AI_MODEL_CHAT=google-genai --DB_URL=jdbc:mysql://localhost:3307/livic?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC --DB_USERNAME=livic --DB_PASSWORD=livic"
+      ],
+      "cwd": "ai-service",
+      "port": 8082,
+      "url": "http://localhost:8082"
     }
   ]
 }

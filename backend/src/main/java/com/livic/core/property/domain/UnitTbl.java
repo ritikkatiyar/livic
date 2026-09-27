@@ -1,8 +1,8 @@
 package com.livic.core.property.domain;
 
 import com.livic.platform.common.domain.BaseEntity;
-import com.livic.platform.common.domain.FacingDirection;
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.property.domain.FacingDirection;
+import com.livic.core.property.domain.UnitType;
 import jakarta.persistence.*;
 import lombok.*;
 

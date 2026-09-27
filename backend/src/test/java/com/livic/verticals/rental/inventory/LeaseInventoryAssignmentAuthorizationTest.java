@@ -1,9 +1,9 @@
 package com.livic.verticals.rental.inventory;
 
+import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.AuthorizationTestSupport;
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.auth.service.impl.AuthorizationServiceImpl;
-import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.common.enums.ResourceType;
 import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 class LeaseInventoryAssignmentAuthorizationTest {
 
     @Mock
-    private MembershipCrudService membershipCrudService;
+    private MembershipRepository membershipRepository;
 
     @Mock
     private LeaseFacade leaseFacade;
@@ -59,7 +59,7 @@ class LeaseInventoryAssignmentAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, null, leaseFacade, inventoryFacade, null);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, leaseFacade, inventoryFacade, null);
         propertyId = UUID.randomUUID();
         leaseId = UUID.randomUUID();
         assignmentId = UUID.randomUUID();
@@ -105,7 +105,7 @@ class LeaseInventoryAssignmentAuthorizationTest {
         );
 
         when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(lease));
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("LEASE_UPDATE", "LEASE_VIEW"));
         when(inventoryFacade.getLeaseIdForAssignment(assignmentId)).thenReturn(Optional.of(leaseId));
 
@@ -137,7 +137,7 @@ class LeaseInventoryAssignmentAuthorizationTest {
         );
 
         when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(lease));
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(tenantUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(tenantUserId, propertyId))
                 .thenReturn(Set.of()); // Tenant does not hold property-level LEASE_UPDATE
         when(inventoryFacade.getLeaseIdForAssignment(assignmentId)).thenReturn(Optional.of(leaseId));
 
@@ -169,7 +169,7 @@ class LeaseInventoryAssignmentAuthorizationTest {
         );
 
         when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(lease));
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(unrelatedUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(unrelatedUserId, propertyId))
                 .thenReturn(Set.of());
         when(inventoryFacade.getLeaseIdForAssignment(assignmentId)).thenReturn(Optional.of(leaseId));
 

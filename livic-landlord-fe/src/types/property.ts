@@ -3,6 +3,7 @@ export type CreatePropertyRequest = {
   address: string;
   city: string;
   landmark?: string;
+  /** The default block's height. Omit when the property has several blocks. */
   totalFloors?: number;
   amenities?: string[];
   autoBillDayOfMonth?: number | null;
@@ -13,6 +14,7 @@ export type UpdatePropertyRequest = {
   address: string;
   city: string;
   landmark?: string;
+  /** The default block's height. Omit when the property has several blocks. */
   totalFloors?: number;
   amenities?: string[];
   autoBillDayOfMonth?: number | null;
@@ -24,7 +26,6 @@ export type PropertyResponse = {
   address: string;
   city: string;
   landmark?: string;
-  totalFloors?: number;
   ownerId?: string;
   isActive?: boolean;
   amenities?: string[];

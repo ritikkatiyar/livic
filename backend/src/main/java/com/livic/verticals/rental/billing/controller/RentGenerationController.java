@@ -19,7 +19,7 @@ import java.util.UUID;
  * stays in core, where an owner with no lease can also be billed.
  */
 @RestController
-@RequestMapping("/api/v1/finance/rent-cycles")
+@RequestMapping("/api/v1/finance/bills")
 @RequiredArgsConstructor
 public class RentGenerationController {
 

@@ -18,5 +18,4 @@ public interface OtpVerificationRepository extends JpaRepository<OtpVerification
 
     Optional<OtpVerificationTbl> findBySessionToken(String sessionToken);
 
-    void deleteByExpiresAtBefore(Instant threshold);
 }

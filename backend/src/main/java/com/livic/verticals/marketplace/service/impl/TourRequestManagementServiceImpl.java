@@ -10,7 +10,7 @@ import com.livic.verticals.marketplace.service.interfaces.TourAvailabilityServic
 import com.livic.verticals.marketplace.service.interfaces.TourRequestManagementService;
 import com.livic.verticals.marketplace.slots.TourSchedule;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
-import com.livic.platform.common.domain.LeadStatus;
+import com.livic.verticals.marketplace.domain.LeadStatus;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;

@@ -8,7 +8,6 @@ import com.livic.platform.payment.domain.PaymentTransactionTbl;
 import com.livic.platform.payment.domain.PaymentWebhookEventTbl;
 import com.livic.platform.payment.repository.PaymentTransactionRepository;
 import com.livic.platform.payment.repository.PaymentWebhookEventRepository;
-import com.livic.platform.payment.service.PaymentGatewayRouter;
 import com.livic.platform.payment.service.interfaces.PaymentTransactionService;
 import com.livic.platform.payment.dto.PaymentGatewayType;
 import com.livic.platform.payment.dto.PaymentIntentRequest;
@@ -161,7 +160,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                         String orderId = entityObj.optString("order_id");
                         String paymentMethod = entityObj.optString("method", PaymentConstants.Method.ONLINE);
 
-                        PaymentTransactionTbl transaction = paymentTransactionRepository.findByGatewayTransactionId(orderId)
+                        PaymentTransactionTbl transaction = paymentTransactionRepository.findByGatewayTransactionIdForUpdate(orderId)
                                 .orElse(null);
 
                         if (transaction != null && !PaymentConstants.Status.SUCCESS.equals(transaction.getStatus())) {
@@ -235,7 +234,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
 
         // 2. Find transaction by order ID and mark SUCCESS
         PaymentTransactionTbl transaction = paymentTransactionRepository
-                .findByGatewayTransactionId(request.razorpayOrderId())
+                .findByGatewayTransactionIdForUpdate(request.razorpayOrderId())
                 .orElse(null);
 
         if (transaction == null) {
@@ -269,8 +268,11 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
 
     @Override
     @Transactional(readOnly = true)
-    public com.livic.platform.payment.dto.PaymentTransactionResponse getTransactionResponse(UUID id) {
+    public com.livic.platform.payment.dto.PaymentTransactionResponse getTransactionResponse(UUID id, UUID callerUserId) {
+        // Only the payer may read a transaction. Anyone else gets the same answer as for an id
+        // that does not exist, so the endpoint cannot be used to probe for payments.
         PaymentTransactionTbl tx = paymentTransactionRepository.findById(id)
+                .filter(t -> callerUserId.equals(t.getPayerUserId()))
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Transaction not found: " + id));
         return new com.livic.platform.payment.dto.PaymentTransactionResponse(
                 tx.getId(),

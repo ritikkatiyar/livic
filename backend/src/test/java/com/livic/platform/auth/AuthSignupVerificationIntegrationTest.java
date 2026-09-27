@@ -6,7 +6,7 @@ import com.livic.platform.auth.dto.AuthRequests.SignupRequest;
 import com.livic.platform.auth.dto.AuthResponses.SignupResponse;
 import com.livic.platform.auth.dto.AuthResponses.TokenBundle;
 import com.livic.platform.auth.repository.EmailVerificationRepository;
-import com.livic.platform.auth.service.JwtService;
+import com.livic.platform.auth.service.impl.JwtService;
 import com.livic.platform.auth.service.interfaces.AuthService;
 import com.livic.platform.auth.service.interfaces.EmailVerificationService;
 import com.livic.platform.common.domain.UserRole;

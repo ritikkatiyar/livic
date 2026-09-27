@@ -133,7 +133,7 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     const delayDebounceFn = setTimeout(async () => {
       setSuggestionsLoading(true);
       try {
-        const results = await searchUserByPhone(query, token);
+        const results = await searchUserByPhone(query, propertyId, token);
         setSuggestions(results || []);
       } catch (error) {
         console.error('Error fetching suggestions:', error);
@@ -143,7 +143,7 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [tenantPhoneSearch, token]);
+  }, [tenantPhoneSearch, propertyId, token]);
 
   const updateUnitDetails = (id: string, updates: Partial<UnitBlock>) => {
     setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
@@ -168,7 +168,7 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     setTenantSearchError(null);
     setTenantSearchResult(null);
     try {
-      const users = await searchUserByPhone(phone, token);
+      const users = await searchUserByPhone(phone, propertyId, token);
       if (!users || users.length === 0) {
         setTenantSearchError('Tenant not found with this number.');
         return;
@@ -265,7 +265,7 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     setTenantCreating(true);
     setTenantSearchError(null);
     try {
-      const createdUser = await quickCreateTenant({ email, fullName: name, phoneNumber: phone }, token);
+      const createdUser = await quickCreateTenant({ email, fullName: name, phoneNumber: phone }, propertyId, token);
       setTenantSearchResult(createdUser);
       setTenantPhoneSearch(createdUser.phoneNumber || '');
       setIsCreatingNewTenant(false);

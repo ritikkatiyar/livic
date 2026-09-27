@@ -7,9 +7,11 @@ import com.livic.platform.user.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/user")
@@ -19,18 +21,24 @@ public class UserController {
     private final UserService userService;
     private final UserQueryService userQueryService;
 
+    /**
+     * Finds the account behind a full phone number, for a landlord adding a tenant to a property
+     * they manage. Exact match only: a partial number used to return up to ten accounts, which let
+     * any signed-in user list everyone's name, email and phone a few digits at a time.
+     */
     @GetMapping("/search")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'LEASE_CREATE')")
     public ResponseEntity<ApiResponse<List<UserDTOs.UserSearchResponse>>> searchByPhone(
-            @RequestParam String phone
+            @RequestParam String phone,
+            @RequestParam UUID propertyId
     ) {
-        List<UserDTOs.UserSearchResponse> results = userQueryService.searchByPhoneNumber(phone).stream()
-                .map(UserDTOs.UserSearchResponse::from)
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success(results));
+        return ResponseEntity.ok(ApiResponse.success(userQueryService.lookupByPhoneNumber(phone)));
     }
 
     @PostMapping("/create-tenant")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'LEASE_CREATE')")
     public ResponseEntity<ApiResponse<UserDTOs.UserSearchResponse>> createTenant(
+            @RequestParam UUID propertyId,
             @Valid @RequestBody UserDTOs.CreateTenantRequest request
     ) {
         return ResponseEntity.ok(ApiResponse.success(userService.createTenant(request)));

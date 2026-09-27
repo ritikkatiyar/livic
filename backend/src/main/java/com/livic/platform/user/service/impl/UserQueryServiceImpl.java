@@ -1,8 +1,9 @@
 package com.livic.platform.user.service.impl;
 
+import com.livic.platform.user.repository.UserRepository;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.user.domain.UserTbl;
-import com.livic.platform.user.service.interfaces.UserCrudService;
+import com.livic.platform.user.dto.UserDTOs;
 import com.livic.platform.user.service.interfaces.UserQueryService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,48 +24,55 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class UserQueryServiceImpl implements UserQueryService {
 
-    private final UserCrudService userCrudService;
+    private final UserRepository userRepository;
 
     @Override
     public UserTbl getUserById(UUID id) {
-        return userCrudService.findById(id)
+        return userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     @Override
+    public UserDTOs.TenantProfileResponse getTenantProfile(UUID userId) {
+        return UserDTOs.TenantProfileResponse.from(getUserById(userId));
+    }
+
+    @Override
     public UserTbl getUserByEmail(String email) {
-        return userCrudService.findByAuthUid(normalizeEmail(email))
+        return userRepository.findByAuthUid(normalizeEmail(email))
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     @Override
     public Optional<UserTbl> findByEmail(String email) {
-        return userCrudService.findByAuthUid(normalizeEmail(email));
+        return userRepository.findByAuthUid(normalizeEmail(email));
     }
 
     @Override
     public Optional<UserTbl> findByPhoneNumber(String phoneNumber) {
-        return userCrudService.findByPhoneNumber(normalizePhoneNumber(phoneNumber));
+        return userRepository.findByPhoneNumber(normalizePhoneNumber(phoneNumber));
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return userCrudService.findByAuthUid(normalizeEmail(email)).isPresent();
+        return userRepository.findByAuthUid(normalizeEmail(email)).isPresent();
     }
 
     @Override
     public Map<UUID, UserTbl> getUsersByIds(Collection<UUID> ids) {
         if (ids == null || ids.isEmpty()) return Collections.emptyMap();
-        return userCrudService.findAllById(ids).stream()
+        return userRepository.findAllById(ids).stream()
                 .collect(Collectors.toMap(UserTbl::getId, u -> u));
     }
 
     @Override
-    public List<UserTbl> searchByPhoneNumber(String phoneNumber) {
+    public List<UserDTOs.UserSearchResponse> lookupByPhoneNumber(String phoneNumber) {
         if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
             return Collections.emptyList();
         }
-        return userCrudService.findTop10ByPhoneNumberContaining(phoneNumber.trim());
+        return findByPhoneNumber(phoneNumber).stream()
+                .map(UserDTOs.UserSearchResponse::from)
+                .toList();
     }
 
     private static String normalizeEmail(String email) {

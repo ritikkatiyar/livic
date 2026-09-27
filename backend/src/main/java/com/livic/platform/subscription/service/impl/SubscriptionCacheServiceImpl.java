@@ -1,18 +1,16 @@
 package com.livic.platform.subscription.service.impl;
 
+import com.livic.platform.subscription.repository.SubscriptionPlanRepository;
+import com.livic.platform.subscription.repository.SaasSubscriptionRepository;
+import com.livic.platform.subscription.repository.PlanFeatureLimitRepository;
 import com.livic.platform.common.subscription.FeatureKey;
 import com.livic.platform.subscription.domain.PlanFeatureLimitTbl;
 import com.livic.platform.subscription.domain.SaasSubscriptionTbl;
 import com.livic.platform.subscription.domain.SubscriptionPlanTbl;
 import com.livic.platform.subscription.dto.UserSubscriptionContext;
-import com.livic.platform.subscription.service.interfaces.PlanFeatureLimitCrudService;
-import com.livic.platform.subscription.service.interfaces.SaasSubscriptionCrudService;
 import com.livic.platform.subscription.service.interfaces.SubscriptionCacheService;
-import com.livic.platform.subscription.service.interfaces.SubscriptionPlanCrudService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,23 +24,24 @@ import java.util.UUID;
 @Slf4j
 public class SubscriptionCacheServiceImpl implements SubscriptionCacheService {
 
-    private final SaasSubscriptionCrudService subscriptionCrudService;
-    private final SubscriptionPlanCrudService planCrudService;
-    private final PlanFeatureLimitCrudService featureLimitCrudService;
+    private final SaasSubscriptionRepository saasSubscriptionRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
+    private final PlanFeatureLimitRepository planFeatureLimitRepository;
 
+    /**
+     * Read fresh on every call. It used to sit in a cache that nothing ever evicted, so a user who
+     * upgraded kept the starter plan's limits until a restart, and the cache grew by one entry per
+     * user forever. It is only asked when a property, unit or team seat is added, so three small
+     * queries per call cost nothing worth caching.
+     */
     @Override
-    @Cacheable(value = "userSubscription", key = "#userId")
     @Transactional(readOnly = true)
     public UserSubscriptionContext getUserSubscriptionContext(UUID userId) {
-        log.info("[SUBSCRIPTION CACHE MISS] Building subscription context from DB for user: {}", userId);
 
-        SaasSubscriptionTbl subscription = subscriptionCrudService.findByUserIdAndStatus(userId, "ACTIVE")
+        SaasSubscriptionTbl subscription = saasSubscriptionRepository.findFirstByUserIdAndStatusOrderByCreatedAtDesc(userId, "ACTIVE")
                 .orElse(null);
 
-        SubscriptionPlanTbl starterPlan = planCrudService.findAll().stream()
-                .filter(p -> "STARTER".equalsIgnoreCase(p.getPlanKey()))
-                .findFirst()
-                .orElse(null);
+        SubscriptionPlanTbl starterPlan = subscriptionPlanRepository.findByPlanKey("STARTER").orElse(null);
 
         String planId = starterPlan != null ? starterPlan.getIdString() : null;
         String planKey = "STARTER";
@@ -56,7 +55,7 @@ public class SubscriptionCacheServiceImpl implements SubscriptionCacheService {
         }
 
         // Fetch feature limits in a single query (0 N+1 queries)
-        List<PlanFeatureLimitTbl> limitsList = featureLimitCrudService.findByPlanId(planId);
+        List<PlanFeatureLimitTbl> limitsList = planFeatureLimitRepository.findByPlanId(planId);
         Map<FeatureKey, Integer> limitsMap = new HashMap<>();
 
         for (PlanFeatureLimitTbl limit : limitsList) {
@@ -76,9 +75,4 @@ public class SubscriptionCacheServiceImpl implements SubscriptionCacheService {
                 .build();
     }
 
-    @Override
-    @CacheEvict(value = "userSubscription", key = "#userId")
-    public void evictUserSubscriptionContext(UUID userId) {
-        log.info("[SUBSCRIPTION CACHE EVICT] Evicting subscription cache for user: {}", userId);
-    }
 }

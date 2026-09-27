@@ -19,7 +19,7 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { usePathname } from 'expo-router';
-import { runAICommand, getJobStatus } from '@/src/features/ai/api/ai.api';
+import { runAICommand } from '@/src/features/ai/api/ai.api';
 import { createStyles } from './FloatingAIAssistant.styles';
 
 type Message = {
@@ -28,10 +28,11 @@ type Message = {
   text: string;
 };
 
+// The assistant can only read data for now, so every example is a question.
 const EXAMPLES = [
-  'Generate rent roll for this month',
-  'Send billing notification to all defaulters',
-  'Help me plan units for a 5 floor PG with 4 rooms per floor',
+  'Which residents have overdue payments?',
+  'How much rent have we collected this month?',
+  'Show the open maintenance issues',
 ];
 
 export default function FloatingAIAssistant() {
@@ -48,7 +49,7 @@ export default function FloatingAIAssistant() {
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Tell me what you want to do in Tenant Living. I can guide and perform tasks for you!',
+      text: 'Ask me about your properties, rent collection, overdue payments, issues and announcements.',
     },
   ]);
   const [isSending, setIsSending] = useState(false);
@@ -117,23 +118,10 @@ export default function FloatingAIAssistant() {
 
     try {
       const response = await runAICommand({ message: text }, accessToken);
-      let assistantMsgText = '';
-
-      if (response.status === 'COMPLETED') {
-        assistantMsgText = response.message || 'Task completed successfully.';
-      } else if (response.status === 'RUNNING' || response.status === 'QUEUED' || response.jobId) {
-        assistantMsgText = response.message || 'Your request is processing in the background. I will update you soon.';
-        if (response.jobId) {
-          pollJobStatus(response.jobId);
-        }
-      } else {
-        assistantMsgText = response.message || 'An error occurred during execution.';
-      }
-
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        text: assistantMsgText
+        text: response.message || 'An error occurred during execution.'
       }]);
     } catch (err: any) {
       setMessages(prev => [...prev, {
@@ -144,32 +132,6 @@ export default function FloatingAIAssistant() {
     } finally {
       setIsSending(false);
     }
-  };
-
-  const pollJobStatus = async (jobId: string) => {
-    if (!accessToken) return;
-    const interval = setInterval(async () => {
-      try {
-        const job = await getJobStatus(jobId, accessToken);
-        if (job.status === 'COMPLETED') {
-          clearInterval(interval);
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'assistant',
-            text: `Background Task Completed: ${job.response || 'Execution successful.'}`
-          }]);
-        } else if (job.status === 'FAILED') {
-          clearInterval(interval);
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'assistant',
-            text: `Background Task Failed: ${job.errorMessage || 'Failed to execute.'}`
-          }]);
-        }
-      } catch (e) {
-        console.error('AI job status check failed', e);
-      }
-    }, 3000);
   };
 
   // Interpolations for open sheet layout

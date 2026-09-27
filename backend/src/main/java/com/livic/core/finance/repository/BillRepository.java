@@ -7,8 +7,10 @@ import com.livic.core.finance.dto.RentRollMetricsDTO;
 import com.livic.core.finance.dto.RevenueMetricsDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -28,6 +30,11 @@ import java.util.UUID;
 public interface BillRepository extends JpaRepository<BillTbl, UUID>, JpaSpecificationExecutor<BillTbl> {
 
     Optional<BillTbl> findByMemberIdAndBillingMonthAndBillType(UUID memberId, String billingMonth, BillType billType);
+
+    /** Locks the bill until the caller's transaction ends, so concurrent payments apply one after another. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM BillTbl b WHERE b.id = :id")
+    Optional<BillTbl> findByIdForUpdate(@Param("id") UUID id);
 
     List<BillTbl> findByMemberId(UUID memberId);
 

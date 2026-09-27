@@ -1,13 +1,12 @@
 package com.livic.verticals.rental.inventory;
 
+import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.AuthorizationTestSupport;
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.auth.service.impl.AuthorizationServiceImpl;
-import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.common.enums.ResourceType;
 import com.livic.verticals.rental.inventory.controller.InventoryController;
-import com.livic.verticals.rental.inventory.dto.CreateInventoryItemRequest;
 import com.livic.verticals.rental.inventory.dto.ServiceExpenseRequest;
 import com.livic.verticals.rental.inventory.dto.UpdateInventoryItemRequest;
 import com.livic.verticals.rental.inventory.facade.InventoryFacade;
@@ -34,7 +33,7 @@ import static org.mockito.Mockito.when;
 class InventoryAuthorizationTest {
 
     @Mock
-    private MembershipCrudService membershipCrudService;
+    private MembershipRepository membershipRepository;
 
     @Mock
     private InventoryFacade inventoryFacade;
@@ -48,7 +47,7 @@ class InventoryAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, null, null, inventoryFacade, null);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, null, inventoryFacade, null);
         propertyId = UUID.randomUUID();
         itemId = UUID.randomUUID();
         ownerUserId = UUID.randomUUID();
@@ -78,7 +77,7 @@ class InventoryAuthorizationTest {
         authenticateUser(ownerUserId, "owner@example.com");
 
         when(inventoryFacade.getPropertyIdForInventoryItem(itemId)).thenReturn(Optional.of(propertyId));
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("INVENTORY_MANAGE", "INVENTORY_VIEW"));
 
         assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ITEM, itemId, "INVENTORY_MANAGE")).isTrue();
@@ -91,7 +90,7 @@ class InventoryAuthorizationTest {
         authenticateUser(unrelatedUserId, "stranger@example.com");
 
         when(inventoryFacade.getPropertyIdForInventoryItem(itemId)).thenReturn(Optional.of(propertyId));
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(unrelatedUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(unrelatedUserId, propertyId))
                 .thenReturn(Set.of());
 
         assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ITEM, itemId, "INVENTORY_MANAGE")).isFalse();
@@ -126,6 +125,7 @@ class InventoryAuthorizationTest {
         Method getTenantVisible = clazz.getMethod("getTenantVisibleItems", UUID.class, UserDetailsImpl.class);
         PreAuthorize preAuthTenantVisible = getTenantVisible.getAnnotation(PreAuthorize.class);
         assertThat(preAuthTenantVisible).isNotNull();
-        assertThat(preAuthTenantVisible.value()).isEqualTo("hasAnyRole('TENANT', 'LANDLORD', 'ADMIN', 'SUPERADMIN')");
+        // TENANT, LANDLORD and SUPERADMIN are not roles; the old rule locked every tenant out.
+        assertThat(preAuthTenantVisible.value()).isEqualTo("isAuthenticated()");
     }
 }

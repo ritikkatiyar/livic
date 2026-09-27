@@ -1,11 +1,11 @@
 package com.livic.verticals.rental.lease.facade.impl;
 
+import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
-import com.livic.platform.common.domain.LeaseStatus;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
 import com.livic.verticals.rental.lease.facade.LeaseFacade;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,12 +26,12 @@ import java.util.stream.Collectors;
 public class LeaseFacadeImpl implements LeaseFacade {
 
     private final LeaseQueryService leaseQueryService;
-    private final LeaseCrudService leaseCrudService;
+    private final LeaseRepository leaseRepository;
     private final UnitFacade unitFacade;
 
     @Override
     public boolean isUnitOccupiedOnDate(UUID unitId, LocalDate date) {
-        return leaseCrudService.existsActiveLeaseOnDate(unitId, LeaseStatus.ACTIVE, date);
+        return leaseRepository.existsActiveLeaseOnDate(unitId, LeaseStatus.ACTIVE, date);
     }
 
     @Override
@@ -49,13 +49,6 @@ public class LeaseFacadeImpl implements LeaseFacade {
                 .toList();
     }
 
-    @Override
-    public List<LeaseSummaryDTO> getActiveLeasesByUnitId(UUID unitId) {
-        UnitSummaryDTO u = unitFacade.getUnitById(unitId).orElse(null);
-        return leaseQueryService.findByUnitIdAndStatus(unitId, LeaseStatus.ACTIVE).stream()
-                .map(lease -> LeaseSummaryDTO.from(lease, u))
-                .toList();
-    }
 
     @Override
     public Map<UUID, List<LeaseSummaryDTO>> getActiveLeasesByUnitIds(Collection<UUID> unitIds) {
@@ -77,7 +70,7 @@ public class LeaseFacadeImpl implements LeaseFacade {
 
     @Override
     public Optional<LeaseSummaryDTO> getLeaseById(UUID leaseId) {
-        return leaseCrudService.findById(leaseId)
+        return leaseRepository.findById(leaseId)
                 .map(lease -> LeaseSummaryDTO.from(lease, unitFacade.getUnitById(lease.getUnitId()).orElse(null)));
     }
 }

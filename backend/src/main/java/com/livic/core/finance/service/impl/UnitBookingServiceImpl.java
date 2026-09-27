@@ -1,7 +1,8 @@
 package com.livic.core.finance.service.impl;
 
+import com.livic.core.finance.repository.UnitBookingRepository;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
-import com.livic.platform.common.domain.UnitBookingStatus;
+import com.livic.core.finance.domain.UnitBookingStatus;
 import com.livic.platform.common.enums.ResourceType;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.UnitBookingTbl;
@@ -9,7 +10,6 @@ import com.livic.core.finance.dto.UnitBookingDTOs;
 import com.livic.core.finance.dto.UnitBookingDTOs.UnitBookingResponse;
 import com.livic.core.finance.mapper.UnitBookingMapper;
 import com.livic.core.property.spi.UnitOccupancyProvider;
-import com.livic.core.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.core.finance.service.interfaces.UnitBookingService;
 import com.livic.platform.payment.dto.PaymentTransactionResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class UnitBookingServiceImpl implements UnitBookingService {
 
-    private final UnitBookingCrudService unitBookingCrudService;
+    private final UnitBookingRepository unitBookingRepository;
     private final UnitOccupancyProvider unitOccupancyProvider;
     private final UnitFacade unitFacade;
     private final PropertyFacade propertyFacade;
@@ -61,7 +61,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
 
         UnitBookingTbl booking = UnitBookingMapper.toEntity(request, unitSummary.id());
-        booking = unitBookingCrudService.save(booking);
+        booking = unitBookingRepository.save(booking);
         return UnitBookingMapper.toResponse(booking, unitSummary.unitNumber());
     }
 
@@ -75,7 +75,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         }
 
         booking.setStatus(UnitBookingStatus.FORFEITED.name());
-        booking = unitBookingCrudService.save(booking);
+        booking = unitBookingRepository.save(booking);
         String unitNumber = unitFacade.getUnitById(booking.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse("N/A");
         return UnitBookingMapper.toResponse(booking, unitNumber);
     }
@@ -90,7 +90,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         }
 
         booking.setStatus(UnitBookingStatus.REFUNDED.name());
-        booking = unitBookingCrudService.save(booking);
+        booking = unitBookingRepository.save(booking);
         String unitNumber = unitFacade.getUnitById(booking.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse("N/A");
         return UnitBookingMapper.toResponse(booking, unitNumber);
     }
@@ -155,22 +155,22 @@ public class UnitBookingServiceImpl implements UnitBookingService {
                 if (unitIds.isEmpty()) {
                     return Page.empty(pageable);
                 }
-                bookingsPage = unitBookingCrudService.findByUnitIdIn(unitIds, pageable);
+                bookingsPage = unitBookingRepository.findByUnitIdIn(unitIds, pageable);
             } else if (currentUserId != null) {
                 List<PropertySummaryDTO> userProperties = propertyFacade.getPropertiesByUserId(currentUserId);
                 List<UUID> propertyIds = userProperties.stream().map(PropertySummaryDTO::id).toList();
                 if (propertyIds.isEmpty()) {
-                    bookingsPage = unitBookingCrudService.findByProspectiveTenantUserId(currentUserId, pageable);
+                    bookingsPage = unitBookingRepository.findByProspectiveTenantUserId(currentUserId, pageable);
                 } else {
                     List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyIds(propertyIds);
                     List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
                     if (unitIds.isEmpty()) {
                         return Page.empty(pageable);
                     }
-                    bookingsPage = unitBookingCrudService.findByUnitIdIn(unitIds, pageable);
+                    bookingsPage = unitBookingRepository.findByUnitIdIn(unitIds, pageable);
                 }
             } else {
-                bookingsPage = unitBookingCrudService.findAll(pageable);
+                bookingsPage = unitBookingRepository.findAll(pageable);
             }
 
             if (bookingsPage == null || bookingsPage.isEmpty()) {
@@ -196,7 +196,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
     }
 
     private UnitBookingTbl getBookingOrThrow(UUID id) {
-        return unitBookingCrudService.findById(id)
+        return unitBookingRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit booking not found"));
     }
 

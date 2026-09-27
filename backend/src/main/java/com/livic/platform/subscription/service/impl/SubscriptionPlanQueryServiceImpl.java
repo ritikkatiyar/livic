@@ -1,10 +1,10 @@
 package com.livic.platform.subscription.service.impl;
 
+import com.livic.platform.subscription.repository.SubscriptionPlanRepository;
+import com.livic.platform.subscription.repository.PlanFeatureLimitRepository;
 import com.livic.platform.subscription.domain.PlanFeatureLimitTbl;
 import com.livic.platform.subscription.domain.SubscriptionPlanTbl;
 import com.livic.platform.subscription.dto.PlanResponse;
-import com.livic.platform.subscription.service.interfaces.PlanFeatureLimitCrudService;
-import com.livic.platform.subscription.service.interfaces.SubscriptionPlanCrudService;
 import com.livic.platform.subscription.service.interfaces.SubscriptionPlanQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,13 +19,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SubscriptionPlanQueryServiceImpl implements SubscriptionPlanQueryService {
 
-    private final SubscriptionPlanCrudService planCrudService;
-    private final PlanFeatureLimitCrudService featureLimitCrudService;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
+    private final PlanFeatureLimitRepository planFeatureLimitRepository;
 
     @Override
     @Transactional(readOnly = true)
     public List<PlanResponse> getAllActivePlans() {
-        List<SubscriptionPlanTbl> plans = planCrudService.findByIsActiveTrue();
+        List<SubscriptionPlanTbl> plans = subscriptionPlanRepository.findByIsActiveTrue();
         if (plans.isEmpty()) {
             return Collections.emptyList();
         }
@@ -35,7 +35,7 @@ public class SubscriptionPlanQueryServiceImpl implements SubscriptionPlanQuerySe
                 .filter(Objects::nonNull)
                 .toList();
 
-        List<PlanFeatureLimitTbl> activeLimits = featureLimitCrudService.findByPlanIdIn(planIds);
+        List<PlanFeatureLimitTbl> activeLimits = planFeatureLimitRepository.findByPlanIdIn(planIds);
         Map<String, List<PlanFeatureLimitTbl>> limitsByPlanId = activeLimits.stream()
                 .collect(Collectors.groupingBy(PlanFeatureLimitTbl::getPlanId));
 

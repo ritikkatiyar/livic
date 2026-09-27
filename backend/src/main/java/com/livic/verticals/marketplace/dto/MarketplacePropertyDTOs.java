@@ -1,6 +1,6 @@
 package com.livic.verticals.marketplace.dto;
 
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.core.property.domain.PropertyType;
 
 import java.util.List;
 import java.util.UUID;

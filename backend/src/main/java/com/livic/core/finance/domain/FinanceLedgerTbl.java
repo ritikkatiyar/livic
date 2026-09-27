@@ -1,7 +1,7 @@
 package com.livic.core.finance.domain;
 
 import com.livic.platform.common.domain.BaseEntity;
-import com.livic.platform.common.domain.LedgerTransactionType;
+import com.livic.core.finance.domain.LedgerTransactionType;
 import jakarta.persistence.*;
 import lombok.*;
 

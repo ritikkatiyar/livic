@@ -1,8 +1,8 @@
 package com.livic.core.finance;
 
+import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.AuthorizationTestSupport;
 import com.livic.platform.auth.service.impl.AuthorizationServiceImpl;
-import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.security.UserDetailsImpl;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 class LeaseAuthorizationTest {
 
     @Mock
-    private MembershipCrudService membershipCrudService;
+    private MembershipRepository membershipRepository;
 
     private AuthorizationServiceImpl authorizationService;
 
@@ -40,7 +40,7 @@ class LeaseAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, null, null, null, null);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, null, null, null);
         propertyId = UUID.randomUUID();
     }
 
@@ -71,9 +71,9 @@ class LeaseAuthorizationTest {
     void unrelatedUserIsRejected() {
         UUID strangerId = UUID.randomUUID();
         authenticateUser(strangerId);
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(strangerId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(strangerId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(strangerId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(strangerId, propertyId))
                 .thenReturn(Set.of());
 
         assertThat(authorizationService.hasPermission(propertyId, "LEASE_VIEW")).isFalse();
@@ -84,9 +84,9 @@ class LeaseAuthorizationTest {
     void staffNeedsLeaseView() {
         UUID staffId = UUID.randomUUID();
         authenticateUser(staffId);
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(staffId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(staffId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(staffId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(staffId, propertyId))
                 .thenReturn(Set.of("ISSUE_VIEW"), Set.of("LEASE_VIEW"));
 
         assertThat(authorizationService.hasPermission(propertyId, "LEASE_VIEW")).isFalse();
@@ -98,7 +98,7 @@ class LeaseAuthorizationTest {
     void fullAccessOwnerIsAllowed() {
         UUID ownerId = UUID.randomUUID();
         authenticateUser(ownerId);
-        when(membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(ownerId, propertyId, AccessType.FULL_ACCESS))
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(ownerId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(true);
 
         assertThat(authorizationService.hasPermission(propertyId, "LEASE_VIEW")).isTrue();

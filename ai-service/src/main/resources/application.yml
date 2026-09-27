@@ -29,6 +29,14 @@ spring:
     enabled: false
 
   ai:
+    # At most 3 tries with short backoff (docs/AI_ARCHITECTURE_DESIGN.md §30). The default of 10 with
+    # 5x backoff held a request for ~45s on a provider 429, past the apps' timeout.
+    retry:
+      max-attempts: 3
+      backoff:
+        initial-interval: 1s
+        multiplier: 2
+        max-interval: 4s
     model:
       chat: ${SPRING_AI_MODEL_CHAT:none}
     google:

@@ -1,6 +1,6 @@
 package com.livic.core.property.dto;
 
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.property.domain.UnitType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,7 +21,8 @@ public class PropertyDTOs {
 
                         String landmark,
 
-                        @NotNull(message = "Total floors is required") @Min(value = 1, message = "Property must have at least 1 floor")
+                        /** The default block's height. Omit it when the property has several blocks. */
+                        @Min(value = 1, message = "A block must have at least 1 floor")
             Integer totalFloors,
 
             java.util.List<String> amenities,
@@ -41,7 +42,8 @@ public class PropertyDTOs {
 
                         String landmark,
 
-                        @NotNull(message = "Total floors is required") @Min(value = 1, message = "Property must have at least 1 floor")
+                        /** The default block's height. Omit it when the property has several blocks. */
+                        @Min(value = 1, message = "A block must have at least 1 floor")
             Integer totalFloors,
 
             java.util.List<String> amenities,
@@ -55,7 +57,6 @@ public class PropertyDTOs {
             String address,
             String city,
             String landmark,
-            Integer totalFloors,
             UUID ownerId,
             boolean isActive,
             java.util.List<String> amenities,

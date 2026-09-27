@@ -1,7 +1,7 @@
 package com.livic.verticals.marketplace;
 
-import com.livic.platform.common.domain.LeadStatus;
-import com.livic.platform.common.domain.LeadType;
+import com.livic.verticals.marketplace.domain.LeadStatus;
+import com.livic.verticals.marketplace.domain.LeadType;
 import com.livic.verticals.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.verticals.marketplace.listener.MarketplacePaymentEventListener;
 import com.livic.verticals.marketplace.repository.MarketplaceLeadRepository;

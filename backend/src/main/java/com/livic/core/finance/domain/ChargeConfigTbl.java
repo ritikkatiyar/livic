@@ -1,9 +1,9 @@
 package com.livic.core.finance.domain;
 
 import com.livic.platform.common.domain.BaseEntity;
-import com.livic.platform.common.domain.BillingFrequency;
-import com.livic.platform.common.domain.CalculationStrategyType;
-import com.livic.platform.common.domain.ChargeCategory;
+import com.livic.core.finance.domain.BillingFrequency;
+import com.livic.core.finance.domain.CalculationStrategyType;
+import com.livic.core.finance.domain.ChargeCategory;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.UUID;

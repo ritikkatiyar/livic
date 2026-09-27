@@ -1,5 +1,6 @@
 package com.livic.platform.auth.service.impl;
 
+import com.livic.platform.auth.repository.RefreshTokenRepository;
 import com.livic.platform.auth.domain.RefreshTokenTbl;
 import com.livic.platform.auth.dto.AuthRequests.LoginRequest;
 import com.livic.platform.auth.dto.AuthRequests.LogoutRequest;
@@ -9,12 +10,8 @@ import com.livic.platform.auth.dto.AuthRequests.ValidateRequest;
 import com.livic.platform.auth.dto.AuthResponses.SignupResponse;
 import com.livic.platform.auth.dto.AuthResponses.TokenBundle;
 import com.livic.platform.auth.dto.AuthResponses.ValidateResponse;
-import com.livic.platform.auth.service.JwtService;
-import com.livic.platform.auth.service.TokenHasher;
-import com.livic.platform.auth.service.TokenIssuer;
 import com.livic.platform.auth.service.interfaces.AuthService;
 import com.livic.platform.auth.service.interfaces.EmailVerificationService;
-import com.livic.platform.auth.service.interfaces.RefreshTokenCrudService;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
@@ -44,7 +41,7 @@ import java.util.UUID;
 public class AuthServiceImpl implements AuthService {
 
     private final UserFacade userFacade;
-    private final RefreshTokenCrudService refreshTokenCrudService;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final TokenIssuer tokenIssuer;
@@ -98,7 +95,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public TokenBundle refresh(RefreshRequest request) {
-        RefreshTokenTbl stored = refreshTokenCrudService.findByTokenHashAndRevokedIsFalse(TokenHasher.sha256Hex(request.refreshToken()))
+        RefreshTokenTbl stored = refreshTokenRepository.findByTokenHashAndRevokedIsFalse(TokenHasher.sha256Hex(request.refreshToken()))
                 .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
 
         if (stored.getExpiresAt().isBefore(Instant.now())) {
@@ -109,15 +106,15 @@ public class AuthServiceImpl implements AuthService {
         UserSummaryDTO user = userFacade.getUserById(userId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        refreshTokenCrudService.delete(stored);
+        refreshTokenRepository.delete(stored);
         return tokenIssuer.issueFor(user);
     }
 
     @Override
     @Transactional
     public void logout(LogoutRequest request) {
-        refreshTokenCrudService.findByTokenHashAndRevokedIsFalse(TokenHasher.sha256Hex(request.refreshToken()))
-                .ifPresent(refreshTokenCrudService::delete);
+        refreshTokenRepository.findByTokenHashAndRevokedIsFalse(TokenHasher.sha256Hex(request.refreshToken()))
+                .ifPresent(refreshTokenRepository::delete);
     }
 
     @Override

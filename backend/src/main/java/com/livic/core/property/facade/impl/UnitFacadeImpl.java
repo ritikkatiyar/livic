@@ -1,9 +1,9 @@
 package com.livic.core.property.facade.impl;
 
+import com.livic.core.property.repository.UnitRepository;
 import com.livic.core.property.dto.UnitListingDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
-import com.livic.core.property.service.interfaces.UnitCrudService;
 import com.livic.core.property.service.interfaces.UnitQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,11 +25,11 @@ import java.util.stream.StreamSupport;
 public class UnitFacadeImpl implements UnitFacade {
 
     private final UnitQueryService unitQueryService;
-    private final UnitCrudService unitCrudService;
+    private final UnitRepository unitRepository;
 
     @Override
     public Optional<UnitSummaryDTO> getUnitById(UUID unitId) {
-        return unitCrudService.findById(unitId)
+        return unitRepository.findById(unitId)
                 .map(UnitSummaryDTO::from);
     }
 
@@ -55,7 +55,7 @@ public class UnitFacadeImpl implements UnitFacade {
         if (propertyIds == null || propertyIds.isEmpty()) {
             return List.of();
         }
-        return unitCrudService.findByPropertyIdIn(propertyIds).stream()
+        return unitRepository.findByPropertyIdIn(propertyIds).stream()
                 .map(UnitSummaryDTO::from)
                 .toList();
     }
@@ -67,14 +67,13 @@ public class UnitFacadeImpl implements UnitFacade {
                 .toList();
     }
 
-    @Override
-    public boolean existsUnitById(UUID unitId) {
-        return unitCrudService.existsById(unitId);
-    }
 
     @Override
     public long getTotalUnitsForPropertyIds(List<UUID> propertyIds) {
-        return unitCrudService.countByPropertyIdIn(propertyIds);
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return 0;
+        }
+        return unitRepository.countByPropertyIdIn(propertyIds);
     }
 
     @Override
@@ -82,32 +81,35 @@ public class UnitFacadeImpl implements UnitFacade {
         if (unitIds == null || unitIds.isEmpty()) {
             return Map.of();
         }
-        return StreamSupport.stream(unitCrudService.findAllById(unitIds).spliterator(), false)
+        return StreamSupport.stream(unitRepository.findAllById(unitIds).spliterator(), false)
                 .map(UnitSummaryDTO::from)
                 .collect(Collectors.toMap(UnitSummaryDTO::id, dto -> dto));
     }
 
     @Override
     public List<UUID> getUnitIdsByUnitNumberSearch(String searchPattern) {
-        return unitCrudService.findIdsByUnitNumberPattern(searchPattern);
+        if (searchPattern == null || searchPattern.isBlank()) {
+            return List.of();
+        }
+        return unitRepository.findIdsByUnitNumberPattern(searchPattern.trim());
     }
 
     @Override
     public Optional<UnitListingDTO> getUnitListingById(UUID unitId) {
-        return unitCrudService.findById(unitId)
+        return unitRepository.findById(unitId)
                 .map(UnitListingDTO::from);
     }
 
     @Override
     public List<UnitListingDTO> getUnitListingsByPropertyId(UUID propertyId) {
-        return unitCrudService.findByPropertyId(propertyId).stream()
+        return unitRepository.findByPropertyId(propertyId).stream()
                 .map(UnitListingDTO::from)
                 .toList();
     }
 
     @Override
     public Page<UnitListingDTO> getUnitListingsByPropertyId(UUID propertyId, boolean availableOnly, Pageable pageable) {
-        return unitCrudService.findListingUnits(propertyId, availableOnly, pageable)
+        return unitRepository.findListingUnits(propertyId, availableOnly, pageable)
                 .map(UnitListingDTO::from);
     }
 
@@ -116,7 +118,7 @@ public class UnitFacadeImpl implements UnitFacade {
         if (propertyIds == null || propertyIds.isEmpty()) {
             return Map.of();
         }
-        return unitCrudService.findByPropertyIdIn(propertyIds).stream()
+        return unitRepository.findByPropertyIdIn(propertyIds).stream()
                 .map(UnitListingDTO::from)
                 .collect(Collectors.groupingBy(UnitListingDTO::propertyId));
     }

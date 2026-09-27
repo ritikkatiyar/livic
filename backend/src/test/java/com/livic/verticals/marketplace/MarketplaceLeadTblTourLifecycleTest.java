@@ -1,8 +1,8 @@
 package com.livic.verticals.marketplace;
 
 import com.livic.verticals.marketplace.domain.MarketplaceLeadTbl;
-import com.livic.platform.common.domain.LeadStatus;
-import com.livic.platform.common.domain.LeadType;
+import com.livic.verticals.marketplace.domain.LeadStatus;
+import com.livic.verticals.marketplace.domain.LeadType;
 import com.livic.platform.common.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

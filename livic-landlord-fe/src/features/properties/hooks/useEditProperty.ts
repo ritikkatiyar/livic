@@ -44,7 +44,9 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
       setAddress(data.address);
       setCity(data.city);
       setLandmark(data.landmark || '');
-      setTotalFloors(data.totalFloors?.toString() || '');
+      // Floors live on the block now, so read the default one rather than the property.
+      const defaultBlock = blockData.find((b) => b.isDefault) ?? blockData[0];
+      setTotalFloors(defaultBlock?.totalFloors?.toString() || '');
       setAutoBillDayOfMonth(data.autoBillDayOfMonth?.toString() || '');
       setSelectedAmenities(data.amenities || ['High-speed Fiber Wi-Fi', 'Covered Parking', '24/7 Security', 'Power Backup']);
       setBlocks(blockData);

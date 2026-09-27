@@ -8,7 +8,7 @@ import com.livic.core.community.issue.dto.IssueDTOs.IssueResponse;
 import com.livic.core.community.issue.service.interfaces.IssueService;
 import com.livic.core.finance.controller.MeterReadingController;
 import com.livic.core.finance.dto.MeterReadingDTOs.MeterReadingResponse;
-import com.livic.core.finance.service.MeterReadingService;
+import com.livic.core.finance.service.interfaces.MeterReadingService;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.platform.security.UserDetailsImpl;

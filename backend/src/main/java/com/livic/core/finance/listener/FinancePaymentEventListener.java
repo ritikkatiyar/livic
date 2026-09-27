@@ -1,15 +1,15 @@
 package com.livic.core.finance.listener;
 
-import com.livic.platform.common.domain.LedgerTransactionType;
+import com.livic.core.finance.repository.UnitBookingRepository;
+import com.livic.core.finance.repository.FinanceLedgerRepository;
+import com.livic.core.finance.repository.BillRepository;
+import com.livic.core.finance.domain.LedgerTransactionType;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.FinanceLedgerTbl;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.domain.UnitBookingTbl;
-import com.livic.core.finance.service.interfaces.FinanceLedgerCrudService;
-import com.livic.core.finance.service.interfaces.BillCrudService;
-import com.livic.core.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.platform.payment.constant.PaymentConstants;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +26,9 @@ import java.time.LocalDateTime;
 @Slf4j
 public class FinancePaymentEventListener {
 
-    private final BillCrudService billCrudService;
-    private final UnitBookingCrudService unitBookingCrudService;
-    private final FinanceLedgerCrudService financeLedgerCrudService;
+    private final BillRepository billRepository;
+    private final UnitBookingRepository unitBookingRepository;
+    private final FinanceLedgerRepository financeLedgerRepository;
     private final UnitMemberFacade unitMemberFacade;
 
     @EventListener
@@ -44,7 +44,7 @@ public class FinancePaymentEventListener {
     private void handleBillPayment(PaymentCompletedEvent event) {
         log.info("[OBSERVER: FINANCE] Processing PaymentCompletedEvent for Rent Cycle: {}", event);
 
-        BillTbl bill = billCrudService.findById(event.getReferenceId())
+        BillTbl bill = billRepository.findByIdForUpdate(event.getReferenceId())
                 .orElse(null);
 
         if (bill == null) {
@@ -52,7 +52,8 @@ public class FinancePaymentEventListener {
             return;
         }
 
-        // Idempotent calculation
+        // Each payment transaction completes exactly once (its row is locked while it is marked
+        // SUCCESS), and the bill is locked above, so adding this payment's amount is safe.
         BigDecimal currentPaid = bill.getAmountPaid() != null ? bill.getAmountPaid() : BigDecimal.ZERO;
         BigDecimal newTotalPaid = currentPaid.add(event.getAmount());
 
@@ -65,13 +66,13 @@ public class FinancePaymentEventListener {
             bill.setStatus(BillStatus.PARTIALLY_PAID);
         }
 
-        billCrudService.save(bill);
+        billRepository.save(bill);
 
         // The ledger follows the payer, so it works for owners with no lease too.
         UnitResidentDTO payer = bill.getMemberId() == null ? null
                 : unitMemberFacade.getResidentByMemberId(bill.getMemberId()).orElse(null);
         if (payer != null) {
-            BigDecimal currentBalance = financeLedgerCrudService.sumAmountByMemberId(bill.getMemberId());
+            BigDecimal currentBalance = financeLedgerRepository.sumAmountByMemberId(bill.getMemberId());
             BigDecimal ledgerAmount = event.getAmount().negate();
             BigDecimal newBalance = currentBalance.add(ledgerAmount);
 
@@ -89,7 +90,7 @@ public class FinancePaymentEventListener {
                     .description(description)
                     .build();
 
-            financeLedgerCrudService.save(ledgerEntry);
+            financeLedgerRepository.save(ledgerEntry);
         }
 
         log.info("[OBSERVER: FINANCE] Successfully updated Bill: {} status to: {}, totalPaid: {}", bill.getId(), bill.getStatus(), newTotalPaid);
@@ -98,7 +99,7 @@ public class FinancePaymentEventListener {
     private void handleUnitBookingPayment(PaymentCompletedEvent event) {
         log.info("[OBSERVER: FINANCE] Processing PaymentCompletedEvent for Unit Booking: {}", event);
 
-        UnitBookingTbl booking = unitBookingCrudService.findById(event.getReferenceId())
+        UnitBookingTbl booking = unitBookingRepository.findById(event.getReferenceId())
                 .orElse(null);
 
         if (booking == null) {

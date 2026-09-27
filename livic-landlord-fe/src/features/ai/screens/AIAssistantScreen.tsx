@@ -15,7 +15,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
-import { getJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
+import { runAICommand } from '@/src/features/ai/api/ai.api';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
@@ -45,11 +45,12 @@ type Message = {
   attachments?: AttachedFile[];
 };
 
+// The assistant can only read data for now, so every prompt here is a question.
 const QUICK_COMMANDS = [
-  { icon: 'add-business', label: 'Create Property', prompt: 'Create a property named Sunrise PG in Bengaluru near the metro' },
-  { icon: 'help-outline', label: 'Property Checklist', prompt: 'What details do you need before creating a new property?' },
-  { icon: 'grid-view', label: 'Plan Units', prompt: 'Help me plan units for a 5 floor PG with 4 rooms per floor' },
-  { icon: 'payments', label: 'Billing Summary', prompt: 'Summarize overdue rent cycles and draft invoices for this month' },
+  { icon: 'money-off', label: 'Overdue Rent', prompt: 'Which residents have overdue payments?' },
+  { icon: 'payments', label: 'Collection', prompt: 'How much rent have we collected this month?' },
+  { icon: 'build', label: 'Open Issues', prompt: 'Show the open maintenance issues' },
+  { icon: 'campaign', label: 'Announcements', prompt: 'What announcements have we sent recently?' },
 ];
 
 export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
@@ -65,7 +66,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Hello! I am your AI Property Assistant. I can help manage properties, automate rent billing worksheets, structure floor unit plans, and draft communications. How can I assist you today?',
+      text: 'Hello! I am your AI Property Assistant. Ask me about your properties, rent collection, overdue payments, maintenance issues and announcements.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -169,59 +170,15 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
 
       try {
         const response = await runAICommand({ message: messageContent }, token);
-
-        if (response.jobId && response.status === 'PENDING') {
-          const jobId = response.jobId;
-          let pollCount = 0;
-          const maxPolls = 40;
-
-          const poll = async (): Promise<string> => {
-            return new Promise((resolve, reject) => {
-              const interval = setInterval(async () => {
-                pollCount++;
-                if (pollCount > maxPolls) {
-                  clearInterval(interval);
-                  reject(new Error('AI command execution timed out. Please try again.'));
-                  return;
-                }
-
-                try {
-                  const jobStatus = await getJobStatus(jobId, token);
-                  if (jobStatus.status === 'COMPLETED') {
-                    clearInterval(interval);
-                    resolve(jobStatus.response || 'Command completed successfully.');
-                  } else if (jobStatus.status === 'FAILED') {
-                    clearInterval(interval);
-                    reject(new Error(jobStatus.errorMessage || 'AI execution failed.'));
-                  }
-                } catch (pollErr) {
-                  logger.warn('AI polling transient error:', pollErr);
-                }
-              }, 1500);
-            });
-          };
-
-          const resultText = await poll();
-          setMessages((current) => [
-            ...current,
-            {
-              id: `${Date.now()}-assistant`,
-              role: 'assistant',
-              text: resultText,
-              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            },
-          ]);
-        } else {
-          setMessages((current) => [
-            ...current,
-            {
-              id: `${Date.now()}-assistant`,
-              role: 'assistant',
-              text: response.message || 'I received the command, but no response was returned.',
-              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            },
-          ]);
-        }
+        setMessages((current) => [
+          ...current,
+          {
+            id: `${Date.now()}-assistant`,
+            role: 'assistant',
+            text: response.message || 'I received the command, but no response was returned.',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
       } catch (error: any) {
         setMessages((current) => [
           ...current,

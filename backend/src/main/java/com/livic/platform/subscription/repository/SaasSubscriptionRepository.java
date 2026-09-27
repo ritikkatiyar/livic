@@ -20,5 +20,4 @@ public interface SaasSubscriptionRepository extends JpaRepository<SaasSubscripti
     @EntityGraph(attributePaths = {"plan"})
     Optional<SaasSubscriptionTbl> findFirstByUserIdOrderByCreatedAtDesc(UUID userId);
 
-    Optional<SaasSubscriptionTbl> findByGatewaySubscriptionId(String gatewaySubscriptionId);
 }

@@ -5,7 +5,7 @@ import com.livic.verticals.marketplace.dto.MarketplacePropertyDTOs.PropertySumma
 import com.livic.verticals.marketplace.dto.MarketplaceUnitDTOs.UnitDetailCompositeResponse;
 import com.livic.verticals.marketplace.dto.MarketplaceUnitDTOs.UnitSummaryResponse;
 import com.livic.verticals.marketplace.service.interfaces.MarketplaceSearchService;
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.core.property.domain.PropertyType;
 import com.livic.platform.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

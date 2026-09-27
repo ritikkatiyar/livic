@@ -1,12 +1,13 @@
 package com.livic.platform.auth.service.impl;
 
+import com.livic.platform.auth.repository.PermissionRepository;
+import com.livic.platform.auth.repository.MembershipPermissionRepository;
+import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.domain.MembershipPermissionTbl;
 import com.livic.platform.auth.domain.MembershipTbl;
-import com.livic.platform.auth.domain.PermissionTbl;
-import com.livic.platform.auth.service.interfaces.MembershipCrudService;
-import com.livic.platform.auth.service.interfaces.MembershipPermissionCrudService;
+import com.livic.platform.auth.dto.MembershipDTOs;
+import com.livic.platform.auth.mapper.MembershipMapper;
 import com.livic.platform.auth.service.interfaces.MembershipService;
-import com.livic.platform.auth.service.interfaces.PermissionCrudService;
 import com.livic.platform.common.constant.StaffPermission;
 import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.common.event.MemberSeatRequestedEvent;
@@ -29,9 +30,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MembershipServiceImpl implements MembershipService {
 
-    private final MembershipCrudService membershipCrudService;
-    private final MembershipPermissionCrudService membershipPermissionCrudService;
-    private final PermissionCrudService permissionCrudService;
+    private final MembershipRepository membershipRepository;
+    private final MembershipPermissionRepository membershipPermissionRepository;
+    private final PermissionRepository permissionRepository;
     private final UserFacade userFacade;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -41,13 +42,13 @@ public class MembershipServiceImpl implements MembershipService {
         userFacade.getUserById(ownerId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Owner user not found"));
 
-        Optional<MembershipTbl> existing = membershipCrudService.findByUserIdAndPropertyId(ownerId, propertyId);
+        Optional<MembershipTbl> existing = membershipRepository.findByUserIdAndPropertyId(ownerId, propertyId);
         if (existing.isPresent()) {
             MembershipTbl m = existing.get();
             m.setAccessType(AccessType.FULL_ACCESS);
             m.setTitle("Owner");
             m.setActive(true);
-            membershipCrudService.save(m);
+            membershipRepository.save(m);
             return;
         }
 
@@ -60,13 +61,13 @@ public class MembershipServiceImpl implements MembershipService {
                 .assignedBy(ownerId)
                 .build();
         
-        membershipCrudService.save(membership);
+        membershipRepository.save(membership);
     }
 
     @Override
     @Transactional
     public MembershipTbl createMembership(UUID propertyId, UUID userId, String title, AccessType accessType, Set<String> permissionCodes, UUID assignedByUserId) {
-        if (membershipCrudService.existsByUserIdAndPropertyId(userId, propertyId)) {
+        if (membershipRepository.existsByUserIdAndPropertyId(userId, propertyId)) {
             throw new BusinessException(HttpStatus.CONFLICT, "User is already a member of this property");
         }
         
@@ -74,7 +75,7 @@ public class MembershipServiceImpl implements MembershipService {
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
 
         if (AccessType.FULL_ACCESS.equals(accessType)) {
-            boolean callerHasFullAccess = membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(assignedByUserId, propertyId, AccessType.FULL_ACCESS);
+            boolean callerHasFullAccess = membershipRepository.existsByUserIdAndPropertyIdAndAccessType(assignedByUserId, propertyId, AccessType.FULL_ACCESS);
             if (!callerHasFullAccess) {
                 throw new BusinessException(HttpStatus.FORBIDDEN, "Only members with Full Access can grant Full Access.");
             }
@@ -93,16 +94,12 @@ public class MembershipServiceImpl implements MembershipService {
                 .assignedBy(assignedByUserId)
                 .build();
                 
-        MembershipTbl saved = membershipCrudService.save(membership);
+        MembershipTbl saved = membershipRepository.save(membership);
 
         if (AccessType.CUSTOM_ACCESS.equals(saved.getAccessType()) && permissionCodes != null && !permissionCodes.isEmpty()) {
-            List<PermissionTbl> permissions = permissionCrudService.findByCodeIn(permissionCodes);
-            for (PermissionTbl p : permissions) {
-                membershipPermissionCrudService.save(MembershipPermissionTbl.builder()
-                        .membership(saved)
-                        .permission(p)
-                        .build());
-            }
+            membershipPermissionRepository.saveAll(permissionRepository.findByCodeIn(permissionCodes).stream()
+                    .map(p -> MembershipPermissionTbl.builder().membership(saved).permission(p).build())
+                    .toList());
         }
 
         return saved;
@@ -110,15 +107,15 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     @Transactional
-    public MembershipTbl updateMembership(UUID propertyId, UUID membershipId, String title, AccessType accessType, Boolean isActive, Set<String> permissionCodes, UUID actorUserId) {
-        MembershipTbl membership = membershipCrudService.findById(membershipId)
+    public MembershipDTOs.MembershipResponse updateMembership(UUID propertyId, UUID membershipId, String title, AccessType accessType, Boolean isActive, Set<String> permissionCodes, UUID actorUserId) {
+        MembershipTbl membership = membershipRepository.findById(membershipId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Membership not found"));
 
         if (!propertyId.equals(membership.getPropertyId())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Membership does not belong to this property");
         }
 
-        boolean actorHasFullAccess = membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(actorUserId, propertyId, AccessType.FULL_ACCESS);
+        boolean actorHasFullAccess = membershipRepository.existsByUserIdAndPropertyIdAndAccessType(actorUserId, propertyId, AccessType.FULL_ACCESS);
         if (!actorHasFullAccess) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Only Full Access members can update membership permissions and access.");
         }
@@ -143,28 +140,27 @@ public class MembershipServiceImpl implements MembershipService {
             membership.setActive(isActive);
         }
 
-        MembershipTbl updated = membershipCrudService.save(membership);
+        MembershipTbl updated = membershipRepository.save(membership);
 
         if (permissionCodes != null) {
-            membershipPermissionCrudService.deleteByMembershipId(updated.getId());
+            membershipPermissionRepository.deleteByMembershipId(updated.getId());
             if (AccessType.CUSTOM_ACCESS.equals(updated.getAccessType()) && !permissionCodes.isEmpty()) {
-                List<PermissionTbl> permissions = permissionCrudService.findByCodeIn(permissionCodes);
-                for (PermissionTbl p : permissions) {
-                    membershipPermissionCrudService.save(MembershipPermissionTbl.builder()
-                            .membership(updated)
-                            .permission(p)
-                            .build());
-                }
+                membershipPermissionRepository.saveAll(permissionRepository.findByCodeIn(permissionCodes).stream()
+                        .map(p -> MembershipPermissionTbl.builder().membership(updated).permission(p).build())
+                        .toList());
             }
         }
 
-        return updated;
+        return MembershipMapper.toMembershipResponse(
+                updated,
+                userFacade.getUserById(updated.getUserId()).orElse(null),
+                membershipPermissionRepository.findPermissionCodesByMembershipId(updated.getId()));
     }
 
     @Override
     @Transactional
     public void toggleMembershipActive(UUID propertyId, UUID membershipId, boolean isActive, UUID actorUserId) {
-        MembershipTbl membership = membershipCrudService.findById(membershipId)
+        MembershipTbl membership = membershipRepository.findById(membershipId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Membership not found"));
 
         if (!propertyId.equals(membership.getPropertyId())) {
@@ -180,13 +176,13 @@ public class MembershipServiceImpl implements MembershipService {
         }
 
         membership.setActive(isActive);
-        membershipCrudService.save(membership);
+        membershipRepository.save(membership);
     }
 
     @Override
     @Transactional
     public void removeMembership(UUID propertyId, UUID membershipId, UUID actorUserId) {
-        MembershipTbl membership = membershipCrudService.findById(membershipId)
+        MembershipTbl membership = membershipRepository.findById(membershipId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Membership not found"));
         
         if (!propertyId.equals(membership.getPropertyId())) {
@@ -197,8 +193,8 @@ public class MembershipServiceImpl implements MembershipService {
             ensureNotDemotingLastFullAccess(propertyId, membership.getId());
         }
 
-        membershipPermissionCrudService.deleteByMembershipId(membership.getId());
-        membershipCrudService.delete(membership);
+        membershipPermissionRepository.deleteByMembershipId(membership.getId());
+        membershipRepository.delete(membership);
     }
 
     @Override
@@ -207,13 +203,13 @@ public class MembershipServiceImpl implements MembershipService {
         userFacade.getUserById(toUserId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Target owner user not found"));
 
-        Optional<MembershipTbl> toUserMembershipOpt = membershipCrudService.findByUserIdAndPropertyId(toUserId, propertyId);
+        Optional<MembershipTbl> toUserMembershipOpt = membershipRepository.findByUserIdAndPropertyId(toUserId, propertyId);
         if (toUserMembershipOpt.isPresent()) {
             MembershipTbl m = toUserMembershipOpt.get();
             m.setAccessType(AccessType.FULL_ACCESS);
             m.setTitle("Owner");
             m.setActive(true);
-            membershipCrudService.save(m);
+            membershipRepository.save(m);
         } else {
             MembershipTbl newMembership = MembershipTbl.builder()
                     .userId(toUserId)
@@ -223,7 +219,7 @@ public class MembershipServiceImpl implements MembershipService {
                     .isActive(true)
                     .assignedBy(currentOwnerId)
                     .build();
-            membershipCrudService.save(newMembership);
+            membershipRepository.save(newMembership);
         }
     }
 
@@ -236,7 +232,7 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     private void ensureNotDemotingLastFullAccess(UUID propertyId, UUID currentMembershipId) {
-        List<MembershipTbl> fullAccessMembers = membershipCrudService.findByPropertyIdAndAccessType(propertyId, AccessType.FULL_ACCESS);
+        List<MembershipTbl> fullAccessMembers = membershipRepository.findByPropertyIdAndAccessType(propertyId, AccessType.FULL_ACCESS);
         long activeFullAccessCount = fullAccessMembers.stream()
                 .filter(MembershipTbl::isActive)
                 .filter(m -> !m.getId().equals(currentMembershipId))

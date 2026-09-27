@@ -76,7 +76,7 @@ export const batchGenerateRentCycle = async (
   const body: Record<string, any> = { propertyId, billingMonth, dueDate };
   if (blockId) body.blockId = blockId;
   return await apiRequest<BatchGenerateResult>(
-    '/api/v1/finance/rent-cycles/batch-generate',
+    '/api/v1/finance/bills/batch-generate',
     {
       method: 'POST',
       body: JSON.stringify(body),
@@ -91,7 +91,7 @@ export const getPreFlightChecklist = async (
   token: string
 ): Promise<PreFlightChecklistResponse> => {
   return await apiRequest<PreFlightChecklistResponse>(
-    `/api/v1/finance/rent-cycles/pre-flight?propertyId=${propertyId}&billingMonth=${billingMonth}`,
+    `/api/v1/finance/bills/pre-flight?propertyId=${propertyId}&billingMonth=${billingMonth}`,
     {
       method: 'GET',
       token
@@ -142,7 +142,7 @@ export const listRentCycles = async (
   params.append('page', String(page));
   params.append('size', String(size));
 
-  const url = `/api/v1/finance/rent-cycles?${params.toString()}`;
+  const url = `/api/v1/finance/bills?${params.toString()}`;
   const response = await apiRequest<BackendRentCycleListResponse>(url, {
     method: 'GET',
     token
@@ -164,7 +164,7 @@ export const publishRentCycle = async (
   token: string
 ): Promise<RentCycleResponse> => {
   return await apiRequest<RentCycleResponse>(
-    `/api/v1/finance/rent-cycles/${id}/publish`,
+    `/api/v1/finance/bills/${id}/publish`,
     {
       method: 'POST',
       token
@@ -177,7 +177,7 @@ export const unpublishRentCycle = async (
   token: string
 ): Promise<RentCycleResponse> => {
   return await apiRequest<RentCycleResponse>(
-    `/api/v1/finance/rent-cycles/${id}/unpublish`,
+    `/api/v1/finance/bills/${id}/unpublish`,
     {
       method: 'POST',
       token
@@ -191,7 +191,7 @@ export const batchPublishRentCycle = async (
   token: string
 ): Promise<BatchPublishResult> => {
   return await apiRequest<BatchPublishResult>(
-    '/api/v1/finance/rent-cycles/batch-publish',
+    '/api/v1/finance/bills/batch-publish',
     {
       method: 'POST',
       body: JSON.stringify({ propertyId, billingMonth }),
@@ -206,7 +206,7 @@ export const batchUnpublishRentCycle = async (
   token: string
 ): Promise<BatchUnpublishResult> => {
   return await apiRequest<BatchUnpublishResult>(
-    '/api/v1/finance/rent-cycles/batch-unpublish',
+    '/api/v1/finance/bills/batch-unpublish',
     {
       method: 'POST',
       body: JSON.stringify({ propertyId, billingMonth }),
@@ -222,7 +222,7 @@ export const recordCashPayment = async (
   token: string
 ): Promise<any> => {
   return await apiRequest<any>(
-    `/api/v1/finance/rent-cycles/${cycleId}/cash`,
+    `/api/v1/finance/bills/${cycleId}/cash`,
     {
       method: 'POST',
       body: JSON.stringify({ amount, note }),

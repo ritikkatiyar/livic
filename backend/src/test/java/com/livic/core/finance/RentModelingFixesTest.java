@@ -1,15 +1,21 @@
 package com.livic.core.finance;
 
-import com.livic.platform.common.domain.BillingFrequency;
-import com.livic.platform.common.domain.CalculationStrategyType;
-import com.livic.platform.common.domain.ChargeCategory;
-import com.livic.platform.common.domain.LeaseSplitStrategy;
-import com.livic.platform.common.domain.LeaseStatus;
-import com.livic.platform.common.domain.RentChargeType;
+import com.livic.core.finance.repository.UnitBookingRepository;
+import com.livic.core.finance.repository.MeterReadingRepository;
+import com.livic.core.finance.repository.FinanceLedgerRepository;
+import com.livic.core.finance.repository.ChargeConfigRepository;
+import com.livic.core.finance.repository.BillLineRepository;
+import com.livic.core.finance.repository.BillingWorksheetRepository;
+import com.livic.core.finance.repository.BillRepository;
+import com.livic.core.finance.domain.BillingFrequency;
+import com.livic.core.finance.domain.CalculationStrategyType;
+import com.livic.core.finance.domain.ChargeCategory;
+import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.core.finance.domain.RentChargeType;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.platform.common.event.RentPublishedEvent;
 import com.livic.platform.common.exception.BusinessException;
-import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.domain.BillLineTbl;
@@ -17,8 +23,6 @@ import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.domain.UnitMemberRole;
 import java.util.concurrent.atomic.AtomicReference;
-import com.livic.core.finance.service.interfaces.UnitBookingCrudService;
-import com.livic.core.finance.service.interfaces.FinanceLedgerCrudService;
 import com.livic.core.finance.strategy.ChargeCalculationService;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.core.finance.domain.BillTbl;
@@ -34,13 +38,7 @@ import com.livic.core.finance.service.impl.ChargeConfigServiceImpl;
 import com.livic.core.finance.service.impl.BillServiceImpl;
 import com.livic.verticals.rental.billing.service.impl.RentGenerationServiceImpl;
 import com.livic.verticals.rental.billing.service.impl.BillTransactionHelper;
-import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
-import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
-import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
-import com.livic.core.finance.service.interfaces.BillLineCrudService;
-import com.livic.core.finance.service.interfaces.BillCrudService;
 import com.livic.core.finance.service.interfaces.BillService;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
@@ -74,31 +72,29 @@ import static org.mockito.Mockito.*;
 public class RentModelingFixesTest {
 
     @Mock
-    private ChargeConfigCrudService chargeConfigCrudService;
+    private ChargeConfigRepository chargeConfigRepository;
     @Mock
     private PropertyFacade propertyFacade;
     @Mock
     private UnitFacade unitFacade;
     @Mock
-    private BillingWorksheetCrudService billingWorksheetCrudService;
+    private BillingWorksheetRepository billingWorksheetRepository;
     @Mock
-    private MeterReadingCrudService meterReadingCrudService;
+    private MeterReadingRepository meterReadingRepository;
     @Mock
-    private BillLineCrudService billLineCrudService;
+    private BillLineRepository billLineRepository;
     @Mock
-    private BillCrudService billCrudService;
+    private BillRepository billRepository;
     @Mock
     private LeaseQueryService leaseQueryService;
-    @Mock
-    private LeaseCrudService leaseCrudService;
     @Mock
     private ApplicationEventPublisher eventPublisher;
     @Mock
     private UserFacade userFacade;
     @Mock
-    private UnitBookingCrudService unitBookingCrudService;
+    private UnitBookingRepository unitBookingRepository;
     @Mock
-    private FinanceLedgerCrudService financeLedgerCrudService;
+    private FinanceLedgerRepository financeLedgerRepository;
     @Mock
     private ChargeCalculationService chargeCalculationService;
     @Mock
@@ -176,34 +172,33 @@ public class RentModelingFixesTest {
                 leaseId, unitId, "101", 1, propertyId);
 
         transactionHelper = new BillTransactionHelper(
-                billCrudService,
-                billLineCrudService,
+                billRepository,
+                billLineRepository,
                 unitFacade,
                 unitMemberFacade,
-                billingWorksheetCrudService,
-                leaseCrudService,
-                chargeConfigCrudService,
+                billingWorksheetRepository,
+                leaseQueryService,
+                chargeConfigRepository,
                 chargeCalculationService,
-                unitBookingCrudService,
-                financeLedgerCrudService,
+                unitBookingRepository,
+                financeLedgerRepository,
                 billService
         );
         rentGenerationService = new RentGenerationServiceImpl(
                 leaseQueryService,
-                leaseCrudService,
-                chargeConfigCrudService,
-                meterReadingCrudService,
+                chargeConfigRepository,
+                meterReadingRepository,
                 unitFacade,
-                billingWorksheetCrudService,
+                billingWorksheetRepository,
                 transactionHelper,
                 billService
         );
         billService = new BillServiceImpl(
-                billCrudService,
-                billLineCrudService,
-                billingWorksheetCrudService,
-                meterReadingCrudService,
-                chargeConfigCrudService,
+                billRepository,
+                billLineRepository,
+                billingWorksheetRepository,
+                meterReadingRepository,
+                chargeConfigRepository,
                 paymentFacade,
                 eventPublisher,
                 userFacade,
@@ -233,16 +228,16 @@ public class RentModelingFixesTest {
     void testProcessLeaseGeneration_SourcesFromLeaseMonthlyRentAmount() {
         when(leaseQueryService.getLeaseById(leaseId)).thenReturn(lease);
         when(unitMemberFacade.getResidentByLeaseId(leaseId)).thenReturn(Optional.of(payerResident));
-        when(billCrudService.findByMemberIdAndBillingMonth(memberId, "2026-08", BillType.RENT)).thenReturn(Optional.empty());
+        when(billRepository.findByMemberIdAndBillingMonthAndBillType(memberId, "2026-08", BillType.RENT)).thenReturn(Optional.empty());
         AtomicReference<BillTbl> saved = new AtomicReference<>();
-        when(billCrudService.save(any(BillTbl.class))).thenAnswer(i -> {
+        when(billRepository.save(any(BillTbl.class))).thenAnswer(i -> {
             BillTbl c = i.getArgument(0);
             if (c.getId() == null) c.setId(UUID.randomUUID());
             saved.set(c);
             return c;
         });
         // generation hands back through core's read path, so that lookup has to resolve
-        when(billCrudService.findById(any(UUID.class))).thenAnswer(i -> Optional.ofNullable(saved.get()));
+        when(billRepository.findById(any(UUID.class))).thenAnswer(i -> Optional.ofNullable(saved.get()));
         when(unitMemberFacade.getResidentByMemberId(memberId)).thenReturn(Optional.of(payerResident));
 
         BillDTOs.GenerateBillRequest request = new BillDTOs.GenerateBillRequest(leaseId, "2026-08", LocalDate.now().plusDays(10));
@@ -250,7 +245,7 @@ public class RentModelingFixesTest {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<BillLineTbl>> chargeCaptor = ArgumentCaptor.forClass(List.class);
-        verify(billLineCrudService, times(1)).saveAll(chargeCaptor.capture());
+        verify(billLineRepository, times(1)).saveAll(chargeCaptor.capture());
 
         BillLineTbl savedCharge = chargeCaptor.getValue().get(0);
         assertEquals(RentChargeType.BASE_RENT, savedCharge.getChargeType());
@@ -266,12 +261,12 @@ public class RentModelingFixesTest {
         when(authentication.getPrincipal()).thenReturn(UUID.randomUUID().toString());
         org.springframework.security.core.context.SecurityContextHolder.setContext(securityContext);
 
-        when(chargeConfigCrudService.findById(chargeConfigId)).thenReturn(Optional.of(rentConfig));
+        when(chargeConfigRepository.findById(chargeConfigId)).thenReturn(Optional.of(rentConfig));
         when(unitFacade.getUnitsByPropertyId(propertyId)).thenReturn(List.of(UnitSummaryDTO.from(unit)));
         when(leaseQueryService.findActiveLeasesByProperty(propertyId)).thenReturn(List.of(lease));
-        when(billingWorksheetCrudService.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(propertyId, chargeConfigId, "2026-08")).thenReturn(List.of());
+        when(billingWorksheetRepository.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(propertyId, chargeConfigId, "2026-08")).thenReturn(List.of());
         when(userFacade.getUsersByIds(any())).thenReturn(Map.of());
-        when(billCrudService.findByPropertyIdAndBillingMonth(propertyId, "2026-08")).thenReturn(List.of());
+        when(billRepository.findByPropertyIdAndBillingMonth(propertyId, "2026-08")).thenReturn(List.of());
 
         List<WorksheetEntryResponse> responses = billingWorksheetService.getOrCreateWorksheetForMonth(propertyId, chargeConfigId, "2026-08");
 
@@ -295,8 +290,8 @@ public class RentModelingFixesTest {
         UUID cycleId = UUID.randomUUID();
         cycle.setId(cycleId);
 
-        when(billCrudService.findById(cycleId)).thenReturn(Optional.of(cycle));
-        when(billCrudService.save(any(BillTbl.class))).thenAnswer(i -> i.getArgument(0));
+        when(billRepository.findById(cycleId)).thenReturn(Optional.of(cycle));
+        when(billRepository.save(any(BillTbl.class))).thenAnswer(i -> i.getArgument(0));
 
         // Test Publish
         BillDTOs.BillResponse publishedResp = billService.publish(cycleId);
@@ -339,14 +334,14 @@ public class RentModelingFixesTest {
 
         when(unitMemberFacade.getActiveResidencesByUserId(landlordId)).thenReturn(List.of());
         when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of(
-                new PropertySummaryDTO(myProperty1, "My PG 1", "Address 1", "City", "Landmark", 3, true),
-                new PropertySummaryDTO(myProperty2, "My PG 2", "Address 2", "City", "Landmark", 3, true)
+                new PropertySummaryDTO(myProperty1, "My PG 1", "Address 1", "City", "Landmark", true),
+                new PropertySummaryDTO(myProperty2, "My PG 2", "Address 2", "City", "Landmark", true)
         ));
 
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
         org.springframework.data.domain.Page<BillTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
-        when(billCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+        when(billRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
                 .thenReturn(mockPage);
 
         BillDTOs.BillListResponse result = billService.list(landlordId, null, null, "2026-08", null, null, pageable);
@@ -371,7 +366,7 @@ public class RentModelingFixesTest {
         assertNotNull(result);
         assertEquals(0, result.totalElements());
         assertTrue(result.content().isEmpty());
-        verify(billCrudService, never()).findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class));
+        verify(billRepository, never()).findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class));
     }
 
     @Test
@@ -383,7 +378,7 @@ public class RentModelingFixesTest {
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
         org.springframework.data.domain.Page<BillTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
-        when(billCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+        when(billRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
                 .thenReturn(mockPage);
 
         BillDTOs.BillListResponse result = billService.list(tenantId, null, null, "2026-08", null, null, pageable);
@@ -401,16 +396,16 @@ public class RentModelingFixesTest {
 
         when(unitMemberFacade.getActiveResidencesByUserId(landlordId)).thenReturn(List.of());
         when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of(
-                new PropertySummaryDTO(propertyId1, "Property 1", "Addr 1", "City", "Landmark", 5, true),
-                new PropertySummaryDTO(propertyId2, "Property 2", "Addr 2", "City", "Landmark", 5, true)
+                new PropertySummaryDTO(propertyId1, "Property 1", "Addr 1", "City", "Landmark", true),
+                new PropertySummaryDTO(propertyId2, "Property 2", "Addr 2", "City", "Landmark", true)
         ));
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
         org.springframework.data.domain.Page<BillTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
-        when(billCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+        when(billRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
                 .thenReturn(mockPage);
 
-        when(billCrudService.getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any()))
+        when(billRepository.getRentRollMetrics(any(), eq("2026-08"), any(), any(), any(), any(), any()))
                 .thenReturn(new RentRollMetricsDTO(BigDecimal.valueOf(50000), 2L, 8L));
 
         BillDTOs.BillListResponse result = billService.list(landlordId, null, null, "2026-08", null, null, pageable);
@@ -424,7 +419,7 @@ public class RentModelingFixesTest {
         // property, and not in bulk either.
         verify(unitFacade, never()).getUnitsByPropertyIds(any());
         verify(unitFacade, never()).getUnitsByPropertyId(any());
-        verify(billCrudService, times(1)).getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any());
+        verify(billRepository, times(1)).getRentRollMetrics(any(), eq("2026-08"), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -434,11 +429,10 @@ public class RentModelingFixesTest {
         BillTransactionHelper mockTxHelper = mock(BillTransactionHelper.class);
         RentGenerationServiceImpl service = new RentGenerationServiceImpl(
                 leaseQueryService,
-                leaseCrudService,
-                chargeConfigCrudService,
-                meterReadingCrudService,
+                chargeConfigRepository,
+                meterReadingRepository,
                 unitFacade,
-                billingWorksheetCrudService,
+                billingWorksheetRepository,
                 mockTxHelper,
                 mockBillService
         );
@@ -462,7 +456,7 @@ public class RentModelingFixesTest {
         lease2.setUnitId(u2);
         lease2.setStatus(LeaseStatus.ACTIVE);
 
-        when(leaseCrudService.findByUnitIdInAndStatus(any(), eq(LeaseStatus.ACTIVE)))
+        when(leaseQueryService.findActiveLeasesByProperty(propId))
                 .thenReturn(List.of(lease1, lease2));
 
         BillTbl bill1 = new BillTbl();

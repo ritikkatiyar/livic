@@ -36,21 +36,8 @@ public class InventoryFacadeImpl implements InventoryFacade {
         );
     }
 
-    @Override
-    public BigDecimal getTotalValuationForProperty(UUID propertyId) {
-        BigDecimal sum = inventoryItemRepository.sumReplacementValueByPropertyId(propertyId);
-        return sum != null ? sum : BigDecimal.ZERO;
-    }
 
-    @Override
-    public long getInventoryCountForProperty(UUID propertyId) {
-        return inventoryItemRepository.countByPropertyId(propertyId);
-    }
 
-    @Override
-    public long getAssignedInventoryCountForLease(UUID leaseId) {
-        return assignmentRepository.countByLeaseId(leaseId);
-    }
 
     @Override
     public Optional<UUID> getLeaseIdForAssignment(UUID assignmentId) {

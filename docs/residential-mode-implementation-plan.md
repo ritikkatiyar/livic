@@ -118,7 +118,7 @@ Everything else keeps its name and only gains columns.
 | `property_module_tbl` | start using it; type seeds the default module set | core/property |
 | `block_tbl` | **new** — `property_id, name, sort_order`, `is_default`; every property gets an auto-created `"Main"` block, and **any type may have several** — see §4.2a | core/property |
 | `unit_tbl` | `block_id` (unique key moves from `(property_id, unit_number)` to `(block_id, unit_number)`), optional `area`. **Already exists** from the marketplace work: `base_price`, `is_bookable`, `description`, `amenities` — `is_bookable` is the per-unit listing switch the plan called `is_listed`. | core/property |
-| `unit_member_tbl` | **new** — §4.3 | core/property |
+| `unit_member_tbl` | **new** — §4.3. `lease_id` is **removed**: the link lives on the lease, §4.3a | core/property |
 | `charge_config_tbl` | `billed_to_role` (TENANT default / OWNER), optional `unit_id` for owner-specific charges, `tax_rate` | core/finance |
 | `finance_ledger_tbl` | `member_id`, `unit_id` kept — balance per payer **and** per unit (dues follow the flat on sale) | core/finance |
 | `credit_note_tbl` | **new** — refunds, waivers, advances | core/finance |
@@ -127,7 +127,8 @@ Everything else keeps its name and only gains columns.
 | `outbox_tbl` | **new** — §4.6 | platform |
 | `listing_tbl` | **new** — §5 | verticals/marketplace |
 | `marketplace_lead_tbl` | `property_id` + `unit_id` (NOT NULL today) → `listing_id` | verticals/marketplace |
-| `lease_tbl`, `unit_booking_tbl`, `lease_inventory_assignment_tbl` | unchanged, owned by rental | verticals/rental |
+| `lease_tbl` | gains `member_id` → `unit_member`, replacing `unit_member.lease_id` (§4.3a) | verticals/rental |
+| `unit_booking_tbl`, `lease_inventory_assignment_tbl` | unchanged, owned by rental | verticals/rental |
 | `visitor_tbl`, `amenity_booking_tbl` | **new, later** | verticals/society |
 
 ### 4.2a Blocks belong to every property type
@@ -177,12 +178,44 @@ it surfaces the moment a second one exists.
 ### 4.3 `unit_member_tbl` — who belongs to a flat
 ```
 id, unit_id, user_id (null while pending), role OWNER|TENANT|FAMILY,
-is_primary, lease_id (tenants only), from_date, to_date, is_active, assigned_by_id
+is_primary, from_date, to_date, is_active, assigned_by_id
 ```
 - The single answer to "who is in this unit" — used by announcements, issues, resident context, marketplace availability and later visitor approval. Nothing reads `lease_tbl` for this.
 - **Why both member and lease for a rental tenant:** the member row answers *who is here* and lives in core; the lease answers *what was agreed* and lives in the rental vertical. Core cannot depend on rental, owners and family have no lease, and one lookup beats four.
+- **The link lives on the lease, not on the member** — see §4.3a. `unit_member` has no `lease_id`.
 - **Invariant:** creating a lease creates the member row in the same transaction; ending a lease sets `to_date` in the same transaction. Tested both ways.
 - One active primary OWNER per unit; owner and tenant can be active together; a sale ends one owner row and opens the next.
+
+### 4.3a The lease points at the member, not the other way round
+
+`unit_member_tbl.lease_id` shipped in slice 1c, with a real foreign key:
+
+```sql
+CONSTRAINT fk_unit_member_lease FOREIGN KEY (lease_id) REFERENCES lease_tbl (id)
+```
+
+That is a **core table holding a foreign key into a vertical** — the one direction §2 says must never exist. `ModuleBoundaryTest` reads bytecode, not DDL, so it cannot see this and never will.
+
+Keeping the column nullable was right: owners and family have no lease, so `NOT NULL` would be wrong. Nullability is not the problem. **Direction is.**
+
+**Amendment: move the link to `lease_tbl.member_id`.**
+
+| | Direction | Legal? |
+|---|---|---|
+| Today | `unit_member.lease_id` → `lease_tbl` | No — core → vertical |
+| Amended | `lease_tbl.member_id` → `unit_member` | Yes — vertical → core |
+
+Rental is allowed to depend on core, so the same fact expressed from the rental side breaks no rule. The semantics are unchanged — an owner simply has no lease row pointing at them, which is exactly what the nullable column was expressing.
+
+**Three things this buys:**
+
+1. **The DDL violation goes away.** Core stops referencing a vertical's table, so `unit_member` can be created in a deployment that has no rental module at all — a society-only install, or a later split of the monolith.
+2. **Core stops speaking rental's language.** Four methods currently carry a lease id through the core facade: `addTenant(..., leaseId, ...)`, `endTenancy(leaseId, ...)`, `getActiveMemberByLeaseId`, `getResidentByLeaseId`. All four move to rental, where a lease id belongs. `endTenancy` becomes `endTenancy(memberId, ...)`, which is what it actually does.
+3. **One query fewer, every time.** Rental holding a lease currently calls into core to find the member. With the pointer inverted it reads `lease.getMemberId()` from an object it already has. "Bills for lease X" loses a hop too: today lease → member → bills, amended lease.memberId → bills.
+
+**Cost:** one migration — add `lease_tbl.member_id`, backfill from `unit_member.lease_id`, then drop that column and its FK. Then the four facade methods move.
+
+**Care needed:** `endTenancy` is how the lease/member invariant in §4.3 is kept in step, and that invariant has no database enforcement behind it — it holds only because `LeaseServiceImpl` is its sole writer. The move touches exactly that path, so it wants the full suite green either side rather than a quick edit. Worth doing before phase 3, since residential adds owners with no lease and a second writer of member rows.
 
 ### 4.4 Occupancy
 Rented = active TENANT · Owner-occupied = active OWNER with no tenant · Vacant = neither. Capacity counts TENANT only.
@@ -377,6 +410,7 @@ Building admin ──(maintenance)──▶ Unit owner ──(rent)──▶ Ten
 | D13 | GST and invoice numbering in v1 | Yes, numbering from day one; GST when societies arrive |
 | D14 | Can a rental have several blocks | Yes — any type, any number; `is_default` hides the level for the single-block case |
 | D15 | Block vs separate property | Shared staff, charges and books → one property with blocks; separate books → separate properties |
+| D16 | Which side holds the lease/member link | The lease holds `member_id`. A core table must not reference a vertical, and rental already has the lease in hand (§4.3a) |
 
 ---
 
@@ -500,7 +534,7 @@ first — nobody should be left with "Main" and "Building B".
 | Phase | Deliverable | Size |
 |---|---|---|
 | **0** | Open security findings | S |
-| **1** | **Core model**, in slices: (a) `block_tbl` + `unit.block_id` + `RESIDENTIAL` type — **done, migration V24**; (b) modules in use; (c) `unit_member_tbl`; (d) bill rename + payer/issuer + `invoice_no`, ledger per member and per unit; (e) outbox; (f) blocks for every property type — `BlockController`, block level in the units navigation, floor grouping scoped to `(block_id, floor)`, §4.2a. Property and finance packages move as part of this work. Announcements, issues and resident context read members. | L |
+| **1** | **Core model**, in slices: (a) `block_tbl` + `unit.block_id` + `RESIDENTIAL` type — **done, migration V24**; (b) modules in use; (c) `unit_member_tbl`; (d) bill rename + payer/issuer + `invoice_no`, ledger per member and per unit; (e) outbox; (f) blocks for every property type; (g) invert the lease/member link — `lease.member_id` replaces `unit_member.lease_id`, §4.3a — `BlockController`, block level in the units navigation, floor grouping scoped to `(block_id, floor)`, §4.2a. Property and finance packages move as part of this work. Announcements, issues and resident context read members. | L |
 | **2** | **Authorization**: unit-member role rule, `UnitMemberProvider` SPI, drop `LEASE_VIEW_OWN`, permission registry, `/me/context` returns unit links | M |
 | **3** | **Residential**: assign owners, maintenance bills, owner-issued rent, rent privacy, issue routing, landlord + resident screens | M |
 
@@ -525,6 +559,7 @@ Phase 1 is the one big change. Everything after it is additive — which is the 
 - **Residential (3):** maintenance bill has only OWNER charges; residential rent bill only base rent; separate ledger balances; admin batch generates maintenance only; pending owner links on signup.
 - **Marketplace (4, 5):** standalone listing with no account; lead attaches to a listing; conversion keeps leads and URL; managed listing shows vacant/vacating; public API exposes no tenant, bill or document data; listing flips to RENTED when a tenant member is created.
 - **Rental regression (every phase):** lease, booking, rent roll, payment, inventory and analytics unchanged.
+- **Layering (1g):** no core table holds a foreign key into a vertical — assert it against the live schema, since ArchUnit reads bytecode and cannot see DDL.
 - **ArchUnit:** rules added in phase 1 as warnings, tightened to failures as each module lands.
 
 ---

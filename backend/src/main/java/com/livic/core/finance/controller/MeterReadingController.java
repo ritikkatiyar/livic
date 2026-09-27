@@ -3,7 +3,7 @@ package com.livic.core.finance.controller;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.core.finance.dto.MeterReadingDTOs.MeterReadingRequest;
 import com.livic.core.finance.dto.MeterReadingDTOs.MeterReadingResponse;
-import com.livic.core.finance.service.MeterReadingService;
+import com.livic.core.finance.service.interfaces.MeterReadingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -1,7 +1,7 @@
 package com.livic.core.finance.strategy;
 
 import com.livic.core.finance.domain.ChargeConfigTbl;
-import com.livic.platform.common.domain.CalculationStrategyType;
+import com.livic.core.finance.domain.CalculationStrategyType;
 import java.util.UUID;
 
 public interface ChargeCalculation {

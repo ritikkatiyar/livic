@@ -6,7 +6,7 @@ import com.livic.verticals.marketplace.mapper.TourRequestMapper;
 import com.livic.verticals.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.verticals.marketplace.service.interfaces.MyTourRequestService;
 import com.livic.verticals.marketplace.service.interfaces.OtpService;
-import com.livic.platform.common.domain.LeadType;
+import com.livic.verticals.marketplace.domain.LeadType;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;

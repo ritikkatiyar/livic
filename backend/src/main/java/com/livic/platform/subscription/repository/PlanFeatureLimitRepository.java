@@ -19,6 +19,4 @@ public interface PlanFeatureLimitRepository extends JpaRepository<PlanFeatureLim
 
     Optional<PlanFeatureLimitTbl> findByPlanIdAndFeatureKey(String planId, String featureKey);
 
-    @Query("SELECT pfl FROM PlanFeatureLimitTbl pfl WHERE pfl.planId = :planId AND pfl.featureKey = :featureKey")
-    Optional<PlanFeatureLimitTbl> getFeatureLimit(@Param("planId") String planId, @Param("featureKey") String featureKey);
 }

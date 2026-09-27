@@ -27,7 +27,7 @@ public class PaymentController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         log.info("API request: Get payment transaction: {} by user: {}", id, userDetails.getId());
-        return ResponseEntity.ok(ApiResponse.success(paymentTransactionService.getTransactionResponse(id)));
+        return ResponseEntity.ok(ApiResponse.success(paymentTransactionService.getTransactionResponse(id, UUID.fromString(userDetails.getId()))));
     }
 
     @PostMapping("/verify")

@@ -34,30 +34,14 @@ public class UnitMemberFacadeImpl implements UnitMemberFacade {
         unitMemberService.endTenancy(leaseId, on);
     }
 
-    @Override
-    public List<UnitMemberSummaryDTO> getActiveMembersByUnitId(UUID unitId) {
-        return unitMemberService.findActiveByUnitId(unitId).stream().map(UnitMemberSummaryDTO::from).toList();
-    }
 
-    @Override
-    public List<UnitMemberSummaryDTO> getActiveMembersByUnitIds(Collection<UUID> unitIds) {
-        return unitMemberService.findActiveByUnitIds(unitIds).stream().map(UnitMemberSummaryDTO::from).toList();
-    }
 
-    @Override
-    public List<UnitMemberSummaryDTO> getActiveMembersByUserId(UUID userId) {
-        return unitMemberService.findActiveByUserId(userId).stream().map(UnitMemberSummaryDTO::from).toList();
-    }
 
     @Override
     public List<UnitMemberSummaryDTO> getActiveMembersByPropertyId(UUID propertyId) {
         return unitMemberService.findActiveByPropertyId(propertyId).stream().map(UnitMemberSummaryDTO::from).toList();
     }
 
-    @Override
-    public Optional<UnitMemberSummaryDTO> getActiveMemberByLeaseId(UUID leaseId) {
-        return unitMemberService.findActiveByLeaseId(leaseId).map(UnitMemberSummaryDTO::from);
-    }
 
     @Override
     public List<UnitResidentDTO> getActiveResidentsByPropertyId(UUID propertyId) {

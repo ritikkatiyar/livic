@@ -1,7 +1,7 @@
 package com.livic.core.finance.domain;
 
 import com.livic.platform.common.domain.BaseEntity;
-import com.livic.platform.common.domain.RentChargeType;
+import com.livic.core.finance.domain.RentChargeType;
 import jakarta.persistence.*;
 import lombok.*;
 

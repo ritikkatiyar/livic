@@ -22,12 +22,9 @@ public interface LeaseInventoryAssignmentRepository extends JpaRepository<LeaseI
 
     long countByLeaseId(UUID leaseId);
 
-    List<LeaseInventoryAssignmentTbl> findAllByLeaseIdIn(Collection<UUID> leaseIds);
 
     Page<LeaseInventoryAssignmentTbl> findAllByItemId(UUID itemId, Pageable pageable);
 
-    @Query("SELECT a FROM LeaseInventoryAssignmentTbl a WHERE a.itemId = :itemId AND a.returnedAt IS NULL")
-    Optional<LeaseInventoryAssignmentTbl> findActiveAssignmentByItemId(@Param("itemId") UUID itemId);
 
     @Query("SELECT a FROM LeaseInventoryAssignmentTbl a WHERE a.itemId IN :itemIds AND a.returnedAt IS NULL")
     List<LeaseInventoryAssignmentTbl> findActiveAssignmentsByItemIds(@Param("itemIds") Collection<UUID> itemIds);
@@ -35,7 +32,5 @@ public interface LeaseInventoryAssignmentRepository extends JpaRepository<LeaseI
     @Query("SELECT a FROM LeaseInventoryAssignmentTbl a WHERE a.leaseId = :leaseId AND a.returnedAt IS NULL")
     List<LeaseInventoryAssignmentTbl> findActiveAssignmentsByLeaseId(@Param("leaseId") UUID leaseId);
 
-    boolean existsByItemIdAndReturnedAtIsNull(UUID itemId);
 
-    boolean existsByLeaseIdAndItemIdAndReturnedAtIsNull(UUID leaseId, UUID itemId);
 }

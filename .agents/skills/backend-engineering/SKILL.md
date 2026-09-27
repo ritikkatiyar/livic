@@ -65,6 +65,18 @@ module/
 
 ---
 
+## AI-SERVICE (`ai-service/`)
+
+`ai-service` is a separate Spring Boot deployable, not a module of the backend monolith. The architecture, module-boundary and mapper rules above apply to `backend/` only. Everything else here (database, logging, security, code quality) applies to both.
+
+* Packages are `com.livic.ai.<area>` (`agent`, `orchestration`, `tools`, `llm`, `client`, ...), laid out in `ai-service/docs/README.md` and enforced by its `ArchitectureTest`. They are not `com.livic.<layer>.<module>`.
+* It reaches the backend only over HTTP through `client.BackendClient`, relaying the caller's JWT so the backend's own permission checks apply. It cannot inject backend facades or services, and it never reads business tables.
+* That relay is why `AgentContext` and `ToolExecutionContext` carry the raw user token. Both override `toString()` to leave it out, and nothing may log it.
+* Tools project backend JSON into small records for the model, inline. IDs in those records stay `String`: they are JSON for the model, not keys. The mapper conventions do not apply.
+* It uses Jackson 3: `tools.jackson.core` / `tools.jackson.databind` are correct, alongside `com.fasterxml.jackson.annotation`, which Jackson 3 kept.
+
+---
+
 ## DATABASE STANDARDS
 
 1. Table naming:

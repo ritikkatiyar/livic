@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface DynamicPreviewCardProps {
   chargeCategory: string;
@@ -133,7 +134,7 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
   },
   categoryBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.12)' : 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.12) : withAlpha(theme.Colors.primary, 0.08),
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -154,13 +155,13 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.12)' : 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.12) : withAlpha(theme.Colors.primary, 0.08),
     justifyContent: 'center',
     alignItems: 'center',
   },
   previewDivider: {
     height: 1,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.Colors.outlineVariant,
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : theme.Colors.outlineVariant,
     marginVertical: 16,
   },
   previewBody: {

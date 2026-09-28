@@ -87,7 +87,7 @@ export function TrajectoryChart({ token }: TrajectoryChartProps) {
                   </Text>
                 </View>
                 <View style={styles.tooltipPill}>
-                  <View style={[styles.dot, { backgroundColor: theme.Colors.tertiary || '#00e0ff' }]} />
+                  <View style={[styles.dot, { backgroundColor: theme.Colors.tertiary || theme.Colors.primary }]} />
                   <Text style={styles.tooltipVal}>
                     Collected: ₹{data[activeIdx].collected.toLocaleString()}
                   </Text>
@@ -216,7 +216,7 @@ const createStyles = (theme: any, isDark: boolean) =>
     },
     rangeBtnActive: {
       backgroundColor: theme.Colors.surfaceContainerLowest,
-      shadowColor: '#000',
+      shadowColor: theme.Colors.shadowColor,
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.1,
       shadowRadius: 3,

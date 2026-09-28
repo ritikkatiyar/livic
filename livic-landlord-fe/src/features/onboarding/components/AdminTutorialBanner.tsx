@@ -7,6 +7,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useAdminTutorial } from '../context/AdminTutorialContext';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 /** Roles that are allowed to see the Admin Setup Checklist. */
 const ADMIN_ROLES = ['ADMIN', 'SUPER_ADMIN'] as const;
@@ -64,7 +65,7 @@ export const AdminTutorialBanner: React.FC = () => {
   return (
     <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={styles.card}>
       <LinearGradient
-        colors={isDark ? ['rgba(0, 114, 255, 0.15)', 'rgba(0, 212, 255, 0.05)'] : ['rgba(0, 114, 255, 0.08)', 'rgba(0, 212, 255, 0.02)']}
+        colors={isDark ? [withAlpha(theme.Colors.primary, 0.15), withAlpha(theme.Colors.primary, 0.05)] : [withAlpha(theme.Colors.primary, 0.08), withAlpha(theme.Colors.primary, 0.02)]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientBg}
@@ -91,7 +92,7 @@ export const AdminTutorialBanner: React.FC = () => {
         {/* Progress Bar Track */}
         <View style={styles.progressBarTrack}>
           <LinearGradient
-            colors={['#0072ff', '#00d4ff']}
+            colors={[theme.Colors.primary, theme.Colors.primary]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.progressBarFill, { width: `${progressPercent}%` }]}
@@ -223,7 +224,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
     progressBarTrack: {
       height: 6,
       borderRadius: 3,
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.1) : withAlpha(theme.Colors.onSurface, 0.06),
       overflow: 'hidden',
       marginBottom: theme.Spacing.sm || 14,
     },
@@ -253,7 +254,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: isDark ? 'rgba(0, 114, 255, 0.2)' : 'rgba(0, 114, 255, 0.1)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.2) : withAlpha(theme.Colors.primary, 0.1),
       justifyContent: 'center',
       alignItems: 'center',
     },

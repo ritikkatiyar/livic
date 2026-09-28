@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface PaginationProps {
   page: number;
@@ -54,9 +55,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.05) : withAlpha(theme.Colors.onSurface, 0.03),
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.1) : withAlpha(theme.Colors.onSurface, 0.05),
     justifyContent: 'center',
     alignItems: 'center',
   },

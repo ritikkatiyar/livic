@@ -14,6 +14,7 @@ import { DayOfWeek, TimeWindow } from '../api/tourAvailability.api';
 import { BlockedDatesCard } from '../components/visiting-hours/BlockedDatesCard';
 import { BookingRulesCard } from '../components/visiting-hours/BookingRulesCard';
 import { SlotPreviewCard } from '../components/visiting-hours/SlotPreviewCard';
+import { VisitorMessagesCard } from '../components/visiting-hours/VisitorMessagesCard';
 import { createVisitingHoursStyles } from '../components/visiting-hours/VisitingHours.styles';
 import { WeeklyHoursEditor } from '../components/visiting-hours/WeeklyHoursEditor';
 import { useTourAvailability } from '../hooks/useTourAvailability';
@@ -165,6 +166,7 @@ export default function VisitingHoursScreen({ propertyId }: VisitingHoursScreenP
                 deletingId={deletingBlackoutId}
               />
               <SlotPreviewCard preview={preview} isLoading={isPreviewLoading} hasUnsavedChanges={isDirty} />
+              <VisitorMessagesCard propertyId={propertyId} />
             </View>
           </View>
 

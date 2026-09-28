@@ -192,7 +192,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
           disabled={page === 0}
           style={[styles.pageButton, page === 0 && styles.pageButtonDisabled]}
         >
-          <MaterialIcons name="chevron-left" size={24} color={page === 0 ? '#b0bec5' : theme.Colors.primary} />
+          <MaterialIcons name="chevron-left" size={24} color={page === 0 ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
         </TouchableOpacity>
         <Text style={styles.pageText}>
           Page {page + 1} of {totalPages}
@@ -202,7 +202,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
           disabled={page >= totalPages - 1}
           style={[styles.pageButton, page >= totalPages - 1 && styles.pageButtonDisabled]}
         >
-          <MaterialIcons name="chevron-right" size={24} color={page >= totalPages - 1 ? '#b0bec5' : theme.Colors.primary} />
+          <MaterialIcons name="chevron-right" size={24} color={page >= totalPages - 1 ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
         </TouchableOpacity>
       </View>
     );
@@ -407,7 +407,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   filterButtonText: {
-    color: theme.Surface.card,
+    color: theme.Colors.onPrimary,
     fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '600',
   },

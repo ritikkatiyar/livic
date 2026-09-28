@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface RecordCashModalProps {
   visible: boolean;
@@ -87,7 +88,7 @@ export function RecordCashModal({
             ) : (
               <View style={styles.successContainer}>
                 <View style={styles.successIconCircle}>
-                  <MaterialIcons name="check-circle" size={48} color="#16a34a" />
+                  <MaterialIcons name="check-circle" size={48} color={theme.Colors.success} />
                 </View>
                 <Text style={styles.successTitle}>Payment Confirmed!</Text>
                 <Text style={styles.successSubtitle}>
@@ -96,15 +97,15 @@ export function RecordCashModal({
 
                 <View style={styles.checklistReceipt}>
                   <View style={styles.checkItem}>
-                    <MaterialIcons name="check" size={16} color="#16a34a" />
+                    <MaterialIcons name="check" size={16} color={theme.Colors.success} />
                     <Text style={styles.checkText}>Signature transaction generated</Text>
                   </View>
                   <View style={styles.checkItem}>
-                    <MaterialIcons name="check" size={16} color="#16a34a" />
+                    <MaterialIcons name="check" size={16} color={theme.Colors.success} />
                     <Text style={styles.checkText}>Ledger accounts balanced & updated</Text>
                   </View>
                   <View style={styles.checkItem}>
-                    <MaterialIcons name="check" size={16} color="#16a34a" />
+                    <MaterialIcons name="check" size={16} color={theme.Colors.success} />
                     <Text style={styles.checkText}>Receipt notification dispatched</Text>
                   </View>
                 </View>
@@ -133,7 +134,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.Colors.scrim || theme.Colors.scrim,
   },
   modalBlur: {
     ...StyleSheet.absoluteFillObject,
@@ -194,7 +195,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+    backgroundColor: withAlpha(theme.Colors.success, 0.1),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.Spacing.md,

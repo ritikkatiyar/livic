@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { GlassCard } from './GlassCard';
 import { ActionButton } from '../inputs/ActionButton';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface EmptyStateProps {
   title: string;
@@ -56,7 +57,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: theme.Rounded.full,
-    backgroundColor: 'rgba(0, 104, 117, 0.05)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.05),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.Spacing.stackMd,

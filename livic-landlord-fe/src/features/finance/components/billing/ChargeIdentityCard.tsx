@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface ChargeIdentityCardProps {
   expenseName: string;
@@ -134,8 +135,8 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     height: 48,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.glassStroke,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : theme.Colors.glassFill,
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.12) : theme.Colors.glassStroke,
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.glassFill,
     justifyContent: 'center',
     paddingHorizontal: theme.Spacing.md,
     marginBottom: 20,
@@ -162,13 +163,13 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
   categoryButton: {
     paddingVertical: theme.Spacing.sm,
     paddingHorizontal: 14,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : theme.Colors.glassFill,
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.04) : theme.Colors.glassFill,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.Colors.glassStroke,
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : theme.Colors.glassStroke,
   },
   categoryButtonActiveDark: {
-    backgroundColor: 'rgba(0, 229, 255, 0.15)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.15),
     borderColor: theme.Colors.primary,
   },
   categoryButtonActiveLight: {
@@ -192,9 +193,9 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     flexDirection: 'row',
     height: 48,
     borderRadius: 16,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : theme.Colors.glassFill,
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.Colors.glassStroke,
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : theme.Colors.glassStroke,
     padding: theme.Spacing.xs,
   },
   segmentButtonWrapper: {
@@ -208,7 +209,7 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     alignItems: 'center',
   },
   segmentButtonActiveDark: {
-    backgroundColor: 'rgba(0, 229, 255, 0.15)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.15),
     borderWidth: 1,
     borderColor: theme.Colors.primary,
   },

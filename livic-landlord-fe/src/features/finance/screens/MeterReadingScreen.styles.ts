@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: { flex: 1, backgroundColor: theme.Colors.background },
@@ -34,7 +35,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.glassFill,
     justifyContent: 'center', 
     alignItems: 'center',
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -150,9 +151,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 104, 117, 0.1)',
+    borderBottomColor: isDark ? withAlpha(theme.Colors.onSurface, 0.06) : withAlpha(theme.Colors.primary, 0.1),
   },
-  rowError: { backgroundColor: isDark ? 'rgba(255, 107, 107, 0.12)' : 'rgba(254, 226, 226, 0.4)', borderRadius: 12, paddingHorizontal: theme.Spacing.sm },
+  rowError: { backgroundColor: isDark ? withAlpha(theme.Colors.error, 0.12) : withAlpha(theme.Colors.error, 0.4), borderRadius: 12, paddingHorizontal: theme.Spacing.sm },
   
   rowLeft: { flex: 2 },
   unitName: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
@@ -168,7 +169,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLowest, 
     borderRadius: 10,
     borderWidth: 1, 
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 104, 117, 0.15)',
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.15) : withAlpha(theme.Colors.primary, 0.15),
     width: '100%', 
     paddingVertical: 10, 
     paddingHorizontal: 12,
@@ -356,7 +357,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   summaryMetricItem: {
     flex: 1,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.surfaceContainerLowest,
     padding: theme.Spacing.md,
     borderRadius: 16,
     borderWidth: 1,
@@ -376,7 +377,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   previewDivider: {
     height: 1,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.1)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : withAlpha(theme.Colors.primary, 0.1),
     marginVertical: theme.Spacing.md,
   },
   summaryRow: {
@@ -419,7 +420,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: theme.Spacing.md,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.1)',
+    borderTopColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : withAlpha(theme.Colors.primary, 0.1),
   },
   pageButton: {
     flexDirection: 'row',
@@ -468,9 +469,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.1)' : 'rgba(0, 104, 117, 0.05)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.1) : withAlpha(theme.Colors.primary, 0.05),
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(0, 229, 255, 0.2)' : 'rgba(0, 104, 117, 0.1)',
+    borderColor: isDark ? withAlpha(theme.Colors.primary, 0.2) : withAlpha(theme.Colors.primary, 0.1),
   },
   controlLinkText: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -481,7 +482,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   controlSeparator: {
     width: 1,
     height: 12,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 104, 117, 0.15)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.15) : withAlpha(theme.Colors.primary, 0.15),
   },
   emptyConfigCard: {
     padding: theme.Spacing.xl,
@@ -494,7 +495,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
     borderColor: theme.Colors.outline,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 12,

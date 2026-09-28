@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
@@ -213,12 +214,12 @@ export const createStyles = (theme: any, isDark: boolean) =>
       color: theme.Colors.onSurface,
     },
     blockBadge: {
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.08),
       paddingVertical: 2,
       paddingHorizontal: 6,
       borderRadius: 6,
       borderWidth: 1,
-      borderColor: 'rgba(0, 104, 117, 0.2)',
+      borderColor: withAlpha(theme.Colors.primary, 0.2),
     },
     blockBadgeText: {
       color: theme.Colors.primary,

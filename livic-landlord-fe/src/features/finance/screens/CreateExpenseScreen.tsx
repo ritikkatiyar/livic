@@ -390,7 +390,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 20,
     gap: theme.Spacing.sm,
     marginTop: 10,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

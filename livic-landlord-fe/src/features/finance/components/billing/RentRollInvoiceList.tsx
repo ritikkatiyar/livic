@@ -8,6 +8,7 @@ import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { PaginatedContainer } from '@/src/components/common/layout/PaginatedContainer';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface RentRollInvoiceListProps {
   invoices: RentCycleResponse[];
@@ -142,12 +143,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   blockBadge: {
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.08),
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.2)',
+    borderColor: withAlpha(theme.Colors.primary, 0.2),
   },
   blockBadgeText: {
     color: theme.Colors.primary,
@@ -197,9 +198,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.08),
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.24)',
+    borderColor: withAlpha(theme.Colors.primary, 0.24),
     borderRadius: 10,
     paddingVertical: 6,
     paddingHorizontal: 12,

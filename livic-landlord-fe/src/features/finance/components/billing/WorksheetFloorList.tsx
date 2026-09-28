@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { WorksheetEntryResponse } from '@/src/features/finance/api/worksheet.api';
 import type { ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface WorksheetFloorListProps {
   entries: WorksheetEntryResponse[];
@@ -140,7 +141,7 @@ export function WorksheetFloorList({
                         disabled={currentPage === 1}
                         onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage - 1 }))}
                       >
-                        <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? '#a0aab2' : theme.Colors.primary} />
+                        <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
                         <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Prev</Text>
                       </TouchableOpacity>
                       
@@ -154,7 +155,7 @@ export function WorksheetFloorList({
                         onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage + 1 }))}
                       >
                         <Text style={[styles.pageButtonText, currentPage === totalFloorPagesUnits && styles.pageButtonTextDisabled]}>Next</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? '#a0aab2' : theme.Colors.primary} />
+                        <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
                       </TouchableOpacity>
                     </View>
                   )}
@@ -210,12 +211,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   blockBadge: {
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.08),
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.2)',
+    borderColor: withAlpha(theme.Colors.primary, 0.2),
   },
   blockBadgeText: {
     color: theme.Colors.primary,
@@ -232,12 +233,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'flex-end',
   },
   billedBadge: {
-    backgroundColor: 'rgba(0, 104, 117, 0.12)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.12),
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.24)',
+    borderColor: withAlpha(theme.Colors.primary, 0.24),
   },
   billedBadgeText: {
     color: theme.Colors.primary,
@@ -249,8 +250,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 44,
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
-    borderColor: 'rgba(0, 104, 117, 0.3)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.08),
+    borderColor: withAlpha(theme.Colors.primary, 0.3),
     borderWidth: 1,
     borderRadius: 22,
     paddingVertical: 8,

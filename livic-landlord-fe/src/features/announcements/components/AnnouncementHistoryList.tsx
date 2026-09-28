@@ -5,6 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import type { Announcement } from '@/src/features/announcements/api/announcement.api';
 import type { PropertyResponse } from '@/src/types/property';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface AnnouncementHistoryListProps {
   properties: PropertyResponse[];
@@ -26,8 +27,8 @@ export function AnnouncementHistoryList({
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'CRITICAL': return '#ba1a1a';
-      case 'WARNING': return '#e28743';
+      case 'CRITICAL': return theme.Colors.error;
+      case 'WARNING': return theme.Colors.tertiary;
       default: return theme.Colors.primary;
     }
   };
@@ -215,7 +216,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 104, 117, 0.05)',
+    borderTopColor: withAlpha(theme.Colors.primary, 0.05),
     paddingTop: 10,
   },
   historySender: {

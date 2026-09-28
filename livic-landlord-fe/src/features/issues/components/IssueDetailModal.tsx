@@ -128,28 +128,28 @@ export default function IssueDetailModal({
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'URGENT':
-        return { bg: '#fee2e2', text: '#ef4444' };
+        return { bg: theme.Colors.errorContainer, text: theme.Colors.error };
       case 'HIGH':
-        return { bg: '#fef3c7', text: '#d97706' };
+        return { bg: theme.Colors.tertiaryContainer, text: theme.Colors.tertiary };
       case 'STANDARD':
-        return { bg: '#e0f2fe', text: '#0284c7' };
+        return { bg: theme.Colors.primaryContainer, text: theme.Colors.primary };
       default:
-        return { bg: '#f3f4f6', text: '#4b5563' };
+        return { bg: theme.Colors.surfaceContainerHigh, text: theme.Colors.onSurfaceVariant };
     }
   };
 
   const getStatusColor = (status: string, escStatus?: string) => {
     if (escStatus === 'ESCALATED') {
-      return { bg: '#fee2e2', text: '#ef4444', label: 'ESCALATED' };
+      return { bg: theme.Colors.errorContainer, text: theme.Colors.error, label: 'ESCALATED' };
     }
     switch (status) {
       case 'RESOLVED':
       case 'CLOSED':
-        return { bg: '#d1fae5', text: theme.Colors.primary, label: status };
+        return { bg: theme.Colors.successContainer, text: theme.Colors.primary, label: status };
       case 'IN_PROGRESS':
-        return { bg: '#fef3c7', text: '#d97706', label: 'IN PROGRESS' };
+        return { bg: theme.Colors.tertiaryContainer, text: theme.Colors.tertiary, label: 'IN PROGRESS' };
       default:
-        return { bg: '#e0f2fe', text: '#0284c7', label: 'OPEN' };
+        return { bg: theme.Colors.primaryContainer, text: theme.Colors.primary, label: 'OPEN' };
     }
   };
 
@@ -158,7 +158,7 @@ export default function IssueDetailModal({
       case 'CREATION':
         return <MaterialIcons name="add-circle" size={18} color={theme.Colors.primary} />;
       case 'STATUS_CHANGE':
-        return <MaterialIcons name="swap-horiz" size={18} color="#d97706" />;
+        return <MaterialIcons name="swap-horiz" size={18} color={theme.Colors.tertiary} />;
       case 'ESCALATION':
         return <MaterialIcons name="report-problem" size={18} color={theme.Colors.error} />;
       default:
@@ -180,7 +180,7 @@ export default function IssueDetailModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0,0,0,0.5)' }]} />
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || theme.Colors.scrim }]} />
         
         <View style={[styles.modalContent, isDesktop && styles.desktopModal]}>
           {/* Header */}
@@ -230,7 +230,7 @@ export default function IssueDetailModal({
                       {issue.priority}
                     </Text>
                   </View>
-                  <View style={[styles.badge, { backgroundColor: 'rgba(255, 255, 255, 0.55)' }]}>
+                  <View style={[styles.badge, { backgroundColor: theme.Colors.surfaceContainerLowest }]}>
                     <Text style={[styles.badgeText, { color: theme.Colors.primary }]}>{issue.category}</Text>
                   </View>
                 </View>

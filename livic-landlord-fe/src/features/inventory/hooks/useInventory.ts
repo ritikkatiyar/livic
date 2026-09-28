@@ -99,7 +99,7 @@ export function useInventory() {
       }, 0);
       setStats([
         { label: 'Total Assets', value: String(mapped.length), helper: 'Total tracked assets', icon: 'trending-up' as const },
-        { label: 'Maintenance Due', value: String(mapped.filter((i) => i.status === 'Service Due' || i.condition === 'Damaged').length).padStart(2, '0'), helper: 'Requires inspection', icon: 'warning' as const },
+        { label: 'Maintenance Due', value: String(mapped.filter((i) => i.status === 'Service Due' || i.condition === 'Damaged').length), helper: 'Requires inspection', icon: 'warning' as const },
         { label: 'Unassigned', value: String(mapped.filter((i) => i.shared).length), helper: 'Ready for move-in', icon: 'inventory-2' as const },
         { label: 'Valuation', value: formatCompactCurrency(totalVal), helper: 'Replacement cost', icon: 'calculate' as const },
       ]);

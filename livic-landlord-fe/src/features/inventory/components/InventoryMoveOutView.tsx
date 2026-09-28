@@ -6,6 +6,7 @@ import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { type VerificationItem } from '@/src/features/inventory/mockInventoryData';
 import { VerificationCard, SummaryLine } from './InventoryCardComponents';
 import { formatCurrency } from '@/src/utils/formatters';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface InventoryMoveOutViewProps {
   items?: VerificationItem[];
@@ -99,10 +100,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   sectionStack: { gap: theme.Spacing.md },
   moveBanner: { borderRadius: 16, backgroundColor: theme.Colors.error, minHeight: 110, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 22, gap: theme.Spacing.md },
   moveBannerContent: { flex: 1 },
-  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: 'rgba(255,255,255,0.7)', letterSpacing: 0.6 },
+  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: withAlpha(theme.Colors.onPrimary, 0.7), letterSpacing: 0.6 },
   moveBannerTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.surfaceContainerLowest, marginTop: theme.Spacing.xs },
-  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: 'rgba(255,255,255,0.8)', marginTop: theme.Spacing.xs },
-  moveOutDatePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: theme.Spacing.sm, borderRadius: 12 },
+  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: withAlpha(theme.Colors.onPrimary, 0.8), marginTop: theme.Spacing.xs },
+  moveOutDatePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: withAlpha(theme.Colors.onPrimary, 0.2), paddingHorizontal: 12, paddingVertical: theme.Spacing.sm, borderRadius: 12 },
   moveOutDateText: { color: theme.Colors.surfaceContainerLowest, fontWeight: '600', fontSize: theme.Typography.bodyMedium.fontSize },
   workflowGrid: { gap: 14 },
   workflowGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },

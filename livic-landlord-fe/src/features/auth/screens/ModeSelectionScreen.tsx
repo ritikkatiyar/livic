@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface ModeSelectionScreenProps {
   onSelectMode: (mode: string) => Promise<void>;
@@ -164,7 +165,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 20,
-    backgroundColor: isDark ? 'rgba(0, 104, 117, 0.2)' : 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.2) : withAlpha(theme.Colors.primary, 0.08),
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -194,7 +195,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   loaderOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: theme.Colors.scrim || theme.Colors.scrim,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -167,7 +167,7 @@ const createStyles = (theme: any, isDark: boolean) =>
       borderWidth: 1,
       borderColor: theme.Colors.outlineVariant,
       overflow: 'hidden',
-      shadowColor: '#000',
+      shadowColor: theme.Colors.shadowColor,
       shadowOffset: { width: 0, height: 16 },
       shadowOpacity: 0.1,
       shadowRadius: 32,

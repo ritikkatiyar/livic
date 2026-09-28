@@ -7,6 +7,7 @@ import {
   View,
   ActivityIndicator,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -14,8 +15,9 @@ import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { EmptyState } from '@/src/components/common/display/EmptyState';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
-import { formatCurrency, formatCompactCurrency } from '@/src/utils/formatters';
+import { formatCurrency, formatCompactCurrency, formatDate } from '@/src/utils/formatters';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
+import { ActionMenuSheet } from '@/src/components/common/inputs/ActionMenuSheet';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
 import { BlockFilterPills } from '@/src/components/common/inputs/BlockFilterPills';
@@ -33,6 +35,7 @@ import { UnitBookingResponse } from '@/src/features/leases/api/unitBooking.api';
 import { useRouter } from 'expo-router';
 import { ContextualStepGuideBar } from '@/src/features/onboarding/components/ContextualStepGuideBar';
 import { useAdminTutorial } from '@/src/features/onboarding/context/AdminTutorialContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export default function OwnerLeasesScreen() {
   const { theme, isDark } = useAppTheme();
@@ -99,9 +102,9 @@ export default function OwnerLeasesScreen() {
 
   const stats = [
     { label: 'Active Leases', value: String(activeLeasesDisplayCount), helper: 'Occupied tenancies', icon: 'vpn-key' as const },
-    { label: 'Notices Served', value: String(noticeCount).padStart(2, '0'), helper: 'Vacating soon', icon: 'door-sliding' as const },
-    { label: 'Pending Bookings', value: String(pendingBookingsCount).padStart(2, '0'), helper: 'Tokens received', icon: 'bookmark' as const },
-    { label: 'Available Units', value: String(availableUnitsCount).padStart(2, '0'), helper: 'Ready to market', icon: 'meeting-room' as const },
+    { label: 'Notices Served', value: String(noticeCount), helper: 'Vacating soon', icon: 'door-sliding' as const },
+    { label: 'Pending Bookings', value: String(pendingBookingsCount), helper: 'Tokens received', icon: 'bookmark' as const },
+    { label: 'Available Units', value: String(availableUnitsCount), helper: 'Ready to market', icon: 'meeting-room' as const },
   ];
   const TABS = [
     { id: 'leases' as const, label: 'Active Leases', icon: 'description' as const, count: activeLeasesDisplayCount },
@@ -164,8 +167,8 @@ export default function OwnerLeasesScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tabsScrollContent}
-            style={styles.tabsScrollView}
+            contentContainerStyle={[styles.tabsScrollContent, !isDesktop && styles.edgeToEdgeContent]}
+            style={[styles.tabsScrollView, !isDesktop && styles.edgeToEdgeRow]}
           >
             {TABS.map((t) => (
               <FilterPill
@@ -190,7 +193,8 @@ export default function OwnerLeasesScreen() {
           <View style={styles.searchBar}>
             <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
             <TextInput
-              placeholder="Search by tenant name, unit number, phone, status..."
+              placeholder="Search tenant, unit or phone"
+              numberOfLines={1}
               placeholderTextColor={theme.Colors.onSurfaceVariant}
               value={searchQuery} onChangeText={setSearchQuery}
               style={styles.searchInput}
@@ -304,6 +308,8 @@ function LeasesTab({
   onInventory,
   onServeNotice,
 }: any) {
+  const [menuLease, setMenuLease] = React.useState<LeaseResponse | null>(null);
+
   if (filteredLeases.length === 0) {
     return (
       <EmptyState
@@ -317,6 +323,52 @@ function LeasesTab({
     <View style={styles.listContainer}>
       {filteredLeases.map((l: LeaseResponse) => {
         const hasNotice = Boolean(l.moveOutDate);
+        if (!isDesktop) {
+          const location = [`Unit ${l.unitNumber || '—'}`, l.propertyName, l.blockName].filter(Boolean).join(' · ');
+          return (
+            <GlassCard
+              key={l.id}
+              style={[styles.leaseCard, hasNotice && styles.leaseCardAlert]}
+              contentStyle={styles.compactLeaseContent}
+            >
+              <View style={styles.compactTopRow}>
+                <View style={styles.compactAvatar}>
+                  <Text style={styles.compactAvatarText}>{(l.tenantName || 'T').substring(0, 1).toUpperCase()}</Text>
+                </View>
+                <View style={styles.compactIdentity}>
+                  <Text style={styles.tenantName} numberOfLines={1}>{l.tenantName || 'Active Tenant'}</Text>
+                  <Text style={styles.compactMuted} numberOfLines={1}>{location}</Text>
+                </View>
+                <StatusPill status={hasNotice ? 'ENDING_SOON' : l.status || 'ACTIVE'} />
+                <TouchableOpacity
+                  style={styles.compactMoreButton}
+                  onPress={() => setMenuLease(l)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`More actions for ${l.tenantName || 'tenant'}`}
+                >
+                  <MaterialIcons name="more-vert" size={22} color={theme.Colors.onSurfaceVariant} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.compactMetaRow}>
+                <Text style={styles.compactRent}>
+                  {formatCurrency(l.monthlyRentAmount)}
+                  <Text style={styles.compactMuted}>/mo</Text>
+                </Text>
+                <Text style={styles.compactMuted}>Deposit {formatCurrency(l.securityDeposit ?? 0)}</Text>
+                {l.moveInDate ? <Text style={styles.compactMuted}>Since {formatDate(l.moveInDate)}</Text> : null}
+              </View>
+
+              {hasNotice && (
+                <View style={styles.compactNotice}>
+                  <MaterialIcons name="warning-amber" size={16} color={theme.Colors.error} />
+                  <Text style={styles.noticeAlertText}>Vacating on {formatDate(l.moveOutDate)}</Text>
+                </View>
+              )}
+            </GlassCard>
+          );
+        }
         return (
           <GlassCard key={l.id} style={[styles.leaseCard, hasNotice && styles.leaseCardAlert]}>
             {/* Header Row: Tenant identity on left, Status Badge on right */}
@@ -379,54 +431,15 @@ function LeasesTab({
                 <Text style={styles.detailValueSecondary}>{l.moveInDate || '—'}</Text>
               </View>
               {l.moveOutDate && (
-                <View style={[styles.detailItem, { borderColor: 'rgba(239, 68, 68, 0.25)' }]}>
+                <View style={[styles.detailItem, { borderColor: withAlpha(theme.Colors.error, 0.25) }]}>
                   <Text style={[styles.detailLabel, { color: theme.Colors.error }]}>EXPECTED VACATE</Text>
                   <Text style={[styles.detailValueSecondary, { color: theme.Colors.error, fontWeight: '600' }]}>{l.moveOutDate}</Text>
                 </View>
               )}
             </View>
 
-            {/* Responsive Actions: Clean stacked/grid rows on mobile, horizontal row on desktop */}
-            {!isDesktop ? (
-              <View style={styles.mobileActionsContainer}>
-                <View style={styles.cardFooterMobile}>
-                  <Text style={styles.leaseIdText}>ID: #{l.id?.substring(0, 8)}</Text>
-                </View>
-                <View style={styles.mobileActionsRow}>
-                  <View style={{ flex: 1 }}>
-                    <ActionButton
-                      label="Edit Terms"
-                      icon="edit"
-                      variant="outline"
-                      size="sm"
-                      fullWidth
-                      onPress={() => onEditTerms(l)}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <ActionButton
-                      label="Inventory"
-                      icon="inventory-2"
-                      variant="outline"
-                      size="sm"
-                      fullWidth
-                      onPress={() => onInventory(l)}
-                    />
-                  </View>
-                </View>
-                {!l.moveOutDate && (
-                  <ActionButton
-                    label="Serve Notice"
-                    icon="warning"
-                    variant="danger"
-                    size="sm"
-                    fullWidth
-                    onPress={() => onServeNotice(l.id)}
-                  />
-                )}
-              </View>
-            ) : (
-              <View style={styles.cardFooter}>
+            {/* Desktop actions (mobile uses the compact card + action menu above) */}
+            <View style={styles.cardFooter}>
                 <View style={styles.footerLeft}>
                   <Text style={styles.leaseIdText}>ID: #{l.id?.substring(0, 8)}</Text>
                 </View>
@@ -455,11 +468,26 @@ function LeasesTab({
                     />
                   )}
                 </View>
-              </View>
-            )}
+            </View>
           </GlassCard>
         );
       })}
+
+      <ActionMenuSheet
+        visible={menuLease !== null}
+        title={menuLease?.tenantName || 'Lease'}
+        onClose={() => setMenuLease(null)}
+        items={menuLease ? [
+          ...(menuLease.tenantPhone
+            ? [{ key: 'call', label: `Call ${menuLease.tenantPhone}`, icon: 'call' as const, onPress: () => Linking.openURL(`tel:${menuLease.tenantPhone}`) }]
+            : []),
+          { key: 'terms', label: 'Edit terms', icon: 'edit' as const, onPress: () => onEditTerms(menuLease) },
+          { key: 'inventory', label: 'Inventory', icon: 'inventory-2' as const, onPress: () => onInventory(menuLease) },
+          ...(!menuLease.moveOutDate
+            ? [{ key: 'notice', label: 'Serve notice', icon: 'warning' as const, destructive: true, onPress: () => onServeNotice(menuLease.id) }]
+            : []),
+        ] : []}
+      />
 
       {isFetchingMore && (
         <View style={styles.loadingMoreBox}>
@@ -493,7 +521,7 @@ function BookingsTab({ filteredBookings, isDark, isDesktop, styles, theme, onCas
         <GlassCard key={b.id} style={styles.leaseCard}>
           <View style={styles.cardHeader}>
             <View style={styles.headerLeft}>
-              <View style={[styles.tenantAvatarCircle, { backgroundColor: 'rgba(79,70,229,0.1)' }]}>
+              <View style={[styles.tenantAvatarCircle, { backgroundColor: withAlpha(theme.Colors.secondary, 0.1) }]}>
                 <Text style={[styles.tenantAvatarText, { color: theme.Colors.secondary }]}>{(b.prospectiveTenantName || 'P').substring(0, 2).toUpperCase()}</Text>
               </View>
               <View style={styles.tenantTextContainer}>
@@ -665,7 +693,7 @@ function VacanciesTab({ vacatingUnits, isDark, styles, theme, currentPropertyNam
         <GlassCard key={v.id || i} style={[styles.leaseCard, styles.leaseCardAlert]}>
           <View style={styles.cardHeader}>
             <View style={styles.headerLeft}>
-              <View style={[styles.tenantAvatarCircle, { backgroundColor: 'rgba(186,26,26,0.1)' }]}>
+              <View style={[styles.tenantAvatarCircle, { backgroundColor: withAlpha(theme.Colors.error, 0.1) }]}>
                 <MaterialIcons name="door-sliding" size={22} color={theme.Colors.error} />
               </View>
               <View style={styles.tenantTextContainer}>

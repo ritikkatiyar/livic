@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, StyleProp } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export interface FilterPillProps {
   label: string;
@@ -120,7 +121,7 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md') => {
       justifyContent: 'center',
     },
     badgeActive: {
-      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+      backgroundColor: withAlpha(theme.Colors.onPrimary, 0.25),
     },
     badgeInactive: {
       backgroundColor: theme.Colors.surfaceContainerLow,

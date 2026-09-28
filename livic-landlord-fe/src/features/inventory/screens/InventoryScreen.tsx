@@ -26,6 +26,7 @@ import { PropertyRequiredBanner } from '@/src/components/common/feedback/Propert
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
 import { useRouter } from 'expo-router';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export default function InventoryScreen() {
   const { theme, isDark } = useAppTheme();
@@ -233,7 +234,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(0,104,117,0.1)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.1),
     paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: 8,

@@ -1,4 +1,5 @@
 import { StyleSheet, Platform } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
@@ -119,7 +120,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     monthSelector: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.55)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.06) : theme.Colors.surfaceContainerLowest,
       borderRadius: theme.Rounded.full,
       paddingHorizontal: 8,
       paddingVertical: 4,
@@ -147,7 +148,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       gap: 8,
       marginTop: 18,
       borderTopWidth: 1,
-      borderTopColor: 'rgba(0,0,0,0.06)',
+      borderTopColor: withAlpha(theme.Colors.onSurface, 0.06),
       paddingTop: 16,
     },
     statusChipsWrap: {
@@ -159,7 +160,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       flexDirection: 'row',
       marginTop: 18,
       borderTopWidth: 1,
-      borderTopColor: 'rgba(0,0,0,0.06)',
+      borderTopColor: withAlpha(theme.Colors.onSurface, 0.06),
       paddingTop: 16,
     },
     propertyTabsContent: {
@@ -169,7 +170,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingHorizontal: 16,
       paddingVertical: 8,
       borderRadius: theme.Rounded.full,
-      backgroundColor: 'rgba(255,255,255,0.7)',
+      backgroundColor: theme.Colors.surfaceContainerLowest,
       borderWidth: 1,
       borderColor: theme.Colors.outlineVariant,
     },
@@ -199,7 +200,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     searchBox: {
       width: '100%',
       height: 42,
-      backgroundColor: isDark ? 'rgba(15, 23, 32, 0.6)' : 'rgba(255, 255, 255, 0.5)',
+      backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.surfaceContainerLowest,
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.Colors.glassStroke,
@@ -230,7 +231,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingHorizontal: 14,
       paddingVertical: 7,
       borderRadius: 10,
-      backgroundColor: 'rgba(255,255,255,0.7)',
+      backgroundColor: theme.Colors.surfaceContainerLowest,
       borderWidth: 1,
       borderColor: theme.Colors.outlineVariant,
     },
@@ -259,9 +260,9 @@ export const createStyles = (theme: any, isDark: boolean) =>
       flexDirection: 'row',
       paddingVertical: 14,
       paddingHorizontal: 24,
-      backgroundColor: 'rgba(255, 255, 255, 0.85)',
+      backgroundColor: theme.Colors.surfaceContainerLowest,
       borderBottomWidth: 1,
-      borderBottomColor: '#e2e8f0',
+      borderBottomColor: theme.Colors.outline,
     },
     headerCell: {
       fontSize: theme.Typography.bodySmall.fontSize,
@@ -275,7 +276,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingVertical: 16,
       paddingHorizontal: 24,
       borderBottomWidth: 1,
-      borderBottomColor: 'rgba(0,0,0,0.05)',
+      borderBottomColor: withAlpha(theme.Colors.onSurface, 0.05),
     },
     rowMobile: {
       paddingHorizontal: 0,
@@ -306,9 +307,9 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 8,
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.08),
       borderWidth: 1,
-      borderColor: 'rgba(0, 104, 117, 0.2)',
+      borderColor: withAlpha(theme.Colors.primary, 0.2),
     },
     downloadBtnText: {
       fontSize: theme.Typography.bodySmall.fontSize,
@@ -356,7 +357,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginTop: 10,
       paddingTop: 8,
       borderTopWidth: 1,
-      borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+      borderTopColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : withAlpha(theme.Colors.onSurface, 0.06),
     },
     mobileAmount: {
       fontSize: theme.Typography.bodyMedium.fontSize,
@@ -370,7 +371,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingHorizontal: 24,
       paddingVertical: 18,
       borderTopWidth: 1,
-      borderTopColor: '#e2e8f0',
+      borderTopColor: theme.Colors.outline,
       flexWrap: 'wrap',
       gap: 12,
     },
@@ -410,7 +411,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 8,
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.08),
     },
     pageNumberText: {
       fontSize: theme.Typography.bodyMedium.fontSize,

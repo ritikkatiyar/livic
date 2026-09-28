@@ -72,7 +72,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.Colors.scrim || theme.Colors.scrim,
   },
   modalCard: {
     width: '100%',

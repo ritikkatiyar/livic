@@ -20,6 +20,7 @@ import { EmptyState } from '@/src/components/common/display/EmptyState';
 import { MembershipResponse } from '@/src/features/properties/api/membership.api';
 import { JoinCodeResponse } from '@/src/features/properties/api/rolePermission.api';
 import { ActiveTab } from '@/src/features/settings/hooks/useSettings';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 type ThemeLike = any;
 type StylesLike = Record<string, any>;
@@ -96,7 +97,7 @@ export function SettingsHubGrid({
       <TouchableOpacity activeOpacity={0.85} onPress={() => onTabChange('members')} style={styles.hubCardTouch}>
         <GlassCard style={[styles.hubCard, activeTab === 'members' && styles.hubCardActive]}>
           <View style={styles.hubCardHeader}>
-            <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(0, 104, 117, 0.12)' }]}>
+            <View style={[styles.hubIconHalo, { backgroundColor: withAlpha(theme.Colors.primary, 0.12) }]}>
               <MaterialIcons name="people" size={24} color={theme.Colors.primary} />
             </View>
             <View style={styles.hubBadge}>
@@ -111,7 +112,7 @@ export function SettingsHubGrid({
       <TouchableOpacity activeOpacity={0.85} onPress={() => onTabChange('invites')} style={styles.hubCardTouch}>
         <GlassCard style={[styles.hubCard, activeTab === 'invites' && styles.hubCardActive]}>
           <View style={styles.hubCardHeader}>
-            <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(0, 104, 117, 0.12)' }]}>
+            <View style={[styles.hubIconHalo, { backgroundColor: withAlpha(theme.Colors.primary, 0.12) }]}>
               <MaterialIcons name="vpn-key" size={24} color={theme.Colors.primary} />
             </View>
             <View style={styles.hubBadge}>
@@ -126,7 +127,7 @@ export function SettingsHubGrid({
       <TouchableOpacity activeOpacity={0.85} onPress={() => onTabChange('preferences')} style={styles.hubCardTouch}>
         <GlassCard style={[styles.hubCard, activeTab === 'preferences' && styles.hubCardActive]}>
           <View style={styles.hubCardHeader}>
-            <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(91, 94, 207, 0.12)' }]}>
+            <View style={[styles.hubIconHalo, { backgroundColor: withAlpha(theme.Colors.secondary, 0.12) }]}>
               <MaterialIcons name="tune" size={24} color={theme.Colors.secondary} />
             </View>
             <View style={styles.hubBadge}>
@@ -242,8 +243,8 @@ export function SettingsTabContent({
                         handleToggleMemberActive(item, val);
                       }}
                       disabled={!canEdit}
-                      trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
-                      thumbColor={item.isActive ? '#00d4ff' : '#9ca3af'}
+                      trackColor={{ false: withAlpha(theme.Colors.primary, 0.15), true: theme.Colors.primary }}
+                      thumbColor={item.isActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
                     />
                   )}
                 </View>
@@ -383,8 +384,8 @@ export function SettingsTabContent({
                     paddingHorizontal: 12,
                     borderRadius: 10,
                     borderWidth: 1.5,
-                    borderColor: isSelected ? theme.Colors.primary : 'rgba(0, 104, 117, 0.2)',
-                    backgroundColor: isSelected ? 'rgba(0, 104, 117, 0.12)' : 'transparent',
+                    borderColor: isSelected ? theme.Colors.primary : withAlpha(theme.Colors.primary, 0.2),
+                    backgroundColor: isSelected ? withAlpha(theme.Colors.primary, 0.12) : 'transparent',
                     alignItems: 'center',
                     flexDirection: 'row',
                     justifyContent: 'center',

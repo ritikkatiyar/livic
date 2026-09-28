@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { SystemEventItem } from '../api/analytics.api';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface SystemEventsFeedProps {
   events: SystemEventItem[];
@@ -26,21 +27,21 @@ export function SystemEventsFeed({ events, loading = false }: SystemEventsFeedPr
         };
       case 'MAINTENANCE':
         return {
-          bg: 'rgba(234, 153, 0, 0.15)',
-          color: '#e28743',
+          bg: withAlpha(theme.Colors.tertiary, 0.15),
+          color: theme.Colors.tertiary,
           icon: 'warning' as const,
         };
       case 'PAYMENT':
         return {
-          bg: 'rgba(0, 224, 255, 0.15)',
-          color: theme.Colors.tertiary || '#00e0ff',
+          bg: withAlpha(theme.Colors.primary, 0.15),
+          color: theme.Colors.tertiary || theme.Colors.primary,
           icon: 'payments' as const,
         };
       case 'MEMBER':
       default:
         return {
-          bg: 'rgba(123, 44, 191, 0.15)',
-          color: '#a78bfa',
+          bg: withAlpha(theme.Colors.secondary, 0.15),
+          color: theme.Colors.secondary,
           icon: 'person-add' as const,
         };
     }

@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
@@ -16,7 +17,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.sm,
     paddingVertical: 3,
     borderRadius: 6,
-    backgroundColor: 'rgba(0,104,117,0.08)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.08),
   },
   propertyBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', color: theme.Colors.primary },
   desktopTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: theme.Spacing.md, marginTop: 10 },
@@ -37,19 +38,19 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   filterBarDesktop: { paddingHorizontal: 0, marginTop: theme.Spacing.lg },
   searchWrapper: { flex: 1, position: 'relative' },
   searchIcon: { position: 'absolute', left: 14, top: 12, zIndex: 5 },
+  // Sits inside `searchBar`, which already draws the box and the icon
   searchInput: {
-    height: 44,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.6)' : 'rgba(255, 255, 255, 0.50)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
-    paddingLeft: 44,
-    paddingRight: theme.Spacing.md,
+    flex: 1,
+    minWidth: 0,
+    height: 24,
+    padding: 0,
     fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
-    fontWeight: '600',
     outlineWidth: 0,
   },
+  // Horizontal chip rows bleed to the screen edge on mobile so they clearly scroll
+  edgeToEdgeRow: { marginHorizontal: -theme.Spacing.containerPadding },
+  edgeToEdgeContent: { paddingHorizontal: theme.Spacing.containerPadding },
   propertySelectWrapper: { width: 190 },
 
   statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.Spacing.md },
@@ -62,7 +63,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.glassStroke,
     backgroundColor: theme.Colors.glassFill,
     overflow: 'hidden',
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
@@ -72,7 +73,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   statIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   statVal: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
 
-  tabsRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)', marginTop: theme.Spacing.sm, paddingHorizontal: theme.Spacing.md },
+  tabsRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: withAlpha(theme.Colors.onSurface, 0.06), marginTop: theme.Spacing.sm, paddingHorizontal: theme.Spacing.md },
   tabsRowDesktop: { paddingHorizontal: 0, marginTop: theme.Spacing.md },
   tabBtn: { paddingVertical: 12, paddingHorizontal: theme.Spacing.md, borderBottomWidth: 2, borderBottomColor: 'transparent', marginRight: theme.Spacing.md },
   activeTabBtn: { borderBottomColor: theme.Colors.primary },
@@ -85,7 +86,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.glassStroke,
     backgroundColor: theme.Colors.glassFill,
     padding: theme.Spacing.lg,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 20,
@@ -150,7 +151,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 6,
-    backgroundColor: 'rgba(0,104,117,0.04)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.04),
   },
   btnSecondaryText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600' },
 
@@ -164,7 +165,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 6,
-    backgroundColor: 'rgba(229,57,53,0.04)',
+    backgroundColor: withAlpha(theme.Colors.error, 0.04),
   },
   btnActionDestructiveText: { color: theme.Colors.error, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600' },
 
@@ -186,14 +187,14 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   emptyContainer: { padding: 40, alignItems: 'center', justifyContent: 'center', gap: 12 },
   emptyText: { fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalCard: { width: '100%', backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 28, overflow: 'hidden', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.9)' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: theme.Spacing.lg, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
+  modalOverlay: { flex: 1, backgroundColor: theme.Colors.scrim, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalCard: { width: '100%', backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 28, overflow: 'hidden', borderWidth: 1.5, borderColor: theme.Colors.surfaceContainerLowest },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: theme.Spacing.lg, borderBottomWidth: 1, borderBottomColor: withAlpha(theme.Colors.onSurface, 0.06) },
   modalKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 1, color: theme.Colors.onSurfaceVariant },
   modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onSurface, marginTop: theme.Spacing.xs },
-  closeBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.03)', alignItems: 'center', justifyContent: 'center' },
+  closeBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: withAlpha(theme.Colors.onSurface, 0.03), alignItems: 'center', justifyContent: 'center' },
   modalBody: { padding: theme.Spacing.lg, gap: theme.Spacing.md },
-  modalFooter: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, padding: theme.Spacing.lg, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.06)' },
+  modalFooter: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, padding: theme.Spacing.lg, borderTopWidth: 1, borderTopColor: withAlpha(theme.Colors.onSurface, 0.06) },
 
   cancelBtn: { minHeight: 44, justifyContent: 'center', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 100 },
   cancelBtnText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant },
@@ -203,9 +204,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   input: {
     height: 48,
-    backgroundColor: 'rgba(0,0,0,0.02)',
+    backgroundColor: withAlpha(theme.Colors.onSurface, 0.02),
     borderWidth: 1,
-    borderColor: 'rgba(0,104,117,0.15)',
+    borderColor: withAlpha(theme.Colors.primary, 0.15),
     borderRadius: 12,
     paddingHorizontal: theme.Spacing.md,
     fontSize: theme.Typography.bodyMedium.fontSize,
@@ -234,13 +235,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.md,
     paddingVertical: 10,
     borderRadius: 100,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
+    borderColor: theme.Colors.surfaceContainerLowest,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -248,7 +249,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   pageBtnDisabled: {
     opacity: 0.5,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   pageBtnText: {
     fontSize: theme.Typography.bodySmall.fontSize,
@@ -262,9 +263,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.06)',
+    borderColor: withAlpha(theme.Colors.onSurface, 0.06),
   },
   pageNumberText: {
     fontSize: theme.Typography.bodySmall.fontSize,
@@ -352,9 +353,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: isDark ? 'rgba(0, 104, 117, 0.25)' : 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.25) : withAlpha(theme.Colors.primary, 0.08),
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(0, 104, 117, 0.35)' : 'rgba(0, 104, 117, 0.15)',
+    borderColor: isDark ? withAlpha(theme.Colors.primary, 0.35) : withAlpha(theme.Colors.primary, 0.15),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -385,9 +386,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
-    backgroundColor: isDark ? 'rgba(0, 104, 117, 0.25)' : 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.25) : withAlpha(theme.Colors.primary, 0.08),
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(0, 104, 117, 0.35)' : 'rgba(0, 104, 117, 0.15)',
+    borderColor: isDark ? withAlpha(theme.Colors.primary, 0.35) : withAlpha(theme.Colors.primary, 0.15),
   },
   unitBadgeText: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -401,9 +402,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.error, 0.15) : withAlpha(theme.Colors.error, 0.08),
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.25)',
+    borderColor: withAlpha(theme.Colors.error, 0.25),
     marginTop: 10,
   },
   noticeAlertText: {
@@ -422,9 +423,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     minWidth: 95,
     padding: 10,
     borderRadius: 12,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 104, 117, 0.04)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.03) : withAlpha(theme.Colors.primary, 0.04),
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 104, 117, 0.08)',
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.06) : withAlpha(theme.Colors.primary, 0.08),
   },
   detailLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -502,12 +503,12 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: theme.Spacing.sm,
     borderRadius: 100,
-    backgroundColor: 'rgba(0,0,0,0.03)',
+    backgroundColor: withAlpha(theme.Colors.onSurface, 0.03),
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.06)',
+    borderColor: withAlpha(theme.Colors.onSurface, 0.06),
   },
   unitChipSelected: {
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.08),
     borderColor: theme.Colors.primary,
   },
   unitChipText: {
@@ -547,7 +548,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     paddingVertical: theme.Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.06)',
+    borderTopColor: withAlpha(theme.Colors.onSurface, 0.06),
   },
   paginationInfo: {
     fontSize: theme.Typography.bodySmall.fontSize,
@@ -600,7 +601,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
+    borderBottomColor: withAlpha(theme.Colors.onSurface, 0.06),
     paddingBottom: theme.Spacing.xs,
   },
   tab: {
@@ -622,10 +623,10 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 100,
-    backgroundColor: 'rgba(0,0,0,0.06)',
+    backgroundColor: withAlpha(theme.Colors.onSurface, 0.06),
   },
   tabBadgeActive: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: withAlpha(theme.Colors.onPrimary, 0.25),
   },
   tabBadgeText: {
     fontSize: theme.Typography.labelSmall.fontSize - 2,
@@ -666,8 +667,68 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '600',
   },
   leaseCardAlert: {
-    borderColor: 'rgba(229,57,53,0.3)',
-    backgroundColor: 'rgba(229,57,53,0.02)',
+    borderColor: withAlpha(theme.Colors.error, 0.3),
+    backgroundColor: withAlpha(theme.Colors.error, 0.02),
+  },
+
+  // Compact mobile lease card: identity row + one meta row, actions live in a menu
+  compactLeaseContent: {
+    padding: theme.Spacing.md,
+    gap: theme.Spacing.sm,
+  },
+  compactTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.Spacing.sm,
+  },
+  compactAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.Colors.primaryContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactAvatarText: {
+    fontSize: theme.Typography.bodyLarge.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.primary,
+  },
+  compactIdentity: {
+    flex: 1,
+    minWidth: 0,
+  },
+  compactMuted: {
+    fontSize: theme.Typography.bodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    fontWeight: '400',
+  },
+  compactMoreButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: -6,
+  },
+  // Each fact wraps to the next line whole on narrow screens instead of truncating
+  compactMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    columnGap: theme.Spacing.md,
+    rowGap: 2,
+    paddingLeft: 36 + theme.Spacing.sm,
+  },
+  compactRent: {
+    fontSize: theme.Typography.bodyLarge.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.onSurface,
+  },
+  compactNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingLeft: 36 + theme.Spacing.sm,
   },
   alertStripe: {
     position: 'absolute',

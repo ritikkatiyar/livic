@@ -3,19 +3,20 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import type { InventoryCondition, InventoryItem, AssignmentItem, VerificationItem } from '@/src/features/inventory/mockInventoryData';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 const getConditionConfig = (theme: any) => ({
-  Excellent: { color: theme.Colors.primary, bg: 'rgba(5,150,105,0.1)'  },
-  Good:      { color: theme.Colors.primary, bg: 'rgba(0,104,117,0.1)'  },
-  Fair:      { color: theme.Colors.tertiary, bg: 'rgba(217,119,6,0.1)'  },
-  Damaged:   { color: theme.Colors.error, bg: 'rgba(186,26,26,0.1)'  },
+  Excellent: { color: theme.Colors.primary, bg: withAlpha(theme.Colors.success, 0.1)  },
+  Good:      { color: theme.Colors.primary, bg: withAlpha(theme.Colors.primary, 0.1)  },
+  Fair:      { color: theme.Colors.tertiary, bg: withAlpha(theme.Colors.tertiary, 0.1)  },
+  Damaged:   { color: theme.Colors.error, bg: withAlpha(theme.Colors.error, 0.1)  },
 });
 
 const getStatusConfig = (theme: any) => ({
-  Assigned:      { color: theme.Colors.primary, bg: 'rgba(5,150,105,0.1)',   dot: theme.Colors.primary },
-  Available:     { color: theme.Colors.primary, bg: 'rgba(0,104,117,0.1)',   dot: theme.Colors.primary },
-  Shared:        { color: theme.Colors.secondary, bg: 'rgba(79,70,229,0.1)',   dot: theme.Colors.secondary },
-  'Service Due': { color: theme.Colors.error, bg: 'rgba(186,26,26,0.08)',  dot: theme.Colors.error },
+  Assigned:      { color: theme.Colors.primary, bg: withAlpha(theme.Colors.success, 0.1),   dot: theme.Colors.primary },
+  Available:     { color: theme.Colors.primary, bg: withAlpha(theme.Colors.primary, 0.1),   dot: theme.Colors.primary },
+  Shared:        { color: theme.Colors.secondary, bg: withAlpha(theme.Colors.secondary, 0.1),   dot: theme.Colors.secondary },
+  'Service Due': { color: theme.Colors.error, bg: withAlpha(theme.Colors.error, 0.08),  dot: theme.Colors.error },
 });
 
 const formatCurrency = (amount: number) =>
@@ -38,7 +39,7 @@ export function StatusPill({ status }: { status: string }) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const cfg = (getStatusConfig(theme) as Record<string, any>)[status] ?? { color: theme.Colors.onSurfaceVariant, bg: 'rgba(107,114,128,0.1)', dot: '#9ca3af' };
+  const cfg = (getStatusConfig(theme) as Record<string, any>)[status] ?? { color: theme.Colors.onSurfaceVariant, bg: withAlpha(theme.Colors.onSurfaceVariant, 0.1), dot: theme.Colors.onSurfaceVariant };
   return (
     <View style={[styles.statusPill, { backgroundColor: cfg.bg }]}>
       <View style={[styles.statusDot, { backgroundColor: cfg.dot }]} />
@@ -199,10 +200,10 @@ export function VerificationCard({ item }: { item: VerificationItem }) {
   const isDamaged = item.status === 'Damaged';
   const isReview  = item.status === 'Review';
   const statusCfg = isDamaged
-    ? { color: theme.Colors.error, bg: 'rgba(186,26,26,0.1)', label: 'Damaged' }
+    ? { color: theme.Colors.error, bg: withAlpha(theme.Colors.error, 0.1), label: 'Damaged' }
     : isReview
-    ? { color: theme.Colors.tertiary || theme.Colors.secondary, bg: 'rgba(217,119,6,0.1)',  label: 'Under Review' }
-    : { color: theme.Colors.primary, bg: 'rgba(5,150,105,0.1)',  label: 'Good' };
+    ? { color: theme.Colors.tertiary || theme.Colors.secondary, bg: withAlpha(theme.Colors.tertiary, 0.1),  label: 'Under Review' }
+    : { color: theme.Colors.primary, bg: withAlpha(theme.Colors.success, 0.1),  label: 'Good' };
 
   return (
     <View style={styles.verifyCard}>
@@ -225,7 +226,7 @@ export function VerificationCard({ item }: { item: VerificationItem }) {
           <Text style={styles.compareLabel}>MOVE-IN</Text>
           <ConditionPill condition={item.moveInCondition} />
         </View>
-        <MaterialIcons name="arrow-forward" size={18} color="#c4cdd0" />
+        <MaterialIcons name="arrow-forward" size={18} color={theme.Colors.onSurfaceVariant} />
         <View style={styles.conditionCompareItem}>
           <Text style={styles.compareLabel}>RETURN</Text>
           <ConditionPill condition={item.returnCondition} />
@@ -235,14 +236,14 @@ export function VerificationCard({ item }: { item: VerificationItem }) {
       <View style={styles.photoGrid}>
         <View style={styles.photoPanel}>
           <Image source={{ uri: item.moveInPhoto }} style={styles.photoImage} />
-          <View style={[styles.photoTag, { backgroundColor: 'rgba(0,0,0,0.65)' }]}>
+          <View style={[styles.photoTag, { backgroundColor: theme.Colors.scrim }]}>
             <Text style={styles.photoTagText}>MOVE-IN</Text>
           </View>
         </View>
         <View style={styles.photoPanel}>
           <Image source={{ uri: item.returnPhoto }} style={styles.photoImage} />
           <View
-            style={[styles.photoTag, isDamaged ? styles.photoTagDanger : { backgroundColor: 'rgba(0,0,0,0.65)' }]}
+            style={[styles.photoTag, isDamaged ? styles.photoTagDanger : { backgroundColor: theme.Colors.scrim }]}
           >
             <Text style={[styles.photoTagText, isDamaged && { color: theme.Colors.error }]}>RETURN</Text>
           </View>

@@ -20,6 +20,7 @@ import {
   deleteMediaAsset,
   uploadAndConfirmMedia,
 } from '@/src/features/storage/api/media.api';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export interface StagedMediaItem {
   id: string;
@@ -239,9 +240,9 @@ export function MediaUploadGrid({
                 accessibilityLabel="Delete photo"
               >
                 {isDeleting ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
+                  <ActivityIndicator size="small" color={theme.Colors.onPrimary} />
                 ) : (
-                  <MaterialIcons name="close" size={14} color="#ffffff" />
+                  <MaterialIcons name="close" size={14} color={theme.Colors.onPrimary} />
                 )}
               </TouchableOpacity>
             </View>
@@ -268,7 +269,7 @@ export function MediaUploadGrid({
               accessibilityRole="button"
               accessibilityLabel="Remove photo"
             >
-              <MaterialIcons name="close" size={14} color="#ffffff" />
+              <MaterialIcons name="close" size={14} color={theme.Colors.onPrimary} />
             </TouchableOpacity>
           </View>
         ))}
@@ -429,7 +430,7 @@ const createStyles = (theme: any, isDark: boolean) =>
       width: 26,
       height: 26,
       borderRadius: 13,
-      backgroundColor: 'rgba(0, 0, 0, 0.72)',
+      backgroundColor: theme.Colors.scrim,
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 2,
@@ -485,7 +486,7 @@ const createStyles = (theme: any, isDark: boolean) =>
     },
     modalOverlay: {
       flex: 1,
-      backgroundColor: isDark ? 'rgba(0,0,0,0.65)' : 'rgba(0,15,25,0.4)',
+      backgroundColor: isDark ? theme.Colors.scrim : withAlpha(theme.Colors.surfaceContainerLowest, 0.4),
       justifyContent: 'flex-end',
       alignItems: 'center',
       paddingHorizontal: 16,
@@ -499,7 +500,7 @@ const createStyles = (theme: any, isDark: boolean) =>
       padding: 20,
       borderWidth: 1,
       borderColor: theme.Colors.outlineVariant,
-      shadowColor: theme.Colors.shadowColor || '#000000',
+      shadowColor: theme.Colors.shadowColor,
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.12,
       shadowRadius: 20,
@@ -555,7 +556,7 @@ const createStyles = (theme: any, isDark: boolean) =>
       borderRadius: 14,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.06) : withAlpha(theme.Colors.onSurface, 0.04),
       minHeight: 44,
     },
     modalCancelText: {

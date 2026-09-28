@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MeterReadingResponse } from '@/src/features/finance/api/meterReading.api';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface MeterReadingFloorCardProps {
   floor: number;
@@ -86,7 +87,7 @@ export function MeterReadingFloorCard({
                         style={styles.prevTextInput}
                         keyboardType="decimal-pad"
                         placeholder="0.00"
-                        placeholderTextColor="#a0aab2"
+                        placeholderTextColor={theme.Colors.onSurfaceVariant}
                         value={prevInputs[row.unitId] ?? ''}
                         onChangeText={(val) => setPrevInputs(prev => ({ ...prev, [row.unitId]: val }))}
                       />
@@ -114,7 +115,7 @@ export function MeterReadingFloorCard({
                       style={[styles.input, isError && styles.inputError, { flex: 1 }]}
                       keyboardType="decimal-pad"
                       placeholder="0.00"
-                      placeholderTextColor="#a0aab2"
+                      placeholderTextColor={theme.Colors.onSurfaceVariant}
                       value={inputs[row.unitId] ?? ''}
                       onChangeText={(val) => setInputs(prev => ({ ...prev, [row.unitId]: val }))}
                       returnKeyType="next"
@@ -137,7 +138,7 @@ export function MeterReadingFloorCard({
                 disabled={currentPage === 1}
                 onPress={() => setPage(currentPage - 1)}
               >
-                <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? '#a0aab2' : theme.Colors.primary} />
+                <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
                 <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Prev</Text>
               </TouchableOpacity>
               
@@ -151,7 +152,7 @@ export function MeterReadingFloorCard({
                 onPress={() => setPage(currentPage + 1)}
               >
                 <Text style={[styles.pageButtonText, currentPage === totalFloorPagesUnits && styles.pageButtonTextDisabled]}>Next</Text>
-                <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? '#a0aab2' : theme.Colors.primary} />
+                <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
               </TouchableOpacity>
             </View>
           )}
@@ -191,7 +192,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLow,
   },
   rowError: {
-    backgroundColor: 'rgba(186, 26, 26, 0.04)',
+    backgroundColor: withAlpha(theme.Colors.error, 0.04),
   },
   rowLeft: {
     flex: 1.5,
@@ -215,8 +216,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   prevTextInput: {
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 104, 117, 0.2)',
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : 'rgba(255, 255, 255, 0.4)',
+    borderColor: isDark ? withAlpha(theme.Colors.primary, 0.25) : withAlpha(theme.Colors.primary, 0.2),
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.surfaceContainerLowest,
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -250,7 +251,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 12,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 104, 117, 0.15)',
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.15) : withAlpha(theme.Colors.primary, 0.15),
     paddingHorizontal: 12,
     fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
@@ -259,7 +260,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   inputError: {
     borderColor: theme.Colors.error,
-    backgroundColor: 'rgba(186, 26, 26, 0.05)',
+    backgroundColor: withAlpha(theme.Colors.error, 0.05),
   },
   unitTypeLabel: {
     marginLeft: 6,
@@ -278,9 +279,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: theme.Spacing.md,
-    backgroundColor: isDark ? 'transparent' : 'rgba(0, 104, 117, 0.02)',
+    backgroundColor: isDark ? 'transparent' : withAlpha(theme.Colors.primary, 0.02),
     borderTopWidth: 1,
-    borderTopColor: (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.04)'),
+    borderTopColor: (isDark ? withAlpha(theme.Colors.onSurface, 0.08) : withAlpha(theme.Colors.primary, 0.04)),
   },
   pageButton: {
     flexDirection: 'row',
@@ -291,14 +292,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 22,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
     borderColor: theme.Colors.glassStroke,
   },
   pageButtonDisabled: {
     opacity: 0.5,
     backgroundColor: 'transparent',
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.05) : withAlpha(theme.Colors.onSurface, 0.05),
   },
   pageButtonText: {
     fontSize: theme.Typography.bodySmall.fontSize,

@@ -6,6 +6,7 @@ import ActionButton from '@/src/components/common/inputs/ActionButton';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import type { PropertyResponse } from '@/src/types/property';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface AnnouncementComposerProps {
   properties: PropertyResponse[];
@@ -60,7 +61,7 @@ export function AnnouncementComposer({
       <TextInput
         style={styles.composerInput}
         placeholder="e.g. Water supply maintenance shutdown"
-        placeholderTextColor="#a0aab2"
+        placeholderTextColor={theme.Colors.onSurfaceVariant}
         value={broadcastTitle}
         onChangeText={setBroadcastTitle}
         maxLength={255}
@@ -71,7 +72,7 @@ export function AnnouncementComposer({
       <TextInput
         style={[styles.composerInput, styles.composerTextarea]}
         placeholder="Write detail notice instructions..."
-        placeholderTextColor="#a0aab2"
+        placeholderTextColor={theme.Colors.onSurfaceVariant}
         value={broadcastContent}
         onChangeText={setBroadcastContent}
         multiline
@@ -129,7 +130,7 @@ export function AnnouncementComposer({
           <TextInput
             style={styles.composerInput}
             placeholder={broadcastTargetType === 'FLOOR' ? 'e.g. 3' : 'e.g. uuid of unit'}
-            placeholderTextColor="#a0aab2"
+            placeholderTextColor={theme.Colors.onSurfaceVariant}
             value={broadcastTargetValue}
             onChangeText={setBroadcastTargetValue}
             keyboardType={broadcastTargetType === 'FLOOR' ? 'numeric' : 'default'}
@@ -200,7 +201,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 20,
     backgroundColor: theme.Colors.glassStroke,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.15)',
+    borderColor: withAlpha(theme.Colors.primary, 0.15),
     marginRight: theme.Spacing.sm,
   },
   chipActive: {

@@ -29,6 +29,7 @@ import { useIssues } from '@/src/features/issues/hooks/useIssues';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useCommandCenter } from '@/src/features/properties/hooks/useCommandCenter';
 import { PropertyCard } from '@/src/features/properties/components/PropertyCard';
+import { PropertyPager } from '@/src/features/properties/components/PropertyPager';
 import { BroadcastComposerModal } from '@/src/features/properties/components/BroadcastComposerModal';
 import { CommandCenterEmptyState } from '@/src/features/properties/components/CommandCenterEmptyState';
 import { useAdminTutorial } from '@/src/features/onboarding/context/AdminTutorialContext';
@@ -193,8 +194,9 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     />
   );
 
-  const renderPropertyCard = (item: PropertyResponse) => (
+  const renderPropertyCard = (item: PropertyResponse, show3D = false) => (
     <PropertyCard
+      show3D={show3D}
       item={item}
       isDesktop={isDesktop}
       accessToken={accessToken}
@@ -291,7 +293,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                 accessibilityLabel="Add Property"
                 accessibilityRole="button"
               >
-                <MaterialIcons name="add" size={22} color="#ffffff" />
+                <MaterialIcons name="add" size={22} color={theme.Colors.onPrimary} />
               </TouchableOpacity>
             )}
           </View>
@@ -341,11 +343,18 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   return (
     <>
       <PageShell scrollable edges={isDesktop ? ['top'] : []} onEndReached={handleEndReached}>
-        <ListHeader />
+        {/* Called as functions, not <ListHeader />: they're recreated every render, and as
+            components React would remount them each time (dropping search input focus). */}
+        {ListHeader()}
         {isLoading ? (
           <SkeletonCardGrid count={isDesktop ? 2 : 1} isDesktop={isDesktop} />
         ) : properties.length === 0 ? (
-          <ListEmptyComponent />
+          ListEmptyComponent()
+        ) : !isDesktop ? (
+          <>
+            <PropertyPager properties={properties} renderCard={renderPropertyCard} />
+            {ListFooter()}
+          </>
         ) : (
           <>
             <View style={styles.propertyGrid}>
@@ -355,7 +364,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                 </View>
               ))}
             </View>
-            <ListFooter />
+            {ListFooter()}
             {hasMore && (
               <View style={{ paddingVertical: 24, alignItems: 'center', justifyContent: 'center' }}>
                 <ActivityIndicator size="small" color={theme.Colors.primary} />

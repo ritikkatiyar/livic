@@ -249,7 +249,7 @@ const createLocalStyles = (theme: AppTheme, isDark: boolean) => StyleSheet.creat
     position: 'relative',
     overflow: 'hidden',
     borderWidth: 1.5,
-    shadowColor: theme.Surface.shadowColor,
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: isDark ? 0.35 : 0.12,
     shadowRadius: 6,
@@ -337,10 +337,14 @@ const createLocalStyles = (theme: AppTheme, isDark: boolean) => StyleSheet.creat
     width: theme.Spacing.sm,
     height: theme.Spacing.sm,
     borderRadius: theme.Rounded.xs,
-    backgroundColor: theme.Colors.onSurfaceVariant,
-  },
-  statusDotVacant: {
+    // Occupied/partial units: teal, matching the shared occupancy colors
     backgroundColor: theme.Colors.primary,
+  },
+  // Vacant: hollow ring, like the vacant key in OccupancyLegend
+  statusDotVacant: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: theme.Colors.onSurfaceVariant,
   },
   statusDotSelected: {
     backgroundColor: theme.Colors.surfaceTint,
@@ -360,7 +364,7 @@ const createLocalStyles = (theme: AppTheme, isDark: boolean) => StyleSheet.creat
     backgroundColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: theme.Surface.shadowColor,
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.4,
     shadowRadius: 3,

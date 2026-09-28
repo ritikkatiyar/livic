@@ -116,7 +116,7 @@ export default function UnitTypeSelectionModal({
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || theme.Colors.scrim,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -127,7 +127,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.Colors.outline,
     backgroundColor: theme.Colors.surfaceContainerLowest,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,

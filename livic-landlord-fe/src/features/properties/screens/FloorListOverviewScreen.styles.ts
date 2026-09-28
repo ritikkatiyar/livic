@@ -20,22 +20,6 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.background,
     overflow: 'hidden',
   },
-  headerContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.Spacing.md,
-  },
-  titleWrapper: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  compactTitleText: {
-    fontSize: theme.Typography.bodyLg.fontSize,
-    fontWeight: '600',
-    color: theme.Colors.onSurface,
-  },
   backButton: {
     width: 44,
     height: 44,
@@ -312,25 +296,26 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 6,
     gap: theme.Spacing.xs,
   },
+  // Teal = done/healthy, amber = to-do (see StatusPill for the shared status scheme)
   statusConfigured: {
-    backgroundColor: theme.Colors.successContainer,
+    backgroundColor: theme.Colors.primaryContainer,
     borderWidth: 1,
-    borderColor: theme.Colors.success,
+    borderColor: theme.Colors.primary,
   },
   statusNotConfigured: {
-    backgroundColor: theme.Colors.errorContainer,
+    backgroundColor: theme.Colors.tertiaryContainer,
     borderWidth: 1,
-    borderColor: theme.Colors.error,
+    borderColor: theme.Colors.tertiary,
   },
   statusText: {
     fontSize: theme.Typography.labelSmall.fontSize - 2,
     fontWeight: '600',
   },
   textConfigured: {
-    color: theme.Colors.success,
+    color: theme.Colors.primary,
   },
   textNotConfigured: {
-    color: theme.Colors.error,
+    color: theme.Colors.tertiary,
   },
   unitCountText: {
     fontSize: theme.Typography.bodySmall.fontSize,

@@ -182,7 +182,7 @@ export function BroadcastComposerModal({
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   composerOverlay: {
     flex: 1,
-    backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || theme.Colors.scrim,
     justifyContent: 'flex-end',
     zIndex: 9999,
   },

@@ -339,7 +339,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   emptyText: { textAlign: 'center', color: theme.Colors.onSurfaceVariant, marginTop: 40 },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: theme.Colors.scrim,
     justifyContent: 'flex-end',
   },
   modalContent: {

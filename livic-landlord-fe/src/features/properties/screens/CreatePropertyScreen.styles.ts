@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
@@ -38,7 +39,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.Spacing.md,
@@ -61,7 +62,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
     padding: theme.Spacing.lg,
     marginBottom: 30,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 12,
@@ -152,12 +153,16 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.Spacing.sm,
-    backgroundColor: 'rgba(229, 57, 53, 0.08)',
+    backgroundColor: withAlpha(theme.Colors.error, 0.08),
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(229, 57, 53, 0.15)',
+    borderColor: withAlpha(theme.Colors.error, 0.15),
     marginBottom: 20,
+  },
+  toggleHelperText: {
+    fontSize: theme.Typography.bodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
   },
   errorText: {
     fontSize: theme.Typography.bodySmall.fontSize,
@@ -178,7 +183,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingTop: theme.Spacing.xl,
     paddingBottom: theme.Spacing.lg,
     borderRightWidth: 1,
-    borderRightColor: theme.Surface.border,
+    borderRightColor: theme.Colors.outline,
     backgroundColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
@@ -210,7 +215,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: theme.Rounded.lg,
   },
   sidebarLinkActive: {
-    backgroundColor: 'rgba(0, 224, 255, 0.10)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.1),
     borderRightWidth: 4,
     borderRightColor: theme.Colors.primaryContainer,
   },

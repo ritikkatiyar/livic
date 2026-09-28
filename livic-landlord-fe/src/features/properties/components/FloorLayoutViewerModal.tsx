@@ -27,6 +27,8 @@ import { useFloorLayoutViewer, UnitBlock } from '../hooks/useFloorLayoutViewer';
 import { TenantDetailsSidebar } from './TenantDetailsSidebar';
 import { createStyles } from './FloorLayoutViewerModal.styles';
 import { FloorLayoutGridCanvas } from './FloorLayoutGridCanvas';
+import { OccupancyLegend } from './OccupancyLegend';
+import { getOccupancyColors, getOccupancyState } from '@/src/features/properties/utils/occupancy';
 
 // Motion and Layout Constants
 const ZOOM_STEP_IN = 1.25;
@@ -226,31 +228,13 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
   }, [visible, scale, savedScale]);
 
   const getBlockColorStyles = (b: UnitBlock) => {
-    const activeCount = b.activeLeases ? b.activeLeases.length : 0;
-    const capacity = b.capacity || 1;
-
-    if (activeCount === 0) {
-      return {
-        backgroundColor: theme.Colors.primary,
-        borderColor: theme.Colors.primary,
-        textColor: theme.Colors.onPrimary,
-        accentColor: theme.Colors.primaryContainer,
-      };
-    } else if (activeCount < capacity) {
-      return {
-        backgroundColor: theme.Colors.tertiary,
-        borderColor: theme.Colors.tertiary,
-        textColor: theme.Colors.onTertiary,
-        accentColor: theme.Colors.tertiaryContainer,
-      };
-    } else {
-      return {
-        backgroundColor: theme.Colors.error,
-        borderColor: theme.Colors.error,
-        textColor: theme.Colors.onError,
-        accentColor: theme.Colors.errorContainer,
-      };
-    }
+    const colors = getOccupancyColors(theme, getOccupancyState(b.activeLeases ? b.activeLeases.length : 0, b.capacity));
+    return {
+      backgroundColor: colors.fill,
+      borderColor: colors.border,
+      textColor: colors.onFill,
+      accentColor: colors.container,
+    };
   };
 
   const selectedBlock = blocks.find((b) => b.id === selectedUnitId);
@@ -409,7 +393,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
     return (
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
         <View style={styles.modalOverlay}>
-          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0,0,0,0.5)' }]} />
+          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || theme.Colors.scrim }]} />
           <View style={[styles.modalContent, styles.modalContentDesktop]}>
             <View style={[styles.desktopShell, { backgroundColor: theme.Colors.background }]}>
               <GestureHandlerRootView style={{ flex: 1 }}>
@@ -477,18 +461,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                             <View style={styles.canvasContainer}>
                               {/* Canvas Legend Overlay at Top-Right */}
                               <View style={styles.canvasLegendOverlay}>
-                                <View style={styles.legendItem}>
-                                  <View style={[styles.legendDot, { backgroundColor: theme.Colors.primary }]} />
-                                  <Text style={styles.legendText}>Vacant</Text>
-                                </View>
-                                <View style={styles.legendItem}>
-                                  <View style={[styles.legendDot, { backgroundColor: theme.Colors.tertiary }]} />
-                                  <Text style={styles.legendText}>Partial</Text>
-                                </View>
-                                <View style={styles.legendItem}>
-                                  <View style={[styles.legendDot, { backgroundColor: theme.Colors.error }]} />
-                                  <Text style={styles.legendText}>Occupied</Text>
-                                </View>
+                                <OccupancyLegend />
                               </View>
 
                               {/* Floating Canvas Controls at Bottom-Left */}
@@ -565,7 +538,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
       <View style={styles.modalOverlay}>
         <TouchableOpacity
           activeOpacity={1}
-          style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0,0,0,0.5)' }]}
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || theme.Colors.scrim }]}
           onPress={onClose}
         />
         <View style={[styles.modalContent, { backgroundColor: theme.Colors.background }]}>
@@ -642,8 +615,10 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                   </GestureDetector>
                 </View>
 
+                {/* The details panel fills its parent, so on mobile it needs a share of the
+                    sheet's height; without one it collapsed to zero under the grid. */}
                 {selectedBlock && (
-                  <View style={styles.mobileBottomActionContainer}>
+                  <View style={[styles.mobileBottomActionContainer, styles.mobileDetailsPanel]}>
                     {renderDetailsSidebar()}
                   </View>
                 )}

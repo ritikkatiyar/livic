@@ -103,7 +103,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: theme.Spacing.lg,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
-    shadowColor: theme.Colors.shadowColor || '#000000',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 16,

@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean = false) =>
   StyleSheet.create({
@@ -15,7 +16,7 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
       paddingHorizontal: 20,
       paddingVertical: theme.Spacing.md,
       borderBottomWidth: 1,
-      borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.05)',
+      borderBottomColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : withAlpha(theme.Colors.onSurface, 0.05),
     },
     sheetUnitTitle: {
       fontSize: theme.Typography.headlineSmall.fontSize,
@@ -32,7 +33,7 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
       width: 32,
       height: 32,
       borderRadius: 16,
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.03)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : withAlpha(theme.Colors.onSurface, 0.03),
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -69,9 +70,9 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
     inputWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : theme.Colors.surfaceContainerLow,
+      backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.outlineVariant,
+      borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.12) : theme.Colors.outlineVariant,
       borderRadius: 12,
       paddingHorizontal: 12,
       height: 48,
@@ -85,13 +86,13 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
     },
     statusContainer: {
       flexDirection: 'row',
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.05) : withAlpha(theme.Colors.onSurface, 0.04),
       borderRadius: 14,
       padding: 4,
       gap: 6,
       marginTop: theme.Spacing.md,
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.Colors.outlineVariant,
+      borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : theme.Colors.outlineVariant,
     },
     statusToggle: {
       flex: 1,
@@ -112,32 +113,32 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
       color: theme.Colors.onSurfaceVariant,
     },
     statusActiveVacant: {
-      backgroundColor: isDark ? 'rgba(0, 229, 255, 0.14)' : 'rgba(0, 104, 117, 0.10)',
-      borderColor: isDark ? 'rgba(0, 229, 255, 0.35)' : 'rgba(0, 104, 117, 0.25)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.14) : withAlpha(theme.Colors.primary, 0.1),
+      borderColor: isDark ? withAlpha(theme.Colors.primary, 0.35) : withAlpha(theme.Colors.primary, 0.25),
     },
     statusTextVacant: {
-      color: isDark ? '#00E5FF' : '#006875',
+      color: isDark ? theme.Colors.primary : theme.Colors.primary,
       fontWeight: '600',
     },
     statusDotVacant: {
       width: 7,
       height: 7,
       borderRadius: 4,
-      backgroundColor: isDark ? '#00E5FF' : '#006875',
+      backgroundColor: isDark ? theme.Colors.primary : theme.Colors.primary,
     },
     statusActiveOccupied: {
-      backgroundColor: isDark ? 'rgba(255, 107, 107, 0.14)' : 'rgba(186, 26, 26, 0.10)',
-      borderColor: isDark ? 'rgba(255, 107, 107, 0.35)' : 'rgba(186, 26, 26, 0.25)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.error, 0.14) : withAlpha(theme.Colors.error, 0.1),
+      borderColor: isDark ? withAlpha(theme.Colors.error, 0.35) : withAlpha(theme.Colors.error, 0.25),
     },
     statusTextOccupied: {
-      color: isDark ? '#FF6B6B' : '#ba1a1a',
+      color: isDark ? theme.Colors.error : theme.Colors.error,
       fontWeight: '600',
     },
     statusDotOccupied: {
       width: 7,
       height: 7,
       borderRadius: 4,
-      backgroundColor: isDark ? '#FF6B6B' : '#ba1a1a',
+      backgroundColor: isDark ? theme.Colors.error : theme.Colors.error,
     },
     statusDisabled: {
       opacity: 0.5,
@@ -158,11 +159,11 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
       flex: 1,
       height: 44,
       borderRadius: 12,
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.06) : withAlpha(theme.Colors.onSurface, 0.04),
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.outlineVariant,
+      borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.12) : theme.Colors.outlineVariant,
     },
     cancelTenantBtnText: {
       fontSize: theme.Typography.bodyMedium.fontSize,
@@ -189,12 +190,12 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
     tenantListContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.05) : withAlpha(theme.Colors.onSurface, 0.02),
       padding: 10,
       borderRadius: 12,
     },
     tenantTag: {
-      backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.08)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.15) : withAlpha(theme.Colors.primary, 0.08),
       paddingHorizontal: theme.Spacing.sm,
       paddingVertical: theme.Spacing.xs,
       borderRadius: 6,
@@ -208,15 +209,15 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
       width: 24,
       height: 24,
       borderRadius: 12,
-      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+      backgroundColor: withAlpha(theme.Colors.error, 0.1),
       justifyContent: 'center',
       alignItems: 'center',
     },
     warningContainer: {
       flexDirection: 'row',
-      backgroundColor: 'rgba(239, 68, 68, 0.06)',
+      backgroundColor: withAlpha(theme.Colors.error, 0.06),
       borderWidth: 1,
-      borderColor: 'rgba(239, 68, 68, 0.12)',
+      borderColor: withAlpha(theme.Colors.error, 0.12),
       padding: 12,
       borderRadius: 12,
       gap: theme.Spacing.sm,
@@ -242,7 +243,7 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
       padding: 12,
       gap: theme.Spacing.sm,
       borderBottomWidth: 1,
-      borderBottomColor: 'rgba(0,0,0,0.03)',
+      borderBottomColor: withAlpha(theme.Colors.onSurface, 0.03),
     },
     suggestionTextContainer: {
       flex: 1,
@@ -259,9 +260,9 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
     },
     quickCreatePrompt: {
       padding: 12,
-      backgroundColor: 'rgba(0, 104, 117, 0.04)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.04),
       borderWidth: 1,
-      borderColor: 'rgba(0, 104, 117, 0.1)',
+      borderColor: withAlpha(theme.Colors.primary, 0.1),
       borderRadius: 12,
       marginTop: theme.Spacing.xs,
     },
@@ -275,7 +276,7 @@ export const createStyles = (theme: any, isDark: boolean = false) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      backgroundColor: 'rgba(0, 104, 117, 0.04)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.04),
       padding: 12,
       borderRadius: 12,
     },

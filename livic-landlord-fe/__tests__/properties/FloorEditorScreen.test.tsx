@@ -67,6 +67,6 @@ describe('FloorEditorScreen Component', () => {
         onSave={jest.fn()}
       />
     );
-    expect(getByText('Edit Floor 2')).toBeTruthy();
+    expect(getByText('Floor 2 layout')).toBeTruthy();
   });
 });

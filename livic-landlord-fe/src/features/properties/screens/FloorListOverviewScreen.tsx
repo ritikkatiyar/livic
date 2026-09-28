@@ -185,7 +185,7 @@ export default function FloorListOverviewScreen({
               <MaterialIcons 
                 name={floor.configured ? "check-circle" : "warning"} 
                 size={12} 
-                color={floor.configured ? theme.Colors.success : theme.Colors.error} 
+                color={floor.configured ? theme.Colors.primary : theme.Colors.tertiary} 
               />
               <Text style={[styles.statusText, floor.configured ? styles.textConfigured : styles.textNotConfigured]}>
                 {floor.configured ? 'Configured' : 'Not Configured'}
@@ -290,16 +290,9 @@ export default function FloorListOverviewScreen({
   }
 
   return (
-    <PageShell 
-      scrollable={true}
-      header={
-        <View style={styles.headerContent}>
-          <View style={styles.titleWrapper}>
-            <Text style={styles.compactTitleText}>Floor Overview</Text>
-          </View>
-        </View>
-      }
-    >
+    // No compact header here: it only repeated the large title below and, with flex: 1,
+    // took half the screen and squeezed the floor list into the bottom half.
+    <PageShell scrollable={true}>
       <View style={styles.largeTitleContainer}>
         <Text style={styles.titleLine}>Floor Overview</Text>
         <View style={styles.propertyBadge}>

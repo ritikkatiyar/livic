@@ -9,14 +9,18 @@ import { StagedMediaItem } from '@/src/components/common/display/MediaUploadGrid
 interface UseCreatePropertyProps {
   userToken: string;
   onSaveAndConfigure?: (propertyId: string, totalFloors?: number) => void;
+  /** Called instead when the landlord said the property has several blocks. */
+  onSaveAndAddBlocks?: (propertyId: string) => void;
 }
 
-export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePropertyProps) {
+export function useCreateProperty({ userToken, onSaveAndConfigure, onSaveAndAddBlocks }: UseCreatePropertyProps) {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [landmark, setLandmark] = useState('');
   const [totalFloors, setTotalFloors] = useState('');
+  /** Off means one block called Main, which the landlord never sees. */
+  const [hasMultipleBlocks, setHasMultipleBlocks] = useState(false);
   const [autoBillDayOfMonth, setAutoBillDayOfMonth] = useState('1');
   const [globalUnitsPerFloor, setGlobalUnitsPerFloor] = useState('');
   const [globalUnitType, setGlobalUnitType] = useState('SINGLE_UNIT');
@@ -63,7 +67,7 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
     if (!name) { hasError = true; triggerShake(shakeName); if (!firstErrorField) firstErrorField = 'name'; }
     if (!address) { hasError = true; triggerShake(shakeAddress); if (!firstErrorField) firstErrorField = 'address'; }
     if (!city) { hasError = true; triggerShake(shakeCity); if (!firstErrorField) firstErrorField = 'city'; }
-    if (!totalFloors || parseInt(totalFloors, 10) < 1) { 
+    if (!hasMultipleBlocks && (!totalFloors || parseInt(totalFloors, 10) < 1)) { 
       hasError = true; triggerShake(shakeFloors); if (!firstErrorField) firstErrorField = 'floors'; 
     }
 
@@ -91,13 +95,13 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
           address,
           city,
           landmark,
-          totalFloors: parseInt(totalFloors, 10),
+          totalFloors: hasMultipleBlocks ? undefined : parseInt(totalFloors, 10),
           autoBillDayOfMonth: autoBillDayOfMonth ? parseInt(autoBillDayOfMonth, 10) : null,
           amenities: selectedAmenities
         },
       });
 
-      if (globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0) {
+      if (!hasMultipleBlocks && globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0) {
         await generateBatchUnits(property.id, {
           totalFloors: parseInt(totalFloors, 10),
           unitsPerFloor: parseInt(globalUnitsPerFloor, 10),
@@ -126,7 +130,9 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
         }
       }
 
-      if (onSaveAndConfigure) {
+      if (hasMultipleBlocks && onSaveAndAddBlocks) {
+        onSaveAndAddBlocks(property.id);
+      } else if (onSaveAndConfigure) {
         onSaveAndConfigure(property.id, parseInt(totalFloors, 10));
       }
     } catch (error: any) {
@@ -148,6 +154,8 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
     setLandmark,
     totalFloors,
     setTotalFloors,
+    hasMultipleBlocks,
+    setHasMultipleBlocks,
     autoBillDayOfMonth,
     setAutoBillDayOfMonth,
     globalUnitsPerFloor,

@@ -5,66 +5,76 @@ import {
   StyleSheet,
   Platform,
   Text,
+  Animated,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter, usePathname } from 'expo-router';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { usePermissions } from '@/src/features/auth/hooks/usePermissions';
+import { useScrollNav } from './ScrollContext';
+import { useAppChrome } from '@/src/components/common/layout/AppChrome';
 
-interface BottomNavigationProps {
+/** Gap between the floating pill and the bottom of the screen. */
+const BOTTOM_BAR_OFFSET = Platform.OS === 'ios' ? 24 : 16;
+
+interface BottomNavigationProps extends BottomTabBarProps {
   onMorePress: () => void;
-  onQRPress?: () => void;
 }
 
 interface NavTabItem {
   id: string;
   label: string;
   icon: keyof typeof MaterialIcons.glyphMap;
+  /** Tab route name in app/(tabs)/_layout.tsx */
+  tabName: string;
+  /** URL used for the permission check */
   route: string;
-  isActive: (pathname: string) => boolean;
+  /** Screen to open the first time the tab is visited. A group otherwise opens its
+   * alphabetically-first route, which is rarely the one the tab is named after. */
+  initialScreen?: string;
 }
 
-export default function BottomNavigation({ onMorePress }: BottomNavigationProps) {
-  const router = useRouter();
-  const pathname = usePathname();
+/** Custom tab bar for the Tabs navigator in app/(tabs)/_layout.tsx (mobile only). */
+export default function BottomNavigation({ state, navigation, onMorePress }: BottomNavigationProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { canRoute } = usePermissions();
+  const { navTranslateY } = useScrollNav();
+  const { setSlotHeight } = useAppChrome();
 
-  if (pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') {
-    return null;
-  }
-
+  const focusedTab = state.routes[state.index]?.name;
+  const canSeeRentRoll = canRoute('/expenses/rent-roll');
   const navItems: NavTabItem[] = ([
-    {
-      id: 'home',
-      label: 'Home',
-      icon: 'apartment',
-      route: '/command-center',
-      isActive: (path) => path === '/command-center' || path === '/' || path.startsWith('/properties'),
-    },
-    {
-      id: 'leases',
-      label: 'Leases',
-      icon: 'receipt-long',
-      route: '/leases',
-      isActive: (path) => path === '/leases' || path.startsWith('/leases'),
-    },
+    { id: 'home', label: 'Home', icon: 'apartment', tabName: '(home)', route: '/command-center', initialScreen: 'command-center' },
+    { id: 'leases', label: 'Leases', icon: 'receipt-long', tabName: '(leases)', route: '/leases', initialScreen: 'leases' },
     {
       id: 'finance',
       label: 'Finance',
       icon: 'payments',
-      route: canRoute('/expenses/rent-roll') ? '/expenses/rent-roll' : '/expenses',
-      isActive: (path) => path.startsWith('/expenses') || path === '/billing',
+      tabName: '(finance)',
+      route: canSeeRentRoll ? '/expenses/rent-roll' : '/expenses',
+      initialScreen: canSeeRentRoll ? 'expenses/rent-roll' : 'expenses/index',
     },
-    {
-      id: 'alerts',
-      label: 'Alerts',
-      icon: 'report-problem',
-      route: '/escalations',
-      isActive: (path) => path === '/escalations' || path.startsWith('/escalations'),
-    },
+    { id: 'alerts', label: 'Alerts', icon: 'report-problem', tabName: '(alerts)', route: '/escalations', initialScreen: 'escalations' },
   ] satisfies NavTabItem[]).filter((item) => canRoute(item.route));
+
+  // More sections (analytics, settings...) are tabs without a button: highlight "More" for them
+  const isMoreActive = !navItems.some((item) => item.tabName === focusedTab);
+
+  const handleTabPress = (item: NavTabItem) => {
+    const route = state.routes.find((r) => r.name === item.tabName);
+    if (!route) return;
+    const isFocused = route.name === focusedTab;
+    // Emitting tabPress lets the tab's stack pop back to its first screen when the focused
+    // tab is tapped again (e.g. Home while on a property's floor editor).
+    const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+    if (isFocused || event.defaultPrevented) return;
+    if (!route.state && item.initialScreen) {
+      navigation.navigate(route.name, { screen: item.initialScreen });
+    } else {
+      navigation.navigate(route.name);
+    }
+  };
 
   return (
     <>
@@ -84,29 +94,36 @@ export default function BottomNavigation({ onMorePress }: BottomNavigationProps)
           }
         `}} />
       )}
-      <View
+      <Animated.View
         // @ts-ignore
         dataSet={{ bottomNav: 'true', responsiveLayout: 'mobile' }}
         className="mobile-bottom-nav-container"
-        style={styles.outerContainer}
+        style={[
+          styles.outerContainer,
+          {
+            transform: [{ translateY: navTranslateY }],
+            opacity: navTranslateY.interpolate({ inputRange: [0, 120], outputRange: [1, 0], extrapolate: 'clamp' }),
+          },
+        ]}
         pointerEvents="box-none"
+        // The bar floats over content: report what it covers so screens can pad for it
+        onLayout={(e) => setSlotHeight('tabBar', e.nativeEvent.layout.height + BOTTOM_BAR_OFFSET)}
       >
         <View style={styles.pillContainer}>
           {navItems.map((item) => {
-            const active = item.isActive(pathname);
+            const active = item.tabName === focusedTab;
             return (
               <TouchableOpacity
                 key={item.id}
                 style={styles.navItem}
-                onPress={() => {
-                  if (!active) router.push(item.route as any);
-                }}
+                onPress={() => handleTabPress(item)}
                 activeOpacity={0.75}
                 hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                accessibilityRole="button"
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
                 accessibilityLabel={item.label}
               >
-                <View style={[styles.iconCircle, active && { backgroundColor: `${theme.Colors.primary}18` }]}>
+                <View style={[styles.iconCircle, active && styles.iconCircleActive]}>
                   <MaterialIcons
                     name={item.icon}
                     size={20}
@@ -134,17 +151,25 @@ export default function BottomNavigation({ onMorePress }: BottomNavigationProps)
             activeOpacity={0.75}
             hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
             accessibilityRole="button"
+            accessibilityState={{ selected: isMoreActive }}
             accessibilityLabel="More options"
           >
-            <View style={styles.iconCircle}>
-              <MaterialIcons name="grid-view" size={20} color={theme.Colors.onSurfaceVariant} />
+            <View style={[styles.iconCircle, isMoreActive && styles.iconCircleActive]}>
+              <MaterialIcons name="grid-view" size={20} color={isMoreActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
             </View>
-            <Text style={[styles.navText, { color: theme.Colors.onSurfaceVariant }]} numberOfLines={1}>
+            <Text
+              style={[
+                styles.navText,
+                { color: isMoreActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant },
+                isMoreActive && styles.navTextActive,
+              ]}
+              numberOfLines={1}
+            >
               More
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
     </>
   );
 }
@@ -152,7 +177,7 @@ export default function BottomNavigation({ onMorePress }: BottomNavigationProps)
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   outerContainer: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 24 : 16,
+    bottom: BOTTOM_BAR_OFFSET,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -170,7 +195,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
-    shadowColor: theme.Colors.shadowColor || '#000000',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -192,6 +217,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconCircleActive: {
+    backgroundColor: theme.Colors.primaryContainer,
   },
   navText: {
     fontSize: theme.Typography.labelSmall.fontSize,

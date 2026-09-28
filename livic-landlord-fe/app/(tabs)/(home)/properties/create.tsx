@@ -17,6 +17,7 @@ export default function CreatePropertyRoute() {
       ownerId={user?.id || ''}
       onBack={() => router.back()}
       onSaveAndConfigure={(propertyId: string) => router.replace(`/properties/${propertyId}/floors`)}
+      onSaveAndAddBlocks={(propertyId: string) => router.replace(`/properties/${propertyId}/blocks`)}
     />
   );
 }

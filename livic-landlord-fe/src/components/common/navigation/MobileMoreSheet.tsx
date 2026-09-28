@@ -16,6 +16,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { usePermissions } from '@/src/features/auth/hooks/usePermissions';
 import { Theme } from '@/src/theme/Theme';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface MobileMoreSheetProps {
   visible: boolean;
@@ -242,7 +243,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: theme.Colors.scrim || theme.Colors.scrim,
   },
   sheetContainer: {
     backgroundColor: theme.Colors.surfaceContainerLowest,
@@ -254,7 +255,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.outlineVariant,
     maxHeight: '85%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -385,7 +386,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   upgradeBannerSub: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: withAlpha(theme.Colors.onPrimary, 0.85),
     fontWeight: '600',
     marginTop: 1,
   },

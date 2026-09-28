@@ -17,6 +17,7 @@ import { useRouter, usePathname, Href } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { usePermissions } from '@/src/features/auth/hooks/usePermissions';
 import { Theme } from '@/src/theme/Theme';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface MobileDrawerProps {
   visible: boolean;
@@ -112,7 +113,7 @@ export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
         <MaterialIcons 
           name={icon} 
           size={22} 
-          color={isActive ? '#006677' : '#4f6073'} 
+          color={isActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant} 
         />
         <Text style={[styles.linkText, isActive && styles.linkTextActive]}>
           {label}
@@ -187,7 +188,7 @@ export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
               onPress={handleLogout}
               activeOpacity={0.7}
             >
-              <MaterialIcons name="logout" size={20} color="#ff3b30" />
+              <MaterialIcons name="logout" size={20} color={theme.Colors.error} />
               <Text style={styles.logoutText}>Log Out</Text>
             </TouchableOpacity>
           </View>
@@ -205,13 +206,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: theme.Colors.scrim || theme.Colors.scrim,
     zIndex: 1,
   },
   drawerContainer: {
     height: '100%',
     backgroundColor: theme.Colors.surfaceContainerLowest,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 4, height: 0 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
@@ -304,9 +305,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'transparent',
   },
   linkItemActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
-    borderColor: 'rgba(255, 255, 255, 0.85)',
-    shadowColor: 'black',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderColor: theme.Colors.surfaceContainerLowest,
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 8,
@@ -319,15 +320,15 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginLeft: 12,
   },
   linkTextActive: {
-    color: 'black',
+    color: theme.Colors.onSurface,
     fontWeight: '600',
   },
   drawerFooter: {
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderTopColor: theme.Colors.surfaceContainerLowest,
+    backgroundColor: withAlpha(theme.Colors.onPrimary, 0.15),
   },
   logoutButton: {
     flexDirection: 'row',

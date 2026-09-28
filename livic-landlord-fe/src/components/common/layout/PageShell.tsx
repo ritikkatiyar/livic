@@ -4,6 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
+import { useAppChromeInsets } from '@/src/components/common/layout/AppChrome';
 
 interface PageShellProps {
   children: React.ReactNode;
@@ -31,9 +32,11 @@ export function PageShell({
   const { theme, isDark } = useAppTheme();
   const { isDesktop } = useResponsive();
   const insets = useSafeAreaInsets();
+  // Measured by the app shell (header, bottom bar, assistant); zero on screens without chrome
+  const chrome = useAppChromeInsets();
 
-  const mobileHeaderOffset = isDesktop ? 0 : (56 + (insets.top > 0 ? insets.top : 12));
-  const mobileBottomOffset = isDesktop ? 0 : (68 + (insets.bottom > 0 ? insets.bottom : 12));
+  const mobileHeaderOffset = isDesktop ? 0 : chrome.top;
+  const mobileBottomOffset = isDesktop ? 0 : Math.max(chrome.bottom, insets.bottom);
 
   const styles = React.useMemo(
     () => createStyles(theme, isDark, isDesktop, mobileHeaderOffset, mobileBottomOffset),
@@ -65,12 +68,13 @@ export function PageShell({
   const customPaddingTop = flattenedCustomStyle?.paddingTop ?? flattenedCustomStyle?.padding;
   const effectivePaddingTop = isDesktop
     ? (customPaddingTop ?? 24)
-    : Math.max(mobileHeaderOffset + 16, typeof customPaddingTop === 'number' ? customPaddingTop : 0);
+    : Math.max(mobileHeaderOffset + theme.Spacing.md, typeof customPaddingTop === 'number' ? customPaddingTop : 0);
 
   const customPaddingBottom = flattenedCustomStyle?.paddingBottom ?? flattenedCustomStyle?.padding;
   const effectivePaddingBottom = isDesktop
     ? (customPaddingBottom ?? 40)
-    : Math.max(mobileBottomOffset + 24, typeof customPaddingBottom === 'number' ? customPaddingBottom : 0);
+    // chrome.bottom already covers the bottom bar and the assistant bubble above it
+    : Math.max(mobileBottomOffset + theme.Spacing.md, typeof customPaddingBottom === 'number' ? customPaddingBottom : 0);
 
   const resolvedScrollContentStyle = React.useMemo(() => {
     return [

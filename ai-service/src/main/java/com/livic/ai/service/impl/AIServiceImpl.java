@@ -46,6 +46,7 @@ public class AIServiceImpl implements AIService {
         }
 
         String content = chatClient.prompt()
+                .system(ScreenContextPrompt.build(request.getContext()))
                 .user(request.getMessage())
                 .call()
                 .content();

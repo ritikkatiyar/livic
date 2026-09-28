@@ -1,10 +1,11 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
     backdrop: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.45)',
+      backgroundColor: theme.Colors.scrim || theme.Colors.scrim,
       zIndex: 99998,
     },
     container: {
@@ -13,7 +14,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       borderColor: theme.Colors.outlineVariant,
       backgroundColor: theme.Colors.surfaceContainerLowest,
       overflow: 'hidden',
-      shadowColor: theme.Colors.shadowColor || '#000000',
+      shadowColor: theme.Colors.shadowColor,
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.12,
       shadowRadius: 16,
@@ -23,13 +24,6 @@ export const createStyles = (theme: any, isDark: boolean) =>
     bubbleTrigger: {
       width: '100%',
       height: '100%',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    bubbleGradient: {
-      width: 54,
-      height: 54,
-      borderRadius: 27,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -54,7 +48,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       width: 38,
       height: 5,
       borderRadius: 2.5,
-      backgroundColor: 'rgba(0, 104, 117, 0.25)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.25),
     },
     headerTitleRow: {
       flexDirection: 'row',
@@ -62,13 +56,22 @@ export const createStyles = (theme: any, isDark: boolean) =>
       justifyContent: 'space-between',
       marginTop: theme.Spacing.xs,
     },
-    headerIconWrapper: {
-      width: 28,
-      height: 28,
-      borderRadius: 8,
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    contextChip: {
+      flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
+      alignSelf: 'flex-start',
+      gap: 6,
+      marginTop: theme.Spacing.sm,
+      paddingVertical: 4,
+      paddingHorizontal: 10,
+      borderRadius: 12,
+      backgroundColor: theme.Colors.primaryContainer,
+    },
+    contextChipText: {
+      flexShrink: 1,
+      fontSize: theme.Typography.bodySmall.fontSize,
+      fontWeight: '600',
+      color: theme.Colors.primary,
     },
     headerTitle: {
       fontSize: theme.Typography.titleSmall.fontSize,

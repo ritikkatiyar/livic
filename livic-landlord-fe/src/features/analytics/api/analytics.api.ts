@@ -11,13 +11,25 @@ export interface SummaryResponse {
   profitGrowthRate: number;
 }
 
+/**
+ * Unit fields count rooms (a shared room with any tenant is one occupied unit); bed fields count capacity.
+ * Both rates are percentages in [0, 100]. activeLeases is the tenant count.
+ */
 export interface PortfolioOccupancyResponse {
   propertyId: string;
   propertyName: string;
   totalUnits: number;
+  /** Units with at least one active lease (partialUnits + fullUnits). */
   occupiedUnits: number;
   occupancyRate: number;
   netYield: number;
+  vacantUnits?: number;
+  partialUnits?: number;
+  fullUnits?: number;
+  totalBeds?: number;
+  occupiedBeds?: number;
+  bedOccupancyRate?: number;
+  activeLeases?: number;
 }
 
 export interface DefaulterResponse {
@@ -259,10 +271,14 @@ export function exportPortfolioCSV(summary: SummaryResponse | null, occupancy: P
   lines.push(`Net Profit,₹${summary?.netProfit || 0}`);
   lines.push('');
   lines.push('--- PROPERTY OCCUPANCY BREAKDOWN ---');
-  lines.push('Property Name,Total Units,Occupied Units,Occupancy Rate,Net Yield');
+  lines.push('Property Name,Total Units,Occupied Units,Occupancy Rate,Total Beds,Occupied Beds,Bed Occupancy Rate,Active Leases,Net Yield');
 
   occupancy.forEach((p) => {
-    lines.push(`"${p.propertyName}",${p.totalUnits},${p.occupiedUnits},${p.occupancyRate}%,${p.netYield}%`);
+    lines.push(
+      `"${p.propertyName}",${p.totalUnits},${p.occupiedUnits},${p.occupancyRate}%,` +
+        `${p.totalBeds ?? ''},${p.occupiedBeds ?? ''},${p.bedOccupancyRate != null ? `${p.bedOccupancyRate}%` : ''},` +
+        `${p.activeLeases ?? ''},${p.netYield}%`
+    );
   });
 
   const csvContent = lines.join('\n');

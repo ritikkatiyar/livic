@@ -81,6 +81,16 @@ public class UnitMemberFacadeImpl implements UnitMemberFacade {
     }
 
     @Override
+    public List<UUID> getMemberIdsByUnitIds(Collection<UUID> unitIds) {
+        return unitMemberService.findMemberIdsByUnitIds(unitIds);
+    }
+
+    @Override
+    public List<UUID> getMemberIdsByUserIds(Collection<UUID> userIds) {
+        return unitMemberService.findMemberIdsByUserIds(userIds);
+    }
+
+    @Override
     public Optional<UnitResidentDTO> getResidentByLeaseId(UUID leaseId) {
         return unitMemberService.findResidentByLeaseId(leaseId);
     }

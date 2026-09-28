@@ -9,6 +9,7 @@ import com.livic.core.finance.service.interfaces.BillService;
 import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
 import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
 import com.livic.core.property.dto.UnitSummaryDTO;
+import com.livic.core.property.facade.PropertyFacade.UnitOccupancy;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.platform.common.domain.CalculationStrategyType;
 import com.livic.platform.common.domain.LeaseStatus;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -101,13 +103,17 @@ public class RentGenerationServiceImpl implements RentGenerationService {
         List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
                 leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
         int totalUnits = units.size();
+        // A lease is one tenant, so leases are measured against beds: a shared room holds several.
+        int totalBeds = units.stream().mapToInt(u -> UnitOccupancy.beds(u.capacity())).sum();
         int activeLeasesCount = activeLeases.size();
+        // Meters are read per unit, so roommates share one reading per metered charge.
+        Set<UUID> occupiedUnitIds = activeLeases.stream().map(LeaseTbl::getUnitId).collect(Collectors.toSet());
 
         long meteredTypesCount = chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId).stream()
                 .filter(c -> c.getCalculationStrategy() == CalculationStrategyType.METERED)
                 .count();
 
-        int meterReadingsExpected = activeLeasesCount * (int) meteredTypesCount;
+        int meterReadingsExpected = occupiedUnitIds.size() * (int) meteredTypesCount;
         int meterReadingsEntered = 0;
 
         try {
@@ -116,14 +122,9 @@ public class RentGenerationServiceImpl implements RentGenerationService {
             int month = Integer.parseInt(parts[1]);
 
             List<MeterReadingTbl> propertyReadings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
-            Map<UUID, List<MeterReadingTbl>> readingsByUnit = propertyReadings.stream()
-                    .collect(Collectors.groupingBy(MeterReadingTbl::getUnitId));
-
-            for (LeaseTbl lease : activeLeases) {
-                List<MeterReadingTbl> readings = readingsByUnit.getOrDefault(lease.getUnitId(), List.of());
-                long enteredForLease = readings.stream().filter(r -> r.getCurrentReading() != null).count();
-                meterReadingsEntered += enteredForLease;
-            }
+            meterReadingsEntered = (int) propertyReadings.stream()
+                    .filter(r -> occupiedUnitIds.contains(r.getUnitId()) && r.getCurrentReading() != null)
+                    .count();
         } catch (Exception e) {
             log.warn("Failed to calculate meter readings for checklist", e);
         }
@@ -131,6 +132,7 @@ public class RentGenerationServiceImpl implements RentGenerationService {
         boolean isReady = (meterReadingsEntered >= meterReadingsExpected) || activeLeasesCount == 0;
         return new BillDTOs.PreFlightChecklistResponse(
             totalUnits,
+            totalBeds,
             activeLeasesCount,
             meterReadingsExpected,
             meterReadingsEntered,

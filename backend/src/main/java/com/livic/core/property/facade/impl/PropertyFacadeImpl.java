@@ -5,6 +5,7 @@ import com.livic.platform.common.domain.PropertyType;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.dto.PublicPropertyListingDTO;
 import com.livic.core.property.facade.PropertyFacade;
+import com.livic.core.property.facade.PropertyFacade.UnitOccupancy;
 import com.livic.core.property.service.interfaces.PropertyCrudService;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
 import jakarta.persistence.EntityManager;
@@ -84,26 +85,61 @@ public class PropertyFacadeImpl implements PropertyFacade {
             return Collections.emptyList();
         }
 
-        String jpql = "SELECT p.id, p.name, " +
-                      "(SELECT COUNT(u) FROM UnitTbl u WHERE u.property.id = p.id), " +
-                      "(SELECT COUNT(l) FROM LeaseTbl l, UnitTbl u WHERE l.unitId = u.id AND u.property.id = p.id AND l.status = :statusActive) " +
-                      "FROM PropertyTbl p WHERE p.id IN :propertyIds";
+        Query propertyQuery = entityManager.createQuery(
+                "SELECT p.id, p.name FROM PropertyTbl p WHERE p.id IN :propertyIds");
+        propertyQuery.setParameter("propertyIds", propertyIds);
 
-        Query query = entityManager.createQuery(jpql);
+        Map<UUID, OccupancyTally> tallies = tallyUnitsByProperty(propertyIds);
+
+        List<PropertyOccupancySummaryDTO> result = new ArrayList<>();
+        for (Object[] row : (List<Object[]>) propertyQuery.getResultList()) {
+            UUID propId = (UUID) row[0];
+            result.add(tallies.getOrDefault(propId, new OccupancyTally()).toSummary(propId, (String) row[1]));
+        }
+        return result;
+    }
+
+    /**
+     * One row per unit (property, capacity, active leases), folded per property. Counting per unit rather than
+     * per lease keeps a shared room with two tenants at one occupied unit.
+     */
+    private Map<UUID, OccupancyTally> tallyUnitsByProperty(List<UUID> propertyIds) {
+        Query query = entityManager.createQuery(
+                "SELECT u.property.id, u.capacity, " +
+                "(SELECT COUNT(l) FROM LeaseTbl l WHERE l.unitId = u.id AND l.status = :statusActive) " +
+                "FROM UnitTbl u WHERE u.property.id IN :propertyIds");
         query.setParameter("propertyIds", propertyIds);
         query.setParameter("statusActive", LeaseStatus.ACTIVE);
 
-        List<Object[]> rows = query.getResultList();
-        List<PropertyOccupancySummaryDTO> result = new ArrayList<>();
-        for (Object[] row : rows) {
-            UUID propId = (UUID) row[0];
-            String propName = (String) row[1];
-            int totalUnits = ((Number) row[2]).intValue();
-            int occupiedUnits = ((Number) row[3]).intValue();
-
-            result.add(new PropertyOccupancySummaryDTO(propId, propName, totalUnits, occupiedUnits));
+        Map<UUID, OccupancyTally> tallies = new HashMap<>();
+        for (Object[] row : (List<Object[]>) query.getResultList()) {
+            tallies.computeIfAbsent((UUID) row[0], id -> new OccupancyTally())
+                    .add(((Number) row[2]).intValue(), (Integer) row[1]);
         }
-        return result;
+        return tallies;
+    }
+
+    private static final class OccupancyTally {
+        private final int[] unitStates = new int[UnitOccupancy.values().length];
+        private int totalBeds;
+        private int occupiedBeds;
+        private int activeLeases;
+
+        void add(int unitActiveLeases, Integer capacity) {
+            int beds = UnitOccupancy.beds(capacity);
+            unitStates[UnitOccupancy.of(unitActiveLeases, capacity).ordinal()]++;
+            totalBeds += beds;
+            occupiedBeds += Math.min(unitActiveLeases, beds);
+            activeLeases += unitActiveLeases;
+        }
+
+        PropertyOccupancySummaryDTO toSummary(UUID propertyId, String propertyName) {
+            return new PropertyOccupancySummaryDTO(propertyId, propertyName,
+                    unitStates[UnitOccupancy.VACANT.ordinal()],
+                    unitStates[UnitOccupancy.PARTIAL.ordinal()],
+                    unitStates[UnitOccupancy.FULL.ordinal()],
+                    totalBeds, occupiedBeds, activeLeases);
+        }
     }
 
     @Override

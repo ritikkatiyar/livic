@@ -60,6 +60,8 @@ export interface BatchUnpublishResult {
 
 export interface PreFlightChecklistResponse {
   totalUnits: number;
+  /** Sum of unit capacities. activeLeases counts tenants, so it is measured against beds, not units. */
+  totalBeds?: number;
   activeLeases: number;
   meterReadingsExpected: number;
   meterReadingsEntered: number;

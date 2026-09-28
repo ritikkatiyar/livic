@@ -5,6 +5,7 @@ import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { PreFlightChecklistResponse } from '@/src/features/finance/api/rentCycle.api';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface PreFlightChecklistCardProps {
   checklist: PreFlightChecklistResponse | null;
@@ -35,7 +36,14 @@ export function PreFlightChecklistCard({
         <View style={styles.checklistGrid}>
           <View style={styles.checklistItem}>
             <Text style={styles.checklistLabel}>Active Leases</Text>
-            <Text style={styles.checklistValue}>{checklist.activeLeases} / {checklist.totalUnits}</Text>
+            {checklist.totalBeds != null ? (
+              <>
+                <Text style={styles.checklistValue}>{checklist.activeLeases} / {checklist.totalBeds}</Text>
+                <Text style={styles.checklistHint}>beds across {checklist.totalUnits} units</Text>
+              </>
+            ) : (
+              <Text style={styles.checklistValue}>{checklist.activeLeases}</Text>
+            )}
           </View>
           <View style={styles.checklistItem}>
             <Text style={styles.checklistLabel}>Utility Readings</Text>
@@ -76,9 +84,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: theme.Spacing.xl, maxWidth: 500, lineHeight: 22 },
   checklistGrid: { flexDirection: 'row', gap: theme.Spacing.lg, marginBottom: theme.Spacing.lg, width: '100%', justifyContent: 'center' },
   checklistItem: { 
-    backgroundColor: isDark ? 'rgba(27, 38, 51, 0.85)' : 'rgba(255, 255, 255, 0.7)', 
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.surfaceContainerLowest, 
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 104, 117, 0.15)',
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.12) : withAlpha(theme.Colors.primary, 0.15),
     padding: theme.Spacing.md, 
     borderRadius: 12, 
     alignItems: 'center', 
@@ -87,6 +95,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   checklistLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.2, marginBottom: theme.Spacing.sm },
   checklistValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.primary },
+  checklistHint: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4, textAlign: 'center' },
   statusBox: { flexDirection: 'row', backgroundColor: theme.Colors.secondaryContainer, padding: theme.Spacing.md, borderRadius: 12, marginBottom: theme.Spacing.xl, width: '100%', alignItems: 'center', gap: theme.Spacing.sm },
   statusText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.secondary },
   generateBtn: { width: '100%', maxWidth: 300 },

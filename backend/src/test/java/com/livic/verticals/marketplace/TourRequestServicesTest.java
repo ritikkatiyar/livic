@@ -10,9 +10,9 @@ import com.livic.verticals.marketplace.service.interfaces.OtpService;
 import com.livic.verticals.marketplace.service.interfaces.TourAvailabilityService;
 import com.livic.verticals.marketplace.slots.TourSchedule;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
-import com.livic.platform.common.domain.LeadStatus;
-import com.livic.platform.common.domain.LeadType;
-import com.livic.platform.common.domain.UnitType;
+import com.livic.verticals.marketplace.domain.LeadStatus;
+import com.livic.verticals.marketplace.domain.LeadType;
+import com.livic.core.property.domain.UnitType;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
@@ -220,7 +220,7 @@ class TourRequestServicesTest {
             when(leadRepository.findByProspectPhoneAndLeadType(eq(PHONE), eq(LeadType.TOUR_REQUEST), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of(upcoming, past)));
             when(propertyFacade.getPropertiesByIds(anySet())).thenReturn(Map.of(propertyId,
-                    new PropertySummaryDTO(propertyId, "Test Residency", "1 Test Road", "Pune", null, 3, true)));
+                    new PropertySummaryDTO(propertyId, "Test Residency", "1 Test Road", "Pune", null, true)));
             when(unitFacade.getUnitsByIds(anySet())).thenReturn(Map.of(unitId, unit(unitId, propertyId)));
 
             List<TourRequestDTOs.MyTourRequestResponse> rows = service.listMyTourRequests(TOKEN, PageRequest.of(0, 20)).getContent();

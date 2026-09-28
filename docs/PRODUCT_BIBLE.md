@@ -68,9 +68,9 @@ com.livic.{module}/
 
 | Module | Purpose | Key Controllers |
 |---|---|---|
-| `auth` | Signup, login, JWT refresh, lockout | `AuthController` |
+| `auth` | Signup, login, JWT refresh, lockout, property staff memberships | `AuthController`, `MembershipController` |
 | `user` | User profiles, preferences, global roles | `UserController` |
-| `property` | Property CRUD, floors, units, grid layout | `PropertyController`, `UnitController`, `MembershipController`, `PropertyRoleController`, `PropertyJoinCodeController` |
+| `property` | Property CRUD, floors, units, grid layout | `PropertyController`, `UnitController`, `PropertyRoleController`, `PropertyJoinCodeController` |
 | `finance` | Charge configs, meter readings, worksheets, rent cycles, leases, ledger, invoices, bookings | `ChargeConfigController`, `MeterReadingController`, `BillingWorksheetController`, `RentCycleController`, `LeaseController`, `LedgerController`, `InvoiceController`, `UnitBookingController` |
 | `payment` | Razorpay integration, cash recording, webhook processing | `PaymentController` |
 | `billing` | SaaS subscription plans, feature limits, wallet, usage enforcement | `BillingController` |

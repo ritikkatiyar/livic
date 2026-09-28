@@ -4,7 +4,7 @@ import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.platform.common.enums.OwnerModule;
 import com.livic.platform.storage.dto.MediaDTOs;
-import com.livic.platform.storage.facade.StorageFacade;
+import com.livic.platform.storage.service.interfaces.StorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,7 +28,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MediaController {
 
-    private final StorageFacade storageFacade;
+    private final StorageService storageService;
 
     @PostMapping("/upload-authorization")
     @PreAuthorize("@authorizationService.hasMediaAccess(#request.ownerModule(), #request.referenceId(), 'WRITE')")
@@ -36,13 +36,7 @@ public class MediaController {
             @Valid @RequestBody MediaDTOs.UploadAuthorizationRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        MediaDTOs.UploadAuthorizationResponse response = storageFacade.requestUploadAuthorization(
-                request.ownerModule(),
-                request.referenceId(),
-                request.fileType(),
-                request.filename(),
-                userId
-        );
+        MediaDTOs.UploadAuthorizationResponse response = storageService.createUploadAuthorization(request, userId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -52,7 +46,7 @@ public class MediaController {
             @Valid @RequestBody MediaDTOs.ConfirmUploadRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        MediaDTOs.MediaAssetDTO response = storageFacade.confirmUpload(request, userId);
+        MediaDTOs.MediaAssetDTO response = storageService.confirmUpload(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
@@ -61,7 +55,7 @@ public class MediaController {
     public ResponseEntity<ApiResponse<List<MediaDTOs.MediaAssetDTO>>> listMediaAssets(
             @RequestParam OwnerModule ownerModule,
             @RequestParam UUID referenceId) {
-        List<MediaDTOs.MediaAssetDTO> assets = storageFacade.getAssets(ownerModule, referenceId);
+        List<MediaDTOs.MediaAssetDTO> assets = storageService.listAssets(ownerModule, referenceId);
         return ResponseEntity.ok(ApiResponse.success(assets));
     }
 
@@ -71,7 +65,7 @@ public class MediaController {
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        storageFacade.deleteAsset(id, userId);
+        storageService.deleteAsset(id, userId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

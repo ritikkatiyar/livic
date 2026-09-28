@@ -19,7 +19,7 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { usePathname } from 'expo-router';
-import { runAICommand, getJobStatus } from '@/src/features/ai/api/ai.api';
+import { runAICommand } from '@/src/features/ai/api/ai.api';
 import { createStyles } from './FloatingAIAssistant.styles';
 
 type Message = {
@@ -116,23 +116,10 @@ export default function FloatingAIAssistant() {
 
     try {
       const response = await runAICommand({ message: text }, accessToken);
-      let assistantMsgText = '';
-
-      if (response.status === 'COMPLETED') {
-        assistantMsgText = response.message || 'Task completed successfully.';
-      } else if (response.status === 'RUNNING' || response.status === 'QUEUED' || response.jobId) {
-        assistantMsgText = response.message || 'Your request is processing in the background. I will update you soon.';
-        if (response.jobId) {
-          pollJobStatus(response.jobId);
-        }
-      } else {
-        assistantMsgText = response.message || 'An error occurred during execution.';
-      }
-
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        text: assistantMsgText
+        text: response.message || 'An error occurred during execution.'
       }]);
     } catch (err: any) {
       setMessages(prev => [...prev, {
@@ -143,32 +130,6 @@ export default function FloatingAIAssistant() {
     } finally {
       setIsSending(false);
     }
-  };
-
-  const pollJobStatus = async (jobId: string) => {
-    if (!accessToken) return;
-    const interval = setInterval(async () => {
-      try {
-        const job = await getJobStatus(jobId, accessToken);
-        if (job.status === 'COMPLETED') {
-          clearInterval(interval);
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'assistant',
-            text: `Background Task Completed: ${job.response || 'Execution successful.'}`
-          }]);
-        } else if (job.status === 'FAILED') {
-          clearInterval(interval);
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'assistant',
-            text: `Background Task Failed: ${job.errorMessage || 'Failed to execute.'}`
-          }]);
-        }
-      } catch (e) {
-        console.error('AI job status check failed', e);
-      }
-    }, 3000);
   };
 
   // Interpolations for open sheet layout

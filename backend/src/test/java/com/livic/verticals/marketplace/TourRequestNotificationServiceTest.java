@@ -2,14 +2,14 @@ package com.livic.verticals.marketplace;
 
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
-import com.livic.platform.common.domain.LeadStatus;
-import com.livic.platform.common.domain.LeadType;
+import com.livic.verticals.marketplace.domain.LeadStatus;
+import com.livic.verticals.marketplace.domain.LeadType;
 import com.livic.platform.notification.domain.MessageTemplate;
 import com.livic.platform.notification.domain.NotificationChannel;
 import com.livic.platform.notification.dto.DeliveryReport;
 import com.livic.platform.notification.dto.DeliveryReport.Outcome;
 import com.livic.platform.notification.dto.TemplatedMessage;
-import com.livic.platform.notification.service.MessagingService;
+import com.livic.platform.notification.service.interfaces.MessagingService;
 import com.livic.verticals.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.verticals.marketplace.domain.TourMessageType;
 import com.livic.verticals.marketplace.repository.MarketplaceLeadRepository;
@@ -64,7 +64,7 @@ class TourRequestNotificationServiceTest {
     void setUp() {
         ReflectionTestUtils.setField(service, "marketplaceBaseUrl", "https://livic.in");
         lenient().when(propertyFacade.getPropertyById(propertyId)).thenReturn(Optional.of(
-                new PropertySummaryDTO(propertyId, "Test Residency", "12 MG Road", "Pune", null, 3, true)));
+                new PropertySummaryDTO(propertyId, "Test Residency", "12 MG Road", "Pune", null, true)));
         lenient().when(tourAvailabilityService.getSchedule(propertyId)).thenReturn(TourSchedule.defaults(List.of()));
         lenient().when(tourMessageSettingsService.channelsFor(eq(propertyId), any())).thenReturn(BOTH);
         lenient().when(messagingService.send(eq(PHONE), any(TemplatedMessage.class), anySet()))

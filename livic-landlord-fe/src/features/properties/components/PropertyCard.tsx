@@ -57,7 +57,7 @@ export function PropertyCard({
 
   const hasMultipleBlocks = blocks.length > 1;
   const totalBlocks = Math.max(blocks.length, 1);
-  const displayFloors = blocks[0]?.totalFloors ?? item.totalFloors ?? '-';
+  const displayFloors = blocks[0]?.totalFloors ?? '-';
 
   const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
   const activeBlockId = selectedBlockId || (blocks.length > 0 ? blocks[0].id : null);

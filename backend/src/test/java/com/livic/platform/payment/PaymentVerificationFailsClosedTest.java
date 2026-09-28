@@ -5,7 +5,7 @@ import com.livic.platform.payment.config.RazorpayProperties;
 import com.livic.platform.payment.dto.PaymentVerificationRequest;
 import com.livic.platform.payment.repository.PaymentTransactionRepository;
 import com.livic.platform.payment.repository.PaymentWebhookEventRepository;
-import com.livic.platform.payment.service.PaymentGatewayRouter;
+import com.livic.platform.payment.service.impl.PaymentGatewayRouter;
 import com.livic.platform.payment.service.impl.PaymentTransactionServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

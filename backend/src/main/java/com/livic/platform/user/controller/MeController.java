@@ -19,7 +19,6 @@ public class MeController {
 
     private final UserQueryService userQueryService;
     private final UserService userService;
-    private final com.livic.platform.user.facade.UserFacade userFacade;
 
     @GetMapping("/tenant/profile")
     public ResponseEntity<ApiResponse<UserDTOs.TenantProfileResponse>> getTenantProfile(
@@ -27,7 +26,7 @@ public class MeController {
     ) {
         UUID userId = UUID.fromString(currentUser.getId());
         return ResponseEntity.ok(ApiResponse.success(
-                UserDTOs.TenantProfileResponse.from(userQueryService.getUserById(userId))
+                userQueryService.getTenantProfile(userId)
         ));
     }
 
@@ -38,7 +37,7 @@ public class MeController {
     ) {
         UUID userId = UUID.fromString(currentUser.getId());
         return ResponseEntity.ok(ApiResponse.success(
-                userService.updateTenantProfile(userQueryService.getUserById(userId), request)
+                userService.updateTenantProfile(userId, request)
         ));
     }
 
@@ -48,7 +47,7 @@ public class MeController {
             @jakarta.validation.Valid @RequestBody UserDTOs.RegisterDeviceTokenRequest request
     ) {
         UUID userId = UUID.fromString(currentUser.getId());
-        userFacade.registerDeviceToken(userId, request.expoPushToken(), request.platform());
+        userService.registerDeviceToken(userId, request.expoPushToken(), request.platform());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

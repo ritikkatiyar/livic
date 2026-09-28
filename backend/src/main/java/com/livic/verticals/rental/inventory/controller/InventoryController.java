@@ -1,7 +1,6 @@
 package com.livic.verticals.rental.inventory.controller;
 
 import com.livic.platform.security.UserDetailsImpl;
-import com.livic.platform.common.enums.ResourceType;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.verticals.rental.inventory.domain.enums.InventoryScope;
 import com.livic.verticals.rental.inventory.domain.enums.InventoryStatus;
@@ -97,8 +96,9 @@ public class InventoryController {
         return ResponseEntity.ok(ApiResponse.success(inventoryItemService.getInventoryStats(propertyId)));
     }
 
+    // Any signed-in user: the service answers only from the caller's own active lease.
     @GetMapping("/my-visible-items")
-    @PreAuthorize("hasAnyRole('TENANT', 'LANDLORD', 'ADMIN', 'SUPERADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<TenantVisibleInventoryResponse>> getTenantVisibleItems(
             @RequestParam(required = false) UUID propertyId,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {

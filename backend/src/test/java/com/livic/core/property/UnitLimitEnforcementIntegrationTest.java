@@ -1,7 +1,7 @@
 package com.livic.core.property;
 
 import com.livic.platform.auth.service.interfaces.MembershipService;
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.property.domain.UnitType;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.property.controller.UnitController;

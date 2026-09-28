@@ -22,7 +22,6 @@ public interface UnitMemberRepository extends JpaRepository<UnitMemberTbl, UUID>
 
     List<UnitMemberTbl> findByUserIdAndIsActiveTrue(UUID userId);
 
-    List<UnitMemberTbl> findByUserIdAndRoleAndIsActiveTrue(UUID userId, UnitMemberRole role);
 
     List<UnitMemberTbl> findByUnitIdAndRoleAndIsActiveTrue(UUID unitId, UnitMemberRole role);
 
@@ -62,6 +61,14 @@ public interface UnitMemberRepository extends JpaRepository<UnitMemberTbl, UUID>
             WHERE m.unitId = u.id AND m.id IN :memberIds
             """)
     List<UnitResidentDTO> findResidentsByMemberIds(@Param("memberIds") Collection<UUID> memberIds);
+
+    /** Members of these units, past and present — a bill outlives the tenancy. */
+    @Query("SELECT m.id FROM UnitMemberTbl m WHERE m.unitId IN :unitIds")
+    List<UUID> findMemberIdsByUnitIds(@Param("unitIds") Collection<UUID> unitIds);
+
+    /** Members belonging to these people, past and present. */
+    @Query("SELECT m.id FROM UnitMemberTbl m WHERE m.userId IN :userIds")
+    List<UUID> findMemberIdsByUserIds(@Param("userIds") Collection<UUID> userIds);
 
     /** The active tenant behind a lease, with its unit and property, in one query. */
     @Query("""

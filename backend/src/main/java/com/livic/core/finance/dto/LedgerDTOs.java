@@ -1,6 +1,6 @@
 package com.livic.core.finance.dto;
 
-import com.livic.platform.common.domain.LedgerTransactionType;
+import com.livic.core.finance.domain.LedgerTransactionType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

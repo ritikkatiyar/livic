@@ -1,8 +1,8 @@
 package com.livic.verticals.rental.lease.domain;
 
 import com.livic.platform.common.domain.BaseEntity;
-import com.livic.platform.common.domain.LeaseStatus;
-import com.livic.platform.common.domain.LeaseSplitStrategy;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;

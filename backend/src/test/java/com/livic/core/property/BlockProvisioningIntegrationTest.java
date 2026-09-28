@@ -1,6 +1,6 @@
 package com.livic.core.property;
 
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.property.domain.UnitType;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.security.UserDetailsImpl;
@@ -72,8 +72,9 @@ class BlockProvisioningIntegrationTest {
 
     private PropertyTbl createProperty(String name) {
         UserTbl owner = authenticatedOwner();
-        return propertyService.createProperty(new PropertyDTOs.CreatePropertyRequest(
-                name, "1 Test St", "Test City", null, 2, List.of(), null), owner.getId());
+        UUID propertyId = propertyService.createProperty(new PropertyDTOs.CreatePropertyRequest(
+                name, "1 Test St", "Test City", null, 2, List.of(), null), owner.getId()).id();
+        return propertyRepository.findById(propertyId).orElseThrow();
     }
 
     private UnitDTOs.FloorLayoutUnitRequest layoutUnit(String unitNumber, int gridX) {
@@ -142,14 +143,14 @@ class BlockProvisioningIntegrationTest {
     @DisplayName("Deleting a property removes its blocks as well as its units")
     void deletingAPropertyRemovesItsBlocks() {
         UserTbl owner = authenticatedOwner();
-        PropertyTbl property = propertyService.createProperty(new PropertyDTOs.CreatePropertyRequest(
-                "Disposable Property", "3 Test St", "Test City", null, 1, List.of(), null), owner.getId());
-        unitService.saveFloorLayout(property.getId(), null, 1, List.of(layoutUnit("301", 0)));
+        UUID propertyId = propertyService.createProperty(new PropertyDTOs.CreatePropertyRequest(
+                "Disposable Property", "3 Test St", "Test City", null, 1, List.of(), null), owner.getId()).id();
+        unitService.saveFloorLayout(propertyId, null, 1, List.of(layoutUnit("301", 0)));
 
-        propertyService.deleteProperty(property.getId());
+        propertyService.deleteProperty(propertyId);
 
-        assertThat(blockRepository.findByPropertyIdOrderBySortOrderAscNameAsc(property.getId())).isEmpty();
-        assertThat(unitRepository.findByPropertyId(property.getId())).isEmpty();
+        assertThat(blockRepository.findByPropertyIdOrderBySortOrderAscNameAsc(propertyId)).isEmpty();
+        assertThat(unitRepository.findByPropertyId(propertyId)).isEmpty();
     }
 
     private UnitTbl unit(PropertyTbl property, BlockTbl block, String unitNumber) {

@@ -10,9 +10,9 @@ import com.livic.core.property.facade.PropertyFacade.PropertyOccupancySummaryDTO
 import com.livic.core.property.repository.PropertyRepository;
 import com.livic.core.property.repository.UnitRepository;
 import com.livic.core.property.service.interfaces.BlockService;
-import com.livic.platform.common.domain.LeaseSplitStrategy;
-import com.livic.platform.common.domain.LeaseStatus;
-import com.livic.platform.common.domain.UnitType;
+import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.core.property.domain.UnitType;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.user.repository.UserRepository;

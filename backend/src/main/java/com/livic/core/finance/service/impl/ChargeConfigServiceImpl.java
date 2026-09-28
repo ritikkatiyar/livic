@@ -1,18 +1,17 @@
 package com.livic.core.finance.service.impl;
 
+import com.livic.core.finance.repository.MeterReadingRepository;
+import com.livic.core.finance.repository.ChargeConfigRepository;
+import com.livic.core.finance.repository.BillLineRepository;
+import com.livic.core.finance.repository.BillingWorksheetRepository;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.core.finance.dto.ChargeConfigRequest;
 import com.livic.core.finance.dto.ChargeConfigResponse;
 import com.livic.core.finance.mapper.ChargeConfigMapper;
-import com.livic.core.finance.service.ChargeConfigService;
-import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
-import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
-import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
-import com.livic.core.finance.service.interfaces.BillLineCrudService;
-import com.livic.core.property.domain.PropertyTbl;
+import com.livic.core.finance.service.interfaces.ChargeConfigService;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
-import com.livic.platform.common.domain.ChargeCategory;
+import com.livic.core.finance.domain.ChargeCategory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +25,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ChargeConfigServiceImpl implements ChargeConfigService {
 
-    private final ChargeConfigCrudService chargeConfigCrudService;
+    private final ChargeConfigRepository chargeConfigRepository;
     private final PropertyFacade propertyFacade;
-    private final BillingWorksheetCrudService billingWorksheetCrudService;
-    private final MeterReadingCrudService meterReadingCrudService;
-    private final BillLineCrudService billLineCrudService;
+    private final BillingWorksheetRepository billingWorksheetRepository;
+    private final MeterReadingRepository meterReadingRepository;
+    private final BillLineRepository billLineRepository;
 
     @Override
     public ChargeConfigResponse createChargeConfig(ChargeConfigRequest request) {
@@ -40,13 +39,13 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
         PropertySummaryDTO propSummary = propertyFacade.getPropertyById(request.getPropertyId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Property not found"));
         ChargeConfigTbl config = ChargeConfigMapper.toEntity(request, propSummary.id());
-        chargeConfigCrudService.save(config);
+        chargeConfigRepository.save(config);
         return ChargeConfigMapper.toResponse(config);
     }
 
     @Override
     public ChargeConfigResponse updateChargeConfig(UUID id, ChargeConfigRequest request) {
-        ChargeConfigTbl config = chargeConfigCrudService.findById(id)
+        ChargeConfigTbl config = chargeConfigRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
 
         if (config.getChargeCategory() != request.getChargeCategory() && 
@@ -55,13 +54,13 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
         }
 
         ChargeConfigMapper.updateEntity(request, config);
-        chargeConfigCrudService.save(config);
+        chargeConfigRepository.save(config);
         return ChargeConfigMapper.toResponse(config);
     }
 
     @Override
     public void deactivateChargeConfig(UUID id) {
-        ChargeConfigTbl config = chargeConfigCrudService.findById(id)
+        ChargeConfigTbl config = chargeConfigRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
 
         if (Boolean.TRUE.equals(config.getIsSystemRequired())) {
@@ -69,33 +68,33 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
         }
 
         config.setIsActive(false);
-        chargeConfigCrudService.save(config);
+        chargeConfigRepository.save(config);
     }
 
     @Override
     public void reactivateChargeConfig(UUID id) {
-        ChargeConfigTbl config = chargeConfigCrudService.findById(id)
+        ChargeConfigTbl config = chargeConfigRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
         config.setIsActive(true);
-        chargeConfigCrudService.save(config);
+        chargeConfigRepository.save(config);
     }
 
     @Override
     public void deleteChargeConfigPermanently(UUID id) {
-        ChargeConfigTbl config = chargeConfigCrudService.findById(id)
+        ChargeConfigTbl config = chargeConfigRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
 
         if (Boolean.TRUE.equals(config.getIsSystemRequired())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot delete a system-required charge configuration.");
         }
 
-        if (billingWorksheetCrudService.existsByChargeConfigId(id) ||
-                meterReadingCrudService.existsByChargeConfigId(id) ||
-                billLineCrudService.existsByCustomChargeConfigId(id)) {
+        if (billingWorksheetRepository.existsByChargeConfigId(id) ||
+                meterReadingRepository.existsByChargeConfigId(id) ||
+                billLineRepository.existsByCustomChargeConfigId(id)) {
             throw new BusinessException(HttpStatus.CONFLICT, "Cannot permanently delete this charge configuration because it has historical billing records. Please keep it deactivated instead.");
         }
 
-        chargeConfigCrudService.delete(config);
+        chargeConfigRepository.delete(config);
     }
 
 

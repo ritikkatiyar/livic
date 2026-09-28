@@ -1,8 +1,8 @@
 package com.livic.core.finance.service.impl;
 
+import com.livic.core.finance.repository.FinanceLedgerRepository;
 import com.livic.core.finance.domain.FinanceLedgerTbl;
 import com.livic.core.finance.dto.LedgerDTOs.LedgerEntryResponse;
-import com.livic.core.finance.service.interfaces.FinanceLedgerCrudService;
 import com.livic.core.finance.specification.FinanceLedgerSpecifications;
 import com.livic.core.finance.service.interfaces.LedgerService;
 import com.livic.core.property.dto.UnitResidentDTO;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LedgerServiceImpl implements LedgerService {
 
-    private final FinanceLedgerCrudService financeLedgerCrudService;
+    private final FinanceLedgerRepository financeLedgerRepository;
     private final UserFacade userFacade;
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
@@ -43,16 +43,25 @@ public class LedgerServiceImpl implements LedgerService {
     @Override
     @Transactional(readOnly = true)
     public Page<LedgerEntryResponse> getLedgerForProperty(UUID propertyId, String search, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable) {
+        // The units are needed for display anyway, so resolving them here also keeps the
+        // specification from selecting out of the property module's tables.
+        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        List<UUID> propertyUnitIds = units.stream().map(UnitSummaryDTO::id).toList();
+
+        List<UUID> matchingUnitIds = List.of();
+        List<UUID> matchingMemberIds = List.of();
+        if (search != null && !search.trim().isEmpty()) {
+            matchingUnitIds = unitFacade.getUnitIdsByUnitNumberSearch(search);
+            matchingMemberIds = unitMemberFacade.getMemberIdsByUserIds(userFacade.getUserIdsBySearch(search));
+        }
+
         Specification<FinanceLedgerTbl> spec = Specification
-                .where(FinanceLedgerSpecifications.hasPropertyId(propertyId))
+                .where(FinanceLedgerSpecifications.hasUnitIdIn(propertyId == null ? null : propertyUnitIds))
                 .and(FinanceLedgerSpecifications.createdAfter(fromDate))
                 .and(FinanceLedgerSpecifications.createdBefore(toDate))
-                .and(FinanceLedgerSpecifications.searchStringFields(search));
+                .and(FinanceLedgerSpecifications.matchesSearch(search, matchingUnitIds, matchingMemberIds));
 
-        Page<FinanceLedgerTbl> entriesPage = financeLedgerCrudService.findAll(spec, pageable);
-
-        // Fetch units for mapping unit names
-        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        Page<FinanceLedgerTbl> entriesPage = financeLedgerRepository.findAll(spec, pageable);
         Map<UUID, UnitSummaryDTO> unitMap = units.stream()
                 .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
 
@@ -78,7 +87,7 @@ public class LedgerServiceImpl implements LedgerService {
 
         Map<UUID, BigDecimal> runningBalancesMap = Collections.emptyMap();
         if (!entryIds.isEmpty()) {
-            runningBalancesMap = financeLedgerCrudService.getRunningBalancesForEntries(entryIds).stream()
+            runningBalancesMap = financeLedgerRepository.getRunningBalancesForEntries(entryIds).stream()
                     .filter(row -> row[0] != null)
                     .collect(Collectors.toMap(
                             row -> toUuid(row[0]),

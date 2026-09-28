@@ -1,7 +1,7 @@
 package com.livic.verticals.marketplace.config;
 
 import com.livic.platform.notification.domain.NotificationChannel;
-import com.livic.platform.notification.service.MessagingService;
+import com.livic.platform.notification.service.interfaces.MessagingService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

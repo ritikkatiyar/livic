@@ -20,15 +20,7 @@ public interface UnitMemberFacade {
 
     void endTenancy(UUID leaseId, LocalDate on);
 
-    List<UnitMemberSummaryDTO> getActiveMembersByUnitId(UUID unitId);
-
-    List<UnitMemberSummaryDTO> getActiveMembersByUnitIds(Collection<UUID> unitIds);
-
-    List<UnitMemberSummaryDTO> getActiveMembersByUserId(UUID userId);
-
     List<UnitMemberSummaryDTO> getActiveMembersByPropertyId(UUID propertyId);
-
-    Optional<UnitMemberSummaryDTO> getActiveMemberByLeaseId(UUID leaseId);
 
     /** Active members of a property, with each unit's floor, for targeting notices. */
     List<UnitResidentDTO> getActiveResidentsByPropertyId(UUID propertyId);

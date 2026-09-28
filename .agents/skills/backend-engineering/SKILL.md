@@ -21,8 +21,11 @@ Module structure:
 module/
 ├── controller/
 ├── service/
-│   ├── interface/
+│   ├── interfaces/
 │   └── impl/
+├── facade/          (only when other modules need something from this one)
+│   └── impl/
+├── spi/             (implementations of SPIs declared by lower layers)
 ├── domain/
 ├── repository/
 ├── dto/
@@ -54,10 +57,23 @@ module/
 * Dependencies flow `verticals` -> `core` -> `platform`, and modules must stay free of cycles (enforced by `ModuleBoundaryTest`). Never the reverse: `platform` must not reference `core` or `verticals`, `core` must not reference `verticals`, and one vertical must not reference another.
 * **Core must never know about a vertical.** This is what keeps residential, society and hostel additive rather than rewrites. Anything that needs to know "who is in this unit" reads `unit_member` in `core.property`, never leases in `verticals.rental`.
 * When a lower layer needs something from a higher one, declare an SPI in the lower layer and implement it in the higher one (e.g. `platform.subscription.spi.PropertyUsageProvider` implemented by `core.property`), or publish a synchronous event.
-* No direct repository access across modules
+* No direct repository access across modules. The one exception is `core.finance`, whose repositories, entities and service interfaces are open to verticals because verticals build their billing on them.
 * Modules communicate ONLY via facade or service interfaces (e.g. `com.livic.core.finance.facade` or `com.livic.core.finance.service.interfaces`)
-* Controllers must remain thin
+* Controllers must remain thin: a controller calls only its own module's services and gets DTOs back. It never touches a repository, an entity, a mapper or a facade. Facades are for one module's services to reach another's.
 * Business logic only inside services
+* These layer rules are enforced by `ModuleBoundaryTest`; fix the code, not the test.
+
+---
+
+## AI-SERVICE (`ai-service/`)
+
+`ai-service` is a separate Spring Boot deployable, not a module of the backend monolith. The architecture, module-boundary and mapper rules above apply to `backend/` only. Everything else here (database, logging, security, code quality) applies to both.
+
+* Packages are `com.livic.ai.<area>` (`agent`, `orchestration`, `tools`, `llm`, `client`, ...), laid out in `ai-service/docs/README.md` and enforced by its `ArchitectureTest`. They are not `com.livic.<layer>.<module>`.
+* It reaches the backend only over HTTP through `client.BackendClient`, relaying the caller's JWT so the backend's own permission checks apply. It cannot inject backend facades or services, and it never reads business tables.
+* That relay is why `AgentContext` and `ToolExecutionContext` carry the raw user token. Both override `toString()` to leave it out, and nothing may log it.
+* Tools project backend JSON into small records for the model, inline. IDs in those records stay `String`: they are JSON for the model, not keys. The mapper conventions do not apply.
+* It uses Jackson 3: `tools.jackson.core` / `tools.jackson.databind` are correct, alongside `com.fasterxml.jackson.annotation`, which Jackson 3 kept.
 
 ---
 
@@ -149,7 +165,8 @@ Avoid:
   * Batch execute database modifications (e.g., `saveAll()`, `deleteAll()`) outside the loop.
 * **N+1 Query Avoidance**: Never lazy-load relational collections in loops or iterate over parent entities fetching children one-by-one. Always use `@EntityGraph`, `JOIN FETCH` JPQL queries (e.g., `@Query("SELECT p FROM SubscriptionPlanTbl p JOIN FETCH p.features")`), or bulk `IN` fetch queries mapped in-memory using `Map<UUID, List<T>>`.
 * **Mandatory Pagination for Dynamic Lists**: Any query or endpoint returning collections that grow dynamically over time (e.g., Ledger entries, Expenses, Rent Cycles, Announcements, Audit logs) MUST implement pagination using Spring's `Pageable` and return `Page<T>` instead of raw lists (`List<T>`).
-* **Decoupled CRUD Service Layer**: Direct repository injection in high-level business services is discouraged. Abstraction interfaces (`CrudService<T, ID>`) and domain CRUD services (e.g., `UserCrudService`) must be used to wrap direct database repository calls.
+* **Repositories Are the Data Layer**: Services and facades inject their own module's Spring Data repositories directly. Do not wrap a repository in a pass-through CRUD service; Spring Data already is that abstraction. Guards such as an empty `IN` list or a blank search pattern belong in the service method that calls the query.
+* **Transactions Live on Services**: Put `@Transactional` on the service method that performs the business operation, so all of its writes commit or roll back together.
 
 ---
 

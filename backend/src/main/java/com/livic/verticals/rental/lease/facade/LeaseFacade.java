@@ -24,8 +24,6 @@ public interface LeaseFacade {
 
     List<LeaseSummaryDTO> getActiveLeasesByPropertyId(UUID propertyId);
 
-    List<LeaseSummaryDTO> getActiveLeasesByUnitId(UUID unitId);
-
     Map<UUID, List<LeaseSummaryDTO>> getActiveLeasesByUnitIds(Collection<UUID> unitIds);
 
     boolean hasLeasesForProperty(UUID propertyId);

@@ -10,7 +10,7 @@ import com.livic.platform.notification.domain.MessageTemplate;
 import com.livic.platform.notification.domain.NotificationChannel;
 import com.livic.platform.notification.dto.DeliveryReport;
 import com.livic.platform.notification.dto.TemplatedMessage;
-import com.livic.platform.notification.service.MessagingService;
+import com.livic.platform.notification.service.interfaces.MessagingService;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import lombok.RequiredArgsConstructor;

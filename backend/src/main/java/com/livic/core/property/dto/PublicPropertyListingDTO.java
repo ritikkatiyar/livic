@@ -1,6 +1,6 @@
 package com.livic.core.property.dto;
 
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.core.property.domain.PropertyType;
 import com.livic.core.property.domain.PropertyTbl;
 
 import java.util.List;
@@ -21,9 +21,6 @@ public record PublicPropertyListingDTO(
         List<String> amenities,
         String qrSlug
 ) {
-    public static PublicPropertyListingDTO from(PropertyTbl p) {
-        return from(p, null);
-    }
 
     /** {@code totalFloors} is derived from the property's blocks, so callers supply it. */
     public static PublicPropertyListingDTO from(PropertyTbl p, Integer totalFloors) {

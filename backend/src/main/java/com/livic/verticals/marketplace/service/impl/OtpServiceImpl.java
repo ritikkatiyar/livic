@@ -12,7 +12,7 @@ import com.livic.platform.common.exception.BusinessException;
 import com.livic.verticals.marketplace.config.MarketplaceOtpProperties;
 import com.livic.platform.notification.domain.MessageTemplate;
 import com.livic.platform.notification.dto.TemplatedMessage;
-import com.livic.platform.notification.service.MessagingService;
+import com.livic.platform.notification.service.interfaces.MessagingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

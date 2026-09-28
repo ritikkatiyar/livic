@@ -1,9 +1,12 @@
 package com.livic.platform.user.service.impl;
 
+import com.livic.platform.user.repository.ResidentNotificationPreferenceRepository;
+import com.livic.platform.user.repository.UserPreferenceRepository;
+import com.livic.platform.user.domain.ResidentNotificationPreferenceTbl;
 import com.livic.platform.user.domain.UserPreferenceTbl;
+import com.livic.platform.user.dto.UserNotificationPreferencesDTO;
 import com.livic.platform.user.dto.UserPreferenceResponse;
 import com.livic.platform.user.dto.SaveUserPreferenceRequest;
-import com.livic.platform.user.service.interfaces.UserPreferenceCrudService;
 import com.livic.platform.user.service.interfaces.UserPreferenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +21,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserPreferenceServiceImpl implements UserPreferenceService {
 
-    private final UserPreferenceCrudService userPreferenceCrudService;
+    private final UserPreferenceRepository userPreferenceRepository;
+    private final ResidentNotificationPreferenceRepository residentNotificationPreferenceRepository;
 
     @Override
     @Transactional
     public UserPreferenceResponse savePreference(UUID userId, SaveUserPreferenceRequest request) {
-        Optional<UserPreferenceTbl> existingOpt = userPreferenceCrudService.findByUserId(userId);
+        Optional<UserPreferenceTbl> existingOpt = userPreferenceRepository.findByUserId(userId);
 
         UserPreferenceTbl preference;
         if (existingOpt.isPresent()) {
@@ -38,7 +42,7 @@ public class UserPreferenceServiceImpl implements UserPreferenceService {
                     .build();
         }
 
-        preference = userPreferenceCrudService.save(preference);
+        preference = userPreferenceRepository.save(preference);
         log.info("preference_saved userId={} activeMode={}", userId, request.activeMode());
 
         return new UserPreferenceResponse(
@@ -51,12 +55,42 @@ public class UserPreferenceServiceImpl implements UserPreferenceService {
     @Override
     @Transactional(readOnly = true)
     public UserPreferenceResponse getPreference(UUID userId) {
-        return userPreferenceCrudService.findByUserId(userId)
+        return userPreferenceRepository.findByUserId(userId)
                 .map(pref -> new UserPreferenceResponse(
                         pref.getId(),
                         pref.getActiveMode(),
                         pref.isOnboardingDone()
                 ))
                 .orElseGet(() -> new UserPreferenceResponse(null, null, false));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserNotificationPreferencesDTO getNotificationPreferences(UUID userId) {
+        return residentNotificationPreferenceRepository.findByUserId(userId)
+                .map(pref -> new UserNotificationPreferencesDTO(
+                        pref.isEmailEnabled(),
+                        pref.isPushEnabled(),
+                        pref.isWhatsappEnabled()
+                ))
+                .orElse(new UserNotificationPreferencesDTO(true, true, true));
+    }
+
+    @Override
+    @Transactional
+    public UserNotificationPreferencesDTO updateNotificationPreferences(UUID userId, UserNotificationPreferencesDTO request) {
+        ResidentNotificationPreferenceTbl pref = residentNotificationPreferenceRepository.findByUserId(userId)
+                .orElseGet(() -> ResidentNotificationPreferenceTbl.builder()
+                        .userId(userId)
+                        .build());
+        pref.setEmailEnabled(request.emailEnabled());
+        pref.setPushEnabled(request.pushEnabled());
+        pref.setWhatsappEnabled(request.whatsappEnabled());
+        ResidentNotificationPreferenceTbl saved = residentNotificationPreferenceRepository.save(pref);
+        return new UserNotificationPreferencesDTO(
+                saved.isEmailEnabled(),
+                saved.isPushEnabled(),
+                saved.isWhatsappEnabled()
+        );
     }
 }

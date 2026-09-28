@@ -1,14 +1,14 @@
 package com.livic.core.finance.service.impl;
 
-import com.livic.platform.common.domain.CalculationStrategyType;
+import com.livic.core.finance.repository.MeterReadingRepository;
+import com.livic.core.finance.repository.ChargeConfigRepository;
+import com.livic.core.finance.domain.CalculationStrategyType;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.core.finance.domain.MeterReadingTbl;
 import com.livic.core.finance.dto.MeterReadingDTOs.*;
-import com.livic.core.finance.service.MeterReadingService;
-import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
+import com.livic.core.finance.service.interfaces.MeterReadingService;
 import com.livic.core.property.facade.UnitMemberFacade;
-import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.dto.UnitMemberSummaryDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
@@ -30,9 +30,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MeterReadingServiceImpl implements MeterReadingService {
 
-    private final MeterReadingCrudService meterReadingCrudService;
+    private final MeterReadingRepository meterReadingRepository;
     private final UnitMemberFacade unitMemberFacade;
-    private final ChargeConfigCrudService chargeConfigCrudService;
+    private final ChargeConfigRepository chargeConfigRepository;
     private final PropertyFacade propertyFacade;
     private final UnitFacade unitFacade;
     private final UserFacade userFacade;
@@ -47,7 +47,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
     public List<MeterReadingResponse> getOrCreateWorksheet(UUID propertyId, UUID chargeConfigId, UUID blockId, Integer month, Integer year) {
         PropertySummaryDTO property = propertyFacade.getPropertyById(propertyId)
                 .orElseThrow(() -> new BusinessException("Property not found"));
-        ChargeConfigTbl chargeConfig = chargeConfigCrudService.findById(chargeConfigId)
+        ChargeConfigTbl chargeConfig = chargeConfigRepository.findById(chargeConfigId)
                 .orElseThrow(() -> new BusinessException("Charge config not found"));
 
         if (chargeConfig.getCalculationStrategy() != CalculationStrategyType.METERED) {
@@ -65,14 +65,14 @@ public class MeterReadingServiceImpl implements MeterReadingService {
                 .collect(Collectors.groupingBy(UnitMemberSummaryDTO::unitId));
         Set<UUID> occupiedUnitIds = unitToMembersMap.keySet();
 
-        List<MeterReadingTbl> existingEntries = meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
+        List<MeterReadingTbl> existingEntries = meterReadingRepository.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
                 propertyId, chargeConfigId, month, year);
         Map<UUID, MeterReadingTbl> existingEntriesMap = existingEntries.stream()
                 .collect(Collectors.toMap(MeterReadingTbl::getUnitId, r -> r));
 
         int previousMonth = month == 1 ? 12 : month - 1;
         int previousYear = month == 1 ? year - 1 : year;
-        List<MeterReadingTbl> previousReadings = meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
+        List<MeterReadingTbl> previousReadings = meterReadingRepository.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
                 propertyId, chargeConfigId, previousMonth, previousYear);
         Map<UUID, BigDecimal> previousReadingsMap = previousReadings.stream()
                 .filter(r -> r.getCurrentReading() != null)
@@ -110,7 +110,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         }
 
         if (!newEntriesToSave.isEmpty()) {
-            finalEntries.addAll(meterReadingCrudService.saveAll(newEntriesToSave));
+            finalEntries.addAll(meterReadingRepository.saveAll(newEntriesToSave));
         }
 
         Set<UUID> userIds = activeMembers.stream()
@@ -161,7 +161,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
     @Override
     @Transactional
     public void batchSaveReadings(MeterReadingRequest request) {
-        List<MeterReadingTbl> existingEntries = meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
+        List<MeterReadingTbl> existingEntries = meterReadingRepository.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
                 request.getPropertyId(), request.getChargeConfigId(), request.getBillingMonth(), request.getBillingYear());
         Map<UUID, MeterReadingTbl> existingEntriesMap = existingEntries.stream()
                 .collect(Collectors.toMap(MeterReadingTbl::getUnitId, r -> r));
@@ -179,7 +179,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         }
 
         if (!toUpdate.isEmpty()) {
-            meterReadingCrudService.saveAll(toUpdate);
+            meterReadingRepository.saveAll(toUpdate);
         }
     }
 }

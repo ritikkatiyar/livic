@@ -1,11 +1,11 @@
 package com.livic.platform.subscription.listener;
 
+import com.livic.platform.subscription.repository.SaasSubscriptionRepository;
+import com.livic.platform.subscription.repository.BillingWalletRepository;
 import com.livic.platform.subscription.constant.BillingConstants;
 import com.livic.platform.subscription.domain.BillingWalletTbl;
 import com.livic.platform.subscription.domain.SaasSubscriptionTbl;
-import com.livic.platform.subscription.service.interfaces.BillingWalletCrudService;
 import com.livic.platform.subscription.service.interfaces.BillingWalletService;
-import com.livic.platform.subscription.service.interfaces.SaasSubscriptionCrudService;
 import com.livic.platform.payment.constant.PaymentConstants;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +21,8 @@ import java.time.LocalDateTime;
 @Slf4j
 public class BillingPaymentEventListener {
 
-    private final SaasSubscriptionCrudService subscriptionCrudService;
-    private final BillingWalletCrudService walletCrudService;
+    private final SaasSubscriptionRepository saasSubscriptionRepository;
+    private final BillingWalletRepository billingWalletRepository;
     private final BillingWalletService walletService;
 
     @EventListener
@@ -38,7 +38,7 @@ public class BillingPaymentEventListener {
     private void handleSubscriptionPayment(PaymentCompletedEvent event) {
         log.info("[OBSERVER: BILLING] Processing PaymentCompletedEvent for SaaS Subscription: {}", event);
 
-        SaasSubscriptionTbl subscription = subscriptionCrudService.findById(event.getReferenceId())
+        SaasSubscriptionTbl subscription = saasSubscriptionRepository.findById(event.getReferenceId())
                 .orElse(null);
 
         if (subscription == null) {
@@ -55,14 +55,14 @@ public class BillingPaymentEventListener {
             subscription.setCurrentPeriodEnd(LocalDateTime.now().plusMonths(1));
         }
 
-        subscriptionCrudService.save(subscription);
+        saasSubscriptionRepository.save(subscription);
         log.info("[OBSERVER: BILLING] Successfully updated SaaS Subscription: {} to ACTIVE", subscription.getId());
     }
 
     private void handleWalletTopUpPayment(PaymentCompletedEvent event) {
         log.info("[OBSERVER: BILLING] Processing PaymentCompletedEvent for Wallet TopUp: {}", event);
 
-        BillingWalletTbl wallet = walletCrudService.findById(event.getReferenceId())
+        BillingWalletTbl wallet = billingWalletRepository.findById(event.getReferenceId())
                 .orElse(null);
 
         if (wallet == null) {

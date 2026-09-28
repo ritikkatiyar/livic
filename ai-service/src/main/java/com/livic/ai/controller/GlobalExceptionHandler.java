@@ -1,5 +1,6 @@
 package com.livic.ai.controller;
 
+import com.livic.ai.client.BackendException;
 import com.livic.ai.common.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +30,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(ApiResponse.error(errorMessage));
     }
 
+    /** The caller's session or access as the backend sees it; anything else means the backend is unavailable. */
+    @ExceptionHandler(BackendException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBackend(BackendException ex, HttpServletRequest request) {
+        HttpStatus status = ex.getStatus() == 401 || ex.getStatus() == 403
+                ? HttpStatus.valueOf(ex.getStatus())
+                : HttpStatus.BAD_GATEWAY;
+        log.warn("Backend call failed on {}: {} {}", request.getRequestURI(), ex.getStatus(), ex.getMessage());
+        return ResponseEntity.status(status).body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex, HttpServletRequest request) {
         log.error("Unexpected error on {}", request.getRequestURI(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Internal server error: " + ex.getMessage()));
+                .body(ApiResponse.error("Internal server error"));
     }
 }

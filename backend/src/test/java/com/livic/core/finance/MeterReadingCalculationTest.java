@@ -1,12 +1,14 @@
 package com.livic.core.finance;
 
-import com.livic.platform.common.domain.BillingFrequency;
-import com.livic.platform.common.domain.CalculationStrategyType;
-import com.livic.platform.common.domain.ChargeCategory;
-import com.livic.platform.common.domain.FacingDirection;
-import com.livic.platform.common.domain.LeaseSplitStrategy;
-import com.livic.platform.common.domain.LeaseStatus;
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.finance.repository.MeterReadingRepository;
+import com.livic.core.finance.repository.ChargeConfigRepository;
+import com.livic.core.finance.domain.BillingFrequency;
+import com.livic.core.finance.domain.CalculationStrategyType;
+import com.livic.core.finance.domain.ChargeCategory;
+import com.livic.core.property.domain.FacingDirection;
+import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.core.property.domain.UnitType;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
@@ -15,9 +17,6 @@ import com.livic.core.finance.dto.MeterReadingDTOs.MeterReadingRequest;
 import com.livic.core.finance.dto.MeterReadingDTOs.MeterReadingResponse;
 import com.livic.core.finance.dto.MeterReadingDTOs.UnitReading;
 import com.livic.core.finance.service.impl.MeterReadingServiceImpl;
-import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
-import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
 import com.livic.core.finance.strategy.CalculationResult;
 import com.livic.core.finance.strategy.MeteredCalculation;
 import com.livic.core.property.dto.PropertySummaryDTO;
@@ -51,11 +50,11 @@ import static org.mockito.Mockito.*;
 class MeterReadingCalculationTest {
 
     @Mock
-    private MeterReadingCrudService meterReadingCrudService;
+    private MeterReadingRepository meterReadingRepository;
     @Mock
     private com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
     @Mock
-    private ChargeConfigCrudService chargeConfigCrudService;
+    private ChargeConfigRepository chargeConfigRepository;
     @Mock
     private PropertyFacade propertyFacade;
     @Mock
@@ -97,18 +96,18 @@ class MeterReadingCalculationTest {
                 .build();
         electricityConfig.setId(chargeConfigId);
 
-        propertySummary = new PropertySummaryDTO(propertyId, "Test Property", "Address", "City", "Landmark", 4, true);
+        propertySummary = new PropertySummaryDTO(propertyId, "Test Property", "Address", "City", "Landmark", true);
         unitSummary = new UnitSummaryDTO(unitId, propertyId, "Test Property", "401", 4, 1, 0, 0, 1, 1, UnitType.SINGLE_UNIT, FacingDirection.NORTH);
         userSummary = new UserSummaryDTO(userId, "ritik@example.com", "ritik katiyar", "+919999999999", UserRole.USER);
 
-        meteredCalculation = new MeteredCalculation(meterReadingCrudService);
+        meteredCalculation = new MeteredCalculation(meterReadingRepository);
     }
 
     @Test
     @DisplayName("Initial month: previous reading defaults to 0, saves user-specified prev (15552) and current (15706)")
     void testInitialWorksheetAndSave() {
         when(propertyFacade.getPropertyById(propertyId)).thenReturn(Optional.of(propertySummary));
-        when(chargeConfigCrudService.findById(chargeConfigId)).thenReturn(Optional.of(electricityConfig));
+        when(chargeConfigRepository.findById(chargeConfigId)).thenReturn(Optional.of(electricityConfig));
         when(unitFacade.getUnitsByPropertyId(propertyId)).thenReturn(List.of(unitSummary));
 
         LeaseTbl activeLease = LeaseTbl.builder()
@@ -130,13 +129,13 @@ class MeterReadingCalculationTest {
         when(userFacade.getUsersByIds(Set.of(userId))).thenReturn(Map.of(userId, userSummary));
 
         // Month 8 (August 2026) has no existing readings
-        when(meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(propertyId, chargeConfigId, 8, 2026))
+        when(meterReadingRepository.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(propertyId, chargeConfigId, 8, 2026))
                 .thenReturn(List.of());
         // Month 7 (July 2026) has no previous readings
-        when(meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(propertyId, chargeConfigId, 7, 2026))
+        when(meterReadingRepository.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(propertyId, chargeConfigId, 7, 2026))
                 .thenReturn(List.of());
 
-        when(meterReadingCrudService.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(meterReadingRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
 
         List<MeterReadingResponse> worksheet = meterReadingService.getOrCreateWorksheet(propertyId, chargeConfigId, 8, 2026);
         assertEquals(1, worksheet.size());
@@ -156,7 +155,7 @@ class MeterReadingCalculationTest {
                 .isBilled(false)
                 .build();
 
-        when(meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(propertyId, chargeConfigId, 8, 2026))
+        when(meterReadingRepository.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(propertyId, chargeConfigId, 8, 2026))
                 .thenReturn(List.of(existingTbl));
 
         MeterReadingRequest saveReq = new MeterReadingRequest(
@@ -171,7 +170,7 @@ class MeterReadingCalculationTest {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MeterReadingTbl>> captor = ArgumentCaptor.forClass(List.class);
-        verify(meterReadingCrudService, times(2)).saveAll(captor.capture());
+        verify(meterReadingRepository, times(2)).saveAll(captor.capture());
 
         List<List<MeterReadingTbl>> allValues = captor.getAllValues();
         List<MeterReadingTbl> savedList = allValues.get(allValues.size() - 1);
@@ -184,7 +183,7 @@ class MeterReadingCalculationTest {
     @DisplayName("Next month (September 2026): previous reading automatically carries over from August (15706)")
     void testNextMonthCarriesOverCurrentAsPrevious() {
         when(propertyFacade.getPropertyById(propertyId)).thenReturn(Optional.of(propertySummary));
-        when(chargeConfigCrudService.findById(chargeConfigId)).thenReturn(Optional.of(electricityConfig));
+        when(chargeConfigRepository.findById(chargeConfigId)).thenReturn(Optional.of(electricityConfig));
         when(unitFacade.getUnitsByPropertyId(propertyId)).thenReturn(List.of(unitSummary));
 
         LeaseTbl activeLease = LeaseTbl.builder()
@@ -206,7 +205,7 @@ class MeterReadingCalculationTest {
         when(userFacade.getUsersByIds(Set.of(userId))).thenReturn(Map.of(userId, userSummary));
 
         // Month 9 (September 2026) has no readings yet
-        when(meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(propertyId, chargeConfigId, 9, 2026))
+        when(meterReadingRepository.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(propertyId, chargeConfigId, 9, 2026))
                 .thenReturn(List.of());
 
         // Month 8 (August 2026) had currentReading = 15706
@@ -220,10 +219,10 @@ class MeterReadingCalculationTest {
                 .currentReading(new BigDecimal("15706"))
                 .isBilled(true)
                 .build();
-        when(meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(propertyId, chargeConfigId, 8, 2026))
+        when(meterReadingRepository.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(propertyId, chargeConfigId, 8, 2026))
                 .thenReturn(List.of(augustReading));
 
-        when(meterReadingCrudService.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(meterReadingRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
 
         List<MeterReadingResponse> septemberWorksheet = meterReadingService.getOrCreateWorksheet(propertyId, chargeConfigId, 9, 2026);
         assertEquals(1, septemberWorksheet.size());
@@ -243,7 +242,7 @@ class MeterReadingCalculationTest {
                 .currentReading(new BigDecimal("15706"))
                 .build();
 
-        when(meterReadingCrudService.findByUnitIdAndChargeConfigIdAndBillingMonthAndBillingYear(unitId, chargeConfigId, 8, 2026))
+        when(meterReadingRepository.findByUnitIdAndChargeConfigIdAndBillingMonthAndBillingYear(unitId, chargeConfigId, 8, 2026))
                 .thenReturn(Optional.of(reading));
 
         CalculationResult result = meteredCalculation.calculate(electricityConfig, unitId, "2026-08");

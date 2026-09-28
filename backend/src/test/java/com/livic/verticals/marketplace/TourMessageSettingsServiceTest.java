@@ -2,7 +2,7 @@ package com.livic.verticals.marketplace;
 
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.notification.domain.NotificationChannel;
-import com.livic.platform.notification.service.MessagingService;
+import com.livic.platform.notification.service.interfaces.MessagingService;
 import com.livic.verticals.marketplace.domain.TourMessageSettingsTbl;
 import com.livic.verticals.marketplace.domain.TourMessageType;
 import com.livic.verticals.marketplace.dto.TourMessageSettingsDTOs.ChannelChoice;

@@ -1,12 +1,11 @@
 package com.livic.core.finance.controller;
 
 import com.livic.platform.security.UserDetailsImpl;
-import com.livic.platform.common.enums.ResourceType;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.core.finance.dto.ChargeConfigRequest;
 import com.livic.core.finance.dto.ChargeConfigResponse;
-import com.livic.core.finance.service.ChargeConfigQueryService;
-import com.livic.core.finance.service.ChargeConfigService;
+import com.livic.core.finance.service.interfaces.ChargeConfigQueryService;
+import com.livic.core.finance.service.interfaces.ChargeConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

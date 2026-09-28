@@ -1,8 +1,8 @@
 package com.livic.platform.auth.service.impl;
 
+import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
-import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.platform.auth.spi.ResourceScope;
 import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.common.enums.OwnerModule;
@@ -22,7 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthorizationServiceImpl implements AuthorizationService {
 
-    private final MembershipCrudService membershipCrudService;
+    private final MembershipRepository membershipRepository;
     private final ResourceScopeRegistry resourceScopeRegistry;
 
     @Override
@@ -43,7 +43,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         }
 
         UUID userId = currentUser.getUuid();
-        Set<String> userPermissions = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
+        Set<String> userPermissions = membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
 
         for (String code : permissionCodes) {
             if (userPermissions.contains(code)) {
@@ -65,7 +65,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (isUserGloballyAuthorized(currentUser)) return true;
 
         UUID userId = currentUser.getUuid();
-        return membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS);
+        return membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS);
     }
 
     @Override
@@ -202,13 +202,13 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         UUID userId = currentUser.getUuid();
 
         // 1. Full Access check: if the user holds any FULL_ACCESS role on this property, all permissions are granted
-        if (membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS)) {
+        if (membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS)) {
             log.debug("User {} has FULL_ACCESS on property {}", userId, propertyId);
             return true;
         }
 
         // 2. Custom Access check: check explicit permission matrix
-        Set<String> permissions = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
+        Set<String> permissions = membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
         boolean hasPerm = permissions.contains(permissionCode);
         log.debug("User {} permission check for {} on property {}: {}", userId, permissionCode, propertyId, hasPerm);
 

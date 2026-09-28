@@ -1,9 +1,9 @@
 package com.livic.platform.storage;
 
+import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.AuthorizationTestSupport;
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.auth.service.impl.AuthorizationServiceImpl;
-import com.livic.platform.auth.service.interfaces.MembershipCrudService;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
 import com.livic.verticals.rental.lease.facade.LeaseFacade;
@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 class MediaAuthorizationTest {
 
     @Mock
-    private MembershipCrudService membershipCrudService;
+    private MembershipRepository membershipRepository;
 
     @Mock
     private LeaseFacade leaseFacade;
@@ -62,7 +62,7 @@ class MediaAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipCrudService, null, null, leaseFacade, inventoryFacade, storageFacade);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, leaseFacade, inventoryFacade, storageFacade);
         propertyId = UUID.randomUUID();
         leaseId = UUID.randomUUID();
         itemId = UUID.randomUUID();
@@ -94,7 +94,7 @@ class MediaAuthorizationTest {
     void ownerCanReadAndWritePropertyMedia() {
         authenticateUser(ownerUserId, "owner@example.com", UserRole.USER);
 
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("PROPERTY_EDIT", "PROPERTY_VIEW"));
 
         assertThat(authorizationService.hasMediaAccess(OwnerModule.PROPERTY, propertyId, "READ")).isTrue();
@@ -106,7 +106,7 @@ class MediaAuthorizationTest {
     void staffWithOnlyViewCanReadButNotWritePropertyMedia() {
         authenticateUser(ownerUserId, "staff@example.com", UserRole.USER);
 
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("PROPERTY_VIEW"));
 
         assertThat(authorizationService.hasMediaAccess(OwnerModule.PROPERTY, propertyId, "READ")).isTrue();
@@ -118,7 +118,7 @@ class MediaAuthorizationTest {
     void strangerIsDeniedPropertyMedia() {
         authenticateUser(strangerUserId, "stranger@example.com", UserRole.USER);
 
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(strangerUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(strangerUserId, propertyId))
                 .thenReturn(Set.of());
 
         assertThat(authorizationService.hasMediaAccess(OwnerModule.PROPERTY, propertyId, "READ")).isFalse();
@@ -145,7 +145,7 @@ class MediaAuthorizationTest {
         );
 
         when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(leaseSummary));
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("LEASE_UPDATE", "LEASE_VIEW"));
 
         assertThat(authorizationService.hasMediaAccess(OwnerModule.LEASE, leaseId, "READ")).isTrue();
@@ -197,7 +197,7 @@ class MediaAuthorizationTest {
         );
 
         when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(leaseSummary));
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(strangerUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(strangerUserId, propertyId))
                 .thenReturn(Set.of());
 
         assertThat(authorizationService.hasMediaAccess(OwnerModule.LEASE, leaseId, "READ")).isFalse();
@@ -211,7 +211,7 @@ class MediaAuthorizationTest {
         authenticateUser(ownerUserId, "owner@example.com", UserRole.USER);
 
         when(inventoryFacade.getPropertyIdForInventoryItem(itemId)).thenReturn(Optional.of(propertyId));
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("INVENTORY_MANAGE", "INVENTORY_VIEW"));
 
         assertThat(authorizationService.hasMediaAccess(OwnerModule.INVENTORY, itemId, "READ")).isTrue();
@@ -260,7 +260,7 @@ class MediaAuthorizationTest {
         );
 
         when(storageFacade.getAssetById(mediaAssetId)).thenReturn(Optional.of(asset));
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("PROPERTY_EDIT"));
 
         assertThat(authorizationService.hasMediaAssetAccess(mediaAssetId, "DELETE")).isTrue();
@@ -285,7 +285,7 @@ class MediaAuthorizationTest {
         );
 
         when(storageFacade.getAssetById(mediaAssetId)).thenReturn(Optional.of(asset));
-        when(membershipCrudService.findPermissionCodesByUserIdAndPropertyId(strangerUserId, propertyId))
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(strangerUserId, propertyId))
                 .thenReturn(Set.of());
 
         assertThat(authorizationService.hasMediaAssetAccess(mediaAssetId, "DELETE")).isFalse();

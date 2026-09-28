@@ -1,7 +1,7 @@
 package com.livic.core.property.repository;
 
 import com.livic.core.property.domain.PropertyTbl;
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.core.property.domain.PropertyType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -20,7 +20,7 @@ import com.livic.platform.notification.dto.TemplatedMessage;
 import com.livic.platform.notification.domain.NotificationChannel;
 import com.livic.platform.notification.dto.DeliveryReport;
 import com.livic.platform.notification.dto.DeliveryReport.Outcome;
-import com.livic.platform.notification.service.MessagingService;
+import com.livic.platform.notification.service.interfaces.MessagingService;
 import com.livic.verticals.marketplace.config.MarketplaceOtpProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;

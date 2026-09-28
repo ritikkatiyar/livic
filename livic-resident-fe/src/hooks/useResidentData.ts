@@ -8,7 +8,7 @@ export function useResidentContext(token: string) {
   return useQuery({
     queryKey: ['residentContext', token],
     queryFn: async () => {
-      if (!token) return { activeLeases: [] };
+      if (!token) return null;
       return getMyContext(token);
     },
     enabled: !!token,

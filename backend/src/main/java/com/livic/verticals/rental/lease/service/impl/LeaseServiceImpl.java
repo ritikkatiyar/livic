@@ -1,19 +1,19 @@
 package com.livic.verticals.rental.lease.service.impl;
 
-import com.livic.platform.common.domain.LeaseStatus;
-import com.livic.platform.common.domain.LedgerTransactionType;
-import com.livic.platform.common.domain.UnitBookingStatus;
+import com.livic.core.finance.repository.UnitBookingRepository;
+import com.livic.core.finance.repository.FinanceLedgerRepository;
+import com.livic.verticals.rental.lease.repository.LeaseRepository;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.core.finance.domain.LedgerTransactionType;
+import com.livic.core.finance.domain.UnitBookingStatus;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.FinanceLedgerTbl;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.domain.UnitBookingTbl;
 import com.livic.verticals.rental.lease.dto.LeaseDTOs;
 import com.livic.verticals.rental.lease.mapper.LeaseMapper;
-import com.livic.core.finance.service.interfaces.FinanceLedgerCrudService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseService;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
-import com.livic.core.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.core.property.facade.UnitMemberFacade;
@@ -35,13 +35,13 @@ import java.util.UUID;
 @Transactional
 public class LeaseServiceImpl implements LeaseService {
 
-    private final LeaseCrudService leaseCrudService;
+    private final LeaseRepository leaseRepository;
     private final LeaseQueryService leaseQueryService;
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
     private final UserFacade userFacade;
-    private final UnitBookingCrudService unitBookingCrudService;
-    private final FinanceLedgerCrudService financeLedgerCrudService;
+    private final UnitBookingRepository unitBookingRepository;
+    private final FinanceLedgerRepository financeLedgerRepository;
 
     @Override
     public LeaseTbl createLease(LeaseDTOs.CreateLeaseRequest request, UUID assignedByUserId) {
@@ -63,7 +63,7 @@ public class LeaseServiceImpl implements LeaseService {
 
         // 2. Process booking conversion and auto-register prospective tenant if needed
         if (request.bookingId() != null) {
-            booking = unitBookingCrudService.findById(request.bookingId())
+            booking = unitBookingRepository.findById(request.bookingId())
                     .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit booking not found"));
 
             if (!UnitBookingStatus.BOOKED.name().equals(booking.getStatus())) {
@@ -107,7 +107,7 @@ public class LeaseServiceImpl implements LeaseService {
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
 
         LeaseTbl lease = LeaseMapper.toEntity(request, unitSummary.id(), targetUserId);
-        LeaseTbl saved = leaseCrudService.save(lease);
+        LeaseTbl saved = leaseRepository.save(lease);
 
         // The tenant becomes a member of the unit, in the same transaction as the lease, so
         // everything that asks "who is in this flat" sees them without reading leases.
@@ -117,11 +117,11 @@ public class LeaseServiceImpl implements LeaseService {
         if (booking != null) {
             booking.setStatus(UnitBookingStatus.CONVERTED.name());
             booking.setConvertedLeaseId(saved.getId());
-            unitBookingCrudService.save(booking);
+            unitBookingRepository.save(booking);
         }
 
         // 4. Log Security Deposit Billing DEBIT in ledger
-        BigDecimal currentBalance = financeLedgerCrudService.sumAmountByMemberId(tenantMember.id());
+        BigDecimal currentBalance = financeLedgerRepository.sumAmountByMemberId(tenantMember.id());
         BigDecimal newBalance = currentBalance.add(request.securityDeposit());
 
         FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
@@ -134,7 +134,7 @@ public class LeaseServiceImpl implements LeaseService {
                 .referenceId(saved.getId())
                 .description("Security Deposit Invoice")
                 .build();
-        financeLedgerCrudService.save(ledgerEntry);
+        financeLedgerRepository.save(ledgerEntry);
 
         log.info("lease_created leaseId={} userId={} unitId={} status={}",
                 saved.getId(), saved.getUserId(), saved.getUnitId(), saved.getStatus());
@@ -143,29 +143,29 @@ public class LeaseServiceImpl implements LeaseService {
 
     @Override
     public LeaseTbl terminateLease(UUID id) {
-        LeaseTbl lease = leaseCrudService.findWithUnitAndPropertyById(id)
+        LeaseTbl lease = leaseRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
 
         lease.setStatus(LeaseStatus.ENDED);
         if (lease.getMoveOutDate() == null) {
             lease.setMoveOutDate(LocalDate.now());
         }
-        LeaseTbl ended = leaseCrudService.save(lease);
+        LeaseTbl ended = leaseRepository.save(lease);
         unitMemberFacade.endTenancy(ended.getId(), ended.getMoveOutDate());
         return ended;
     }
 
     @Override
     public LeaseTbl updateNoticePeriod(UUID id, LocalDate moveOutDate) {
-        LeaseTbl lease = leaseCrudService.findById(id)
+        LeaseTbl lease = leaseRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
         lease.setMoveOutDate(moveOutDate);
-        return leaseCrudService.save(lease);
+        return leaseRepository.save(lease);
     }
 
     @Override
     public LeaseTbl updateLeaseTerms(UUID id, BigDecimal monthlyRentAmount, BigDecimal securityDeposit) {
-        LeaseTbl lease = leaseCrudService.findById(id)
+        LeaseTbl lease = leaseRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
         if (monthlyRentAmount != null) {
             lease.setMonthlyRentAmount(monthlyRentAmount);
@@ -173,6 +173,6 @@ public class LeaseServiceImpl implements LeaseService {
         if (securityDeposit != null) {
             lease.setSecurityDeposit(securityDeposit);
         }
-        return leaseCrudService.save(lease);
+        return leaseRepository.save(lease);
     }
 }

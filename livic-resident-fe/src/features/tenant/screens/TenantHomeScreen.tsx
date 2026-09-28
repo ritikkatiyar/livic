@@ -5,7 +5,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SkeletonCardGrid } from '@/src/components/common/feedback/Skeleton';
 
-import { ActiveLeaseSummary, getMyContext } from '@/src/features/auth/api/me.api';
+import { UnitMembershipSummary, getMyContext } from '@/src/features/auth/api/me.api';
+import { RentCycle, getTenantRentCycles } from '@/src/features/tenant/api/payments.api';
 import { getAnnouncements, markAnnouncementRead, Announcement } from '@/src/features/announcements/api/announcement.api';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { Theme } from '@/src/theme/Theme';
@@ -31,7 +32,8 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
 
   const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
-  const [lease, setLease] = useState<ActiveLeaseSummary | null>(null);
+  const [tenancy, setTenancy] = useState<UnitMembershipSummary | null>(null);
+  const [currentBill, setCurrentBill] = useState<RentCycle | null>(null);
   const [loading, setLoading] = useState(true);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [selectedNotice, setSelectedNotice] = useState<Announcement | null>(null);
@@ -45,9 +47,16 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
 
   useEffect(() => {
     let isMounted = true;
+    // Where they live comes from their unit membership; what they owe comes from the
+    // bill. The lease is the contract between landlord and tenant, not a home-screen fact.
     getMyContext(token)
       .then((context) => {
-        if (isMounted) setLease(context.activeLeases[0] || null);
+        const mine = (context.unitMemberships || []).find((m) => m.role === 'TENANT') || null;
+        if (isMounted) setTenancy(mine);
+        return getTenantRentCycles(token);
+      })
+      .then((bills) => {
+        if (isMounted) setCurrentBill(bills[0] || null);
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -68,11 +77,13 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
 
   const criticalUnread = announcements.filter(a => a.severity === 'CRITICAL' && !a.read);
 
-  const activePropertyName = lease?.propertyName || "Assigned Property";
-  const activeUnitNumber = lease?.unitNumber ? `Unit ${lease.unitNumber}` : "Active Lease";
-  const activeRent = lease?.rentAmount ? `₹${lease.rentAmount.toLocaleString()}` : "Contact Manager";
-  const activeDueDate = (lease as any)?.dueDate || (lease as any)?.nextDueDate || "1st of month";
-  const activeStatus = lease?.status || "ACTIVE";
+  const activePropertyName = tenancy?.propertyName || "Assigned Property";
+  const activeUnitNumber = tenancy?.unitNumber ? `Unit ${tenancy.unitNumber}` : "Active Lease";
+  const activeRent = currentBill?.totalAmount
+    ? `₹${currentBill.totalAmount.toLocaleString()}`
+    : "Contact Manager";
+  const activeDueDate = currentBill?.dueDate || "1st of month";
+  const activeStatus = currentBill?.status || (tenancy ? "ACTIVE" : "—");
 
   return (
     <PageShell

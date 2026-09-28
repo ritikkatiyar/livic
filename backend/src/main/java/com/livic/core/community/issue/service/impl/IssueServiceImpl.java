@@ -1,5 +1,7 @@
 package com.livic.core.community.issue.service.impl;
 
+import com.livic.core.community.issue.repository.IssueTimelineRepository;
+import com.livic.core.community.issue.repository.IssueRepository;
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.common.constant.StaffPermission;
@@ -19,9 +21,7 @@ import com.livic.core.community.issue.dto.IssueDTOs.IssueResponse;
 import com.livic.core.community.issue.dto.IssueDTOs.UpdateStatusRequest;
 import com.livic.core.community.issue.mapper.IssueMapper;
 import com.livic.core.community.issue.service.interfaces.EscalationStrategy;
-import com.livic.core.community.issue.service.interfaces.IssueCrudService;
 import com.livic.core.community.issue.service.interfaces.IssueService;
-import com.livic.core.community.issue.service.interfaces.IssueTimelineCrudService;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
@@ -37,16 +37,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -56,8 +53,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class IssueServiceImpl implements IssueService {
 
-    private final IssueCrudService issueCrudService;
-    private final IssueTimelineCrudService issueTimelineCrudService;
+    private final IssueRepository issueRepository;
+    private final IssueTimelineRepository issueTimelineRepository;
     private final UnitMemberFacade unitMemberFacade;
     private final AuthFacade authFacade;
     private final PropertyFacade propertyFacade;
@@ -111,7 +108,7 @@ public class IssueServiceImpl implements IssueService {
         issue.setEscalationStatus(IssueEscalationStatus.NONE);
         issue.setEscalationLevel(0);
 
-        IssueTbl saved = issueCrudService.save(issue);
+        IssueTbl saved = issueRepository.save(issue);
 
         // Check if any strategy triggers immediate escalation (like SAFETY)
         boolean immediatelyEscalated = false;
@@ -119,7 +116,7 @@ public class IssueServiceImpl implements IssueService {
             if (strategy instanceof SafetyEmergencyStrategy && strategy.shouldEscalate(saved)) {
                 saved.setEscalationStatus(IssueEscalationStatus.ESCALATED);
                 saved.setEscalationLevel(saved.getEscalationLevel() + 1);
-                saved = issueCrudService.save(saved);
+                saved = issueRepository.save(saved);
 
                 IssueTimelineTbl escalationTimeline = IssueTimelineTbl.builder()
                         .issue(saved)
@@ -127,7 +124,7 @@ public class IssueServiceImpl implements IssueService {
                         .entryType(IssueTimelineEntryType.ESCALATION)
                         .content("Safety emergency automatically escalated immediately on creation.")
                         .build();
-                issueTimelineCrudService.save(escalationTimeline);
+                issueTimelineRepository.save(escalationTimeline);
                 immediatelyEscalated = true;
                 break;
             }
@@ -167,10 +164,10 @@ public class IssueServiceImpl implements IssueService {
                 if (blockUnitIds.isEmpty()) {
                     issuesPage = Page.empty(pageable);
                 } else {
-                    issuesPage = issueCrudService.findByUnitIdInOrBlockId(blockUnitIds, blockId, pageable);
+                    issuesPage = issueRepository.findByUnitIdInOrBlockId(blockUnitIds, blockId, pageable);
                 }
             } else {
-                issuesPage = issueCrudService.findByPropertyIdIn(staffPropertyIds, pageable);
+                issuesPage = issueRepository.findByPropertyIdIn(staffPropertyIds, pageable);
             }
         } else {
             List<UUID> myUnitIds = unitMemberFacade.getActiveResidencesByUserId(callerUserId).stream()
@@ -180,34 +177,35 @@ public class IssueServiceImpl implements IssueService {
                     .toList();
             issuesPage = myUnitIds.isEmpty()
                     ? Page.empty(pageable)
-                    : issueCrudService.findByUnitIdIn(myUnitIds, pageable);
+                    : issueRepository.findByUnitIdIn(myUnitIds, pageable);
         }
 
-        // Pre-fetch names to prevent N+1 queries
+        // The whole page costs two lookups: every timeline in one query, then every name the page
+        // shows (reporters, tenants and timeline authors) in one call.
+        List<UUID> issueIds = issuesPage.getContent().stream().map(IssueTbl::getId).toList();
+        Map<UUID, List<IssueTimelineTbl>> timelinesByIssueId = issueIds.isEmpty() ? Collections.emptyMap()
+                : issueTimelineRepository.findByIssueIdInOrderByCreatedAtAsc(issueIds).stream()
+                        .collect(Collectors.groupingBy(t -> t.getIssue().getId()));
+
         Set<UUID> userIds = new HashSet<>();
         issuesPage.getContent().forEach(i -> {
             if (i.getReportedByUserId() != null) userIds.add(i.getReportedByUserId());
             if (i.getTenantId() != null) userIds.add(i.getTenantId());
         });
+        timelinesByIssueId.values().forEach(timeline -> timeline.forEach(t -> userIds.add(t.getAuthorUserId())));
 
         Map<UUID, UserSummaryDTO> usersMap = userIds.isEmpty() ? Collections.emptyMap() : userFacade.getUsersByIds(userIds);
         Map<UUID, String> authorNamesMap = usersMap.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().fullName()));
 
-        return issuesPage.map(issue -> {
-            List<IssueTimelineTbl> timeline = issueTimelineCrudService.findByIssueIdOrderByCreatedAtAsc(issue.getId());
-            timeline.forEach(t -> userIds.add(t.getAuthorUserId()));
-            Map<UUID, UserSummaryDTO> fullUsersMap = userIds.isEmpty() ? Collections.emptyMap() : userFacade.getUsersByIds(userIds);
-            Map<UUID, String> fullAuthorNamesMap = fullUsersMap.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().fullName()));
-            return IssueMapper.toResponse(issue, timeline, fullAuthorNamesMap);
-        });
+        return issuesPage.map(issue -> IssueMapper.toResponse(
+                issue, timelinesByIssueId.getOrDefault(issue.getId(), List.of()), authorNamesMap));
     }
 
     @Override
     @Transactional(readOnly = true)
     public IssueResponse getIssue(UUID issueId, UUID callerUserId) {
-        IssueTbl issue = issueCrudService.findById(issueId)
+        IssueTbl issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
         checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_VIEW);
@@ -217,7 +215,7 @@ public class IssueServiceImpl implements IssueService {
     @Override
     @Transactional
     public IssueResponse addComment(UUID issueId, String content, UUID callerUserId) {
-        IssueTbl issue = issueCrudService.findById(issueId)
+        IssueTbl issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
         checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_VIEW);
@@ -228,7 +226,7 @@ public class IssueServiceImpl implements IssueService {
                 .entryType(IssueTimelineEntryType.COMMENT)
                 .content(content)
                 .build();
-        issueTimelineCrudService.save(commentTimeline);
+        issueTimelineRepository.save(commentTimeline);
 
         return getIssueResponse(issue);
     }
@@ -236,14 +234,14 @@ public class IssueServiceImpl implements IssueService {
     @Override
     @Transactional
     public IssueResponse updateStatus(UUID issueId, UpdateStatusRequest request, UUID callerUserId) {
-        IssueTbl issue = issueCrudService.findById(issueId)
+        IssueTbl issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
         checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_MANAGE);
 
         IssueStatus oldStatus = issue.getStatus();
         issue.setStatus(request.status());
-        IssueTbl saved = issueCrudService.save(issue);
+        IssueTbl saved = issueRepository.save(issue);
 
         String changeContent = "Status changed from " + oldStatus + " to " + request.status();
         if (request.comment() != null && !request.comment().trim().isEmpty()) {
@@ -256,7 +254,7 @@ public class IssueServiceImpl implements IssueService {
                 .entryType(IssueTimelineEntryType.STATUS_CHANGE)
                 .content(changeContent)
                 .build();
-        issueTimelineCrudService.save(statusTimeline);
+        issueTimelineRepository.save(statusTimeline);
 
         return getIssueResponse(saved);
     }
@@ -264,14 +262,14 @@ public class IssueServiceImpl implements IssueService {
     @Override
     @Transactional
     public IssueResponse escalateIssue(UUID issueId, String reason, UUID callerUserId) {
-        IssueTbl issue = issueCrudService.findById(issueId)
+        IssueTbl issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
         checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_MANAGE);
 
         issue.setEscalationStatus(IssueEscalationStatus.ESCALATED);
         issue.setEscalationLevel(issue.getEscalationLevel() + 1);
-        IssueTbl saved = issueCrudService.save(issue);
+        IssueTbl saved = issueRepository.save(issue);
 
         IssueTimelineTbl escalationTimeline = IssueTimelineTbl.builder()
                 .issue(saved)
@@ -279,7 +277,7 @@ public class IssueServiceImpl implements IssueService {
                 .entryType(IssueTimelineEntryType.ESCALATION)
                 .content(reason)
                 .build();
-        issueTimelineCrudService.save(escalationTimeline);
+        issueTimelineRepository.save(escalationTimeline);
 
         String propName = propertyFacade.getPropertyById(saved.getPropertyId()).map(PropertySummaryDTO::name).orElse("Property");
         String unitNumber = saved.getUnitId() != null ? unitFacade.getUnitById(saved.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse("Common Area") : "Common Area";
@@ -294,35 +292,52 @@ public class IssueServiceImpl implements IssueService {
     @Transactional
     public void runDailyEscalationJob() {
         log.info("[IssueSlaJob] Running SLA auto-escalation check...");
-        List<IssueTbl> openIssues = issueCrudService.findByStatusInAndEscalationStatus(
+        List<IssueTbl> openIssues = issueRepository.findByStatusInAndEscalationStatus(
                 Arrays.asList(IssueStatus.OPEN, IssueStatus.IN_PROGRESS),
                 IssueEscalationStatus.NONE
         );
 
+        // Decide every escalation first, so property and unit names come from two lookups rather
+        // than two per escalated issue. The first strategy that fires wins, as before.
+        Map<IssueTbl, String> strategyByIssue = new LinkedHashMap<>();
         for (IssueTbl issue : openIssues) {
-            for (EscalationStrategy strategy : escalationStrategies) {
-                if (strategy.shouldEscalate(issue)) {
-                    log.info("[IssueSlaJob] Escalating issue '{}' ({}) via strategy {}", issue.getTitle(), issue.getId(), strategy.getClass().getSimpleName());
-                    issue.setEscalationStatus(IssueEscalationStatus.ESCALATED);
-                    issue.setEscalationLevel(issue.getEscalationLevel() + 1);
-                    IssueTbl saved = issueCrudService.save(issue);
-
-                    IssueTimelineTbl escalationTimeline = IssueTimelineTbl.builder()
-                            .issue(saved)
-                            .authorUserId(UUID.fromString("00000000-0000-0000-0000-000000000000")) // System User
-                            .entryType(IssueTimelineEntryType.ESCALATION)
-                            .content("SLA auto-escalation triggered by " + strategy.getClass().getSimpleName() + ".")
-                            .build();
-                    issueTimelineCrudService.save(escalationTimeline);
-
-                    String propName = propertyFacade.getPropertyById(saved.getPropertyId()).map(PropertySummaryDTO::name).orElse("Property");
-                    String unitNumber = saved.getUnitId() != null ? unitFacade.getUnitById(saved.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse("Common Area") : "Common Area";
-
-                    publishEscalationNotifications(saved, propName, unitNumber, "SLA auto-escalation triggered by " + strategy.getClass().getSimpleName());
-                    break;
-                }
-            }
+            escalationStrategies.stream()
+                    .filter(strategy -> strategy.shouldEscalate(issue))
+                    .findFirst()
+                    .ifPresent(strategy -> strategyByIssue.put(issue, strategy.getClass().getSimpleName()));
         }
+        if (strategyByIssue.isEmpty()) {
+            return;
+        }
+        Map<UUID, PropertySummaryDTO> propertiesById = propertyFacade.getPropertiesByIds(strategyByIssue.keySet().stream()
+                .map(IssueTbl::getPropertyId)
+                .collect(Collectors.toSet()));
+        Map<UUID, UnitSummaryDTO> unitsById = unitFacade.getUnitsByIds(strategyByIssue.keySet().stream()
+                .map(IssueTbl::getUnitId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet()));
+
+        strategyByIssue.forEach((issue, strategyName) -> {
+            log.info("[IssueSlaJob] Escalating issue '{}' ({}) via strategy {}", issue.getTitle(), issue.getId(), strategyName);
+            issue.setEscalationStatus(IssueEscalationStatus.ESCALATED);
+            issue.setEscalationLevel(issue.getEscalationLevel() + 1);
+            IssueTbl saved = issueRepository.save(issue);
+
+            IssueTimelineTbl escalationTimeline = IssueTimelineTbl.builder()
+                    .issue(saved)
+                    .authorUserId(UUID.fromString("00000000-0000-0000-0000-000000000000")) // System User
+                    .entryType(IssueTimelineEntryType.ESCALATION)
+                    .content("SLA auto-escalation triggered by " + strategyName + ".")
+                    .build();
+            issueTimelineRepository.save(escalationTimeline);
+
+            PropertySummaryDTO property = propertiesById.get(saved.getPropertyId());
+            UnitSummaryDTO unit = saved.getUnitId() != null ? unitsById.get(saved.getUnitId()) : null;
+            String propName = property != null ? property.name() : "Property";
+            String unitNumber = unit != null ? unit.unitNumber() : "Common Area";
+
+            publishEscalationNotifications(saved, propName, unitNumber, "SLA auto-escalation triggered by " + strategyName);
+        });
     }
 
     private void publishCreatedNotifications(IssueTbl issue, String propName, String unitNumber, String creatorName) {
@@ -378,7 +393,7 @@ public class IssueServiceImpl implements IssueService {
     }
 
     private IssueResponse getIssueResponse(IssueTbl issue) {
-        List<IssueTimelineTbl> timeline = issueTimelineCrudService.findByIssueIdOrderByCreatedAtAsc(issue.getId());
+        List<IssueTimelineTbl> timeline = issueTimelineRepository.findByIssueIdOrderByCreatedAtAsc(issue.getId());
         Set<UUID> userIds = new HashSet<>();
         if (issue.getReportedByUserId() != null) userIds.add(issue.getReportedByUserId());
         if (issue.getTenantId() != null) userIds.add(issue.getTenantId());

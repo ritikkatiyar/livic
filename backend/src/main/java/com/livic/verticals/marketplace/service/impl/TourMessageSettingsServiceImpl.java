@@ -9,7 +9,7 @@ import com.livic.verticals.marketplace.repository.TourMessageSettingsRepository;
 import com.livic.verticals.marketplace.service.interfaces.TourMessageSettingsService;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.notification.domain.NotificationChannel;
-import com.livic.platform.notification.service.MessagingService;
+import com.livic.platform.notification.service.interfaces.MessagingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

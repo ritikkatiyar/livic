@@ -43,6 +43,11 @@ public interface UnitMemberService {
     /** Members by id, active or ended — bills outlive the tenancy that produced them. */
     List<UnitResidentDTO> findResidentsByMemberIds(Collection<UUID> memberIds);
 
+    /** Member ids for these units or people, past and present, for filtering bills. */
+    List<UUID> findMemberIdsByUnitIds(Collection<UUID> unitIds);
+
+    List<UUID> findMemberIdsByUserIds(Collection<UUID> userIds);
+
     /** The active tenant behind a lease, with unit and property. */
     Optional<UnitResidentDTO> findResidentByLeaseId(UUID leaseId);
 

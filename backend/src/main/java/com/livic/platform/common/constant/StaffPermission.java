@@ -25,7 +25,7 @@ public enum StaffPermission {
     CHARGE_CONFIG_MANAGE(Module.FINANCE, "Manage Charge Configuration", "Create and edit charges"),
     BILLING_WORKSHEET_VIEW(Module.FINANCE, "View Billing Worksheets", "View billing worksheets"),
     BILLING_WORKSHEET_MANAGE(Module.FINANCE, "Manage Billing Worksheets", "Save billing worksheets"),
-    RENT_ROLL_VIEW(Module.FINANCE, "View Rent Roll", "View rent cycles and invoices"),
+    RENT_ROLL_VIEW(Module.FINANCE, "View Rent Roll", "View bills and invoices"),
     RENT_ROLL_MANAGE(Module.FINANCE, "Manage Rent Roll", "Generate, publish and record rent payments"),
     LEDGER_VIEW(Module.FINANCE, "View Finance Ledger", "View the property financial ledger"),
 

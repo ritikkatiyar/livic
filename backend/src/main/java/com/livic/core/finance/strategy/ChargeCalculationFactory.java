@@ -1,6 +1,6 @@
 package com.livic.core.finance.strategy;
 
-import com.livic.platform.common.domain.CalculationStrategyType;
+import com.livic.core.finance.domain.CalculationStrategyType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

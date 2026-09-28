@@ -21,7 +21,6 @@ public interface BlockRepository extends JpaRepository<BlockTbl, UUID> {
 
     Optional<BlockTbl> findFirstByPropertyIdAndIsDefaultTrue(UUID propertyId);
 
-    Optional<BlockTbl> findByPropertyIdAndNameIgnoreCase(UUID propertyId, String name);
 
     boolean existsByPropertyIdAndNameIgnoreCase(UUID propertyId, String name);
 

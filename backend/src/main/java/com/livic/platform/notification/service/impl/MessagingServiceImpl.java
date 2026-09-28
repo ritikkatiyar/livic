@@ -6,31 +6,50 @@ import com.livic.platform.notification.domain.NotificationStatus;
 import com.livic.platform.notification.dto.DeliveryReport;
 import com.livic.platform.notification.dto.DeliveryReport.Outcome;
 import com.livic.platform.notification.dto.TemplatedMessage;
-import com.livic.platform.notification.exception.NotificationSendException;
-import com.livic.platform.notification.service.ChannelProvider;
-import com.livic.platform.notification.service.MessagingService;
-import com.livic.platform.notification.service.interfaces.NotificationLogCrudService;
-import lombok.RequiredArgsConstructor;
+import com.livic.platform.notification.repository.NotificationLogRepository;
+import com.livic.platform.notification.service.interfaces.MessagingService;
+import com.livic.platform.notification.service.interfaces.NotificationChannelSender;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Sends templated messages to a phone number over the platform's channel senders.
+ *
+ * <p>The senders are the same ones the user-facing {@code NotificationService} uses; this service exists
+ * because a marketplace prospect has no user account, so there is nothing to look up: the number is the
+ * recipient. It also reports what each channel did, which callers store against the lead.
+ */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MessagingServiceImpl implements MessagingService {
 
     private static final String REDACTED_BODY = "[redacted]";
     /** One retry for transient gateway failures. One-time codes are not retried: the user can ask for a new one. */
     private static final int MAX_ATTEMPTS = 2;
 
-    private final MessagingChannels messagingChannels;
-    private final NotificationLogCrudService notificationLogCrudService;
+    private static final Set<NotificationChannel> MESSAGING_CHANNELS = Collections.unmodifiableSet(
+            EnumSet.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP));
+
+    private final List<NotificationChannelSender> senders;
+    private final NotificationLogRepository notificationLogRepository;
+    private final boolean consoleFallback;
+
+    public MessagingServiceImpl(List<NotificationChannelSender> senders,
+                                NotificationLogRepository notificationLogRepository,
+                                @Value("${app.messaging.console-fallback:false}") boolean consoleFallback) {
+        this.senders = senders;
+        this.notificationLogRepository = notificationLogRepository;
+        this.consoleFallback = consoleFallback;
+    }
 
     @Override
     public DeliveryReport send(String phone, TemplatedMessage message, Set<NotificationChannel> channels) {
@@ -57,7 +76,29 @@ public class MessagingServiceImpl implements MessagingService {
 
     @Override
     public Set<NotificationChannel> availableChannels() {
-        return messagingChannels.available();
+        Set<NotificationChannel> available = EnumSet.noneOf(NotificationChannel.class);
+        for (NotificationChannel channel : MESSAGING_CHANNELS) {
+            senderFor(channel).ifPresent(sender -> available.add(channel));
+        }
+        return Collections.unmodifiableSet(available);
+    }
+
+    /**
+     * The sender for a channel: a configured gateway if one is registered, otherwise the console sender,
+     * but only in development. Without this, production would log a message as sent that nobody received,
+     * because the console sender supports every channel.
+     */
+    private Optional<NotificationChannelSender> senderFor(NotificationChannel channel) {
+        return senders.stream()
+                .filter(sender -> sender.supports(channel) && !isConsole(sender))
+                .findFirst()
+                .or(() -> consoleFallback
+                        ? senders.stream().filter(sender -> sender.supports(channel)).findFirst()
+                        : Optional.empty());
+    }
+
+    private static boolean isConsole(NotificationChannelSender sender) {
+        return sender instanceof ConsoleNotificationSender;
     }
 
     private Optional<String> recipient(String phone, TemplatedMessage message) {
@@ -69,21 +110,22 @@ public class MessagingServiceImpl implements MessagingService {
     }
 
     private Outcome deliver(String msisdn, TemplatedMessage message, NotificationChannel channel) {
-        Optional<ChannelProvider> provider = messagingChannels.providerFor(channel);
-        if (provider.isEmpty()) {
+        Optional<NotificationChannelSender> sender = senderFor(channel);
+        if (sender.isEmpty()) {
             log.warn("message_skipped reason=channel_unavailable channel={} template={} to={}",
                     channel, message.template(), PhoneNumbers.mask(msisdn));
             return Outcome.SKIPPED;
         }
         TemplatedMessage fitted = message.forChannel(channel);
+        String body = fitted.render();
 
         // Recipients may have no user account, so the log keeps a masked number instead of a user id
-        NotificationLogTbl logEntry = notificationLogCrudService.save(NotificationLogTbl.builder()
+        NotificationLogTbl logEntry = notificationLogRepository.save(NotificationLogTbl.builder()
                 .channel(channel)
                 .recipientAddress(PhoneNumbers.mask(msisdn))
                 .template(message.template().name())
                 .title(message.template().name())
-                .body(message.template().sensitive() ? REDACTED_BODY : fitted.render())
+                .body(message.template().sensitive() ? REDACTED_BODY : body)
                 .status(NotificationStatus.PENDING)
                 .build());
 
@@ -91,16 +133,13 @@ public class MessagingServiceImpl implements MessagingService {
         boolean sent = false;
         for (int attempt = 1; attempt <= maxAttempts && !sent; attempt++) {
             try {
-                provider.get().send(msisdn, fitted);
+                sender.get().send(msisdn, message.template().name(), body);
                 sent = true;
-            } catch (NotificationSendException e) {
-                boolean retrying = e.isRetryable() && attempt < maxAttempts;
+            } catch (RuntimeException e) {
+                boolean retrying = attempt < maxAttempts;
                 log.warn("message_failed channel={} template={} to={} attempt={} retrying={} error={}",
                         channel, message.template(), PhoneNumbers.mask(msisdn), attempt, retrying, e.getMessage());
                 logEntry.setErrorMessage(e.getMessage());
-                if (!retrying) {
-                    break;
-                }
             }
         }
 
@@ -108,7 +147,7 @@ public class MessagingServiceImpl implements MessagingService {
         if (sent) {
             logEntry.setErrorMessage(null);
         }
-        notificationLogCrudService.save(logEntry);
+        notificationLogRepository.save(logEntry);
         return sent ? Outcome.SENT : Outcome.FAILED;
     }
 }

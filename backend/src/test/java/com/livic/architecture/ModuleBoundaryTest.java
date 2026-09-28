@@ -5,18 +5,21 @@ import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaField;
+import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import jakarta.persistence.Entity;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
@@ -31,7 +34,8 @@ class ModuleBoundaryTest {
             "platform.subscription",
             "core.property", "core.finance",
             "core.community.announcement", "core.community.analytics", "core.community.issue",
-            "verticals.rental.inventory", "verticals.marketplace"
+            "verticals.rental.inventory", "verticals.rental.lease", "verticals.rental.billing",
+            "verticals.marketplace"
     };
 
     @BeforeAll
@@ -104,6 +108,9 @@ class ModuleBoundaryTest {
     @DisplayName("No module repository should be accessed from outside its own module package")
     void noCrossModuleRepositoryAccess() {
         for (String module : MODULES) {
+            if (module.equals("core.finance")) {
+                continue; // open to verticals only, see financeContractsAreOpenToVerticalsOnly
+            }
             String modulePackage = "com.livic." + module + "..";
             String repositoryPackage = "com.livic." + module + ".repository..";
 
@@ -117,31 +124,30 @@ class ModuleBoundaryTest {
     }
 
     @Test
-    @DisplayName("Finance implementations and repositories must not be accessed from outside finance")
+    @DisplayName("Finance implementations must not be accessed from outside finance")
     void financeInternalsAreClosed() {
         ArchRule rule = noClasses()
                 .that().resideOutsideOfPackage("com.livic.core.finance..")
-                .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.core.finance.service.impl..",
-                        "com.livic.core.finance.repository.."
-                )
-                .because("Implementations and repositories stay private to the module that owns them");
+                .should().dependOnClassesThat().resideInAPackage("com.livic.core.finance.service.impl..")
+                .because("Implementations stay private to the module that owns them");
 
         rule.check(classes);
     }
 
     @Test
-    @DisplayName("Only verticals may build on finance's service contracts and entities")
+    @DisplayName("Only verticals may build on finance's service contracts, entities and repositories")
     void financeContractsAreOpenToVerticalsOnly() {
         ArchRule rule = noClasses()
                 .that().resideOutsideOfPackage("com.livic.core.finance..")
                 .and().resideOutsideOfPackage("com.livic.verticals..")
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "com.livic.core.finance.service.interfaces..",
-                        "com.livic.core.finance.domain.."
+                        "com.livic.core.finance.domain..",
+                        "com.livic.core.finance.repository.."
                 )
-                .because("core is the foundation verticals are built on, so rental may hold a BillTbl and "
-                        + "call BillService directly; everyone else goes through com.livic.core.finance.facade");
+                .because("core is the foundation verticals are built on, so rental may hold a BillTbl, store it "
+                        + "through BillRepository and call BillService directly; everyone else goes through "
+                        + "com.livic.core.finance.facade");
 
         rule.check(classes);
     }
@@ -301,6 +307,75 @@ class ModuleBoundaryTest {
                         "com.livic.verticals.rental.inventory.domain.."
                 )
                 .because("Outside modules must access the inventory module strictly through com.livic.verticals.rental.inventory.facade or DTOs");
+
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("Controllers go through their own module's services")
+    void controllersOnlyTalkToServices() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("com.livic..controller..")
+                .should().dependOnClassesThat().resideInAnyPackage("..repository..", "..mapper..", "..facade..")
+                .orShould().dependOnClassesThat().areAnnotatedWith(Entity.class)
+                .because("a controller handles HTTP and calls its module's service, which returns DTOs; entities, "
+                        + "repositories and mapping stay inside the service's transaction (open-in-view is off), "
+                        + "and facades are how one module's services reach another's");
+
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("Controllers never receive an entity from a service")
+    void controllersReceiveDtosOnly() {
+        // A controller that only holds the entity a service returned leaves no dependency on the
+        // entity class in its bytecode, so the rule above cannot see it; the called method can.
+        ArchRule rule = classes()
+                .that().resideInAPackage("com.livic..controller..")
+                .should(new ArchCondition<>("not call methods that return entities") {
+                    @Override
+                    public void check(JavaClass controller, ConditionEvents events) {
+                        for (JavaMethodCall call : controller.getMethodCallsFromSelf()) {
+                            call.getTarget().resolveMember().ifPresent(method -> {
+                                for (JavaClass type : method.getReturnType().getAllInvolvedRawTypes()) {
+                                    if (type.isAnnotatedWith(Entity.class)) {
+                                        events.add(SimpleConditionEvent.violated(call,
+                                                call.getDescription() + " returns entity " + type.getSimpleName()));
+                                    }
+                                }
+                            });
+                        }
+                    }
+                })
+                .because("mapping to a DTO happens inside the service, while the entity is still attached");
+
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("Service packages hold contracts in interfaces and implementations in impl")
+    void servicePackageLayout() {
+        ArchRule layout = classes()
+                .that().resideInAPackage("com.livic..service..")
+                .should().resideInAnyPackage("com.livic..service.interfaces..", "com.livic..service.impl..")
+                .because("every module lays its services out the same way");
+        ArchRule contracts = classes()
+                .that().resideInAPackage("com.livic..service.interfaces..")
+                .and().areTopLevelClasses()
+                .should().beInterfaces();
+
+        layout.check(classes);
+        contracts.check(classes);
+    }
+
+    @Test
+    @DisplayName("facade.impl holds facade implementations only")
+    void facadeImplPackageHoldsFacades() {
+        ArchRule rule = classes()
+                .that().resideInAPackage("com.livic..facade.impl..")
+                .and().areTopLevelClasses()
+                .should().haveSimpleNameEndingWith("FacadeImpl")
+                .because("an SPI implementation lives in the implementing module's spi package");
 
         rule.check(classes);
     }

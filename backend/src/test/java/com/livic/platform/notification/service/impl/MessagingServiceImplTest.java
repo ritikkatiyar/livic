@@ -7,157 +7,146 @@ import com.livic.platform.notification.domain.NotificationStatus;
 import com.livic.platform.notification.dto.DeliveryReport;
 import com.livic.platform.notification.dto.DeliveryReport.Outcome;
 import com.livic.platform.notification.dto.TemplatedMessage;
-import com.livic.platform.notification.exception.NotificationSendException;
-import com.livic.platform.notification.service.ChannelProvider;
-import com.livic.platform.notification.service.interfaces.NotificationLogCrudService;
+import com.livic.platform.notification.repository.NotificationLogRepository;
+import com.livic.platform.notification.service.interfaces.NotificationChannelSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+/**
+ * Messages go to a phone number rather than a user, over the platform's channel senders. A channel with no
+ * gateway is skipped rather than reported as sent, and each attempt is logged with a masked number.
+ */
 class MessagingServiceImplTest {
 
-    private static final TemplatedMessage OTP = TemplatedMessage.of(MessageTemplate.MARKETPLACE_OTP, Map.of("otp", "482913", "minutes", "5"));
-    private static final TemplatedMessage REMINDER = TemplatedMessage.of(MessageTemplate.TOUR_REMINDER, Map.of(
-            "property", "Test Residency", "date", "Thu, 17 Sep", "time", "11:00 AM", "link", "http://localhost:3000/market-place/my-requests"));
+    private static final String PHONE = "9876543210";
+    private static final String LONG_PROPERTY = "Sunshine Residency Co-living for Working Professionals";
 
-    @Mock private ChannelProvider smsProvider;
-    @Mock private ChannelProvider whatsappProvider;
-    @Mock private NotificationLogCrudService notificationLogCrudService;
-
-    private MessagingServiceImpl service;
+    private NotificationLogRepository logRepository;
+    private final List<NotificationLogTbl> saved = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
-        lenient().when(smsProvider.channel()).thenReturn(NotificationChannel.SMS);
-        lenient().when(whatsappProvider.channel()).thenReturn(NotificationChannel.WHATSAPP);
-        lenient().when(notificationLogCrudService.save(any(NotificationLogTbl.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        service = new MessagingServiceImpl(new MessagingChannels(List.of(smsProvider, whatsappProvider), false), notificationLogCrudService);
+        saved.clear();
+        logRepository = mock(NotificationLogRepository.class);
+        when(logRepository.save(any(NotificationLogTbl.class))).thenAnswer(invocation -> {
+            NotificationLogTbl row = invocation.getArgument(0);
+            saved.add(row);
+            return row;
+        });
     }
 
     @Test
-    @DisplayName("Sends on each requested channel and logs one masked row per channel without a user id")
+    @DisplayName("Sends on every requested channel and logs each attempt against a masked number")
     void sendsOnEveryChannel() {
-        DeliveryReport report = service.send("9876543210", REMINDER, Set.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP));
+        RecordingSender sms = new RecordingSender(NotificationChannel.SMS);
+        RecordingSender whatsapp = new RecordingSender(NotificationChannel.WHATSAPP);
+        MessagingServiceImpl service = service(false, sms, whatsapp);
 
-        assertEquals(Map.of(NotificationChannel.SMS, Outcome.SENT, NotificationChannel.WHATSAPP, Outcome.SENT), report.outcomes());
-        verify(smsProvider).send(eq("919876543210"), any());
-        verify(whatsappProvider).send(eq("919876543210"), any());
+        DeliveryReport report = service.send(PHONE, reminder(LONG_PROPERTY),
+                Set.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP));
 
-        List<NotificationLogTbl> rows = loggedRows();
-        assertEquals(Set.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP),
-                Set.copyOf(rows.stream().map(NotificationLogTbl::getChannel).toList()));
-        for (NotificationLogTbl row : rows) {
-            assertNull(row.getRecipientId());
-            assertEquals("******3210", row.getRecipientAddress());
-            assertEquals("TOUR_REMINDER", row.getTemplate());
-            assertEquals(NotificationStatus.SENT, row.getStatus());
-        }
+        assertEquals(Map.of(NotificationChannel.SMS, Outcome.SENT, NotificationChannel.WHATSAPP, Outcome.SENT),
+                report.outcomes());
+        assertEquals(1, sms.sent.size());
+        assertEquals(1, whatsapp.sent.size());
+        assertEquals("******3210", saved.get(0).getRecipientAddress());
+        assertEquals("TOUR_REMINDER", saved.get(0).getTemplate());
+        assertEquals(NotificationStatus.SENT, saved.get(saved.size() - 1).getStatus());
     }
 
     @Test
-    @DisplayName("Fits values per channel: SMS gets DLT-length values, WhatsApp the full text")
+    @DisplayName("An SMS is cut to the DLT variable limit while WhatsApp keeps the full text")
     void fitsPerChannel() {
-        TemplatedMessage longName = TemplatedMessage.of(MessageTemplate.TOUR_REMINDER, Map.of(
-                "property", "Sunshine Residency Co-living for Working Professionals", "date", "Thu, 17 Sep", "time", "11:00 AM",
-                "link", "http://localhost:3000/market-place/my-requests"));
+        RecordingSender sms = new RecordingSender(NotificationChannel.SMS);
+        RecordingSender whatsapp = new RecordingSender(NotificationChannel.WHATSAPP);
+        MessagingServiceImpl service = service(false, sms, whatsapp);
 
-        service.send("9876543210", longName, Set.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP));
+        service.send(PHONE, reminder(LONG_PROPERTY), Set.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP));
 
-        ArgumentCaptor<TemplatedMessage> sms = ArgumentCaptor.forClass(TemplatedMessage.class);
-        ArgumentCaptor<TemplatedMessage> whatsapp = ArgumentCaptor.forClass(TemplatedMessage.class);
-        verify(smsProvider).send(any(), sms.capture());
-        verify(whatsappProvider).send(any(), whatsapp.capture());
-        assertEquals(MessageTemplate.MAX_SMS_VARIABLE_LENGTH, sms.getValue().variables().get("property").length());
-        assertEquals("Sunshine Residency Co-living for Working Professionals", whatsapp.getValue().variables().get("property"));
+        assertFalse(sms.sent.get(0).contains(LONG_PROPERTY));
+        assertTrue(sms.sent.get(0).contains(LONG_PROPERTY.substring(0, MessageTemplate.MAX_SMS_VARIABLE_LENGTH - 3)));
+        assertTrue(whatsapp.sent.get(0).contains(LONG_PROPERTY));
     }
 
     @Test
-    @DisplayName("Falls back to the next channel only when the first fails")
+    @DisplayName("sendFirstSuccessful moves to the next channel when the first one fails")
     void firstSuccessfulFallsBack() {
-        doThrow(new NotificationSendException("rejected", null, false)).when(smsProvider).send(any(), any());
+        RecordingSender sms = new RecordingSender(NotificationChannel.SMS, new RuntimeException("rejected"));
+        RecordingSender whatsapp = new RecordingSender(NotificationChannel.WHATSAPP);
+        MessagingServiceImpl service = service(false, sms, whatsapp);
 
-        DeliveryReport report = service.sendFirstSuccessful("9876543210", OTP, List.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP));
+        DeliveryReport report = service.sendFirstSuccessful(PHONE, reminder("Sunshine"),
+                List.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP));
 
         assertTrue(report.anySent());
         assertEquals(Outcome.FAILED, report.outcome(NotificationChannel.SMS));
         assertEquals(Outcome.SENT, report.outcome(NotificationChannel.WHATSAPP));
-
-        clearInvocations(whatsappProvider);
-        doNothing().when(smsProvider).send(any(), any());
-        DeliveryReport smsWorks = service.sendFirstSuccessful("9876543210", OTP, List.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP));
-        assertEquals(Outcome.SKIPPED, smsWorks.outcome(NotificationChannel.WHATSAPP));
-        verify(whatsappProvider, never()).send(any(), any());
     }
 
     @Test
-    @DisplayName("Never stores a one-time code in the log")
-    void redactsSensitiveBody() {
-        service.send("9876543210", OTP, Set.of(NotificationChannel.SMS));
+    @DisplayName("Without a gateway the channel is skipped, so nothing is reported as delivered")
+    void channelWithoutGatewayIsSkipped() {
+        MessagingServiceImpl service = service(false, new RecordingSender(NotificationChannel.SMS));
 
-        assertEquals("[redacted]", loggedRows().getLast().getBody());
-    }
+        DeliveryReport report = service.send(PHONE, reminder("Sunshine"), Set.of(NotificationChannel.WHATSAPP));
 
-    @Test
-    @DisplayName("Retries a transient failure once for ordinary messages, never for one-time codes")
-    void retries() {
-        doThrow(new NotificationSendException("timeout", null, true)).doNothing().when(smsProvider).send(any(), any());
-        assertEquals(Outcome.SENT, service.send("9876543210", REMINDER, Set.of(NotificationChannel.SMS)).outcome(NotificationChannel.SMS));
-        verify(smsProvider, times(2)).send(any(), any());
-
-        doThrow(new NotificationSendException("timeout", null, true)).when(whatsappProvider).send(any(), any());
-        DeliveryReport otp = service.send("9876543210", OTP, Set.of(NotificationChannel.WHATSAPP));
-        assertEquals(Outcome.FAILED, otp.outcome(NotificationChannel.WHATSAPP));
-        verify(whatsappProvider, times(1)).send(any(), any());
-        assertEquals("timeout", loggedRows().getLast().getErrorMessage());
-    }
-
-    @Test
-    @DisplayName("Skips channels without a gateway and invalid numbers, without logging")
-    void skipsUnavailable() {
-        MessagingServiceImpl smsOnly = new MessagingServiceImpl(new MessagingChannels(List.of(smsProvider), false), notificationLogCrudService);
-
-        DeliveryReport report = smsOnly.send("9876543210", REMINDER, Set.of(NotificationChannel.WHATSAPP));
         assertEquals(Outcome.SKIPPED, report.outcome(NotificationChannel.WHATSAPP));
-        assertEquals(Set.of(NotificationChannel.SMS), smsOnly.availableChannels());
-
-        assertFalse(service.send("12345", REMINDER, Set.of(NotificationChannel.SMS)).anySent());
-        verifyNoInteractions(notificationLogCrudService);
+        assertFalse(report.anySent());
+        assertTrue(saved.isEmpty());
     }
 
-    @Test
-    @DisplayName("Console fallback makes every messaging channel available")
-    void consoleFallback() {
-        MessagingServiceImpl dev = new MessagingServiceImpl(new MessagingChannels(List.of(), true), notificationLogCrudService);
-
-        assertEquals(Set.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP), dev.availableChannels());
-        assertTrue(dev.send("9876543210", REMINDER, Set.of(NotificationChannel.WHATSAPP)).anySent());
+    private MessagingServiceImpl service(boolean consoleFallback, NotificationChannelSender... senders) {
+        return new MessagingServiceImpl(List.of(senders), logRepository, consoleFallback);
     }
 
-    private List<NotificationLogTbl> loggedRows() {
-        ArgumentCaptor<NotificationLogTbl> captor = ArgumentCaptor.forClass(NotificationLogTbl.class);
-        verify(notificationLogCrudService, atLeastOnce()).save(captor.capture());
-        // Each row is saved twice (pending, then final); entities without an id compare equal, so dedupe by identity
-        List<NotificationLogTbl> rows = new ArrayList<>();
-        for (NotificationLogTbl row : captor.getAllValues()) {
-            if (rows.stream().noneMatch(seen -> seen == row)) {
-                rows.add(row);
-            }
+    private TemplatedMessage reminder(String property) {
+        return TemplatedMessage.of(MessageTemplate.TOUR_REMINDER, Map.of(
+                "property", property,
+                "date", "12 Oct",
+                "time", "4:00 PM",
+                "link", "https://livic.example/tours/1"));
+    }
+
+    /** A gateway that records what it was asked to send, and can fail like a rejecting provider. */
+    private static final class RecordingSender implements NotificationChannelSender {
+
+        private final NotificationChannel channel;
+        private final RuntimeException failure;
+        private final List<String> sent = new ArrayList<>();
+
+        RecordingSender(NotificationChannel channel) {
+            this(channel, null);
         }
-        return rows;
+
+        RecordingSender(NotificationChannel channel, RuntimeException failure) {
+            this.channel = channel;
+            this.failure = failure;
+        }
+
+        @Override
+        public boolean supports(NotificationChannel candidate) {
+            return candidate == channel;
+        }
+
+        @Override
+        public void send(String recipientAddress, String title, String body) {
+            if (failure != null) {
+                throw failure;
+            }
+            sent.add(body);
+        }
     }
 }

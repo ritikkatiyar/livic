@@ -3,12 +3,9 @@ package com.livic.core.property.controller;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.core.property.dto.PropertyDTOs;
 import com.livic.core.property.dto.UnitDTOs;
-import com.livic.core.property.domain.UnitTbl;
-import com.livic.core.property.service.interfaces.UnitService;
 import com.livic.core.property.service.interfaces.UnitQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,14 +13,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-import com.livic.core.property.service.impl.UnitLayoutOrchestrationService;
+import com.livic.core.property.service.interfaces.UnitLayoutOrchestrationService;
 
 @RestController
 @RequestMapping("/api/v1/properties/{propertyId}")
 @RequiredArgsConstructor
 public class UnitController {
 
-    private final UnitService unitService;
     private final UnitQueryService unitQueryService;
     private final UnitLayoutOrchestrationService unitLayoutOrchestrationService;
 
@@ -72,8 +68,7 @@ public class UnitController {
     public ResponseEntity<ApiResponse<List<UnitDTOs.UnitResponse>>> generateBatchUnits(
             @PathVariable UUID propertyId,
             @Valid @RequestBody PropertyDTOs.BatchUnitRequest request) {
-        List<UnitTbl> units = unitService.generateBatchUnits(propertyId, request);
-        return ResponseEntity.ok(ApiResponse.success(unitLayoutOrchestrationService.getFloorLayout(propertyId, request.blockId(), request.startingFloorNumber())));
+        return ResponseEntity.ok(ApiResponse.success(unitLayoutOrchestrationService.generateBatchUnits(propertyId, request)));
     }
 
     @GetMapping("/units/vacating")

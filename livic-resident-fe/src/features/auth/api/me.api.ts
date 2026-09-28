@@ -7,23 +7,25 @@ export interface MembershipSummary {
   accessType?: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
 }
 
-export interface ActiveLeaseSummary {
-  leaseId: string;
-  propertyId: string;
-  propertyName: string;
+/** A unit this person belongs to, as owner, tenant or family member. */
+export interface UnitMembershipSummary {
+  memberId: string;
   unitId: string;
   unitNumber: string;
-  rentAmount: number;
-  status: string;
+  floor: number | null;
+  propertyId: string;
+  propertyName: string | null;
+  role: 'OWNER' | 'TENANT' | 'FAMILY';
+  leaseId: string | null;
 }
 
 export interface MyContextResponse {
   globalRole: string;
   managedProperties: MembershipSummary[];
   tenantProperties: MembershipSummary[];
-  activeLeases: ActiveLeaseSummary[];
   isLandlord: boolean;
   isTenant: boolean;
+  unitMemberships: UnitMembershipSummary[];
 }
 
 export function getMyContext(token: string): Promise<MyContextResponse> {

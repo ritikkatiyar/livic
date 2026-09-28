@@ -16,6 +16,4 @@ public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPl
 
     List<SubscriptionPlanTbl> findByIsActiveTrue();
 
-    @Query("SELECT p FROM SubscriptionPlanTbl p WHERE p.isActive = true ORDER BY p.priceMonthly ASC")
-    List<SubscriptionPlanTbl> findAllActivePlans();
 }

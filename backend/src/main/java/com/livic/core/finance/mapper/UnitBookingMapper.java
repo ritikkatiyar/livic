@@ -1,6 +1,6 @@
 package com.livic.core.finance.mapper;
 
-import com.livic.platform.common.domain.UnitBookingStatus;
+import com.livic.core.finance.domain.UnitBookingStatus;
 import com.livic.core.finance.domain.UnitBookingTbl;
 import com.livic.core.finance.dto.UnitBookingDTOs.CreateBookingRequest;
 import com.livic.core.finance.dto.UnitBookingDTOs.PaidBookingRequest;

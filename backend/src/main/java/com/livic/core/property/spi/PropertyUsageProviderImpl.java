@@ -5,6 +5,7 @@ import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.platform.subscription.spi.PropertyUsageProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +24,7 @@ public class PropertyUsageProviderImpl implements PropertyUsageProvider {
 
     @Override
     public long countPropertiesForUser(UUID userId) {
-        return propertyFacade.getPropertiesByUserId(userId, Pageable.unpaged()).getTotalElements();
+        return propertyFacade.getPropertiesByUserId(userId, PageRequest.of(0, 1)).getTotalElements();
     }
 
     @Override

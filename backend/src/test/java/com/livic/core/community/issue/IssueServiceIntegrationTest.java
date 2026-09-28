@@ -1,10 +1,10 @@
 package com.livic.core.community.issue;
 
+import com.livic.core.community.issue.repository.IssueRepository;
 import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.subscription.SubscriptionTestSupport;
 import com.livic.platform.subscription.repository.SaasSubscriptionRepository;
 import com.livic.platform.subscription.repository.SubscriptionPlanRepository;
-import com.livic.platform.common.exception.BusinessException;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import com.livic.core.community.issue.domain.IssueCategory;
@@ -13,11 +13,10 @@ import com.livic.core.community.issue.domain.IssuePriority;
 import com.livic.core.community.issue.domain.IssueScope;
 import com.livic.core.community.issue.domain.IssueStatus;
 import com.livic.core.community.issue.domain.IssueTbl;
-import com.livic.core.community.issue.dto.IssueDTOs.CreateCommentRequest;
 import com.livic.core.community.issue.dto.IssueDTOs.CreateIssueRequest;
 import com.livic.core.community.issue.dto.IssueDTOs.IssueResponse;
+import com.livic.core.community.issue.dto.IssueDTOs.IssueTimelineResponse;
 import com.livic.core.community.issue.dto.IssueDTOs.UpdateStatusRequest;
-import com.livic.core.community.issue.service.interfaces.IssueCrudService;
 import com.livic.core.community.issue.service.interfaces.IssueService;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
@@ -29,14 +28,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -58,7 +60,7 @@ public class IssueServiceIntegrationTest {
     private com.livic.core.property.service.interfaces.BlockService blockService;
 
     @Autowired
-    private IssueCrudService issueCrudService;
+    private IssueRepository issueRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -138,7 +140,7 @@ public class IssueServiceIntegrationTest {
                 .capacity(2)
                 .gridX(0)
                 .gridY(0)
-                .type(com.livic.platform.common.domain.UnitType.ONE_BHK)
+                .type(com.livic.core.property.domain.UnitType.ONE_BHK)
                 .build();
         unitRepository.save(unit);
 
@@ -149,8 +151,8 @@ public class IssueServiceIntegrationTest {
                 .moveOutDate(LocalDate.now().plusMonths(11))
                 .monthlyRentAmount(BigDecimal.valueOf(15000))
                 .securityDeposit(BigDecimal.valueOf(30000))
-                .status(com.livic.platform.common.domain.LeaseStatus.ACTIVE)
-                .splitStrategy(com.livic.platform.common.domain.LeaseSplitStrategy.FULL_UNIT)
+                .status(com.livic.verticals.rental.lease.domain.LeaseStatus.ACTIVE)
+                .splitStrategy(com.livic.verticals.rental.lease.domain.LeaseSplitStrategy.FULL_UNIT)
                 .build();
         leaseRepository.save(lease);
         // The lease is saved directly here, so add the unit member the lease service would create.
@@ -257,9 +259,9 @@ public class IssueServiceIntegrationTest {
         assertEquals(IssueEscalationStatus.NONE, response.escalationStatus());
 
         // Manually adjust the creation date to 50 hours ago to simulate SLA breach
-        IssueTbl issue = issueCrudService.findById(response.id()).orElseThrow();
+        IssueTbl issue = issueRepository.findById(response.id()).orElseThrow();
         issue.setCreatedAt(LocalDateTime.now().minusHours(50));
-        issueCrudService.save(issue);
+        issueRepository.save(issue);
 
         // Execute daily cron SLA evaluation job
         issueService.runDailyEscalationJob();
@@ -269,6 +271,34 @@ public class IssueServiceIntegrationTest {
         assertEquals(IssueEscalationStatus.ESCALATED, updated.escalationStatus());
         assertEquals(1, updated.escalationLevel());
         assertTrue(updated.timeline().size() > 0);
+    }
+
+    @Test
+    public void listingGivesEachIssueItsOwnTimeline() {
+        // The list used to query each issue's timeline and names separately; it now loads the
+        // page's timelines in one query and groups them, so each issue must still get only its own.
+        IssueResponse faucet = issueService.createIssue(unitIssue("Faucet leaking"), tenant.getId());
+        IssueResponse door = issueService.createIssue(unitIssue("Door jammed"), tenant.getId());
+        issueService.addComment(faucet.id(), "faucet-1", landlord.getId());
+        issueService.addComment(door.id(), "door-1", caretaker.getId());
+        issueService.addComment(faucet.id(), "faucet-2", landlord.getId());
+
+        Map<UUID, IssueResponse> listed = issueService.listIssues(landlord.getId(), null, PageRequest.of(0, 20))
+                .getContent().stream()
+                .collect(Collectors.toMap(IssueResponse::id, Function.identity()));
+
+        assertEquals(Set.of("faucet-1", "faucet-2"), contents(listed.get(faucet.id())));
+        assertEquals(Set.of("door-1"), contents(listed.get(door.id())));
+        assertEquals("Caretaker User", listed.get(door.id()).timeline().get(0).authorName());
+    }
+
+    private CreateIssueRequest unitIssue(String title) {
+        return new CreateIssueRequest(property.getId(), unit.getId(), lease.getId(), tenant.getId(),
+                title, title, IssueCategory.MAINTENANCE, IssuePriority.LOW, IssueScope.UNIT, "Tenant User", null);
+    }
+
+    private static Set<String> contents(IssueResponse issue) {
+        return issue.timeline().stream().map(IssueTimelineResponse::content).collect(Collectors.toSet());
     }
 
     @Test

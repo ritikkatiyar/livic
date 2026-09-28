@@ -3,7 +3,7 @@ package com.livic.platform.notification;
 import com.livic.platform.notification.domain.NotificationChannel;
 import com.livic.platform.notification.domain.NotificationLogTbl;
 import com.livic.platform.notification.repository.NotificationLogRepository;
-import com.livic.platform.notification.service.NotificationService;
+import com.livic.platform.notification.service.interfaces.NotificationService;
 import com.livic.platform.user.domain.DevicePlatform;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.user.facade.UserFacade;

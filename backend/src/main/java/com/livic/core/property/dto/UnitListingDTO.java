@@ -2,8 +2,8 @@ package com.livic.core.property.dto;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.livic.platform.common.domain.FacingDirection;
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.property.domain.FacingDirection;
+import com.livic.core.property.domain.UnitType;
 import com.livic.core.property.domain.UnitTbl;
 import lombok.extern.slf4j.Slf4j;
 

@@ -1,13 +1,13 @@
 package com.livic.verticals.marketplace;
 
-import com.livic.platform.common.domain.FacingDirection;
-import com.livic.platform.common.domain.UnitType;
+import com.livic.core.property.domain.FacingDirection;
+import com.livic.core.property.domain.UnitType;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.verticals.marketplace.dto.MarketplacePropertyDTOs;
 import com.livic.verticals.marketplace.dto.MarketplaceUnitDTOs;
 import com.livic.verticals.marketplace.service.interfaces.MarketplaceSearchService;
 import com.livic.core.property.domain.PropertyTbl;
-import com.livic.platform.common.domain.PropertyType;
+import com.livic.core.property.domain.PropertyType;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.repository.PropertyRepository;
 import com.livic.core.property.repository.UnitRepository;

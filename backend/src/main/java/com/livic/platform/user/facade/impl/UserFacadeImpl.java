@@ -1,18 +1,17 @@
 package com.livic.platform.user.facade.impl;
 
+import com.livic.platform.user.repository.UserPreferenceRepository;
+import com.livic.platform.user.repository.UserDeviceTokenRepository;
+import com.livic.platform.user.repository.UserRepository;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.user.domain.DevicePlatform;
-import com.livic.platform.user.domain.ResidentNotificationPreferenceTbl;
 import com.livic.platform.user.domain.UserDeviceTokenTbl;
 import com.livic.platform.user.domain.UserMode;
 import com.livic.platform.user.domain.UserPreferenceTbl;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
-import com.livic.platform.user.repository.ResidentNotificationPreferenceRepository;
-import com.livic.platform.user.service.interfaces.UserCrudService;
-import com.livic.platform.user.service.interfaces.UserDeviceTokenCrudService;
-import com.livic.platform.user.service.interfaces.UserPreferenceCrudService;
+import com.livic.platform.user.service.interfaces.UserPreferenceService;
 import com.livic.platform.user.service.interfaces.UserQueryService;
 import com.livic.platform.user.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -37,17 +35,17 @@ import java.util.stream.Collectors;
 public class UserFacadeImpl implements UserFacade {
 
     private final UserQueryService userQueryService;
-    private final UserCrudService userCrudService;
+    private final UserRepository userRepository;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
-    private final UserPreferenceCrudService userPreferenceCrudService;
-    private final UserDeviceTokenCrudService userDeviceTokenCrudService;
-    private final ResidentNotificationPreferenceRepository residentNotificationPreferenceRepository;
+    private final UserPreferenceRepository userPreferenceRepository;
+    private final UserDeviceTokenRepository userDeviceTokenRepository;
+    private final UserPreferenceService userPreferenceService;
 
     @Override
     public Optional<UserSummaryDTO> getUserById(UUID userId) {
-        return userCrudService.findById(userId)
+        return userRepository.findById(userId)
                 .map(UserSummaryDTO::from);
     }
 
@@ -89,7 +87,7 @@ public class UserFacadeImpl implements UserFacade {
 
     @Override
     public boolean existsById(UUID userId) {
-        return userCrudService.existsById(userId);
+        return userRepository.existsById(userId);
     }
 
     @Override
@@ -113,38 +111,38 @@ public class UserFacadeImpl implements UserFacade {
     @Override
     @Transactional
     public UserSummaryDTO updateUnverifiedUser(UUID userId, String fullName, String phoneNumber, String password) {
-        UserTbl user = userCrudService.findById(userId)
+        UserTbl user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         user.setFullName(fullName != null ? fullName.trim() : "");
         user.setPhoneNumber(normalizePhone(phoneNumber));
         user.setPasswordHash(passwordEncoder.encode(password));
-        return UserSummaryDTO.from(userCrudService.save(user));
+        return UserSummaryDTO.from(userRepository.save(user));
     }
 
     @Override
     public boolean isEmailVerified(UUID userId) {
-        return userCrudService.findById(userId).map(UserTbl::isEmailVerified).orElse(false);
+        return userRepository.findById(userId).map(UserTbl::isEmailVerified).orElse(false);
     }
 
     @Override
     @Transactional
     public void markEmailVerified(UUID userId) {
-        userCrudService.findById(userId)
+        userRepository.findById(userId)
                 .filter(user -> !user.isEmailVerified())
                 .ifPresent(user -> {
                     user.setEmailVerified(true);
-                    userCrudService.save(user);
+                    userRepository.save(user);
                 });
     }
 
     @Override
     @Transactional
     public void clearPassword(UUID userId) {
-        userCrudService.findById(userId)
+        userRepository.findById(userId)
                 .filter(user -> user.getPasswordHash() != null)
                 .ifPresent(user -> {
                     user.setPasswordHash(null);
-                    userCrudService.save(user);
+                    userRepository.save(user);
                 });
     }
 
@@ -166,7 +164,7 @@ public class UserFacadeImpl implements UserFacade {
 
     @Override
     public UserMode getActiveModeForUser(UUID userId) {
-        return userPreferenceCrudService.findByUserId(userId)
+        return userPreferenceRepository.findByUserId(userId)
                 .map(UserPreferenceTbl::getActiveMode)
                 .orElse(UserMode.RENTAL);
     }
@@ -174,21 +172,21 @@ public class UserFacadeImpl implements UserFacade {
     @Override
     @Transactional
     public void markOnboardingDone(UUID userId, UserMode defaultMode) {
-        Optional<UserPreferenceTbl> existingOpt = userPreferenceCrudService.findByUserId(userId);
+        Optional<UserPreferenceTbl> existingOpt = userPreferenceRepository.findByUserId(userId);
         if (existingOpt.isPresent()) {
             UserPreferenceTbl preference = existingOpt.get();
             preference.setOnboardingDone(true);
             if (preference.getActiveMode() == null && defaultMode != null) {
                 preference.setActiveMode(defaultMode);
             }
-            userPreferenceCrudService.save(preference);
+            userPreferenceRepository.save(preference);
         } else {
             UserPreferenceTbl preference = UserPreferenceTbl.builder()
                     .userId(userId)
                     .activeMode(defaultMode != null ? defaultMode : UserMode.RENTAL)
                     .onboardingDone(true)
                     .build();
-            userPreferenceCrudService.save(preference);
+            userPreferenceRepository.save(preference);
         }
         log.info("onboarding_marked_done userId={} mode={}", userId, defaultMode);
     }
@@ -196,63 +194,26 @@ public class UserFacadeImpl implements UserFacade {
     @Override
     @Transactional
     public void registerDeviceToken(UUID userId, String expoPushToken, DevicePlatform platform) {
-        Optional<UserDeviceTokenTbl> existingOpt = userDeviceTokenCrudService.findByExpoPushToken(expoPushToken);
-        if (existingOpt.isPresent()) {
-            UserDeviceTokenTbl token = existingOpt.get();
-            token.setUserId(userId);
-            token.setPlatform(platform);
-            token.setLastSeenAt(LocalDateTime.now());
-            userDeviceTokenCrudService.save(token);
-        } else {
-            UserDeviceTokenTbl token = UserDeviceTokenTbl.builder()
-                    .userId(userId)
-                    .expoPushToken(expoPushToken)
-                    .platform(platform)
-                    .registeredAt(LocalDateTime.now())
-                    .lastSeenAt(LocalDateTime.now())
-                    .build();
-            userDeviceTokenCrudService.save(token);
-        }
+        userService.registerDeviceToken(userId, expoPushToken, platform);
     }
 
     @Override
     public List<String> getActiveDeviceTokens(UUID userId) {
-        return userDeviceTokenCrudService.findByUserId(userId).stream()
+        return userDeviceTokenRepository.findByUserId(userId).stream()
                 .map(UserDeviceTokenTbl::getExpoPushToken)
                 .toList();
     }
 
     @Override
     public com.livic.platform.user.dto.UserNotificationPreferencesDTO getNotificationPreferences(UUID userId) {
-        return residentNotificationPreferenceRepository.findByUserId(userId)
-                .map(pref -> new com.livic.platform.user.dto.UserNotificationPreferencesDTO(
-                        pref.isEmailEnabled(),
-                        pref.isPushEnabled(),
-                        pref.isWhatsappEnabled()
-                ))
-                .orElse(new com.livic.platform.user.dto.UserNotificationPreferencesDTO(true, true, true));
-    }
-
-    @Override
-    @Transactional
-    public com.livic.platform.user.dto.UserNotificationPreferencesDTO updateNotificationPreferences(UUID userId, com.livic.platform.user.dto.UserNotificationPreferencesDTO dto) {
-        ResidentNotificationPreferenceTbl pref = residentNotificationPreferenceRepository.findByUserId(userId)
-                .orElseGet(() -> ResidentNotificationPreferenceTbl.builder()
-                        .userId(userId)
-                        .build());
-        pref.setEmailEnabled(dto.emailEnabled());
-        pref.setPushEnabled(dto.pushEnabled());
-        pref.setWhatsappEnabled(dto.whatsappEnabled());
-        ResidentNotificationPreferenceTbl saved = residentNotificationPreferenceRepository.save(pref);
-        return new com.livic.platform.user.dto.UserNotificationPreferencesDTO(
-                saved.isEmailEnabled(),
-                saved.isPushEnabled(),
-                saved.isWhatsappEnabled()
-        );
+        return userPreferenceService.getNotificationPreferences(userId);
     }
 
     @Override
     public List<UUID> getUserIdsBySearch(String searchPattern) {
-        return userCrudService.findIdsByFullNameOrPhonePattern(searchPattern);
+        if (searchPattern == null || searchPattern.isBlank()) {
+            return List.of();
+        }
+        return userRepository.findIdsByFullNameOrPhonePattern(searchPattern.trim());
     }
 }

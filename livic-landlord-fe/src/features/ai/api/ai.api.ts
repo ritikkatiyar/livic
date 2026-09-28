@@ -16,15 +16,8 @@ export type AICommandRequest = {
 
 export type AICommandResponse = {
   message: string;
-  jobId?: string;
-  status?: string;
-};
-
-export type AIJobStatusResponse = {
-  jobId: string;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
-  response?: string;
-  errorMessage?: string;
+  executionId?: string;
+  status?: 'COMPLETED' | 'FAILED';
 };
 
 export function runAICommand(payload: AICommandRequest, token: string): Promise<AICommandResponse> {
@@ -32,15 +25,7 @@ export function runAICommand(payload: AICommandRequest, token: string): Promise<
     method: 'POST',
     token,
     useAiApi: true,
-    timeout: 30000, // Reduced from 60s since queuing is <50ms
+    timeout: 60000, // the assistant may make several model and backend calls before it answers
     body: JSON.stringify(payload),
-  });
-}
-
-export function getJobStatus(jobId: string, token: string): Promise<AIJobStatusResponse> {
-  return apiRequest<AIJobStatusResponse>(`/api/v1/ai/jobs/${jobId}`, {
-    method: 'GET',
-    token,
-    useAiApi: true,
   });
 }

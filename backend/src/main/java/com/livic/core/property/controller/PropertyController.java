@@ -4,8 +4,6 @@ import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.common.subscription.EnforceSubscription;
 import com.livic.platform.common.subscription.FeatureKey;
 import com.livic.platform.common.response.ApiResponse;
-import com.livic.core.property.domain.PropertyTbl;
-import com.livic.core.property.mapper.PropertyMapper;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
 import com.livic.core.property.service.interfaces.PropertyService;
 import jakarta.validation.Valid;
@@ -38,7 +36,6 @@ import static com.livic.core.property.dto.PropertyDTOs.UpdatePropertyRequest;
 @RequiredArgsConstructor
 public class PropertyController {
     private final PropertyService propertyService;
-    private final com.livic.core.property.service.interfaces.BlockService blockService;
     private final PropertyQueryService propertyQueryService;
 
     @PostMapping
@@ -48,8 +45,8 @@ public class PropertyController {
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @Valid @RequestBody CreatePropertyRequest request) {
         UUID creatorId = UUID.fromString(currentUser.getId());
-        PropertyTbl createdProperty = propertyService.createProperty(request, creatorId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(PropertyMapper.toResponse(createdProperty, blockService.totalFloorsForProperty(createdProperty.getId()))));
+        PropertyResponse createdProperty = propertyService.createProperty(request, creatorId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(createdProperty));
     }
 
     @PutMapping("/{propertyId}")
@@ -57,16 +54,14 @@ public class PropertyController {
     public ResponseEntity<ApiResponse<PropertyResponse>> updateProperty(
             @PathVariable UUID propertyId,
             @Valid @RequestBody UpdatePropertyRequest request) {
-        PropertyTbl updatedProperty = propertyService.updateProperty(propertyId, request);
-        return ResponseEntity.ok(ApiResponse.success(PropertyMapper.toResponse(updatedProperty, blockService.totalFloorsForProperty(updatedProperty.getId()))));
+        return ResponseEntity.ok(ApiResponse.success(propertyService.updateProperty(propertyId, request)));
     }
 
     @GetMapping("/{propertyId}")
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW_OWN_LEASE') or hasAnyRole('TENANT', 'LANDLORD', 'ADMIN', 'SUPERADMIN')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW_OWN_LEASE')")
     public ResponseEntity<ApiResponse<PropertyResponse>> getProperty(
             @PathVariable UUID propertyId) {
-        PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
-        return ResponseEntity.ok(ApiResponse.success(PropertyMapper.toResponse(property, blockService.totalFloorsForProperty(property.getId()))));
+        return ResponseEntity.ok(ApiResponse.success(propertyQueryService.getProperty(propertyId)));
     }
 
     @GetMapping
@@ -76,9 +71,7 @@ public class PropertyController {
             @RequestParam(required = false) String search,
             @PageableDefault(size = 20) Pageable pageable) {
         UUID userId = UUID.fromString(currentUser.getId());
-        Page<PropertyTbl> properties = propertyQueryService.getPropertiesByUserId(userId, search, pageable);
-        return ResponseEntity.ok(ApiResponse.success(properties.map(
-                p -> PropertyMapper.toResponse(p, blockService.totalFloorsForProperty(p.getId())))));
+        return ResponseEntity.ok(ApiResponse.success(propertyQueryService.getMyProperties(userId, search, pageable)));
     }
 
     @DeleteMapping("/{propertyId}")
@@ -94,7 +87,6 @@ public class PropertyController {
             @PathVariable UUID propertyId,
             @RequestParam boolean active
     ) {
-        PropertyTbl updatedProperty = propertyService.togglePropertyActiveStatus(propertyId, active);
-        return ResponseEntity.ok(ApiResponse.success(PropertyMapper.toResponse(updatedProperty, blockService.totalFloorsForProperty(updatedProperty.getId()))));
+        return ResponseEntity.ok(ApiResponse.success(propertyService.togglePropertyActiveStatus(propertyId, active)));
     }
 }

@@ -1,13 +1,14 @@
 package com.livic.core.finance.service.impl;
 
+import com.livic.core.finance.repository.MeterReadingRepository;
+import com.livic.core.finance.repository.ChargeConfigRepository;
+import com.livic.core.finance.repository.BillLineRepository;
+import com.livic.core.finance.repository.BillingWorksheetRepository;
+import com.livic.core.finance.repository.BillRepository;
 import com.livic.platform.security.UserDetailsImpl;
-import com.livic.platform.common.domain.CalculationStrategyType;
-import com.livic.platform.common.domain.LeaseStatus;
 import com.livic.platform.common.event.RentPublishedEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
-import com.livic.core.finance.domain.ChargeConfigTbl;
-import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.domain.MeterReadingTbl;
 import com.livic.core.finance.domain.BillLineTbl;
 import com.livic.core.finance.domain.BillStatus;
@@ -15,19 +16,13 @@ import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.dto.BillDTOs;
 import com.livic.core.finance.dto.RentRollMetricsDTO;
 import com.livic.core.finance.mapper.BillMapper;
-import com.livic.core.finance.service.interfaces.BillingWorksheetCrudService;
-import com.livic.core.finance.service.interfaces.ChargeConfigCrudService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseCrudService;
-import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
-import com.livic.core.finance.service.interfaces.MeterReadingCrudService;
-import com.livic.core.finance.service.interfaces.BillLineCrudService;
-import com.livic.core.finance.service.interfaces.BillCrudService;
 import com.livic.core.finance.service.interfaces.BillService;
 import com.livic.core.finance.specification.BillSpecifications;
 import com.livic.platform.payment.dto.PaymentInitiationRequest;
 import com.livic.platform.payment.dto.PaymentInitiationResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.core.property.dto.PropertySummaryDTO;
+import com.livic.core.property.domain.UnitMemberRole;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
@@ -52,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -66,11 +62,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BillServiceImpl implements BillService {
 
-    private final BillCrudService billCrudService;
-    private final BillLineCrudService billLineCrudService;
-    private final BillingWorksheetCrudService billingWorksheetCrudService;
-    private final MeterReadingCrudService meterReadingCrudService;
-    private final ChargeConfigCrudService chargeConfigCrudService;
+    private final BillRepository billRepository;
+    private final BillLineRepository billLineRepository;
+    private final BillingWorksheetRepository billingWorksheetRepository;
+    private final MeterReadingRepository meterReadingRepository;
+    private final ChargeConfigRepository chargeConfigRepository;
     private final PaymentFacade paymentFacade;
     private final ApplicationEventPublisher eventPublisher;
     private final UserFacade userFacade;
@@ -81,7 +77,7 @@ public class BillServiceImpl implements BillService {
     @Override
     @Transactional(readOnly = true)
     public BillDTOs.BillResponse getById(UUID id) {
-        return buildSingleResponse(billCrudService.findById(id)
+        return buildSingleResponse(billRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found")));
     }
 
@@ -89,8 +85,8 @@ public class BillServiceImpl implements BillService {
     @Transactional
     public PaymentInitiationResponse initiateOnlinePayment(UUID billId, UUID payerUserId) {
         log.info("Executing initiateOnlinePayment for Bill: {} by user: {}", billId, payerUserId);
-        BillTbl bill = billCrudService.findById(billId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+        BillTbl bill = billRepository.findById(billId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
 
         BigDecimal amountPaid = bill.getAmountPaid() != null ? bill.getAmountPaid() : BigDecimal.ZERO;
         BigDecimal remainingAmount = bill.getTotalAmount().subtract(amountPaid);
@@ -115,8 +111,8 @@ public class BillServiceImpl implements BillService {
     @Transactional
     public PaymentInitiationResponse recordCashPayment(UUID billId, BigDecimal amount, String note, UUID payerUserId, UUID confirmedBy) {
         log.info("Executing recordCashPayment for Bill: {} amount: {}", billId, amount);
-        BillTbl bill = billCrudService.findById(billId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+        BillTbl bill = billRepository.findById(billId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
 
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Valid positive amount is required");
@@ -144,12 +140,15 @@ public class BillServiceImpl implements BillService {
         List<UUID> targetPropertyIds = new ArrayList<>();
 
         boolean isTenantView = false;
+        // Set when the caller is themselves a tenant: we already hold their member row, so
+        // there is no need to go back through the lease to find it again.
+        UUID scopedMemberId = null;
         if (currentUserId != null) {
             Optional<UnitResidentDTO> tenancyOpt = unitMemberFacade.getActiveResidencesByUserId(currentUserId).stream()
-                    .filter(r -> r.role() == com.livic.core.property.domain.UnitMemberRole.TENANT)
+                    .filter(r -> r.role() == UnitMemberRole.TENANT)
                     .findFirst();
             if (tenancyOpt.isPresent()) {
-                leaseId = tenancyOpt.get().leaseId();
+                scopedMemberId = tenancyOpt.get().memberId();
                 propertyId = null;
                 isTenantView = true;
             } else {
@@ -185,13 +184,24 @@ public class BillServiceImpl implements BillService {
             );
         }
 
+        // A bill carries its property and payer, so a lease is resolved to its member and a
+        // property filters directly — no walk through units any more.
         Specification<BillTbl> spec;
-        if (leaseId != null) {
-            spec = Specification.where(BillSpecifications.hasLeaseId(leaseId));
+        if (scopedMemberId != null) {
+            spec = Specification.where(BillSpecifications.hasMemberId(scopedMemberId));
+        } else if (leaseId != null) {
+            UUID payerMemberId = unitMemberFacade.getResidentByLeaseId(leaseId)
+                    .map(UnitResidentDTO::memberId)
+                    .orElse(null);
+            spec = Specification.where(BillSpecifications.hasMemberId(payerMemberId));
+            if (payerMemberId == null) {
+                return new BillDTOs.BillListResponse(
+                        List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
+                        new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                );
+            }
         } else {
-            List<UUID> targetUnitIds = targetPropertyIds.isEmpty() ? List.of() :
-                    unitFacade.getUnitsByPropertyIds(targetPropertyIds).stream().map(UnitSummaryDTO::id).toList();
-            spec = Specification.where(BillSpecifications.hasUnitIdIn(targetUnitIds));
+            spec = Specification.where(BillSpecifications.hasPropertyIdIn(targetPropertyIds));
         }
 
         spec = spec.and(BillSpecifications.hasBillingMonth(billingMonth))
@@ -204,14 +214,17 @@ public class BillServiceImpl implements BillService {
         if (search != null && !search.trim().isEmpty()) {
             List<UUID> matchingUnitIds = unitFacade.getUnitIdsByUnitNumberSearch(search);
             List<UUID> matchingUserIds = userFacade.getUserIdsBySearch(search);
-            spec = spec.and(BillSpecifications.matchesSearch(matchingUnitIds, matchingUserIds));
+            Set<UUID> matchingMemberIds = new HashSet<>();
+            matchingMemberIds.addAll(unitMemberFacade.getMemberIdsByUnitIds(matchingUnitIds));
+            matchingMemberIds.addAll(unitMemberFacade.getMemberIdsByUserIds(matchingUserIds));
+            spec = spec.and(BillSpecifications.hasMemberIdIn(matchingMemberIds));
         }
 
-        Page<BillTbl> page = billCrudService.findAll(spec, pageable);
+        Page<BillTbl> page = billRepository.findAll(spec, pageable);
         List<BillDTOs.BillResponse> content = toResponses(page.getContent());
 
         RentRollMetricsDTO rentRollMetrics = !targetPropertyIds.isEmpty() ?
-                billCrudService.getRentRollMetricsForProperties(
+                billRepository.getRentRollMetrics(
                         targetPropertyIds,
                         billingMonth,
                         BillStatus.PENDING,
@@ -219,7 +232,10 @@ public class BillServiceImpl implements BillService {
                         BillStatus.PAID,
                         BillStatus.OVERDUE,
                         BillStatus.PARTIALLY_PAID
-                ) : new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
+                ) : null;
+        if (rentRollMetrics == null) {
+            rentRollMetrics = new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
+        }
 
         return new BillDTOs.BillListResponse(
                 content,
@@ -234,8 +250,8 @@ public class BillServiceImpl implements BillService {
     @Override
     @Transactional
     public BillDTOs.BillResponse markPaid(UUID id) {
-        BillTbl cycle = billCrudService.findById(id)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+        BillTbl cycle = billRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
 
         if (cycle.getStatus() == BillStatus.PAID) {
             return buildSingleResponse(cycle);
@@ -255,8 +271,8 @@ public class BillServiceImpl implements BillService {
 
         recordCashPayment(id, remainingAmount, "Recorded via legacy markPaid", payerUserIdOf(cycle), confirmedBy);
 
-        BillTbl updated = billCrudService.findById(id).orElse(cycle);
-        log.info("rent_cycle_marked_paid billId={} leaseId={} paidAt={}",
+        BillTbl updated = billRepository.findById(id).orElse(cycle);
+        log.info("bill_marked_paid billId={} leaseId={} paidAt={}",
                 updated.getId(), payerLeaseIdOf(updated), updated.getPaidAt());
         return buildSingleResponse(updated);
     }
@@ -264,11 +280,11 @@ public class BillServiceImpl implements BillService {
     @Override
     @Transactional
     public BillDTOs.BillResponse publish(UUID id) {
-        BillTbl cycle = billCrudService.findById(id)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+        BillTbl cycle = billRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
         if (cycle.getStatus() == BillStatus.PENDING) {
             cycle.setStatus(BillStatus.PUBLISHED);
-            billCrudService.save(cycle);
+            billRepository.save(cycle);
 
             if (payerOf(cycle) != null && payerUnitIdOf(cycle) != null) {
                 UUID unitId = payerUnitIdOf(cycle);
@@ -277,13 +293,13 @@ public class BillServiceImpl implements BillService {
                 String billingMonth = cycle.getBillingMonth();
 
                 List<BillingWorksheetEntryTbl> worksheets = propertyId == null ? List.of() :
-                        billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
+                        billingWorksheetRepository.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
                 List<BillingWorksheetEntryTbl> unitWorksheets = worksheets.stream()
                         .filter(w -> w.getUnitId() != null && w.getUnitId().equals(unitId))
                         .peek(w -> w.setIsBilled(true))
                         .toList();
                 if (!unitWorksheets.isEmpty()) {
-                    billingWorksheetCrudService.saveAll(unitWorksheets);
+                    billingWorksheetRepository.saveAll(unitWorksheets);
                 }
 
                 try {
@@ -291,13 +307,13 @@ public class BillServiceImpl implements BillService {
                     int year = Integer.parseInt(parts[0]);
                     int month = Integer.parseInt(parts[1]);
                     List<MeterReadingTbl> readings = propertyId == null ? List.of() :
-                            meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
+                            meterReadingRepository.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
                     List<MeterReadingTbl> unitReadings = readings.stream()
                             .filter(r -> r.getUnitId() != null && r.getUnitId().equals(unitId))
                             .peek(r -> r.setIsBilled(true))
                             .toList();
                     if (!unitReadings.isEmpty()) {
-                        meterReadingCrudService.saveAll(unitReadings);
+                        meterReadingRepository.saveAll(unitReadings);
                     }
                 } catch (Exception e) {
                     log.warn("Failed to update meter readings for unit {}", unitId, e);
@@ -313,7 +329,7 @@ public class BillServiceImpl implements BillService {
                     cycle.getDueDate()
             ));
 
-            log.info("rent_cycle_published billId={} leaseId={} billingMonth={}",
+            log.info("bill_published billId={} leaseId={} billingMonth={}",
                     cycle.getId(), payerLeaseIdOf(cycle), cycle.getBillingMonth());
         }
 
@@ -323,12 +339,12 @@ public class BillServiceImpl implements BillService {
     @Override
     @Transactional
     public BillDTOs.BillResponse unpublish(UUID id) {
-        BillTbl cycle = billCrudService.findById(id)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+        BillTbl cycle = billRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Bill not found"));
 
         if (cycle.getStatus() == BillStatus.PUBLISHED) {
             cycle.setStatus(BillStatus.PENDING);
-            billCrudService.save(cycle);
+            billRepository.save(cycle);
 
             if (payerOf(cycle) != null && payerUnitIdOf(cycle) != null) {
                 UUID unitId = payerUnitIdOf(cycle);
@@ -337,13 +353,13 @@ public class BillServiceImpl implements BillService {
                 String billingMonth = cycle.getBillingMonth();
 
                 List<BillingWorksheetEntryTbl> worksheets = propertyId == null ? List.of() :
-                        billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
+                        billingWorksheetRepository.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
                 List<BillingWorksheetEntryTbl> unitWorksheets = worksheets.stream()
                         .filter(w -> w.getUnitId() != null && w.getUnitId().equals(unitId))
                         .peek(w -> w.setIsBilled(false))
                         .collect(Collectors.toList());
                 if (!unitWorksheets.isEmpty()) {
-                    billingWorksheetCrudService.saveAll(unitWorksheets);
+                    billingWorksheetRepository.saveAll(unitWorksheets);
                 }
 
                 try {
@@ -351,20 +367,20 @@ public class BillServiceImpl implements BillService {
                     int year = Integer.parseInt(parts[0]);
                     int month = Integer.parseInt(parts[1]);
                     List<MeterReadingTbl> readings = propertyId == null ? List.of() :
-                            meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
+                            meterReadingRepository.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
                     List<MeterReadingTbl> unitReadings = readings.stream()
                             .filter(r -> r.getUnitId() != null && r.getUnitId().equals(unitId))
                             .peek(r -> r.setIsBilled(false))
                             .collect(Collectors.toList());
                     if (!unitReadings.isEmpty()) {
-                        meterReadingCrudService.saveAll(unitReadings);
+                        meterReadingRepository.saveAll(unitReadings);
                     }
                 } catch (Exception e) {
                     log.warn("Failed to update meter readings for unit {}", unitId, e);
                 }
             }
 
-            log.info("rent_cycle_unpublished billId={} leaseId={} billingMonth={}",
+            log.info("bill_unpublished billId={} leaseId={} billingMonth={}",
                     cycle.getId(), payerLeaseIdOf(cycle), cycle.getBillingMonth());
         }
 
@@ -372,50 +388,75 @@ public class BillServiceImpl implements BillService {
     }
 
     @Override
+    @Transactional
     public BillDTOs.BatchPublishResult batchPublish(UUID propertyId, String billingMonth) {
         List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
         Map<UUID, String> unitNumbers = units.stream().collect(Collectors.toMap(UnitSummaryDTO::id, UnitSummaryDTO::unitNumber, (a, b) -> a));
         List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
-        List<BillTbl> propertyCycles = billCrudService.findByPropertyIdAndBillingMonth(propertyId, billingMonth);
+        List<BillTbl> propertyCycles = billRepository.findByPropertyIdAndBillingMonth(propertyId, billingMonth);
 
         if (propertyId != null) {
-            List<BillingWorksheetEntryTbl> worksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
+            List<BillingWorksheetEntryTbl> worksheets = billingWorksheetRepository.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
             List<BillingWorksheetEntryTbl> worksheetsToUpdate = worksheets.stream()
                     .peek(w -> w.setIsBilled(true))
                     .collect(Collectors.toList());
             if (!worksheetsToUpdate.isEmpty()) {
-                billingWorksheetCrudService.saveAll(worksheetsToUpdate);
+                billingWorksheetRepository.saveAll(worksheetsToUpdate);
             }
 
             try {
                 String[] parts = billingMonth.split("-");
                 int year = Integer.parseInt(parts[0]);
                 int month = Integer.parseInt(parts[1]);
-                List<MeterReadingTbl> readings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
+                List<MeterReadingTbl> readings = meterReadingRepository.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
                 List<MeterReadingTbl> readingsToUpdate = readings.stream()
                         .peek(r -> r.setIsBilled(true))
                         .collect(Collectors.toList());
                 if (!readingsToUpdate.isEmpty()) {
-                    meterReadingCrudService.saveAll(readingsToUpdate);
+                    meterReadingRepository.saveAll(readingsToUpdate);
                 }
             } catch (Exception e) {
                 log.warn("Failed to update meter readings for property {}", propertyId, e);
             }
         }
 
-        List<BillDTOs.BillResponse> succeeded = new ArrayList<>();
+        // Deliberately not calling publish() per bill: it reloads the bill, re-resolves the
+        // payer and re-scans the whole property's worksheets and meter readings every time.
+        // The property-wide part is already done once above, so the loop only moves status.
+        Map<UUID, UnitResidentDTO> payers = payersOf(propertyCycles);
+        List<BillTbl> transitioned = new ArrayList<>();
         List<BillDTOs.BatchPublishFailure> failed = new ArrayList<>();
 
         for (BillTbl cycle : propertyCycles) {
-            String unitNum = (payerOf(cycle) != null) ? unitNumbers.get(payerUnitIdOf(cycle)) : null;
+            UnitResidentDTO payer = payers.get(cycle.getMemberId());
+            String unitNum = payer != null ? unitNumbers.get(payer.unitId()) : null;
             try {
-                BillDTOs.BillResponse res = publish(cycle.getId());
-                succeeded.add(res);
+                if (cycle.getStatus() == BillStatus.PENDING) {
+                    cycle.setStatus(BillStatus.PUBLISHED);
+                    transitioned.add(cycle);
+                }
             } catch (Exception e) {
-                log.error("[BillServiceImpl] Failed to publish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
+                log.error("[BillServiceImpl] Failed to publish bill: {}, unit: {}", cycle.getId(), unitNum, e);
                 failed.add(new BillDTOs.BatchPublishFailure(cycle.getId(), unitNum, e.getMessage()));
             }
         }
+
+        if (!transitioned.isEmpty()) {
+            billRepository.saveAll(transitioned);
+        }
+        for (BillTbl cycle : transitioned) {
+            UnitResidentDTO payer = payers.get(cycle.getMemberId());
+            eventPublisher.publishEvent(new RentPublishedEvent(
+                    this,
+                    cycle.getId(),
+                    payer != null ? payer.userId() : null,
+                    cycle.getBillingMonth(),
+                    cycle.getTotalAmount(),
+                    cycle.getDueDate()
+            ));
+        }
+
+        List<BillDTOs.BillResponse> succeeded = new ArrayList<>(toResponses(propertyCycles));
 
         Comparator<BillDTOs.BillResponse> publishComp = Comparator.comparing(
                 (BillDTOs.BillResponse r) -> r.unitNumber() != null ? r.unitNumber() : "",
@@ -429,50 +470,63 @@ public class BillServiceImpl implements BillService {
     }
 
     @Override
+    @Transactional
     public BillDTOs.BatchUnpublishResult batchUnpublish(UUID propertyId, String billingMonth) {
         List<UnitSummaryDTO> batchUnpublishUnits = unitFacade.getUnitsByPropertyId(propertyId);
         Map<UUID, String> unitNumbers = batchUnpublishUnits.stream().collect(Collectors.toMap(UnitSummaryDTO::id, UnitSummaryDTO::unitNumber, (a, b) -> a));
         List<UUID> unitIds = batchUnpublishUnits.stream().map(UnitSummaryDTO::id).toList();
-        List<BillTbl> propertyCycles = billCrudService.findByPropertyIdAndBillingMonth(propertyId, billingMonth);
+        List<BillTbl> propertyCycles = billRepository.findByPropertyIdAndBillingMonth(propertyId, billingMonth);
 
         if (propertyId != null) {
-            List<BillingWorksheetEntryTbl> worksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
+            List<BillingWorksheetEntryTbl> worksheets = billingWorksheetRepository.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
             List<BillingWorksheetEntryTbl> worksheetsToUpdate = worksheets.stream()
                     .peek(w -> w.setIsBilled(false))
                     .collect(Collectors.toList());
             if (!worksheetsToUpdate.isEmpty()) {
-                billingWorksheetCrudService.saveAll(worksheetsToUpdate);
+                billingWorksheetRepository.saveAll(worksheetsToUpdate);
             }
 
             try {
                 String[] parts = billingMonth.split("-");
                 int year = Integer.parseInt(parts[0]);
                 int month = Integer.parseInt(parts[1]);
-                List<MeterReadingTbl> readings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
+                List<MeterReadingTbl> readings = meterReadingRepository.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
                 List<MeterReadingTbl> readingsToUpdate = readings.stream()
                         .peek(r -> r.setIsBilled(false))
                         .collect(Collectors.toList());
                 if (!readingsToUpdate.isEmpty()) {
-                    meterReadingCrudService.saveAll(readingsToUpdate);
+                    meterReadingRepository.saveAll(readingsToUpdate);
                 }
             } catch (Exception e) {
                 log.warn("Failed to update meter readings for property {}", propertyId, e);
             }
         }
 
-        List<BillDTOs.BillResponse> succeeded = new ArrayList<>();
+        // Same reasoning as batchPublish: the property-wide reset above happens once, and the
+        // loop only moves status rather than re-running it per bill.
+        Map<UUID, UnitResidentDTO> payers = payersOf(propertyCycles);
+        List<BillTbl> transitioned = new ArrayList<>();
         List<BillDTOs.BatchUnpublishFailure> failed = new ArrayList<>();
 
         for (BillTbl cycle : propertyCycles) {
-            String unitNum = (payerOf(cycle) != null) ? unitNumbers.get(payerUnitIdOf(cycle)) : null;
+            UnitResidentDTO payer = payers.get(cycle.getMemberId());
+            String unitNum = payer != null ? unitNumbers.get(payer.unitId()) : null;
             try {
-                BillDTOs.BillResponse res = unpublish(cycle.getId());
-                succeeded.add(res);
+                if (cycle.getStatus() == BillStatus.PUBLISHED) {
+                    cycle.setStatus(BillStatus.PENDING);
+                    transitioned.add(cycle);
+                }
             } catch (Exception e) {
-                log.error("[BillServiceImpl] Failed to unpublish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
+                log.error("[BillServiceImpl] Failed to unpublish bill: {}, unit: {}", cycle.getId(), unitNum, e);
                 failed.add(new BillDTOs.BatchUnpublishFailure(cycle.getId(), unitNum, e.getMessage()));
             }
         }
+
+        if (!transitioned.isEmpty()) {
+            billRepository.saveAll(transitioned);
+        }
+
+        List<BillDTOs.BillResponse> succeeded = new ArrayList<>(toResponses(propertyCycles));
 
         Comparator<BillDTOs.BillResponse> unpublishComp = Comparator.comparing(
                 (BillDTOs.BillResponse r) -> r.unitNumber() != null ? r.unitNumber() : "",
@@ -499,7 +553,7 @@ public class BillServiceImpl implements BillService {
         }
 
         List<BillLineTbl> charges = bill.getId() != null ?
-                billLineCrudService.findByBill_Id(bill.getId()) : Collections.emptyList();
+                billLineRepository.findByBill_Id(bill.getId()) : Collections.emptyList();
 
         return toResponse(bill, payer, user, unit, charges);
     }
@@ -525,7 +579,7 @@ public class BillServiceImpl implements BillService {
         Map<UUID, UserSummaryDTO> usersMap = userIds.isEmpty() ? Collections.emptyMap() : userFacade.getUsersByIds(userIds);
 
         Map<UUID, List<BillLineTbl>> chargesMap = billIds.isEmpty() ? Collections.emptyMap() :
-                billLineCrudService.findByBill_IdIn(billIds)
+                billLineRepository.findByBill_IdIn(billIds)
                         .stream()
                         .filter(c -> c.getBill() != null && c.getBill().getId() != null)
                         .collect(Collectors.groupingBy(c -> c.getBill().getId()));

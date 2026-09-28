@@ -3,7 +3,7 @@ package com.livic.platform.notification.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.livic.platform.notification.config.Msg91Properties;
 import com.livic.platform.notification.domain.NotificationChannel;
-import com.livic.platform.notification.service.NotificationChannelSender;
+import com.livic.platform.notification.service.interfaces.NotificationChannelSender;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;

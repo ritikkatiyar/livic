@@ -1,6 +1,6 @@
 package com.livic.core.property.mapper;
 
-import com.livic.platform.common.domain.FacingDirection;
+import com.livic.core.property.domain.FacingDirection;
 import com.livic.core.property.domain.BlockTbl;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;

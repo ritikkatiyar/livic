@@ -11,6 +11,8 @@ spring:
     password: ${DB_PASSWORD:livic}
     baseline-on-migrate: false
     validate-on-migrate: false
+    # A developer's database may already hold a branch's migration under a number that main later
+    # used for something else, so a lower version can still be waiting after a higher one applied.
     out-of-order: true
   jpa:
     show-sql: false

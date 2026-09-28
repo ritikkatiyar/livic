@@ -2,7 +2,7 @@ package com.livic.core.finance.event;
 
 import com.livic.platform.common.event.RentPublishedEvent;
 import com.livic.platform.notification.domain.NotificationChannel;
-import com.livic.platform.notification.service.NotificationService;
+import com.livic.platform.notification.service.interfaces.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

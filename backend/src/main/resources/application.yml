@@ -124,23 +124,10 @@ msg91:
   sender-id: ${MSG91_SENDER_ID:LIVIC}
   sms:
     enabled: ${MSG91_SMS_ENABLED:false}
-    # One MSG91 flow per DLT-approved template; the wording to register is in MessageTemplate
-    flows:
-      marketplace-otp: ${MSG91_SMS_FLOW_MARKETPLACE_OTP:}
-      tour-approved: ${MSG91_SMS_FLOW_TOUR_APPROVED:}
-      tour-declined: ${MSG91_SMS_FLOW_TOUR_DECLINED:}
-      tour-reminder: ${MSG91_SMS_FLOW_TOUR_REMINDER:}
+    flow-id: ${MSG91_SMS_FLOW_ID:}
   whatsapp:
     enabled: ${MSG91_WHATSAPP_ENABLED:false}
     integrated-number: ${MSG91_WHATSAPP_INTEGRATED_NUMBER:}
-    language: ${MSG91_WHATSAPP_LANGUAGE:en}
-    namespace: ${MSG91_WHATSAPP_NAMESPACE:}
-    # Meta-approved template name per template; the wording is in MessageTemplate
-    templates:
-      marketplace-otp: ${MSG91_WHATSAPP_TEMPLATE_MARKETPLACE_OTP:}
-      tour-approved: ${MSG91_WHATSAPP_TEMPLATE_TOUR_APPROVED:}
-      tour-declined: ${MSG91_WHATSAPP_TEMPLATE_TOUR_DECLINED:}
-      tour-reminder: ${MSG91_WHATSAPP_TEMPLATE_TOUR_REMINDER:}
 
 storage:
   provider: ${STORAGE_PROVIDER:CLOUDINARY}

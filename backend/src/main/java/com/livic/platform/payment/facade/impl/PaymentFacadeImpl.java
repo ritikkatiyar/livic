@@ -49,11 +49,6 @@ public class PaymentFacadeImpl implements PaymentFacade {
         return toResponse(transaction);
     }
 
-    @Override
-    public Optional<PaymentInitiationResponse> getTransactionStatus(UUID transactionId) {
-        return paymentTransactionService.findTransactionById(transactionId)
-                .map(this::toResponse);
-    }
 
     @Override
     public Optional<PaymentInitiationResponse> getLatestSuccessfulTransaction(String referenceType, UUID referenceId) {

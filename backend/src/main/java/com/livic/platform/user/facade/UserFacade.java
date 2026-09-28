@@ -52,7 +52,5 @@ public interface UserFacade {
 
     com.livic.platform.user.dto.UserNotificationPreferencesDTO getNotificationPreferences(UUID userId);
 
-    com.livic.platform.user.dto.UserNotificationPreferencesDTO updateNotificationPreferences(UUID userId, com.livic.platform.user.dto.UserNotificationPreferencesDTO dto);
-
     List<UUID> getUserIdsBySearch(String searchPattern);
 }

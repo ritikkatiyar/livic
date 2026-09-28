@@ -13,10 +13,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.livic.platform.notification.domain.MessageTemplate;
 import com.livic.platform.notification.dto.TemplatedMessage;
-import com.livic.platform.notification.service.SmsService;
+import com.livic.platform.notification.domain.NotificationChannel;
+import com.livic.platform.notification.dto.DeliveryReport;
+import com.livic.platform.notification.dto.DeliveryReport.Outcome;
+import com.livic.platform.notification.service.MessagingService;
+import com.livic.verticals.marketplace.config.MarketplaceOtpProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -25,10 +30,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -42,13 +49,17 @@ public class OtpServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private SmsService smsService;
+    private MessagingService messagingService;
+
+    @Spy
+    private MarketplaceOtpProperties otpProperties = new MarketplaceOtpProperties();
 
     @InjectMocks
     private OtpServiceImpl otpService;
 
     private static final String TEST_PHONE = "9876543210";
     private static final String TEST_IP = "203.0.113.7";
+    private static final DeliveryReport SENT_BY_SMS = new DeliveryReport(Map.of(NotificationChannel.SMS, Outcome.SENT));
     private static final String TEST_CODE = "123456";
     private static final String HASHED_CODE = "$2a$10$hashedOtpCodeForTesting";
 
@@ -63,7 +74,7 @@ public class OtpServiceTest {
         when(otpRepository.findByPhoneAndCreatedAtAfter(eq(TEST_PHONE), any(Instant.class)))
                 .thenReturn(Collections.emptyList());
         when(passwordEncoder.encode(any(String.class))).thenReturn(HASHED_CODE);
-        when(smsService.sendToPhone(eq(TEST_PHONE), any(TemplatedMessage.class))).thenReturn(true);
+        when(messagingService.sendFirstSuccessful(eq(TEST_PHONE), any(TemplatedMessage.class), anyList())).thenReturn(SENT_BY_SMS);
 
         OtpDTOs.OtpRequestRequest request = new OtpDTOs.OtpRequestRequest(TEST_PHONE);
         OtpDTOs.OtpRequestResponse response = otpService.requestOtp(request, TEST_IP);
@@ -81,7 +92,7 @@ public class OtpServiceTest {
         ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
         verify(passwordEncoder).encode(codeCaptor.capture());
         ArgumentCaptor<TemplatedMessage> messageCaptor = ArgumentCaptor.forClass(TemplatedMessage.class);
-        verify(smsService).sendToPhone(eq(TEST_PHONE), messageCaptor.capture());
+        verify(messagingService).sendFirstSuccessful(eq(TEST_PHONE), messageCaptor.capture(), eq(List.of(NotificationChannel.SMS)));
         assertEquals(MessageTemplate.MARKETPLACE_OTP, messageCaptor.getValue().template());
         assertEquals(codeCaptor.getValue(), messageCaptor.getValue().variables().get("otp"));
         assertEquals("5", messageCaptor.getValue().variables().get("minutes"));
@@ -93,7 +104,8 @@ public class OtpServiceTest {
         when(otpRepository.findByPhoneAndCreatedAtAfter(eq(TEST_PHONE), any(Instant.class)))
                 .thenReturn(Collections.emptyList());
         when(passwordEncoder.encode(any(String.class))).thenReturn(HASHED_CODE);
-        when(smsService.sendToPhone(eq(TEST_PHONE), any(TemplatedMessage.class))).thenReturn(false);
+        when(messagingService.sendFirstSuccessful(eq(TEST_PHONE), any(TemplatedMessage.class), anyList()))
+                .thenReturn(new DeliveryReport(Map.of(NotificationChannel.SMS, Outcome.FAILED)));
 
         OtpDTOs.OtpRequestRequest request = new OtpDTOs.OtpRequestRequest(TEST_PHONE);
         OtpDeliveryException exception = assertThrows(OtpDeliveryException.class, () -> otpService.requestOtp(request, TEST_IP));
@@ -102,6 +114,22 @@ public class OtpServiceTest {
         ArgumentCaptor<OtpVerificationTbl> captor = ArgumentCaptor.forClass(OtpVerificationTbl.class);
         verify(otpRepository, times(2)).save(captor.capture());
         assertFalse(captor.getValue().getExpiresAt().isAfter(Instant.now()), "an undelivered code must not stay verifiable");
+    }
+
+    @Test
+    @DisplayName("Request OTP - Tries the configured channels in order (SMS, then WhatsApp)")
+    public void testRequestOtpUsesConfiguredChannels() {
+        otpProperties.setChannels(List.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP));
+        when(otpRepository.findByPhoneAndCreatedAtAfter(eq(TEST_PHONE), any(Instant.class)))
+                .thenReturn(Collections.emptyList());
+        when(passwordEncoder.encode(any(String.class))).thenReturn(HASHED_CODE);
+        when(messagingService.sendFirstSuccessful(eq(TEST_PHONE), any(TemplatedMessage.class), anyList()))
+                .thenReturn(new DeliveryReport(Map.of(NotificationChannel.SMS, Outcome.FAILED, NotificationChannel.WHATSAPP, Outcome.SENT)));
+
+        assertDoesNotThrow(() -> otpService.requestOtp(new OtpDTOs.OtpRequestRequest(TEST_PHONE), TEST_IP));
+
+        verify(messagingService).sendFirstSuccessful(eq(TEST_PHONE), any(TemplatedMessage.class),
+                eq(List.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP)));
     }
 
     @Test
@@ -116,7 +144,7 @@ public class OtpServiceTest {
 
         assertEquals(HttpStatus.TOO_MANY_REQUESTS, exception.getStatus());
         verify(otpRepository, never()).save(any());
-        verifyNoInteractions(smsService);
+        verifyNoInteractions(messagingService);
     }
 
     @Test
@@ -130,7 +158,7 @@ public class OtpServiceTest {
         otpService.requestOtp(new OtpDTOs.OtpRequestRequest(TEST_PHONE), TEST_IP);
 
         verify(passwordEncoder).encode("000000");
-        verifyNoInteractions(smsService);
+        verifyNoInteractions(messagingService);
     }
 
     @Test
@@ -140,7 +168,7 @@ public class OtpServiceTest {
         when(otpRepository.findByPhoneAndCreatedAtAfter(eq(TEST_PHONE), any(Instant.class)))
                 .thenReturn(Collections.emptyList());
         when(passwordEncoder.encode(any(String.class))).thenReturn(HASHED_CODE);
-        when(smsService.sendToPhone(eq(TEST_PHONE), any(TemplatedMessage.class))).thenReturn(true);
+        when(messagingService.sendFirstSuccessful(eq(TEST_PHONE), any(TemplatedMessage.class), anyList())).thenReturn(SENT_BY_SMS);
 
         otpService.requestOtp(new OtpDTOs.OtpRequestRequest(TEST_PHONE), TEST_IP);
 

@@ -8,7 +8,7 @@ import com.livic.verticals.marketplace.dto.OtpDTOs.OtpVerifyResponse;
 public interface OtpService {
 
     /**
-     * Creates a code and sends it by SMS.
+     * Creates a code and sends it on the configured OTP channels (SMS and/or WhatsApp).
      *
      * @param clientIp the caller's address, for the per-IP request limit
      */

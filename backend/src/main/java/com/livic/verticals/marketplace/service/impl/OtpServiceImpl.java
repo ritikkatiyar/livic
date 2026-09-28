@@ -9,9 +9,10 @@ import com.livic.verticals.marketplace.exception.OtpDeliveryException;
 import com.livic.verticals.marketplace.repository.OtpVerificationRepository;
 import com.livic.verticals.marketplace.service.interfaces.OtpService;
 import com.livic.platform.common.exception.BusinessException;
+import com.livic.verticals.marketplace.config.MarketplaceOtpProperties;
 import com.livic.platform.notification.domain.MessageTemplate;
 import com.livic.platform.notification.dto.TemplatedMessage;
-import com.livic.platform.notification.service.SmsService;
+import com.livic.platform.notification.service.MessagingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,7 +35,8 @@ public class OtpServiceImpl implements OtpService {
 
     private final OtpVerificationRepository otpRepository;
     private final PasswordEncoder passwordEncoder;
-    private final SmsService smsService;
+    private final MessagingService messagingService;
+    private final MarketplaceOtpProperties otpProperties;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private static final int OTP_EXPIRY_MINUTES = 5;
@@ -42,17 +44,17 @@ public class OtpServiceImpl implements OtpService {
     private static final int COOLDOWN_SECONDS = 60;
     private static final int MAX_REQUESTS_PER_HOUR = 5;
     private static final int MAX_ATTEMPTS = 5;
-    /** Stops one client from sending SMS to many numbers; generous enough for shared networks. */
+    /** Stops one client from sending codes to many numbers; generous enough for shared networks. */
     private static final int MAX_REQUESTS_PER_IP_PER_HOUR = 20;
     /** Rows are kept a day past expiry; sessions last minutes, so nothing usable is deleted. */
     private static final int STALE_AFTER_HOURS = 24;
 
-    /** Fixed OTP used instead of a random code when set; configured only in the dev profile (no SMS provider locally). */
+    /** Fixed OTP used instead of a random code when set; configured only in the dev profile (no messaging gateway locally). */
     @Value("${app.marketplace.otp.dev-code:}")
     private String devOtpCode;
 
     /**
-     * Not transactional: each save commits on its own, so the database connection isn't held while the SMS gateway
+     * Not transactional: each save commits on its own, so the database connection is not held while the messaging gateway
      * is called.
      */
     @Override
@@ -100,7 +102,7 @@ public class OtpServiceImpl implements OtpService {
         log.info("Generated OTP verification request for phone ending in {}", 
                 phone.length() > 4 ? phone.substring(phone.length() - 4) : "****");
         if (useDevCode) {
-            log.warn("Marketplace OTP dev code is enabled (app.marketplace.otp.dev-code); no SMS was sent");
+            log.warn("Marketplace OTP dev code is enabled (app.marketplace.otp.dev-code); no message was sent");
         } else {
             sendCode(entity, otpCode);
         }
@@ -159,7 +161,7 @@ public class OtpServiceImpl implements OtpService {
         TemplatedMessage message = TemplatedMessage.of(MessageTemplate.MARKETPLACE_OTP, Map.of(
                 "otp", otpCode,
                 "minutes", String.valueOf(OTP_EXPIRY_MINUTES)));
-        if (!smsService.sendToPhone(entity.getPhone(), message)) {
+        if (!messagingService.sendFirstSuccessful(entity.getPhone(), message, otpProperties.getChannels()).anySent()) {
             // The code never reached the user, so it must not be verifiable; the cooldown still applies to retries
             entity.setExpiresAt(Instant.now());
             otpRepository.save(entity);

@@ -4,7 +4,10 @@ import com.livic.verticals.marketplace.dto.TourAvailabilityDTOs.BlackoutResponse
 import com.livic.verticals.marketplace.dto.TourAvailabilityDTOs.CreateBlackoutRequest;
 import com.livic.verticals.marketplace.dto.TourAvailabilityDTOs.TourAvailabilityResponse;
 import com.livic.verticals.marketplace.dto.TourAvailabilityDTOs.UpdateTourAvailabilityRequest;
+import com.livic.verticals.marketplace.dto.TourMessageSettingsDTOs.TourMessageSettingsResponse;
+import com.livic.verticals.marketplace.dto.TourMessageSettingsDTOs.UpdateTourMessageSettingsRequest;
 import com.livic.verticals.marketplace.service.interfaces.TourAvailabilityService;
+import com.livic.verticals.marketplace.service.interfaces.TourMessageSettingsService;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.platform.security.UserDetailsImpl;
 import jakarta.validation.Valid;
@@ -24,13 +27,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
-/** Landlord / property staff: visiting hours and blocked dates for marketplace tours. */
+/** Landlord / property staff: visiting hours, blocked dates and visitor message channels for marketplace tours. */
 @RestController
 @RequestMapping("/api/v1/marketplace")
 @RequiredArgsConstructor
 public class TourAvailabilityController {
 
     private final TourAvailabilityService tourAvailabilityService;
+    private final TourMessageSettingsService tourMessageSettingsService;
 
     @GetMapping("/properties/{propertyId}/tour-availability")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'LEASE_VIEW')")
@@ -58,6 +62,23 @@ public class TourAvailabilityController {
     ) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
                 tourAvailabilityService.addBlackout(propertyId, request, currentUser.getUuid())));
+    }
+
+    @GetMapping("/properties/{propertyId}/tour-message-settings")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'LEASE_VIEW')")
+    public ResponseEntity<ApiResponse<TourMessageSettingsResponse>> getMessageSettings(@PathVariable UUID propertyId) {
+        return ResponseEntity.ok(ApiResponse.success(tourMessageSettingsService.getSettings(propertyId)));
+    }
+
+    @PutMapping("/properties/{propertyId}/tour-message-settings")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'LEASE_UPDATE')")
+    public ResponseEntity<ApiResponse<TourMessageSettingsResponse>> updateMessageSettings(
+            @PathVariable UUID propertyId,
+            @Valid @RequestBody UpdateTourMessageSettingsRequest request,
+            @AuthenticationPrincipal UserDetailsImpl currentUser
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                tourMessageSettingsService.updateSettings(propertyId, request, currentUser.getUuid())));
     }
 
     /** Permission is checked against the blackout's property in the service. */

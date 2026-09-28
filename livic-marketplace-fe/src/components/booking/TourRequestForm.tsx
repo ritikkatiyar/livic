@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Phone, Mail, Calendar, Clock, ArrowRight, CheckCircle, Globe } from 'lucide-react';
+import { User, Phone, Mail, Calendar, Clock, ArrowRight, CheckCircle, Globe, MessageCircle } from 'lucide-react';
 import { CreateLeadRequest } from '@/types/lead';
 import { TourSlots } from '@/types/tourSlot';
 import { DateStrip } from '@/components/ui/DateStrip';
@@ -20,6 +20,7 @@ const tourSchema = z.object({
   prospectEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
   preferredDate: z.string().min(1, 'Please select a preferred visit date'),
   preferredTime: z.string().min(1, 'Please select a preferred visit time'),
+  whatsappOptIn: z.boolean(),
 });
 
 type TourFormData = z.infer<typeof tourSchema>;
@@ -48,6 +49,8 @@ export function TourRequestForm({ onSubmitLead, loading, verifiedPhone = null, s
     defaultValues: {
       preferredDate: '',
       preferredTime: '',
+      // Unticked by default: WhatsApp requires the visitor's explicit opt-in
+      whatsappOptIn: false,
     },
   });
 
@@ -83,6 +86,7 @@ export function TourRequestForm({ onSubmitLead, loading, verifiedPhone = null, s
       prospectPhone: data.prospectPhone,
       prospectEmail: data.prospectEmail || undefined,
       preferredSlot: slot.start,
+      whatsappOptIn: data.whatsappOptIn,
     });
   };
 
@@ -131,6 +135,21 @@ export function TourRequestForm({ onSubmitLead, loading, verifiedPhone = null, s
             </span>
           )
         )}
+        <label
+          htmlFor="whatsapp-opt-in"
+          className="mt-2 flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-400 cursor-pointer"
+        >
+          <input
+            {...register('whatsappOptIn')}
+            type="checkbox"
+            id="whatsapp-opt-in"
+            className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 dark:border-slate-600 accent-indigo-600"
+          />
+          <span className="flex items-center gap-1">
+            <MessageCircle className="h-3 w-3 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            Send me updates about this visit on WhatsApp
+          </span>
+        </label>
       </div>
 
       <div>

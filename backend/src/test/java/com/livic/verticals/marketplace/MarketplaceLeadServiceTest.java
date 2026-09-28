@@ -104,7 +104,8 @@ public class MarketplaceLeadServiceTest {
                 null,
                 LocalDate.now().plusDays(5),
                 null,
-                "MARKETPLACE"
+                "MARKETPLACE",
+                null
         );
     }
 
@@ -221,7 +222,8 @@ public class MarketplaceLeadServiceTest {
                 Instant.now().plus(2, ChronoUnit.DAYS),
                 null,
                 null,
-                "MARKETPLACE"
+                "MARKETPLACE",
+                null
         );
     }
 

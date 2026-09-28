@@ -247,6 +247,7 @@ BEGIN
     DECLARE caretaker_id VARCHAR(36);
     DECLARE prop_id VARCHAR(36);
     DECLARE curr_block_id VARCHAR(36);
+    DECLARE block_b_id VARCHAR(36);
     DECLARE charge_cfg_id VARCHAR(36);
     DECLARE password_hash VARCHAR(255);
     
@@ -288,10 +289,23 @@ BEGIN
     INSERT INTO property_tbl (id, name, city, address, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
     VALUES (prop_id, 'Livic Residency', 'Bangalore', '100 Feet Road, Indiranagar', TRUE, TRUE, 1, '09:00:00');
     
-    -- Default block
+    -- Two blocks, so the multi-block case is reachable without hand-built data. Tower A is
+    -- the default block every property gets; it is named properly here because this property
+    -- has a second one.
     SET curr_block_id = UUID();
     INSERT INTO block_tbl (id, property_id, name, sort_order, is_default, total_floors)
-    VALUES (curr_block_id, prop_id, 'Main', 0, TRUE, 5);
+    VALUES (curr_block_id, prop_id, 'Tower A', 0, TRUE, 5);
+
+    SET block_b_id = UUID();
+    INSERT INTO block_tbl (id, property_id, name, sort_order, is_default, total_floors)
+    VALUES (block_b_id, prop_id, 'Tower B', 1, FALSE, 2);
+
+    -- Tower B repeats Tower A's unit numbers on purpose: they are unique per block, not per
+    -- property, and this is what proves it. Left vacant, with no leases or bills.
+    INSERT INTO unit_tbl (id, property_id, block_id, unit_number, floor, capacity, type, grid_x, grid_y, grid_width, grid_height) VALUES
+    (UUID(), prop_id, block_b_id, '101', 1, 1, 'SINGLE_UNIT', 1, 1, 1, 1),
+    (UUID(), prop_id, block_b_id, '102', 1, 1, 'SINGLE_UNIT', 2, 1, 1, 1),
+    (UUID(), prop_id, block_b_id, '201', 2, 1, 'SINGLE_UNIT', 1, 1, 1, 1);
     
     -- 4. Map Owner (FULL_ACCESS) and Caretaker (CUSTOM_ACCESS) to this Property
     INSERT INTO membership_tbl (id, user_id, property_id, title, access_type, is_active) VALUES

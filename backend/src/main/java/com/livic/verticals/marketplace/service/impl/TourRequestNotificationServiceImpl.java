@@ -1,12 +1,16 @@
 package com.livic.verticals.marketplace.service.impl;
 
 import com.livic.verticals.marketplace.domain.MarketplaceLeadTbl;
+import com.livic.verticals.marketplace.domain.TourMessageType;
 import com.livic.verticals.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.verticals.marketplace.service.interfaces.TourAvailabilityService;
+import com.livic.verticals.marketplace.service.interfaces.TourMessageSettingsService;
 import com.livic.verticals.marketplace.service.interfaces.TourRequestNotificationService;
 import com.livic.platform.notification.domain.MessageTemplate;
+import com.livic.platform.notification.domain.NotificationChannel;
+import com.livic.platform.notification.dto.DeliveryReport;
 import com.livic.platform.notification.dto.TemplatedMessage;
-import com.livic.platform.notification.service.SmsService;
+import com.livic.platform.notification.service.MessagingService;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +24,12 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -33,7 +39,7 @@ public class TourRequestNotificationServiceImpl implements TourRequestNotificati
 
     /** Reminders go out for approved tours starting within this lead time. */
     static final Duration REMINDER_LEAD_TIME = Duration.ofHours(2);
-    /** A tour approved this recently already got the approval SMS, which serves as its reminder. */
+    /** A tour approved this recently already got the approval message, which serves as its reminder. */
     static final Duration RECENT_APPROVAL = Duration.ofHours(1);
     private static final int REMINDER_BATCH_SIZE = 100;
 
@@ -45,7 +51,8 @@ public class TourRequestNotificationServiceImpl implements TourRequestNotificati
     private final MarketplaceLeadRepository leadRepository;
     private final PropertyFacade propertyFacade;
     private final TourAvailabilityService tourAvailabilityService;
-    private final SmsService smsService;
+    private final TourMessageSettingsService tourMessageSettingsService;
+    private final MessagingService messagingService;
 
     @Value("${app.marketplace.base-url:http://localhost:3000}")
     private String marketplaceBaseUrl;
@@ -70,8 +77,8 @@ public class TourRequestNotificationServiceImpl implements TourRequestNotificati
         if (template == MessageTemplate.TOUR_DECLINED) {
             variables.put("note", lead.getDecisionNote() == null || lead.getDecisionNote().isBlank() ? NO_NOTE : lead.getDecisionNote());
         }
-        boolean sent = smsService.sendToPhone(lead.getProspectPhone(), TemplatedMessage.of(template, variables));
-        log.info("tour_decision_sms leadId={} template={} sent={}", leadId, template, sent);
+        DeliveryReport report = send(lead, TemplatedMessage.of(template, variables), TourMessageType.DECISION);
+        log.info("tour_decision_message leadId={} template={} outcomes={}", leadId, template, report.outcomes());
     }
 
     @Override
@@ -91,7 +98,7 @@ public class TourRequestNotificationServiceImpl implements TourRequestNotificati
                 continue;
             }
             TemplatedMessage message = TemplatedMessage.of(MessageTemplate.TOUR_REMINDER, visitVariables(lead));
-            if (smsService.sendToPhone(lead.getProspectPhone(), message)) {
+            if (send(lead, message, TourMessageType.REMINDER).anySent()) {
                 sent++;
             }
         }
@@ -99,6 +106,22 @@ public class TourRequestNotificationServiceImpl implements TourRequestNotificati
             log.info("tour_reminders_processed due={} sent={}", due.size(), sent);
         }
         return sent;
+    }
+
+    /**
+     * Sends on the channels the property chose for this message, dropping WhatsApp unless the prospect opted in.
+     */
+    private DeliveryReport send(MarketplaceLeadTbl lead, TemplatedMessage message, TourMessageType type) {
+        Set<NotificationChannel> channels = EnumSet.noneOf(NotificationChannel.class);
+        channels.addAll(tourMessageSettingsService.channelsFor(lead.getPropertyId(), type));
+        if (!lead.isWhatsappOptIn()) {
+            channels.remove(NotificationChannel.WHATSAPP);
+        }
+        if (channels.isEmpty()) {
+            log.info("tour_message_skipped leadId={} template={} reason=channels_off", lead.getId(), message.template());
+            return new DeliveryReport(Map.of());
+        }
+        return messagingService.send(lead.getProspectPhone(), message, channels);
     }
 
     /** Property, visit date and time in the property's timezone, and the My Requests link. */

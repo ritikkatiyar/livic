@@ -28,6 +28,7 @@ export type CreateLeadRequest = {
   preferredSlot?: string; // ISO datetime, only for TOUR_REQUEST
   expectedMoveInDate?: string; // ISO date, only for BOOKING
   tokenAmount?: number; // token amount for booking
+  whatsappOptIn?: boolean; // the prospect agreed to updates on WhatsApp (required by Meta before messaging)
 };
 
 export type LeadResponse = {

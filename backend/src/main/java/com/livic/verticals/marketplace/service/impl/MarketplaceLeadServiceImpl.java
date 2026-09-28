@@ -94,6 +94,7 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
         }
 
         // 5. Build and save Lead entity
+        boolean whatsappOptIn = Boolean.TRUE.equals(request.whatsappOptIn());
         MarketplaceLeadTbl lead = MarketplaceLeadTbl.builder()
                 .propertyId(propertyId)
                 .unitId(unitId)
@@ -106,6 +107,8 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
                 .expectedMoveInDate(request.expectedMoveInDate())
                 .tokenAmount(tokenAmount)
                 .source(request.source() != null ? request.source() : "MARKETPLACE")
+                .whatsappOptIn(whatsappOptIn)
+                .whatsappOptInAt(whatsappOptIn ? Instant.now() : null)
                 .build();
 
         try {

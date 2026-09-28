@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-/** Texts the prospect once a landlord's decision is committed; runs off the request thread so a slow gateway can't delay it. */
+/** Messages the prospect once a landlord's decision is committed; runs off the request thread so a slow gateway can't delay it. */
 @Component
 @RequiredArgsConstructor
-public class TourRequestSmsListener {
+public class TourRequestMessageListener {
 
     private final TourRequestNotificationService tourRequestNotificationService;
 

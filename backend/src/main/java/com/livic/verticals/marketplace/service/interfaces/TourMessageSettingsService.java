@@ -1,8 +1,8 @@
 package com.livic.verticals.marketplace.service.interfaces;
 
 import com.livic.verticals.marketplace.domain.TourMessageType;
-import com.livic.verticals.marketplace.dto.TourMessageSettingsDTOs.TourMessageSettingsResponse;
-import com.livic.verticals.marketplace.dto.TourMessageSettingsDTOs.UpdateTourMessageSettingsRequest;
+import com.livic.verticals.marketplace.dto.TourMessageSettingsResponse;
+import com.livic.verticals.marketplace.dto.UpdateTourMessageSettingsRequest;
 import com.livic.platform.notification.domain.NotificationChannel;
 
 import java.util.Set;

@@ -4,8 +4,8 @@ import com.livic.verticals.marketplace.dto.TourAvailabilityDTOs.BlackoutResponse
 import com.livic.verticals.marketplace.dto.TourAvailabilityDTOs.CreateBlackoutRequest;
 import com.livic.verticals.marketplace.dto.TourAvailabilityDTOs.TourAvailabilityResponse;
 import com.livic.verticals.marketplace.dto.TourAvailabilityDTOs.UpdateTourAvailabilityRequest;
-import com.livic.verticals.marketplace.dto.TourMessageSettingsDTOs.TourMessageSettingsResponse;
-import com.livic.verticals.marketplace.dto.TourMessageSettingsDTOs.UpdateTourMessageSettingsRequest;
+import com.livic.verticals.marketplace.dto.TourMessageSettingsResponse;
+import com.livic.verticals.marketplace.dto.UpdateTourMessageSettingsRequest;
 import com.livic.verticals.marketplace.service.interfaces.TourAvailabilityService;
 import com.livic.verticals.marketplace.service.interfaces.TourMessageSettingsService;
 import com.livic.platform.common.response.ApiResponse;

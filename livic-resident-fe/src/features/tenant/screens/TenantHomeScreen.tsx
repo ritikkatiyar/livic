@@ -8,6 +8,7 @@ import { SkeletonCardGrid } from '@/src/components/common/feedback/Skeleton';
 import { UnitMembershipSummary, getMyContext } from '@/src/features/auth/api/me.api';
 import { RentCycle, getTenantRentCycles } from '@/src/features/tenant/api/payments.api';
 import { getAnnouncements, markAnnouncementRead, Announcement } from '@/src/features/announcements/api/announcement.api';
+import { TodayMenuCard } from '@/src/features/mess/components/TodayMenuCard';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { Theme } from '@/src/theme/Theme';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -180,6 +181,8 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
                 </TouchableOpacity>
               </View>
             </View>
+
+            <TodayMenuCard token={token} />
 
             {/* Maintenance Action Strip */}
             <TouchableOpacity onPress={() => router.push('/tenant-maintenance')} activeOpacity={0.88}>

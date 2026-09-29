@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, usePathname, Href } from 'expo-router';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { useMyMessMenu } from '@/src/features/mess/hooks/useMyMessMenu';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
 export default function SidebarNavigation() {
@@ -29,7 +30,9 @@ export default function SidebarNavigation() {
   });
   const router = useRouter();
   const pathname = usePathname();
-  const { signOut } = useAuth();
+  const { signOut, accessToken } = useAuth();
+  // Shown only where the property shares a mess menu; a failed load simply leaves it out
+  const messEnabled = useMyMessMenu(accessToken).data?.enabled ?? false;
 
   const renderSidebarLink = (icon: keyof typeof MaterialIcons.glyphMap, label: string, route: Href) => {
     const isActive = typeof route === 'string' ? (pathname === route || pathname.startsWith(route + '/')) : false;
@@ -72,6 +75,7 @@ export default function SidebarNavigation() {
         {renderSidebarLink('home', 'Home', '/tenant-home')}
         {renderSidebarLink('domain', 'Property', '/tenant-property')}
         {renderSidebarLink('inventory', 'Inventory', '/tenant-inventory' as Href)}
+        {messEnabled ? renderSidebarLink('restaurant-menu', 'Mess Menu', '/tenant-mess' as Href) : null}
         {renderSidebarLink('payments', 'Payments', '/tenant-payments')}
         {renderSidebarLink('support-agent', 'Support', '/tenant-maintenance')}
         {renderSidebarLink('settings', 'Settings', '/settings' as Href)}

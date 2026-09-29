@@ -47,6 +47,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
     { title: 'Reports', subtitle: 'Statements & Logs', route: '/reports', icon: 'assessment', color: theme.Colors.secondary },
     { title: 'Inventory', subtitle: 'Assets & Stock', route: '/inventory', icon: 'inventory-2', color: theme.Colors.tertiary },
     { title: 'Announcements', subtitle: 'Broadcast Messages', route: '/announcements', icon: 'campaign', color: theme.Colors.primary },
+    { title: 'Mess Menu', subtitle: 'Weekly Meals', route: '/mess', icon: 'restaurant-menu', color: theme.Colors.tertiary },
     { title: 'Escalations', subtitle: 'Issues & Repairs', route: '/escalations', icon: 'report-problem', color: theme.Colors.error },
     { title: 'Settings', subtitle: 'Profile & App Config', route: '/settings', icon: 'settings', color: theme.Colors.onSurfaceVariant },
   ] satisfies MenuItem[]).filter((item) => canRoute(item.route)), [theme, canRoute]);

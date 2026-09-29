@@ -91,6 +91,7 @@ export default function SidebarNavigation() {
         {renderSidebarLink('inventory', 'Inventory', '/inventory' as Href)}
         {renderSidebarLink('build', 'Escalations', '/escalations')}
         {renderSidebarLink('campaign', 'Announcements', '/announcements')}
+        {renderSidebarLink('restaurant-menu', 'Mess Menu', '/mess' as Href)}
         {renderSidebarLink('account-balance', 'Finance & Billing', '/expenses')}
         {renderSidebarLink('settings', 'Settings', '/settings')}
       </ScrollView>

@@ -31,13 +31,27 @@ MSG91_ENABLED=true
 MSG91_AUTH_KEY=your_msg91_auth_key
 MSG91_SENDER_ID=LIVIC
 
-# MSG91 SMS:
+# MSG91 SMS (one flow per DLT template; see section 4, Step 2):
 MSG91_SMS_ENABLED=true
-MSG91_SMS_FLOW_ID=your_msg91_approved_sms_flow_id
+MSG91_SMS_FLOW_MARKETPLACE_OTP=flow_id
+MSG91_SMS_FLOW_TOUR_APPROVED=flow_id
+MSG91_SMS_FLOW_TOUR_DECLINED=flow_id
+MSG91_SMS_FLOW_TOUR_REMINDER=flow_id
+# Links in messages point here; the domain must be whitelisted with DLT
+MARKETPLACE_BASE_URL=https://your-marketplace-domain
 
-# MSG91 WhatsApp:
+# MSG91 WhatsApp (one Meta-approved template per message; see section 4, Step 3):
 MSG91_WHATSAPP_ENABLED=true
 MSG91_WHATSAPP_INTEGRATED_NUMBER=919876543210
+MSG91_WHATSAPP_TEMPLATE_MARKETPLACE_OTP=template_name
+MSG91_WHATSAPP_TEMPLATE_TOUR_APPROVED=template_name
+MSG91_WHATSAPP_TEMPLATE_TOUR_DECLINED=template_name
+MSG91_WHATSAPP_TEMPLATE_TOUR_REMINDER=template_name
+MSG91_WHATSAPP_LANGUAGE=en
+
+# Marketplace OTP channels, tried in order: SMS, WHATSAPP or SMS,WHATSAPP (WhatsApp as fallback).
+# The app refuses to start if none of them can deliver.
+MARKETPLACE_OTP_CHANNELS=SMS
 
 # ==============================================================================
 # 4. DIRECT WHATSAPP CLOUD API (Meta - Alternative if not using MSG91)
@@ -119,25 +133,50 @@ MSG91 is a single provider that handles both **TRAI DLT-compliant transactional 
 2. Open the **Dashboard** and navigate to **Authkey**: [https://control.msg91.com/app/authkey](https://control.msg91.com/app/authkey).
 3. Click **Create New Authkey**, name it `Livic-Backend`, and copy the key into `MSG91_AUTH_KEY`.
 
-### Step 2: Configure SMS (`MSG91_SMS_FLOW_ID` & `MSG91_SENDER_ID`)
-1. **DLT Registration**: In India, transactional SMS requires TRAI DLT registration (e.g. via Jio DLT, Vilpower, or Airtel DLT).
-2. **Sender ID**: In the MSG91 dashboard under **SMS** > **Sender ID**, register your approved 6-letter sender ID (e.g. `LIVICR`). Set `MSG91_SENDER_ID=LIVICR`.
-3. **SMS Flow**:
-   - Go to **SMS** > **Campaign / Flows**.
-   - Create a new Flow using your approved DLT content template for rent cycle publication and payment alerts.
-   - Copy the generated Flow ID (a hexadecimal string like `64b8f0...`) into `MSG91_SMS_FLOW_ID`.
-   - Set `MSG91_SMS_ENABLED=true`.
+### Step 2: Configure SMS (`MSG91_SMS_FLOW_*` & `MSG91_SENDER_ID`)
+Carriers in India deliver only SMS whose text matches a DLT-registered template, so every SMS the backend sends is one of the fixed templates in `MessageTemplate` (`backend/src/main/java/com/livic/platform/notification/domain/MessageTemplate.java`). Registration takes days to weeks, so start it early; the code runs with the console provider meanwhile.
 
-### Step 3: Configure WhatsApp (`MSG91_WHATSAPP_INTEGRATED_NUMBER`)
-1. In the MSG91 dashboard, navigate to **WhatsApp**.
-2. Connect your Meta WhatsApp Business Account (WABA) and onboard your business phone number.
-3. Once approved, note the phone number including the country code (e.g. `919876543210` for an Indian number without `+` or leading `0`).
-4. Set:
-   ```env
-   MSG91_WHATSAPP_ENABLED=true
-   MSG91_WHATSAPP_INTEGRATED_NUMBER=919876543210
-   ```
-5. `Msg91WhatsAppNotificationSender` will automatically normalize recipient numbers to standard international format and dispatch outbound messages.
+1. **DLT registration**: register the business as a Principal Entity on a DLT portal (Jio, Vilpower, Airtel, etc.) and add the entity ID in MSG91.
+2. **Sender ID (header)**: register a 6-letter transactional header (e.g. `LIVICR`) on DLT and in MSG91 under **SMS** > **Sender ID**. Set `MSG91_SENDER_ID`.
+3. **URL whitelisting**: whitelist the marketplace domain used in `MARKETPLACE_BASE_URL` on the DLT portal; SMS with unlisted links are blocked.
+4. **Content templates**: register these four as *Service Implicit* templates. The text must match exactly; each `{#var#}` value is at most 30 characters (the backend cuts longer values), and the link uses `{#url#}`.
+
+   | Template (env var) | DLT text | MSG91 variables, in order |
+   |---|---|---|
+   | `MSG91_SMS_FLOW_MARKETPLACE_OTP` | `{#var#} is your Livic verification code. It expires in {#var#} minutes. Do not share it with anyone. -LIVIC` | `otp`, `minutes` |
+   | `MSG91_SMS_FLOW_TOUR_APPROVED` | `Hi {#var#}, your visit to {#var#} on {#var#} at {#var#} is confirmed. Details: {#url#} -LIVIC` | `name`, `property`, `date`, `time`, `link` |
+   | `MSG91_SMS_FLOW_TOUR_DECLINED` | `Hi {#var#}, your visit request for {#var#} on {#var#} at {#var#} was declined. {#var#} See other slots: {#url#} -LIVIC` | `name`, `property`, `date`, `time`, `note`, `link` |
+   | `MSG91_SMS_FLOW_TOUR_REMINDER` | `Reminder: your visit to {#var#} is on {#var#} at {#var#}. Details: {#url#} -LIVIC` | `property`, `date`, `time`, `link` |
+
+5. **Flows**: in MSG91 under **SMS** > **Flows**, create one flow per approved template, writing each variable as `##name##` with the names above (e.g. `##otp## is your Livic verification code...`). Copy each Flow ID into its env var.
+6. Set `MSG91_SMS_ENABLED=true` and `MSG91_AUTH_KEY`. At startup the backend checks that the auth key and all four flow IDs are present.
+
+If you change a template's wording, change `MessageTemplate`, re-register on DLT and update the MSG91 flow together.
+
+### Step 3: Configure WhatsApp (`MSG91_WHATSAPP_*`)
+WhatsApp needs no DLT. Meta approves the business, the sender number and each template, through MSG91.
+
+1. **Business verification**: create a Meta Business Manager account and start business verification (documents; a few days). You can connect before it finishes, with lower daily sending limits.
+2. **Connect**: in the MSG91 dashboard open **WhatsApp** > **Connect** and log in with Facebook. MSG91 creates the WhatsApp Business Account for you, so no Meta developer app or token is needed.
+3. **Number**: add a phone number that is not currently registered on the WhatsApp app, verify it by OTP, and set the display name (e.g. "Livic"); Meta reviews the name. Put the number with country code in `MSG91_WHATSAPP_INTEGRATED_NUMBER` (e.g. `919876543210`).
+4. **Templates**: create these in MSG91 (**WhatsApp** > **Templates**), language English. Body placeholders are numbered in the order shown; approval usually takes minutes to hours.
+
+   | Template (env var) | Category | Body | Parameters, in order |
+   |---|---|---|---|
+   | `MSG91_WHATSAPP_TEMPLATE_MARKETPLACE_OTP` | Authentication | Meta's fixed text ("{{1}} is your verification code."), with the security disclaimer, 5-minute expiry and a **Copy code** button | `otp` (also used for the button) |
+   | `MSG91_WHATSAPP_TEMPLATE_TOUR_APPROVED` | Utility | `Hi {{1}}, your visit to {{2}} on {{3}} at {{4}} is confirmed. Details: {{5}}` | name, property, date, time, link |
+   | `MSG91_WHATSAPP_TEMPLATE_TOUR_DECLINED` | Utility | `Hi {{1}}, your visit request for {{2}} on {{3}} at {{4}} was declined. {{5}} See other slots: {{6}}` | name, property, date, time, note, link |
+   | `MSG91_WHATSAPP_TEMPLATE_TOUR_REMINDER` | Utility | `Reminder: your visit to {{1}} is on {{2}} at {{3}}. Details: {{4}}` | property, date, time, link |
+
+   Put each approved template's name in its env var, and `MSG91_WHATSAPP_NAMESPACE` if MSG91 shows one.
+5. **Wallet**: WhatsApp is prepaid in MSG91: Meta's per-message rate plus MSG91's fee.
+6. Set `MSG91_WHATSAPP_ENABLED=true`. At startup the backend checks the auth key, the number and all four template names.
+
+**Opt-in:** Meta only allows business-initiated WhatsApp messages to people who opted in. The marketplace tour form has an unticked "Send me updates about this visit on WhatsApp" checkbox, and tour messages go on WhatsApp only to visitors who ticked it. OTPs are requested by the visitor, so they need no separate opt-in.
+
+**Who gets what:** each property owner chooses SMS, WhatsApp, both or neither for "visit approved or declined" and for "visit reminder" in the landlord app (**Tour requests** > **Visiting hours** > **Messages to visitors**). Channels without a configured gateway show as not set up and can't be turned on. OTP delivery is the platform-wide `MARKETPLACE_OTP_CHANNELS` setting.
+
+The older `Msg91WhatsAppNotificationSender` still sends tenant notifications (rent, issues) as free-form text; moving those onto templates is a follow-up.
 
 ---
 
@@ -164,7 +203,8 @@ If you prefer to connect directly to Meta without MSG91:
 ## 6. Local Development Mode (Zero Credentials Required)
 
 If you are developing locally or do not yet have live credentials:
-- Keep `EMAIL_ENABLED=false`, `PUSH_ENABLED=false`, and `MSG91_ENABLED=false`.
+- Keep `EMAIL_ENABLED=false`, `PUSH_ENABLED=false`, `MSG91_ENABLED=false`, `MSG91_SMS_ENABLED=false` and `MSG91_WHATSAPP_ENABLED=false`.
+- The dev profile sets `APP_MESSAGING_CONSOLE_FALLBACK=true`, so SMS and WhatsApp messages are printed with a masked number instead of sent (`[WHATSAPP - not sent, console provider] to=******3210 template=TOUR_APPROVED: Hi Riya, ...`). Outside development this stays off: a channel without MSG91 settings is unavailable, never silently "sent". The dev profile also fixes marketplace OTPs to `000000` and skips sending them; set `MARKETPLACE_DEV_OTP_CODE=` (empty) to exercise the OTP message.
 - Spring Boot will automatically activate `ConsoleNotificationSender`.
 - When rent cycles are published or notifications are triggered, all notifications will print directly to the backend log output:
   ```text

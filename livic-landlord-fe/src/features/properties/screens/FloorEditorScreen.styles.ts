@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
@@ -51,8 +52,11 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: theme.Spacing.lg,
-    paddingVertical: theme.Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.Spacing.md,
+    marginBottom: theme.Spacing.md,
   },
   backButton: {
     width: 40,
@@ -65,19 +69,18 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.Spacing.md,
   },
-  titleContainer: {
-    marginTop: theme.Spacing.sm,
-  },
+  // Same scale as the Floor Overview title so the two screens feel like one flow
   titleLine: {
-    fontSize: theme.Typography.headlineXl.fontSize,
+    flexShrink: 1,
+    fontSize: theme.Typography.headlineMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurface,
-    lineHeight: 46,
-    letterSpacing: -1,
+    lineHeight: 36,
+    letterSpacing: -0.4,
   },
+  // PageShell already applies the page's horizontal padding
   contentContainer: {
     flex: 1,
-    paddingHorizontal: theme.Spacing.lg,
   },
   gridWrapper: {
     flex: 1,
@@ -98,7 +101,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   loadingText: {
     marginTop: 12,
@@ -147,7 +150,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingTop: theme.Spacing.xl,
     paddingBottom: theme.Spacing.lg,
     borderRightWidth: 1,
-    borderRightColor: theme.Surface.border,
+    borderRightColor: theme.Colors.outline,
     backgroundColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
@@ -252,7 +255,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 12,
   },
   sidebarLinkActive: {
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.08),
   },
   sidebarLinkText: {
     fontSize: theme.Typography.bodyMedium.fontSize,

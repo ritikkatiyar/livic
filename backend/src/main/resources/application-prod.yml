@@ -22,6 +22,8 @@ spring:
         format_sql: false
 
 server:
+  # Client IPs from X-Forwarded-For, trusted only from proxies on private networks (per-IP OTP limit)
+  forward-headers-strategy: native
   tomcat:
     threads:
       max: 20

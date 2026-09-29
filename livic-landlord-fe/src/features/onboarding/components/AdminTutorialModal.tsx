@@ -16,6 +16,7 @@ import { useAdminTutorial } from '../context/AdminTutorialContext';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 /** Roles that are allowed to see the Admin Setup Checklist. */
 const ADMIN_ROLES = ['ADMIN', 'SUPER_ADMIN'] as const;
@@ -80,7 +81,7 @@ export const AdminTutorialModal: React.FC = () => {
             </View>
             <View style={styles.progressBarTrack}>
               <LinearGradient
-                colors={['#0072ff', '#00d4ff']}
+                colors={[theme.Colors.primary, theme.Colors.primary]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[styles.progressBarFill, { width: `${progressPercent}%` }]}
@@ -109,7 +110,7 @@ export const AdminTutorialModal: React.FC = () => {
                     activeOpacity={0.7}
                   >
                     {isCompleted ? (
-                      <MaterialIcons name="check-circle" size={24} color="#10b981" />
+                      <MaterialIcons name="check-circle" size={24} color={theme.Colors.success} />
                     ) : (
                       <MaterialIcons
                         name="radio-button-unchecked"
@@ -171,7 +172,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
   StyleSheet.create({
     overlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.55)',
+      backgroundColor: theme.Colors.scrim,
       justifyContent: 'center',
       alignItems: 'center',
       padding: isMobile ? 10 : (theme.Spacing.md || 16),
@@ -245,7 +246,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
     progressBarTrack: {
       height: 6,
       borderRadius: 3,
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.1) : withAlpha(theme.Colors.onSurface, 0.06),
       overflow: 'hidden',
     },
     progressBarFill: {
@@ -266,12 +267,12 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
       backgroundColor: theme.Colors.surfaceContainerLowest,
     },
     stepItemCompleted: {
-      borderColor: 'rgba(16, 185, 129, 0.3)',
-      backgroundColor: isDark ? 'rgba(16, 185, 129, 0.04)' : 'rgba(16, 185, 129, 0.02)',
+      borderColor: withAlpha(theme.Colors.success, 0.3),
+      backgroundColor: isDark ? withAlpha(theme.Colors.success, 0.04) : withAlpha(theme.Colors.success, 0.02),
     },
     stepItemActive: {
       borderColor: theme.Colors.primary,
-      backgroundColor: isDark ? 'rgba(0, 114, 255, 0.1)' : 'rgba(0, 114, 255, 0.03)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.1) : withAlpha(theme.Colors.primary, 0.03),
     },
     checkCircle: {
       paddingTop: 2,

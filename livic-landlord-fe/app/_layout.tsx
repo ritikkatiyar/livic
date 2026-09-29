@@ -10,10 +10,8 @@ import 'react-native-reanimated';
 import { useColorScheme } from 'react-native';
 import { AuthProvider } from '@/src/features/auth/context/AuthProvider';
 import { ThemeContextProvider } from '@/src/theme/ThemeContext';
-import BottomNavigation from '@/src/components/common/navigation/BottomNavigation';
 import SidebarNavigation from '@/src/components/common/navigation/SidebarNavigation';
 import MobileHeader from '@/src/components/common/navigation/MobileHeader';
-import MobileMoreSheet from '@/src/components/common/navigation/MobileMoreSheet';
 import QRScannerModal from '@/src/components/common/navigation/QRScannerModal';
 import FloatingAIAssistant from '@/src/components/common/navigation/FloatingAIAssistant';
 import { ScrollProvider } from '@/src/components/common/navigation/ScrollContext';
@@ -27,64 +25,7 @@ import { useProperties } from '@/src/hooks/useProperties';
 import { LinearGradient, type LinearGradientProps } from 'expo-linear-gradient';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { LightColors, Breakpoints, Spacing, Rounded, Timing } from '@/src/theme/Theme';
-
-const ROUTE_TITLES: Record<string, string> = {
-  '/command-center': 'Portfolio',
-  '/leases': 'Leases',
-  '/inventory': 'Items',
-  '/expenses': 'Finance',
-  '/expenses/charge-config': 'Charges',
-  '/expenses/billing-worksheet': 'Worksheets',
-  '/expenses/ledger': 'Ledger',
-  '/expenses/rent-roll': 'Rent Roll',
-  '/create-expense': 'New Charge',
-  '/reports': 'Reports',
-  '/ai': 'AI Desk',
-  '/escalations': 'Escalations',
-  '/announcements': 'Announcements',
-  '/analytics': 'Overview',
-  '/settings': 'Settings',
-  '/admin': 'Admin',
-  '/billing': 'Subscription',
-  '/properties/create': 'New Property',
-};
-
-const PRIMARY_ROUTES = [
-  '/command-center',
-  '/leases',
-  '/inventory',
-  '/expenses',
-  '/analytics',
-  '/reports',
-  '/ai',
-  '/announcements',
-  '/escalations',
-  '/settings',
-  '/'
-];
-
-function getMobileHeaderTitle(pathname: string): string {
-  const clean = pathname.split('?')[0];
-  if (ROUTE_TITLES[clean]) {
-    return ROUTE_TITLES[clean];
-  }
-  if (clean.startsWith('/properties/')) {
-    if (clean.includes('/floors')) {
-      return 'Floor View';
-    }
-    if (clean.includes('/meter-readings')) {
-      return 'Meter Readings';
-    }
-    if (clean.includes('/memberships')) {
-      return 'Members';
-    }
-    return 'Property Details';
-  }
-  if (clean.startsWith('/expenses/')) {
-    return 'Finance';
-  }
-  return 'Livic';
-}
+import { STACK_SCREEN_OPTIONS } from '@/src/components/common/navigation/navigatorOptions';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,54 +44,11 @@ type LinearGradientWithWebProps = LinearGradientProps & {
 };
 const LinearGradientWithDataSet = LinearGradient as React.ComponentType<LinearGradientWithWebProps>;
 
-function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
-  const { theme } = useAppTheme();
-  const pathname = usePathname();
-  const { properties } = useProperties();
-  const { selectedPropertyId, setSelectedPropertyId, searchQuery, setSearchQuery } = useGlobalPropertySelection();
-
-  const isPortfolio = pathname === '/command-center' || pathname === '/';
-  const isAI = pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant';
-  const showScopeSelector = !isAI;
-  const showTopbarSearch = !isPortfolio && !isAI;
-
-  return (
-    <LinearGradientWithDataSet
-      dataSet={{ responsiveLayout: 'desktop' }}
-      colors={theme.Colors.backgroundGradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1, flexDirection: 'row' }}
-    >
-      {/* 1. Persistent Pinned Left Sidebar */}
-      <SidebarNavigation />
-
-      {/* 2. Main Desktop Column with Persistent Pinned Topbar */}
-      <View style={{ flex: 1, flexDirection: 'column' }}>
-        <DesktopNavBar 
-          properties={showScopeSelector ? (properties || []).map((p: any) => ({ id: p.id, name: p.name })) : []}
-          selectedPropertyId={selectedPropertyId}
-          onPropertyChange={setSelectedPropertyId}
-          searchQuery={showTopbarSearch ? searchQuery : undefined}
-          onSearchChange={showTopbarSearch ? setSearchQuery : undefined}
-          showSearch={showTopbarSearch}
-          searchPlaceholder="Search or jump to..."
-        />
-
-        {/* 3. Dynamic Inner Screen View */}
-        <View style={{ flex: 1 }}>
-          {children}
-        </View>
-      </View>
-    </LinearGradientWithDataSet>
-  );
-}
-
-function MobileLayoutShell({ children }: { children: React.ReactNode }) {
+function AppBackground({ children }: { children: React.ReactNode }) {
   const { theme } = useAppTheme();
   return (
     <LinearGradient
-      colors={(theme.Colors.backgroundGradient || ['#090D12', '#0F1720', '#141E2A']) as [string, string, ...string[]]}
+      colors={(theme.Colors.backgroundGradient || [theme.Colors.onSurface, theme.Colors.onSurface, theme.Colors.onSurface]) as [string, string, ...string[]]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ flex: 1, minHeight: '100%', flexDirection: 'column', backgroundColor: theme.Colors.background }}
@@ -158,6 +56,33 @@ function MobileLayoutShell({ children }: { children: React.ReactNode }) {
       {children}
     </LinearGradient>
   );
+}
+
+/**
+ * Root navigator: auth and onboarding screens, plus the signed-in app under (tabs),
+ * which owns the bottom bar and each tab's own history.
+ */
+function RootStack() {
+  return (
+    <Stack screenOptions={STACK_SCREEN_OPTIONS}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="login" />
+      <Stack.Screen name="signup" />
+      <Stack.Screen name="verify-email" />
+      <Stack.Screen name="mode-selection" />
+      <Stack.Screen name="onboarding" />
+      <Stack.Screen name="(tabs)" />
+    </Stack>
+  );
+}
+
+/**
+ * Status bar icons follow the app's chosen theme. `style="auto"` follows the phone's theme
+ * instead, which hides the icons whenever the two differ (e.g. app light, phone dark).
+ */
+function ThemedStatusBar() {
+  const { isDark } = useAppTheme();
+  return <StatusBar style={isDark ? 'light' : 'dark'} translucent backgroundColor="transparent" />;
 }
 
 function NavigationThemeWrapper({ children }: { children: React.ReactNode }) {
@@ -217,7 +142,6 @@ export default function RootLayout() {
   const { isDesktop } = useResponsive();
   const pathname = usePathname();
 
-  const [moreSheetVisible, setMoreSheetVisible] = useState(false);
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -248,13 +172,6 @@ export default function RootLayout() {
     }
   }, []);
 
-  const AUTH_OR_STANDALONE_ROUTES = ['/login', '/signup', '/verify-email', '/onboarding', '/mode-selection', '/'];
-  const hideNavigation = pathname === '/login' || pathname === '/signup' || pathname === '/verify-email' || pathname === '/onboarding' || pathname === '/mode-selection';
-  const cleanPathname = pathname.split('?')[0];
-  const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
-  const showDesktop = isDesktop;
-  const hideHeader = hideNavigation || AUTH_OR_STANDALONE_ROUTES.includes(cleanPathname);
-
   return (
     <SafeAreaProvider>
       <ThemeContextProvider>
@@ -266,119 +183,22 @@ export default function RootLayout() {
                   <AdminTutorialProvider>
                     <PropertySelectionProvider>
                       <ScrollProvider>
-                    {showDesktop && !hideNavigation ? (
-                      <DesktopLayoutShell>
-                        <ScreenWrapper isAuth={hideNavigation}>
-                          <OnboardingGate>
-                            <Stack screenOptions={{ 
-                              headerShown: false, 
-                              contentStyle: { backgroundColor: 'transparent' },
-                              animation: 'fade',
-                              animationDuration: Timing.normal,
-                            }}>
-                              <Stack.Screen name="index" />
-                              <Stack.Screen name="login" />
-                              <Stack.Screen name="signup" />
-                              <Stack.Screen name="verify-email" />
-                              <Stack.Screen name="mode-selection" />
-                              <Stack.Screen name="onboarding" />
-                              <Stack.Screen name="command-center" />
-                              <Stack.Screen name="ai" />
-                              <Stack.Screen name="admin" />
-                              <Stack.Screen name="analytics" />
-                              <Stack.Screen name="reports" />
-                              <Stack.Screen name="billing" />
-                              <Stack.Screen name="expenses/index" />
-                              <Stack.Screen name="expenses/charge-config" />
-                              <Stack.Screen name="expenses/billing-worksheet" />
-                              <Stack.Screen name="expenses/ledger" />
-                              <Stack.Screen name="expenses/rent-roll" />
-                              <Stack.Screen name="leases" />
-                              <Stack.Screen name="inventory" />
-                              <Stack.Screen name="create-expense" />
-                              <Stack.Screen name="properties/create" />
-                              <Stack.Screen name="properties/[id]/index" />
-                              <Stack.Screen name="properties/[id]/meter-readings" />
-                              <Stack.Screen name="properties/[id]/memberships" />
-                              <Stack.Screen name="escalations" />
-                              <Stack.Screen name="announcements" />
-                              <Stack.Screen name="settings" />
-                            </Stack>
-                          </OnboardingGate>
-                        </ScreenWrapper>
-                      </DesktopLayoutShell>
-                    ) : (
-                      <MobileLayoutShell>
-                        {!hideHeader && (
-                          <MobileHeader 
-                            title={getMobileHeaderTitle(pathname)} 
-                            onNotificationPress={() => router.push('/escalations')}
-                          />
-                        )}
-                        <ScreenWrapper isAuth={hideNavigation}>
-                          <OnboardingGate>
-                            <Stack screenOptions={{ 
-                              headerShown: false, 
-                              contentStyle: { backgroundColor: 'transparent' },
-                              animation: 'fade',
-                              animationDuration: Timing.normal,
-                            }}>
-                              <Stack.Screen name="index" />
-                              <Stack.Screen name="login" />
-                              <Stack.Screen name="signup" />
-                              <Stack.Screen name="verify-email" />
-                              <Stack.Screen name="mode-selection" />
-                              <Stack.Screen name="onboarding" />
-                              <Stack.Screen name="command-center" />
-                              <Stack.Screen name="ai" />
-                              <Stack.Screen name="admin" />
-                              <Stack.Screen name="analytics" />
-                              <Stack.Screen name="reports" />
-                              <Stack.Screen name="billing" />
-                              <Stack.Screen name="expenses/index" />
-                              <Stack.Screen name="expenses/charge-config" />
-                              <Stack.Screen name="expenses/billing-worksheet" />
-                              <Stack.Screen name="expenses/ledger" />
-                              <Stack.Screen name="expenses/rent-roll" />
-                              <Stack.Screen name="leases" />
-                              <Stack.Screen name="inventory" />
-                              <Stack.Screen name="create-expense" />
-                              <Stack.Screen name="properties/create" />
-                              <Stack.Screen name="properties/[id]/index" />
-                              <Stack.Screen name="properties/[id]/meter-readings" />
-                              <Stack.Screen name="properties/[id]/memberships" />
-                              <Stack.Screen name="escalations" />
-                              <Stack.Screen name="announcements" />
-                              <Stack.Screen name="settings" />
-                            </Stack>
-                          </OnboardingGate>
-                        </ScreenWrapper>
-                      </MobileLayoutShell>
-                    )}
-                    
-                    {!showDesktop && !hideNavigation && !(pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') && (
-                      <>
-                        <BottomNavigation 
-                          onMorePress={() => setMoreSheetVisible(true)} 
-                          onQRPress={() => setQrModalVisible(true)} 
-                        />
-                        <FloatingAIAssistant />
-                        <MobileMoreSheet 
-                          visible={moreSheetVisible} 
-                          onClose={() => setMoreSheetVisible(false)} 
-                        />
-                        <QRScannerModal 
-                          visible={qrModalVisible} 
-                          onClose={() => setQrModalVisible(false)} 
-                        />
-                      </>
-                    )}
-                    </ScrollProvider>
+                        {/* Chrome (header, bottom bar, assistant, or the desktop sidebar) is
+                            owned by the app shell in app/(tabs)/_layout.tsx, so screens outside
+                            it — login, onboarding, the AI desk — are full-screen automatically. */}
+                        <AppBackground>
+                          <ScreenWrapper>
+                            <OnboardingGate>
+                              <RootStack />
+                            </OnboardingGate>
+                          </ScreenWrapper>
+                        </AppBackground>
+                      </ScrollProvider>
                   </PropertySelectionProvider>
                 </AdminTutorialProvider>
               </AuthProvider>
           </ToastProvider>
-          <StatusBar style="auto" translucent backgroundColor="transparent" />
+          <ThemedStatusBar />
         </QueryClientProvider>
       </ErrorBoundary>
     </NavigationThemeWrapper>

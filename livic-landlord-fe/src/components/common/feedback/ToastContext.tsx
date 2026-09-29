@@ -4,6 +4,7 @@ import * as Haptics from 'expo-haptics';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -20,37 +21,38 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | null>(null);
 
-const TOAST_CONFIG: Record<ToastType, {
+// Built per render from the active theme so toast colors follow light/dark mode
+const getToastConfig = (theme: any): Record<ToastType, {
   icon: string;
   gradientColors: readonly [string, string];
   accentColor: string;
   glowColor: string;
-}> = {
+}> => ({
   success: {
     icon: 'check-circle',
-    gradientColors: ['#059669', '#10b981'],
-    accentColor: '#10b981',
-    glowColor: 'rgba(16, 185, 129, 0.3)',
+    gradientColors: [theme.Colors.success, theme.Colors.success],
+    accentColor: theme.Colors.success,
+    glowColor: withAlpha(theme.Colors.success, 0.3),
   },
   error: {
     icon: 'cancel',
-    gradientColors: ['#dc2626', '#ef4444'],
-    accentColor: '#ef4444',
-    glowColor: 'rgba(239, 68, 68, 0.3)',
+    gradientColors: [theme.Colors.error, theme.Colors.error],
+    accentColor: theme.Colors.error,
+    glowColor: withAlpha(theme.Colors.error, 0.3),
   },
   warning: {
     icon: 'warning-amber',
-    gradientColors: ['#d97706', '#f59e0b'],
-    accentColor: '#f59e0b',
-    glowColor: 'rgba(245, 158, 11, 0.3)',
+    gradientColors: [theme.Colors.tertiary, theme.Colors.tertiary],
+    accentColor: theme.Colors.tertiary,
+    glowColor: withAlpha(theme.Colors.tertiary, 0.3),
   },
   info: {
     icon: 'info',
-    gradientColors: ['#0891b2', '#06b6d4'],
-    accentColor: '#06b6d4',
-    glowColor: 'rgba(6, 182, 212, 0.3)',
+    gradientColors: [theme.Colors.primary, theme.Colors.primary],
+    accentColor: theme.Colors.primary,
+    glowColor: withAlpha(theme.Colors.primary, 0.3),
   },
-};
+});
 
 function ToastItem({
   toast,
@@ -64,8 +66,8 @@ function ToastItem({
   onDismiss: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const config = TOAST_CONFIG[toast.type];
   const { theme, isDark } = useAppTheme();
+  const config = getToastConfig(theme)[toast.type];
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const isWeb = Platform.OS === 'web';
@@ -238,7 +240,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           onRequestClose={() => setConfirmDialog(null)}
         >
           <View style={styles.modalOverlay}>
-            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.4)' }]} />
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.scrim || theme.Colors.scrim }]} />
             <View style={styles.modalCard}>
               <Text style={styles.modalTitle}>{confirmDialog.title}</Text>
               <Text style={styles.modalMessage}>{confirmDialog.message}</Text>
@@ -371,7 +373,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: theme.Colors.scrim || theme.Colors.scrim,
   },
   modalCard: {
     width: 320,

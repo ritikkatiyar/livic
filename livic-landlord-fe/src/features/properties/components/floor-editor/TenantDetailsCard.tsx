@@ -169,7 +169,7 @@ export function TenantDetailsCard({
               <Text style={styles.statusToggleText}>CANCEL</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.statusToggle, styles.statusActiveOccupied, { flex: 1 }]} onPress={handleCreateAndSelectTenant} disabled={tenantCreating}>
-              {tenantCreating ? <ActivityIndicator size="small" color="#fff" /> : <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE & ASSIGN</Text>}
+              {tenantCreating ? <ActivityIndicator size="small" color={theme.Colors.onPrimary} /> : <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE & ASSIGN</Text>}
             </TouchableOpacity>
           </View>
         </View>
@@ -401,7 +401,7 @@ export function TenantDetailsCard({
                         disabled={tenantCreating}
                       >
                         {tenantCreating ? (
-                          <ActivityIndicator size="small" color="#fff" />
+                          <ActivityIndicator size="small" color={theme.Colors.onPrimary} />
                         ) : (
                           <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE & ASSIGN</Text>
                         )}
@@ -455,7 +455,7 @@ export function TenantDetailsCard({
                       disabled={tenantAssigning}
                     >
                       {tenantAssigning ? (
-                        <ActivityIndicator size="small" color="#fff" />
+                        <ActivityIndicator size="small" color={theme.Colors.onPrimary} />
                       ) : (
                         <Text style={[styles.statusToggleText, styles.statusTextActive]}>
                           Assign {tenantSearchResult.fullName}

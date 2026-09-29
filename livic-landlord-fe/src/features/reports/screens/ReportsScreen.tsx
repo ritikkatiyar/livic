@@ -193,7 +193,7 @@ export default function ReportsScreen() {
           helperText={`${publishedCount} published`}
           iconName="payments"
           iconColor={theme.Colors.secondary}
-          valueColor={isDark ? '#A78BFA' : theme.Colors.secondary}
+          valueColor={isDark ? theme.Colors.secondary : theme.Colors.secondary}
           style={isDesktop ? { flex: 1 } : styles.kpiCardMobile}
         />
         <StatCard
@@ -340,7 +340,7 @@ export default function ReportsScreen() {
                     <Text
                       style={[
                         styles.cell,
-                        { flex: 1.5, textAlign: 'right', color: stmt.paidAt ? '#16a34a' : '#6b7a7d' },
+                        { flex: 1.5, textAlign: 'right', color: stmt.paidAt ? theme.Colors.success : theme.Colors.onSurfaceVariant },
                       ]}
                     >
                       ₹{stmt.paidAt ? stmt.totalAmount?.toLocaleString() : '0.00'}
@@ -398,7 +398,7 @@ export default function ReportsScreen() {
                       <Text
                         style={[
                           styles.mobileAmount,
-                          { color: stmt.paidAt ? '#16a34a' : '#6b7a7d' },
+                          { color: stmt.paidAt ? theme.Colors.success : theme.Colors.onSurfaceVariant },
                         ]}
                       >
                         Paid: ₹{stmt.paidAt ? stmt.totalAmount?.toLocaleString() : '0.00'}

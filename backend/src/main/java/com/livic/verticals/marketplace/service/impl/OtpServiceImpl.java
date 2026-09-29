@@ -5,9 +5,14 @@ import com.livic.verticals.marketplace.dto.OtpDTOs.OtpRequestRequest;
 import com.livic.verticals.marketplace.dto.OtpDTOs.OtpRequestResponse;
 import com.livic.verticals.marketplace.dto.OtpDTOs.OtpVerifyRequest;
 import com.livic.verticals.marketplace.dto.OtpDTOs.OtpVerifyResponse;
+import com.livic.verticals.marketplace.exception.OtpDeliveryException;
 import com.livic.verticals.marketplace.repository.OtpVerificationRepository;
 import com.livic.verticals.marketplace.service.interfaces.OtpService;
 import com.livic.platform.common.exception.BusinessException;
+import com.livic.verticals.marketplace.config.MarketplaceOtpProperties;
+import com.livic.platform.notification.domain.MessageTemplate;
+import com.livic.platform.notification.dto.TemplatedMessage;
+import com.livic.platform.notification.service.interfaces.MessagingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +25,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -29,6 +35,8 @@ public class OtpServiceImpl implements OtpService {
 
     private final OtpVerificationRepository otpRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MessagingService messagingService;
+    private final MarketplaceOtpProperties otpProperties;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private static final int OTP_EXPIRY_MINUTES = 5;
@@ -36,14 +44,21 @@ public class OtpServiceImpl implements OtpService {
     private static final int COOLDOWN_SECONDS = 60;
     private static final int MAX_REQUESTS_PER_HOUR = 5;
     private static final int MAX_ATTEMPTS = 5;
+    /** Stops one client from sending codes to many numbers; generous enough for shared networks. */
+    private static final int MAX_REQUESTS_PER_IP_PER_HOUR = 20;
+    /** Rows are kept a day past expiry; sessions last minutes, so nothing usable is deleted. */
+    private static final int STALE_AFTER_HOURS = 24;
 
-    /** Fixed OTP used instead of a random code when set; configured only in the dev profile (no SMS provider locally). */
+    /** Fixed OTP used instead of a random code when set; configured only in the dev profile (no messaging gateway locally). */
     @Value("${app.marketplace.otp.dev-code:}")
     private String devOtpCode;
 
+    /**
+     * Not transactional: each save commits on its own, so the database connection is not held while the messaging gateway
+     * is called.
+     */
     @Override
-    @Transactional
-    public OtpRequestResponse requestOtp(OtpRequestRequest request) {
+    public OtpRequestResponse requestOtp(OtpRequestRequest request, String clientIp) {
         String phone = request.phone().trim();
         Instant now = Instant.now();
 
@@ -61,7 +76,14 @@ public class OtpServiceImpl implements OtpService {
             throw new BusinessException("Maximum OTP requests exceeded for this hour. Please try again later.");
         }
 
-        // 3. Generate 6-digit OTP (fixed code when a dev code is configured)
+        // 3. Per-IP cap: one client cycling through phone numbers
+        if (clientIp != null && otpRepository.countByRequestIpAndCreatedAtAfter(clientIp, now.minus(1, ChronoUnit.HOURS))
+                >= MAX_REQUESTS_PER_IP_PER_HOUR) {
+            log.warn("otp_request_blocked reason=ip_limit ip={}", clientIp);
+            throw new BusinessException(HttpStatus.TOO_MANY_REQUESTS, "Too many verification requests. Please try again later.");
+        }
+
+        // 4. Generate 6-digit OTP (fixed code when a dev code is configured)
         boolean useDevCode = devOtpCode != null && devOtpCode.matches("^[0-9]{6}$");
         String otpCode = useDevCode ? devOtpCode : String.format("%06d", secureRandom.nextInt(1_000_000));
         String hashedOtp = passwordEncoder.encode(otpCode);
@@ -71,6 +93,7 @@ public class OtpServiceImpl implements OtpService {
                 .otpCodeHash(hashedOtp)
                 .expiresAt(now.plus(OTP_EXPIRY_MINUTES, ChronoUnit.MINUTES))
                 .attempts(0)
+                .requestIp(clientIp)
                 .build();
 
         otpRepository.save(entity);
@@ -79,7 +102,9 @@ public class OtpServiceImpl implements OtpService {
         log.info("Generated OTP verification request for phone ending in {}", 
                 phone.length() > 4 ? phone.substring(phone.length() - 4) : "****");
         if (useDevCode) {
-            log.warn("Marketplace OTP dev code is enabled (app.marketplace.otp.dev-code); no SMS was sent");
+            log.warn("Marketplace OTP dev code is enabled (app.marketplace.otp.dev-code); no message was sent");
+        } else {
+            sendCode(entity, otpCode);
         }
 
         return new OtpRequestResponse(OTP_EXPIRY_MINUTES * 60, COOLDOWN_SECONDS);
@@ -120,6 +145,28 @@ public class OtpServiceImpl implements OtpService {
         otpRepository.save(entity);
 
         return new OtpVerifyResponse(sessionToken, tokenExpiresAt);
+    }
+
+    @Override
+    @Transactional
+    public int deleteStaleVerifications() {
+        int deleted = otpRepository.deleteByExpiresAtBefore(Instant.now().minus(STALE_AFTER_HOURS, ChronoUnit.HOURS));
+        if (deleted > 0) {
+            log.info("otp_verifications_deleted count={}", deleted);
+        }
+        return deleted;
+    }
+
+    private void sendCode(OtpVerificationTbl entity, String otpCode) {
+        TemplatedMessage message = TemplatedMessage.of(MessageTemplate.MARKETPLACE_OTP, Map.of(
+                "otp", otpCode,
+                "minutes", String.valueOf(OTP_EXPIRY_MINUTES)));
+        if (!messagingService.sendFirstSuccessful(entity.getPhone(), message, otpProperties.getChannels()).anySent()) {
+            // The code never reached the user, so it must not be verifiable; the cooldown still applies to retries
+            entity.setExpiresAt(Instant.now());
+            otpRepository.save(entity);
+            throw new OtpDeliveryException();
+        }
     }
 
     @Override

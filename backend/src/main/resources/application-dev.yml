@@ -11,6 +11,8 @@ spring:
     password: ${DB_PASSWORD:livic}
     baseline-on-migrate: false
     validate-on-migrate: false
+    # A developer's database may already hold a branch's migration under a number that main later
+    # used for something else, so a lower version can still be waiting after a higher one applied.
     out-of-order: true
   jpa:
     show-sql: false
@@ -19,6 +21,9 @@ spring:
         show_sql: false
         format_sql: false
 app:
+  messaging:
+    # No SMS/WhatsApp gateway locally: messages are printed to the log
+    console-fallback: ${APP_MESSAGING_CONSOLE_FALLBACK:true}
   marketplace:
     otp:
       # Dev only: every marketplace OTP is this fixed code (no SMS provider locally). Never set this outside dev.

@@ -156,7 +156,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   trackBase: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: theme.Colors.surfaceContainerHigh || '#e5e7eb',
+    backgroundColor: theme.Colors.surfaceContainerHigh || theme.Colors.surfaceContainerHigh,
     width: '100%',
   },
   trackFill: {

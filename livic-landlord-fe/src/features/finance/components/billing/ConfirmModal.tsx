@@ -48,7 +48,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.Colors.scrim || theme.Colors.scrim,
   },
   modalPopup: {
     width: 400,

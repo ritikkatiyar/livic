@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
@@ -16,7 +17,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       borderWidth: 1,
       borderColor: theme.Colors.outline,
       overflow: 'hidden',
-      shadowColor: 'black',
+      shadowColor: theme.Colors.shadowColor,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.08,
       shadowRadius: 12,
@@ -77,9 +78,9 @@ export const createStyles = (theme: any, isDark: boolean) =>
       letterSpacing: 0.2,
     },
     infoCard: {
-      backgroundColor: 'rgba(255, 255, 255, 0.45)',
+      backgroundColor: theme.Colors.surfaceContainerLowest,
       borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.65)',
+      borderColor: theme.Colors.surfaceContainerLowest,
       borderRadius: 20,
       padding: theme.Spacing.md,
       marginBottom: 20,
@@ -102,7 +103,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginTop: theme.Spacing.md,
       paddingTop: theme.Spacing.md,
       borderTopWidth: 1,
-      borderTopColor: 'rgba(0, 104, 117, 0.1)',
+      borderTopColor: withAlpha(theme.Colors.primary, 0.1),
       gap: theme.Spacing.md,
     },
     metaItem: {
@@ -121,9 +122,9 @@ export const createStyles = (theme: any, isDark: boolean) =>
       color: theme.Colors.onSurface,
     },
     actionsContainer: {
-      backgroundColor: 'rgba(255, 255, 255, 0.55)',
+      backgroundColor: theme.Colors.surfaceContainerLowest,
       borderWidth: 1.5,
-      borderColor: 'rgba(255, 255, 255, 0.75)',
+      borderColor: theme.Colors.surfaceContainerLowest,
       borderRadius: 20,
       padding: theme.Spacing.md,
       marginBottom: 20,
@@ -145,10 +146,10 @@ export const createStyles = (theme: any, isDark: boolean) =>
       backgroundColor: theme.Colors.primary,
     },
     btnResolve: {
-      backgroundColor: '#16a34a',
+      backgroundColor: theme.Colors.success,
     },
     btnEscalate: {
-      backgroundColor: '#f59e0b',
+      backgroundColor: theme.Colors.tertiary,
     },
     actionBtnText: {
       fontSize: theme.Typography.bodySmall.fontSize,
@@ -158,13 +159,13 @@ export const createStyles = (theme: any, isDark: boolean) =>
     escalateInputContainer: {
       marginTop: 12,
       borderTopWidth: 1,
-      borderTopColor: 'rgba(0, 104, 117, 0.1)',
+      borderTopColor: withAlpha(theme.Colors.primary, 0.1),
       paddingTop: 12,
     },
     escalateInput: {
-      backgroundColor: 'rgba(255, 255, 255, 0.7)',
+      backgroundColor: theme.Colors.surfaceContainerLowest,
       borderWidth: 1,
-      borderColor: 'rgba(0, 104, 117, 0.2)',
+      borderColor: withAlpha(theme.Colors.primary, 0.2),
       borderRadius: 12,
       paddingHorizontal: 14,
       paddingVertical: 10,
@@ -221,21 +222,21 @@ export const createStyles = (theme: any, isDark: boolean) =>
       width: 28,
       height: 28,
       borderRadius: 14,
-      backgroundColor: 'rgba(255,255,255,0.7)',
+      backgroundColor: theme.Colors.surfaceContainerLowest,
       justifyContent: 'center',
       alignItems: 'center',
     },
     timelineLine: {
       width: 2,
       flex: 1,
-      backgroundColor: 'rgba(0,104,117,0.1)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.1),
       marginTop: theme.Spacing.xs,
     },
     timelineContent: {
       flex: 1,
-      backgroundColor: 'rgba(255, 255, 255, 0.4)',
+      backgroundColor: theme.Colors.surfaceContainerLowest,
       borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.55)',
+      borderColor: theme.Colors.surfaceContainerLowest,
       borderRadius: 12,
       padding: 12,
     },
@@ -270,16 +271,16 @@ export const createStyles = (theme: any, isDark: boolean) =>
       flexDirection: 'row',
       padding: theme.Spacing.md,
       borderTopWidth: 1,
-      borderTopColor: 'rgba(0, 104, 117, 0.1)',
-      backgroundColor: 'rgba(255, 255, 255, 0.35)',
+      borderTopColor: withAlpha(theme.Colors.primary, 0.1),
+      backgroundColor: theme.Colors.surfaceContainerLowest,
       alignItems: 'center',
       gap: 12,
     },
     commentInput: {
       flex: 1,
-      backgroundColor: 'rgba(255, 255, 255, 0.65)',
+      backgroundColor: theme.Colors.surfaceContainerLowest,
       borderWidth: 1,
-      borderColor: 'rgba(0, 104, 117, 0.15)',
+      borderColor: withAlpha(theme.Colors.primary, 0.15),
       borderRadius: 18,
       paddingHorizontal: theme.Spacing.md,
       paddingVertical: 10,
@@ -296,6 +297,6 @@ export const createStyles = (theme: any, isDark: boolean) =>
       alignItems: 'center',
     },
     sendButtonDisabled: {
-      backgroundColor: 'rgba(0, 104, 117, 0.15)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.15),
     },
   });

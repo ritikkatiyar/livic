@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
@@ -14,7 +15,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: theme.Spacing.md,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.outline,
     backgroundColor: theme.Colors.glassFill,
     flex: 1,
     minWidth: 140,
@@ -52,7 +53,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingTop: theme.Spacing.xl,
     paddingBottom: theme.Spacing.lg,
     borderRightWidth: 1,
-    borderRightColor: theme.Surface.border,
+    borderRightColor: theme.Colors.outline,
     backgroundColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
@@ -84,7 +85,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: theme.Rounded.lg,
   },
   sidebarLinkActive: {
-    backgroundColor: 'rgba(0, 224, 255, 0.10)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.1),
     borderRightWidth: 4,
     borderRightColor: theme.Colors.primaryContainer,
   },
@@ -132,7 +133,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: theme.Surface.border,
+    borderBottomColor: theme.Colors.outline,
     backgroundColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
@@ -161,7 +162,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     height: 50,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.outline,
     backgroundColor: theme.Colors.glassFill,
     flexDirection: 'row',
     alignItems: 'center',
@@ -216,7 +217,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: 70,
     paddingTop: 26,
     borderTopWidth: 1,
-    borderTopColor: theme.Surface.border,
+    borderTopColor: theme.Colors.outline,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 42,
@@ -525,7 +526,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   addNewCard: {
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 2,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.outline,
     borderStyle: 'dashed',
     borderRadius: theme.Rounded.xl,
     padding: 30,
@@ -538,7 +539,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     minHeight: 180,
     marginTop: 0,
     backgroundColor: theme.Colors.glassFill,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.outline,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -575,7 +576,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: 30,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.outline,
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
@@ -674,7 +675,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   composerOverlay: {
     flex: 1,
-    backgroundColor: theme.Surface.overlay,
+    backgroundColor: theme.Colors.scrim,
     justifyContent: 'flex-end',
   },
   composerSheet: {
@@ -683,7 +684,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderTopRightRadius: 28,
     maxHeight: '92%',
     paddingTop: 12,
-    shadowColor: theme.Surface.shadowColor,
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.15,
     shadowRadius: 24,

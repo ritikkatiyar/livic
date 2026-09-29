@@ -77,7 +77,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: theme.Spacing.containerPadding,
-    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: theme.Colors.scrim || theme.Colors.scrim,
   },
   dismissPressable: {
     ...StyleSheet.absoluteFillObject,

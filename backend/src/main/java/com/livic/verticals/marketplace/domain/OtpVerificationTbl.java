@@ -47,6 +47,9 @@ public class OtpVerificationTbl {
     @Column(name = "verified_at")
     private Instant verifiedAt;
 
+    @Column(name = "request_ip", length = 45)
+    private String requestIp;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

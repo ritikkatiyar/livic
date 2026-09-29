@@ -86,6 +86,18 @@ public class MarketplaceLeadTbl extends BaseEntity {
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
 
+    /** The prospect opted in to WhatsApp updates for this request; WhatsApp is never sent without it. */
+    @Column(name = "whatsapp_opt_in", nullable = false)
+    @Builder.Default
+    private boolean whatsappOptIn = false;
+
+    @Column(name = "whatsapp_opt_in_at")
+    private Instant whatsappOptInAt;
+
+    /** When the visit reminder for an approved tour was handled; set once, by a conditional update. */
+    @Column(name = "reminder_sent_at")
+    private Instant reminderSentAt;
+
     /**
      * Guards concurrent landlord decisions and prospect cancellation. Left null until first persist: Spring Data treats
      * an entity with a non-null version as existing and would merge a copy instead of persisting (losing the new id).

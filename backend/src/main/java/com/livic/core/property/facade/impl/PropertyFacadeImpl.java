@@ -4,10 +4,12 @@ import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.repository.UnitRepository;
 import com.livic.core.property.repository.PropertyRepository;
 import com.livic.core.property.domain.PropertyType;
+import com.livic.core.property.dto.PropertyOccupancySummaryDTO;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.dto.PublicPropertyListingDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.domain.UnitTbl;
+import com.livic.core.property.domain.UnitOccupancy;
 import com.livic.core.property.spi.UnitOccupancyProvider;
 import java.util.Map;
 import com.livic.core.property.service.interfaces.BlockService;
@@ -106,11 +108,13 @@ public class PropertyFacadeImpl implements PropertyFacade {
 
         List<PropertyOccupancySummaryDTO> result = new ArrayList<>();
         for (UUID propertyId : propertyIds) {
-            List<UnitTbl> propertyUnits = unitsByProperty.getOrDefault(propertyId, List.of());
-            long occupied = propertyUnits.stream()
-                    .filter(u -> !occupantsByUnit.getOrDefault(u.getId(), List.of()).isEmpty())
-                    .count();
-            result.add(new PropertyOccupancySummaryDTO(propertyId, namesById.get(propertyId), propertyUnits.size(), (int) occupied));
+            // Counting per unit rather than per occupant keeps a shared room with two tenants
+            // at one occupied unit, while beds still count both.
+            OccupancyTally tally = new OccupancyTally();
+            for (UnitTbl unit : unitsByProperty.getOrDefault(propertyId, List.of())) {
+                tally.add(occupantsByUnit.getOrDefault(unit.getId(), List.of()).size(), unit.getCapacity());
+            }
+            result.add(tally.toSummary(propertyId, namesById.get(propertyId)));
         }
         return result;
     }
@@ -138,5 +142,28 @@ public class PropertyFacadeImpl implements PropertyFacade {
             }
             return property.getQrSlug();
         });
+    }
+/** Folds each unit's occupant count and bed capacity into one property's occupancy. */
+    private static final class OccupancyTally {
+        private final int[] unitStates = new int[UnitOccupancy.values().length];
+        private int totalBeds;
+        private int occupiedBeds;
+        private int activeLeases;
+
+        void add(int unitActiveLeases, Integer capacity) {
+            int beds = UnitOccupancy.beds(capacity);
+            unitStates[UnitOccupancy.of(unitActiveLeases, capacity).ordinal()]++;
+            totalBeds += beds;
+            occupiedBeds += Math.min(unitActiveLeases, beds);
+            activeLeases += unitActiveLeases;
+        }
+
+        PropertyOccupancySummaryDTO toSummary(UUID propertyId, String propertyName) {
+            return new PropertyOccupancySummaryDTO(propertyId, propertyName,
+                    unitStates[UnitOccupancy.VACANT.ordinal()],
+                    unitStates[UnitOccupancy.PARTIAL.ordinal()],
+                    unitStates[UnitOccupancy.FULL.ordinal()],
+                    totalBeds, occupiedBeds, activeLeases);
+        }
     }
 }

@@ -9,6 +9,7 @@ import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { Theme } from '@/src/theme/Theme';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export default function ReportsComingSoonScreen() {
   const { theme, isDark } = useAppTheme();
@@ -61,7 +62,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: 'rgba(0, 104, 117, 0.1)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.1),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Theme.Spacing.stackLg,

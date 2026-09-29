@@ -3,6 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { View, Text, StyleSheet, Switch, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface AdvancedLogicCardProps {
   applySalesTax: boolean;
@@ -41,8 +42,8 @@ export function AdvancedLogicCard({
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setApplySalesTax(val);
           }}
-          trackColor={{ false: isDark ? 'rgba(255, 255, 255, 0.16)' : '#d1d5db', true: theme.Colors.primary }}
-          thumbColor="#ffffff"
+          trackColor={{ false: isDark ? withAlpha(theme.Colors.onSurface, 0.16) : theme.Colors.surfaceContainerHigh, true: theme.Colors.primary }}
+          thumbColor={theme.Colors.onPrimary}
         />
       </View>
 
@@ -54,8 +55,8 @@ export function AdvancedLogicCard({
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setAutoCarryForward(val);
           }}
-          trackColor={{ false: isDark ? 'rgba(255, 255, 255, 0.16)' : '#d1d5db', true: theme.Colors.primary }}
-          thumbColor="#ffffff"
+          trackColor={{ false: isDark ? withAlpha(theme.Colors.onSurface, 0.16) : theme.Colors.surfaceContainerHigh, true: theme.Colors.primary }}
+          thumbColor={theme.Colors.onPrimary}
         />
       </View>
 
@@ -117,9 +118,9 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.12)' : 'rgba(0, 102, 204, 0.08)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.12) : withAlpha(theme.Colors.primary, 0.08),
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 102, 204, 0.18)',
+    borderColor: isDark ? withAlpha(theme.Colors.primary, 0.25) : withAlpha(theme.Colors.primary, 0.18),
   },
   badgeText: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -137,8 +138,8 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     height: 48,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.glassStroke,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : theme.Colors.glassFill,
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.12) : theme.Colors.glassStroke,
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.glassFill,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: theme.Spacing.md,

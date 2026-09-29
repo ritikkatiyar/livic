@@ -121,7 +121,8 @@ public class MarketplaceLeadServiceIntegrationTest {
                 null,
                 LocalDate.now().plusDays(5),
                 null,
-                "MARKETPLACE"
+                "MARKETPLACE",
+                null
         );
 
         assertThrows(BusinessException.class, () -> 
@@ -139,7 +140,8 @@ public class MarketplaceLeadServiceIntegrationTest {
                 null,
                 LocalDate.now().plusDays(5),
                 null,
-                "MARKETPLACE"
+                "MARKETPLACE",
+                null
         );
 
         BusinessException ex = assertThrows(BusinessException.class, () -> 
@@ -158,7 +160,8 @@ public class MarketplaceLeadServiceIntegrationTest {
                 null,
                 LocalDate.now().plusDays(5),
                 null,
-                "MARKETPLACE"
+                "MARKETPLACE",
+                null
         );
 
         MarketplaceLeadDTOs.LeadResponse response = leadService.createLead(property.getId(), bookableUnit.getId(), request, validSessionToken);
@@ -181,7 +184,8 @@ public class MarketplaceLeadServiceIntegrationTest {
                 null,
                 LocalDate.now().plusDays(5),
                 null,
-                "MARKETPLACE"
+                "MARKETPLACE",
+                null
         );
         MarketplaceLeadDTOs.LeadResponse lead = leadService.createLead(property.getId(), bookableUnit.getId(), request, validSessionToken);
 

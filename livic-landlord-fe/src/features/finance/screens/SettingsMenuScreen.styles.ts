@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { Theme} from '@/src/theme/Theme';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: { flex: 1 },
@@ -32,7 +33,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     zIndex: 100,
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.6)',
+    borderBottomColor: theme.Colors.surfaceContainerLowest,
   },
   headerContent: {
     flexDirection: 'row',
@@ -74,7 +75,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.75)',
+    borderColor: theme.Colors.surfaceContainerLowest,
     marginBottom: theme.Spacing.lg,
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 8 },
@@ -118,7 +119,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: 'rgba(0, 104, 117, 0.12)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.12),
   },
   statsSubtitle: {
     textAlign: 'center',
@@ -138,7 +139,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   workflowLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(0, 104, 117, 0.15)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.15),
   },
   workflowLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,

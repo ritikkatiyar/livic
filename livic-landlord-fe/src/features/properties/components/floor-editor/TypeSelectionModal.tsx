@@ -2,6 +2,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK' },
@@ -77,7 +78,7 @@ export function TypeSelectionModal({
       onRequestClose={handleDiscard}
     >
       <View style={styles.modalOverlay}>
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0,0,0,0.5)' }]} />
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || theme.Colors.scrim }]} />
         <View style={styles.typeModalContent}>
           <Text style={styles.typeModalTitle}>Configure New Unit</Text>
           <Text style={styles.typeModalSubtitle}>Select type for Unit {pendingBlockNum}</Text>
@@ -110,7 +111,7 @@ export function TypeSelectionModal({
           </View>
           
           <TouchableOpacity
-            style={[styles.typeCancelButton, { backgroundColor: 'rgba(229, 57, 53, 0.08)' }]}
+            style={[styles.typeCancelButton, { backgroundColor: withAlpha(theme.Colors.error, 0.08) }]}
             onPress={handleDiscard}
           >
             <Text style={[styles.typeCancelText, { color: theme.Colors.error }]}>Discard Unit</Text>
@@ -136,7 +137,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.Colors.outline,
     padding: theme.Spacing.lg,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,

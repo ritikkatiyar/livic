@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 import static com.livic.core.finance.facade.FinanceFacade.DefaulterRecordDTO;
 import static com.livic.core.finance.facade.FinanceFacade.RevenueMetricsDTO;
-import static com.livic.core.property.facade.PropertyFacade.PropertyOccupancySummaryDTO;
+import com.livic.core.property.dto.PropertyOccupancySummaryDTO;
 
 @Service
 @RequiredArgsConstructor

@@ -6,6 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LeaseResponse } from '@/src/features/tenant/api/lease.api';
 import { UnitResponse } from '@/src/features/properties/api/unit.api';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 // ── Modal shell ──────────────────────────────────────────────────────────────
 function ModalShell({ visible, onClose, children }: { visible: boolean; onClose: () => void; children: React.ReactNode }) {
@@ -36,7 +37,7 @@ function ModalFooter({
       </TouchableOpacity>
       <TouchableOpacity onPress={onSubmit} disabled={disabled} style={styles.submitBtn}>
         <View style={[styles.submitBtnInner, { backgroundColor: submitColors[0] || theme.Colors.primary }]}>
-          <MaterialIcons name={submitIcon as any} size={18} color="#ffffff" />
+          <MaterialIcons name={submitIcon as any} size={18} color={theme.Colors.onPrimary} />
           <Text style={styles.submitBtnText}>{submitLabel}</Text>
         </View>
       </TouchableOpacity>
@@ -66,7 +67,7 @@ export function BookRoomModal({
 }) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const placeholderColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.4)';
+  const placeholderColor = isDark ? withAlpha(theme.Colors.onSurface, 0.38) : withAlpha(theme.Colors.onSurface, 0.4);
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={styles.card}>
@@ -126,7 +127,7 @@ export function ServeNoticeModal({ visible, onClose, noticeMoveOutDate, setNotic
 }) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const placeholderColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.4)';
+  const placeholderColor = isDark ? withAlpha(theme.Colors.onSurface, 0.38) : withAlpha(theme.Colors.onSurface, 0.4);
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 440 }]}>
@@ -153,7 +154,7 @@ export function CashTokenModal({ visible, onClose, cashAmount, setCashAmount, ca
 }) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const placeholderColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.4)';
+  const placeholderColor = isDark ? withAlpha(theme.Colors.onSurface, 0.38) : withAlpha(theme.Colors.onSurface, 0.4);
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 440 }]}>
@@ -185,7 +186,7 @@ export function ConvertToLeaseModal({ visible, onClose, convMonthlyRentAmount, s
 }) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const placeholderColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.4)';
+  const placeholderColor = isDark ? withAlpha(theme.Colors.onSurface, 0.38) : withAlpha(theme.Colors.onSurface, 0.4);
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 480 }]}>
@@ -217,7 +218,7 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
 }) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const placeholderColor = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.4)';
+  const placeholderColor = isDark ? withAlpha(theme.Colors.onSurface, 0.38) : withAlpha(theme.Colors.onSurface, 0.4);
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 440 }]}>
@@ -248,9 +249,9 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
           </TouchableOpacity>
           <TouchableOpacity onPress={onSubmit} disabled={isSaving} style={styles.submitBtn}>
             <View style={[styles.submitBtnInner, { backgroundColor: theme.Colors.primary }]}>
-              {isSaving ? <ActivityIndicator size="small" color="#ffffff" /> : (
+              {isSaving ? <ActivityIndicator size="small" color={theme.Colors.onPrimary} /> : (
                 <>
-                  <MaterialIcons name="check" size={18} color="#ffffff" />
+                  <MaterialIcons name="check" size={18} color={theme.Colors.onPrimary} />
                   <Text style={styles.submitBtnText}>Save Terms</Text>
                 </>
               )}
@@ -344,7 +345,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || theme.Colors.scrim,
   },
   card: {
     width: '100%',
@@ -370,8 +371,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     marginBottom: 14,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.03)',
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : theme.Colors.outlineVariant,
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.07) : withAlpha(theme.Colors.onSurface, 0.03),
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.16) : theme.Colors.outlineVariant,
     color: theme.Colors.onSurface,
   },
   multilineInput: { minHeight: 104, fontWeight: '400', marginBottom: theme.Spacing.xs },
@@ -384,8 +385,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: theme.Spacing.sm,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : theme.Colors.outlineVariant,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.07)' : theme.Colors.surfaceContainerLowest,
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.16) : theme.Colors.outlineVariant,
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.07) : theme.Colors.surfaceContainerLowest,
   },
   chipText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
   footer: {
@@ -394,20 +395,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: theme.Spacing.md,
     paddingTop: theme.Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : theme.Colors.outlineVariant,
+    borderTopColor: isDark ? withAlpha(theme.Colors.onSurface, 0.1) : theme.Colors.outlineVariant,
   },
   cancelBtn: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : theme.Colors.outlineVariant,
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.16) : theme.Colors.outlineVariant,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : theme.Colors.surfaceContainerLow,
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.06) : theme.Colors.surfaceContainerLow,
   },
   cancelBtnText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
   submitBtn: { flex: 2, borderRadius: 12, overflow: 'hidden' },
   submitBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.Spacing.sm, paddingVertical: 12 },
-  submitBtnText: { color: '#ffffff', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
+  submitBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
 });

@@ -81,6 +81,16 @@ app:
     lockout-duration-ms: ${APP_AUTH_LOCKOUT_DURATION_MS:900000}
   logging:
     correlation-header-name: ${APP_CORRELATION_HEADER_NAME:X-Correlation-Id}
+  marketplace:
+    # Public marketplace site, used for links in SMS (the domain must be whitelisted with DLT)
+    base-url: ${MARKETPLACE_BASE_URL:http://localhost:3000}
+    otp:
+      # Channels for verification codes, tried in order until one delivers: SMS, WHATSAPP or SMS,WHATSAPP
+      channels: ${MARKETPLACE_OTP_CHANNELS:SMS}
+  messaging:
+    # Print SMS/WhatsApp to the log for channels with no gateway configured. Development only: in production an
+    # unconfigured channel must count as unavailable, not as sent.
+    console-fallback: ${APP_MESSAGING_CONSOLE_FALLBACK:false}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:8081}
     allowed-methods: ${APP_CORS_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}

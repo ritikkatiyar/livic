@@ -37,6 +37,18 @@ jest.mock('@/src/components/common/inputs/GlassDropdown', () => {
   };
 });
 
+// The visitor messages card loads its own settings
+jest.mock('../../src/features/leases/api/tourMessageSettings.api', () => ({
+  getTourMessageSettings: jest.fn().mockResolvedValue({
+    propertyId: 'prop-1',
+    customized: false,
+    decision: { sms: true, whatsapp: true },
+    reminder: { sms: true, whatsapp: true },
+    availableChannels: ['SMS', 'WHATSAPP'],
+  }),
+  updateTourMessageSettings: jest.fn(),
+}));
+
 jest.mock('../../src/features/leases/api/tourAvailability.api', () => ({
   ...jest.requireActual('../../src/features/leases/api/tourAvailability.api'),
   getTourAvailability: jest.fn(),

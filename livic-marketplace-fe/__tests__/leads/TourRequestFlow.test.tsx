@@ -124,7 +124,23 @@ describe('TourRequestForm date & time pickers', () => {
       prospectName: 'Test Visitor',
       prospectPhone: '9876543210',
       preferredSlot: toLocalSlot(dayAfter, '16:00').toISOString(),
+      whatsappOptIn: false,
     });
+  });
+
+  it('sends the WhatsApp opt-in only when the visitor ticks it', async () => {
+    const onSubmitLead = jest.fn();
+    const slots = slotsFixture([{ date: tomorrow, slots: WORKING_DAY }]);
+    render(<TourRequestForm onSubmitLead={onSubmitLead} loading={false} slots={slots} isLoadingSlots={false} />);
+    await fillTourForm();
+
+    const optIn = screen.getByRole('checkbox', { name: /updates about this visit on WhatsApp/i });
+    expect(optIn).not.toBeChecked();
+    fireEvent.click(optIn);
+    fireEvent.click(screen.getByRole('button', { name: /Continue to OTP Verification/i }));
+
+    await waitFor(() => expect(onSubmitLead).toHaveBeenCalledTimes(1));
+    expect(onSubmitLead.mock.calls[0][0]).toMatchObject({ whatsappOptIn: true });
   });
 
   it('marks declined, full and unavailable slots and keeps them unselectable', async () => {

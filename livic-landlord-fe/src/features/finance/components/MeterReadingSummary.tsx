@@ -2,6 +2,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface MeterReadingSummaryProps {
   totalUnits: number;
@@ -160,9 +161,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: isDark ? 'rgba(243, 191, 38, 0.1)' : 'rgba(239, 108, 0, 0.06)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.tertiary, 0.1) : withAlpha(theme.Colors.tertiary, 0.06),
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(243, 191, 38, 0.25)' : 'rgba(239, 108, 0, 0.15)',
+    borderColor: isDark ? withAlpha(theme.Colors.tertiary, 0.25) : withAlpha(theme.Colors.tertiary, 0.15),
     padding: 14,
     borderRadius: 14,
     marginTop: 20,

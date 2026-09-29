@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { UnitBlock } from '../hooks/useFloorLayoutViewer';
 import { createStyles } from './TenantDetailsSidebar.styles';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK' },
@@ -115,7 +116,7 @@ export function TenantDetailsSidebar({
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>PHONE NUMBER</Text>
-              <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+              <View style={[styles.inputWrapper, { backgroundColor: withAlpha(theme.Colors.onPrimary, 0.2) }]}>
                 <MaterialIcons name="phone" size={18} color={theme.Colors.onSurfaceVariant} />
                 <TextInput style={[styles.textInput, { color: theme.Colors.onSurfaceVariant }]} value={tenantPhoneSearch} editable={false} />
               </View>
@@ -211,7 +212,7 @@ export function TenantDetailsSidebar({
                   </Text>
                 </View>
               ) : selectedBlock.activeLeases && selectedBlock.activeLeases.length >= selectedBlock.capacity ? (
-                <View style={[styles.warningContainer, { backgroundColor: 'rgba(46, 125, 50, 0.08)', borderColor: 'rgba(46, 125, 50, 0.15)', marginTop: theme.Spacing.sm }]}>
+                <View style={[styles.warningContainer, { backgroundColor: withAlpha(theme.Colors.success, 0.08), borderColor: withAlpha(theme.Colors.success, 0.15), marginTop: theme.Spacing.sm }]}>
                   <MaterialIcons name="check-circle" size={18} color={theme.Colors.primary} />
                   <Text style={[styles.warningText, { color: theme.Colors.primary }]}>
                     Unit is fully occupied (Capacity: {selectedBlock.capacity}/{selectedBlock.capacity} reached).

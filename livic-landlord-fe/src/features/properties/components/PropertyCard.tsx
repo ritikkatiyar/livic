@@ -6,8 +6,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import Building3DView from '@/src/features/properties/components/Building3DView';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
+import { ActionMenuSheet } from '@/src/components/common/inputs/ActionMenuSheet';
+import { OccupancyStrip } from '@/src/features/properties/components/OccupancyStrip';
+import { usePortfolioOccupancy } from '@/src/features/properties/hooks/usePortfolioOccupancy';
 import type { PropertyResponse } from '@/src/types/property';
 import { getBlocks, BlockResponse } from '@/src/features/properties/api/block.api';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface PropertyCardProps {
   item: PropertyResponse;
@@ -20,6 +24,11 @@ interface PropertyCardProps {
   togglePropertyActive: (id: string, active: boolean) => Promise<void>;
   showToast: (message: string, type: 'success' | 'error' | 'info') => void;
   setSelectedPropertyForBroadcast: (property: PropertyResponse) => void;
+  /**
+   * Mobile only: mount the interactive 3D building. The Home pager passes true just for the
+   * visible page; mounting many 3D views at once made scrolling janky.
+   */
+  show3D?: boolean;
 }
 
 export function PropertyCard({
@@ -32,7 +41,8 @@ export function PropertyCard({
   handleDeleteProperty,
   togglePropertyActive,
   showToast,
-  setSelectedPropertyForBroadcast
+  setSelectedPropertyForBroadcast,
+  show3D = false,
 }: PropertyCardProps) {
   const router = useRouter();
   const { theme, isDark } = useAppTheme();
@@ -51,6 +61,19 @@ export function PropertyCard({
 
   const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
   const activeBlockId = selectedBlockId || (blocks.length > 0 ? blocks[0].id : null);
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  // Shared across all cards: one request for the whole portfolio
+  const { data: occupancyByProperty, isLoading: isOccupancyLoading } = usePortfolioOccupancy();
+
+  const handleToggleActive = async () => {
+    try {
+      const nextState = item.isActive === false;
+      await togglePropertyActive(item.id, nextState);
+      showToast(nextState ? `Property "${item.name}" activated!` : `Property "${item.name}" deactivated!`, 'success');
+    } catch (error: any) {
+      showToast(error.message || 'Failed to toggle status', 'error');
+    }
+  };
 
   if (isDesktop) {
     return (
@@ -81,7 +104,7 @@ export function PropertyCard({
                 <MaterialIcons name="3d-rotation" size={18} color={theme.Colors.primary} />
               </TouchableOpacity>
               
-              <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: 'rgba(186, 26, 26, 0.25)' }]}>
+              <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: withAlpha(theme.Colors.error, 0.25) }]}>
                 <Text style={[styles.statusPillText, item.isActive === false && { color: theme.Colors.error }]}>
                   {item.isActive === false ? 'INACTIVE' : 'ACTIVE'}
                 </Text>
@@ -160,15 +183,7 @@ export function PropertyCard({
               <View style={styles.desktopMetricRow}>
                 <Text style={styles.propertyMetricLabel}>PROPERTY LIFE CYCLE</Text>
                 <TouchableOpacity
-                  onPress={async () => {
-                    try {
-                      const nextState = item.isActive === false;
-                      await togglePropertyActive(item.id, nextState);
-                      showToast(nextState ? `Property "${item.name}" activated!` : `Property "${item.name}" deactivated!`, 'success');
-                    } catch (error: any) {
-                      showToast(error.message || 'Failed to toggle status', 'error');
-                    }
-                  }}
+                  onPress={handleToggleActive}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
                   activeOpacity={0.7}
                 >
@@ -215,62 +230,50 @@ export function PropertyCard({
   }
 
   return (
-    <View style={[styles.propertyCard, item.isActive === false && { opacity: 0.85 }]}>
+    <View style={[styles.propertyCard, styles.propertyCardMobile, item.isActive === false && { opacity: 0.85 }]}>
       <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerMobile, item.isActive === false && { opacity: 0.65 }]}>
         <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-          {accessToken && (
-            <Building3DView 
-              propertyId={item.id} 
-              token={accessToken} 
+          {show3D && accessToken ? (
+            <Building3DView
+              propertyId={item.id}
+              token={accessToken}
               blockId={activeBlockId}
-              onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
+              onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)}
               resetRotationTrigger={resetRotationTrigger}
-              maxContainerHeight={180}
+              maxContainerHeight={170}
+              // The occupancy strip below the name doubles as the key, so don't cover the building
+              hideLegend
             />
+          ) : (
+            <MaterialIcons name="apartment" size={40} color={theme.Colors.primary} style={{ opacity: 0.35 }} />
           )}
         </View>
-        
-        <TouchableOpacity 
-          style={styles.resetButtonOverlay}
-          onPress={() => triggerReset(item.id)}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          activeOpacity={0.7}
-        >
-          <MaterialIcons name="3d-rotation" size={18} color={theme.Colors.primary} />
-        </TouchableOpacity>
-        
-        <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: 'rgba(186, 26, 26, 0.25)' }]}>
-          <Text style={[styles.statusPillText, item.isActive === false && { color: theme.Colors.error }]}>
-            {item.isActive === false ? 'INACTIVE' : 'ACTIVE'}
-          </Text>
-        </View>
 
-        {hasMultipleBlocks && (
+        {show3D && (
+          <TouchableOpacity
+            style={styles.resetButtonOverlay}
+            onPress={() => triggerReset(item.id)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
+            accessibilityLabel="Reset 3D view"
+          >
+            <MaterialIcons name="3d-rotation" size={18} color={theme.Colors.primary} />
+          </TouchableOpacity>
+        )}
+
+        {show3D && hasMultipleBlocks && (
           <View style={styles.blockSwitcherOverlay}>
             {blocks.map((block) => {
               const isSelected = block.id === activeBlockId;
               return (
                 <TouchableOpacity
                   key={block.id}
-                  style={[
-                    styles.blockPill,
-                    isSelected && styles.blockPillActive,
-                  ]}
+                  style={[styles.blockPill, isSelected && styles.blockPillActive]}
                   onPress={() => setSelectedBlockId(block.id)}
                   activeOpacity={0.75}
                 >
-                  <MaterialIcons
-                    name="domain"
-                    size={11}
-                    color={isSelected ? theme.Colors.onPrimary : theme.Colors.onSurfaceVariant}
-                  />
-                  <Text
-                    style={[
-                      styles.blockPillText,
-                      isSelected && styles.blockPillTextActive,
-                    ]}
-                    numberOfLines={1}
-                  >
+                  <MaterialIcons name="domain" size={11} color={isSelected ? theme.Colors.onPrimary : theme.Colors.onSurfaceVariant} />
+                  <Text style={[styles.blockPillText, isSelected && styles.blockPillTextActive]} numberOfLines={1}>
                     {block.name}
                   </Text>
                 </TouchableOpacity>
@@ -278,71 +281,38 @@ export function PropertyCard({
             })}
           </View>
         )}
-
-        <TouchableOpacity 
-          style={[styles.deleteButtonOverlay, { right: 60 }]}
-          onPress={async () => {
-            try {
-              const nextState = item.isActive === false;
-              await togglePropertyActive(item.id, nextState);
-              showToast(nextState ? `Property "${item.name}" activated!` : `Property "${item.name}" deactivated!`, 'success');
-            } catch (error: any) {
-              showToast(error.message || 'Failed to toggle status', 'error');
-            }
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <MaterialIcons 
-            name={item.isActive === false ? "toggle-off" : "toggle-on"} 
-            size={30} 
-            color={item.isActive === false ? theme.Colors.outlineVariant : theme.Colors.primary} 
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.deleteButtonOverlay}
-          onPress={() => handleDeleteProperty(item.id, item.name)}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <MaterialIcons name="delete-outline" size={20} color={theme.Colors.error} />
-        </TouchableOpacity>
       </View>
 
-      <View style={[styles.propertyHeaderRow, styles.propertyHeaderRowMobile]}>
-        <View style={styles.propertyInfo}>
-          <Text style={styles.propertyName}>{item.name}</Text>
+      <View style={styles.mobileHeaderRow}>
+        <View style={styles.mobileHeaderText}>
+          <Text style={styles.propertyName} numberOfLines={1}>{item.name}</Text>
           <View style={styles.addressContainer}>
             <MaterialIcons name="location-on" size={14} color={theme.Colors.onSurfaceVariant} />
-            <Text style={styles.propertyAddress}>{item.address}, {item.city}</Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={[styles.propertyMetrics, styles.propertyMetricsMobile]}>
-        {hasMultipleBlocks ? (
-          <View style={styles.propertyMetric}>
-            <Text style={styles.propertyMetricLabel}>BLOCKS</Text>
-            <Text style={styles.propertyMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-              {totalBlocks}
+            <Text style={[styles.propertyAddress, { flexShrink: 1 }]} numberOfLines={1}>
+              {item.address}, {item.city}
             </Text>
           </View>
-        ) : (
-          <View style={styles.propertyMetric}>
-            <Text style={styles.propertyMetricLabel}>FLOORS</Text>
-            <Text style={styles.propertyMetricValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-              {displayFloors}
-            </Text>
-          </View>
-        )}
-        <View style={styles.propertyMetric}>
-          <Text style={styles.propertyMetricLabel}>STATUS</Text>
-          <Text style={[styles.propertyMetricValue, styles.propertyMetricAccent]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-            READY
+          <Text style={styles.mobileMeta}>
+            {hasMultipleBlocks ? `${totalBlocks} blocks` : `${displayFloors} floors`}
+            {item.isActive === false && <Text style={{ color: theme.Colors.error }}>  ·  Inactive</Text>}
           </Text>
         </View>
+        <TouchableOpacity
+          style={styles.moreButton}
+          onPress={() => setMenuOpen(true)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel={`More actions for ${item.name}`}
+        >
+          <MaterialIcons name="more-vert" size={22} color={theme.Colors.onSurfaceVariant} />
+        </TouchableOpacity>
       </View>
-      
-      <View style={{ gap: 10, marginTop: 14 }}>
+
+      <View style={{ marginTop: theme.Spacing.md }}>
+        <OccupancyStrip occupancy={occupancyByProperty?.[item.id]} isLoading={isOccupancyLoading} />
+      </View>
+
+      <View style={{ marginTop: theme.Spacing.md }}>
         <ActionButton
           label={hasMultipleBlocks ? "Blocks & Floors" : "Floors & Units"}
           icon={hasMultipleBlocks ? "domain" : "layers"}
@@ -352,23 +322,24 @@ export function PropertyCard({
           fullWidth
           onPress={() => router.push(`/properties/${item.id}/floors`)}
         />
-        <ActionButton
-          label="Manage Property Settings"
-          icon="settings"
-          variant="outline"
-          size="md"
-          fullWidth
-          onPress={() => router.push(`/properties/${item.id}`)}
-        />
-        <ActionButton
-          label="Broadcast Notice"
-          icon="campaign"
-          variant="secondary"
-          size="md"
-          fullWidth
-          onPress={() => setSelectedPropertyForBroadcast(item)}
-        />
       </View>
+
+      <ActionMenuSheet
+        visible={menuOpen}
+        title={item.name}
+        onClose={() => setMenuOpen(false)}
+        items={[
+          { key: 'manage', label: 'Property settings', icon: 'settings', onPress: () => router.push(`/properties/${item.id}`) },
+          { key: 'broadcast', label: 'Broadcast notice', icon: 'campaign', onPress: () => setSelectedPropertyForBroadcast(item) },
+          {
+            key: 'toggle',
+            label: item.isActive === false ? 'Activate property' : 'Deactivate property',
+            icon: item.isActive === false ? 'toggle-on' : 'toggle-off',
+            onPress: handleToggleActive,
+          },
+          { key: 'delete', label: 'Delete property', icon: 'delete-outline', destructive: true, onPress: () => handleDeleteProperty(item.id, item.name) },
+        ]}
+      />
     </View>
   );
 }
@@ -381,7 +352,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
     borderColor: theme.Colors.outline,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 12,
@@ -407,13 +378,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     gap: theme.Spacing.md,
   },
+  // Neutral backdrop: a teal backdrop made the teal (occupied) units disappear into it
   buildingPreviewContainer: {
-    backgroundColor: theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderRadius: 16,
     overflow: 'hidden',
     position: 'relative',
-    borderWidth: 1,
-    borderColor: theme.Colors.primaryContainer,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 5,
@@ -423,16 +393,40 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: '100%',
     overflow: 'hidden',
   },
+  propertyCardMobile: {
+    padding: theme.Spacing.md,
+  },
+  mobileHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.Spacing.sm,
+    marginTop: theme.Spacing.md,
+  },
+  mobileHeaderText: {
+    flex: 1,
+    gap: theme.Spacing.xs,
+  },
+  mobileMeta: {
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+  },
   buildingPreviewContainerMobile: {
-    height: 180,
+    height: 170,
     width: '100%',
     overflow: 'hidden',
+  },
+  moreButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   resetButtonOverlay: {
     position: 'absolute',
     left: 12,
     bottom: 12,
-    backgroundColor: theme.Surface.card,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     padding: theme.Spacing.sm,
     borderRadius: 10,
     zIndex: 10,
@@ -459,7 +453,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.surfaceContainerLowest,
     padding: 3,
     borderRadius: 20,
     borderWidth: 1,
@@ -491,13 +485,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     position: 'absolute',
     right: 12,
     bottom: 12,
-    backgroundColor: theme.Surface.card,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     padding: theme.Spacing.sm,
     borderRadius: 10,
     zIndex: 10,
-  },
-  propertyInfo: {
-    gap: theme.Spacing.xs,
   },
   propertyName: {
     fontSize: theme.Typography.titleLarge.fontSize,
@@ -594,33 +585,5 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.primary,
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
-  },
-  propertyHeaderRow: {
-    marginTop: theme.Spacing.md,
-  },
-  propertyHeaderRowMobile: {},
-  propertyMetrics: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 14,
-  },
-  propertyMetricsMobile: {},
-  propertyMetric: {
-    flex: 1,
-    minWidth: 100,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: theme.Colors.surfaceContainerLow,
-    borderWidth: 1,
-    borderColor: theme.Colors.outline,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  propertyMetricValue: {
-    fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '600',
-    color: theme.Colors.onBackground,
-    marginTop: theme.Spacing.xs,
   },
 });

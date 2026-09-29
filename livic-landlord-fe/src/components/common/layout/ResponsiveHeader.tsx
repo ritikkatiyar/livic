@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface ResponsiveHeaderProps {
   title: string;
@@ -44,7 +45,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: theme.Spacing.unit,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 104, 117, 0.08)',
+    borderBottomColor: withAlpha(theme.Colors.primary, 0.08),
     backgroundColor: 'transparent',
     marginBottom: theme.Spacing.stackMd,
   },
@@ -57,7 +58,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginRight: theme.Spacing.stackSm,
     padding: theme.Spacing.unit,
     borderRadius: theme.Rounded.full,
-    backgroundColor: 'rgba(0, 104, 117, 0.05)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.05),
   },
   title: {
     ...theme.Typography.headlineMd,

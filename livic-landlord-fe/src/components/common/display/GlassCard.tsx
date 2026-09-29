@@ -17,8 +17,8 @@ export function GlassCard({
   style,
   contentStyle,
 }: GlassCardProps) {
-  const { theme } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme), [theme]);
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const flattened = StyleSheet.flatten(style);
   const inheritedAlignment: ViewStyle = {};
@@ -34,12 +34,23 @@ export function GlassCard({
   );
 }
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   outerContainer: {
     borderRadius: theme.Rounded.lg,
     borderWidth: 1,
     borderColor: theme.Colors.outline,
     backgroundColor: theme.Colors.surfaceContainerLowest,
+    // Light mode: a soft shadow lifts white cards off the page. Dark mode relies on the
+    // lighter card color instead, since shadows barely show on dark backgrounds.
+    ...(isDark
+      ? {}
+      : {
+          shadowColor: theme.Colors.shadowColor,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.06,
+          shadowRadius: 4,
+          elevation: 1,
+        }),
   },
   content: {
     padding: theme.Spacing.containerPadding,

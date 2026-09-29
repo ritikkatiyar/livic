@@ -60,6 +60,7 @@ public class SecurityConfig {
                                 "/api/v1/marketplace/tour-requests/**",
                                 "/api/v1/marketplace/properties/*/tour-availability",
                                 "/api/v1/marketplace/properties/*/tour-blackouts",
+                                "/api/v1/marketplace/properties/*/tour-message-settings",
                                 "/api/v1/marketplace/tour-blackouts/**"
                         ).authenticated()
                         .requestMatchers(

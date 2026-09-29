@@ -6,7 +6,7 @@ import com.livic.core.community.analytics.dto.PortfolioOccupancyResponse;
 import com.livic.core.community.analytics.dto.SummaryResponse;
 import com.livic.core.finance.facade.FinanceFacade.DefaulterRecordDTO;
 import com.livic.core.finance.facade.FinanceFacade.RevenueMetricsDTO;
-import com.livic.core.property.facade.PropertyFacade.PropertyOccupancySummaryDTO;
+import com.livic.core.property.dto.PropertyOccupancySummaryDTO;
 import com.livic.platform.user.dto.UserSummaryDTO;
 
 import java.math.BigDecimal;
@@ -45,18 +45,22 @@ public final class AnalyticsMapper {
     }
 
     public static PortfolioOccupancyResponse toPortfolioOccupancyResponse(PropertyOccupancySummaryDTO row) {
-        String propId = row.propertyId().toString();
-        String propName = row.propertyName();
-        int totalUnits = row.totalUnits();
-        int occupiedUnits = row.occupiedUnits();
-        BigDecimal occRate = totalUnits > 0
-                ? BigDecimal.valueOf(occupiedUnits).divide(BigDecimal.valueOf(totalUnits), 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100))
-                : BigDecimal.ZERO;
+        BigDecimal occRate = percent(row.occupiedUnits(), row.totalUnits());
         BigDecimal netYield = occRate.multiply(BigDecimal.valueOf(0.08));
 
         return new PortfolioOccupancyResponse(
-                propId, propName, totalUnits, occupiedUnits, occRate, netYield
+                row.propertyId(), row.propertyName(),
+                row.totalUnits(), row.occupiedUnits(), occRate, netYield,
+                row.vacantUnits(), row.partialUnits(), row.fullUnits(),
+                row.totalBeds(), row.occupiedBeds(), percent(row.occupiedBeds(), row.totalBeds()),
+                row.activeLeases()
         );
+    }
+
+    private static BigDecimal percent(int part, int whole) {
+        return whole > 0
+                ? BigDecimal.valueOf(part).divide(BigDecimal.valueOf(whole), 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100))
+                : BigDecimal.ZERO;
     }
 
     public static DefaulterResponse toDefaulterResponse(DefaulterRecordDTO row, UserSummaryDTO user, LocalDate today) {

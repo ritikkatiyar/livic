@@ -1,6 +1,8 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { getOccupancyColors, getOccupancyState } from '@/src/features/properties/utils/occupancy';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 const GRID_SIZE_X = 10;
 const GRID_SIZE_Y = 15;
@@ -50,31 +52,13 @@ export function EditorGrid({
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const getBlockColorStyles = (b: UnitBlock) => {
-    const activeCount = b.activeLeases ? b.activeLeases.length : 0;
-    const capacity = b.capacity || 1;
-
-    if (activeCount === 0) {
-      return {
-        backgroundColor: theme.Colors.primary,
-        borderColor: theme.Colors.primary,
-        textColor: '#ffffff',
-        accentColor: '#c8e6c9'
-      };
-    } else if (activeCount < capacity) {
-      return {
-        backgroundColor: theme.Colors.secondary,
-        borderColor: theme.Colors.secondary,
-        textColor: '#ffffff',
-        accentColor: '#fff3e0'
-      };
-    } else {
-      return {
-        backgroundColor: theme.Colors.error,
-        borderColor: theme.Colors.error,
-        textColor: '#ffffff',
-        accentColor: '#ffcdd2'
-      };
-    }
+    const colors = getOccupancyColors(theme, getOccupancyState(b.activeLeases ? b.activeLeases.length : 0, b.capacity));
+    return {
+      backgroundColor: colors.fill,
+      borderColor: colors.border,
+      textColor: colors.onFill,
+      accentColor: colors.container,
+    };
   };
 
   const rows = [];
@@ -196,10 +180,10 @@ export function EditorGrid({
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   grid: {
-    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.45)' : 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.surfaceContainerLowest, 0.45) : theme.Colors.surfaceContainerLowest,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 104, 117, 0.15)',
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.12) : withAlpha(theme.Colors.primary, 0.15),
     overflow: 'hidden',
   },
   gridRow: {
@@ -209,7 +193,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: CELL_SIZE,
     height: CELL_SIZE,
     borderWidth: 0.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.08)',
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : withAlpha(theme.Colors.primary, 0.08),
   },
   cellEmpty: {
     backgroundColor: 'transparent',
@@ -217,7 +201,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cellActive: {
     borderRadius: 8,
     borderWidth: 1.5,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 3,
@@ -228,7 +212,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '600',
   },
   cellDrawingStart: {
-    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 104, 117, 0.25)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.25) : withAlpha(theme.Colors.primary, 0.25),
     borderColor: theme.Colors.primary,
     borderWidth: 2,
     borderStyle: 'dashed',
@@ -238,7 +222,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'stretch',
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : 'rgba(255,255,255,0.85)',
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.surfaceContainerLowest,
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 3,
@@ -248,7 +232,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'center',
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : 'rgba(255,255,255,0.85)',
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.surfaceContainerLowest,
     borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 2,

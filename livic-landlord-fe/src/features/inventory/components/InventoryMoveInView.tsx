@@ -15,6 +15,7 @@ import { createLeaseAssignments } from '../api/inventory.api';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { formatCurrency } from '@/src/utils/formatters';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface InventoryMoveInViewProps {
   assignedItems?: AssignmentItem[];
@@ -250,13 +251,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between', backgroundColor: theme.Colors.primary, minHeight: 90, gap: theme.Spacing.md,
   },
   moveBannerContent: { flex: 1, gap: 2 },
-  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', letterSpacing: 0.2, color: 'rgba(255,255,255,0.85)' },
+  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', letterSpacing: 0.2, color: withAlpha(theme.Colors.onPrimary, 0.85) },
   moveBannerTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.surfaceContainerLowest },
-  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
+  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: withAlpha(theme.Colors.onPrimary, 0.75), marginTop: 2 },
   progressBox: { alignItems: 'flex-end', gap: theme.Spacing.xs, minWidth: 100 },
   progressFraction: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '600', color: theme.Colors.surfaceContainerLowest },
-  progressSublabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: 'rgba(255,255,255,0.75)', letterSpacing: 0.2 },
-  progressTrack: { width: 100, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' },
+  progressSublabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: withAlpha(theme.Colors.onPrimary, 0.75), letterSpacing: 0.2 },
+  progressTrack: { width: 100, height: 6, borderRadius: 3, backgroundColor: withAlpha(theme.Colors.onPrimary, 0.25), overflow: 'hidden' },
   progressFill: { height: 6, borderRadius: 3 },
 
   workflowGrid: { flexDirection: 'column', gap: theme.Spacing.md },

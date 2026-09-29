@@ -92,7 +92,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     alignItems: 'center',
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,

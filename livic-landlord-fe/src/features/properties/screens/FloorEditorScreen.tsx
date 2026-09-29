@@ -312,18 +312,12 @@ export default function FloorEditorScreen({
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <PageShell
-        scrollable={false}
-        edges={['top', 'bottom']}
-        header={
-          <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-            <View>
-              <View style={styles.titleContainer}>
-                <Text style={styles.titleLine}>Edit Floor {floorNumber}</Text>
-                <Text style={styles.titleLine}>Layout</Text>
-              </View>
-            </View>
-            
+      <PageShell scrollable={false} edges={['top', 'bottom']}>
+        <View style={styles.contentContainer}>
+          {/* Title row lives in the content (not PageShell's `header`), which would render
+              behind the fixed app bar and leave an empty gap above the toolbar. */}
+          <View style={styles.header}>
+            <Text style={styles.titleLine}>Floor {floorNumber} layout</Text>
             <ActionButton
               variant="primary"
               label="Save"
@@ -333,9 +327,7 @@ export default function FloorEditorScreen({
               loading={saving}
             />
           </View>
-        }
-      >
-        <View style={styles.contentContainer}>
+
           <EditorToolbar
             activeTool={activeTool}
             setActiveTool={setActiveTool}
@@ -378,7 +370,7 @@ export default function FloorEditorScreen({
 
         {selectedBlock && (
           <View style={[StyleSheet.absoluteFillObject, { zIndex: 999, overflow: 'hidden' }]}>
-            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.4)' }]} />
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.scrim || theme.Colors.scrim }]} />
 
             <TouchableOpacity
               activeOpacity={1}

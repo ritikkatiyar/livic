@@ -6,6 +6,7 @@ import { TenantDetailsCard } from './TenantDetailsCard';
 import { MediaUploadGrid } from '@/src/components/common/display/MediaUploadGrid';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface UnitBlock {
   id: string; 
@@ -171,13 +172,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   statusContainer: {
     flexDirection: 'row',
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.05) : withAlpha(theme.Colors.onSurface, 0.04),
     borderRadius: 14,
     padding: 4,
     gap: 6,
     marginTop: theme.Spacing.md,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.Colors.outlineVariant,
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : theme.Colors.outlineVariant,
   },
   statusToggle: {
     flex: 1,
@@ -198,32 +199,32 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurfaceVariant,
   },
   statusActiveVacant: {
-    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.14)' : 'rgba(0, 104, 117, 0.10)',
-    borderColor: isDark ? 'rgba(0, 229, 255, 0.35)' : 'rgba(0, 104, 117, 0.25)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.14) : withAlpha(theme.Colors.primary, 0.1),
+    borderColor: isDark ? withAlpha(theme.Colors.primary, 0.35) : withAlpha(theme.Colors.primary, 0.25),
   },
   statusTextVacant: {
-    color: isDark ? '#00E5FF' : '#006875',
+    color: isDark ? theme.Colors.primary : theme.Colors.primary,
     fontWeight: '600',
   },
   statusDotVacant: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: isDark ? '#00E5FF' : '#006875',
+    backgroundColor: isDark ? theme.Colors.primary : theme.Colors.primary,
   },
   statusActiveOccupied: {
-    backgroundColor: isDark ? 'rgba(255, 107, 107, 0.14)' : 'rgba(186, 26, 26, 0.10)',
-    borderColor: isDark ? 'rgba(255, 107, 107, 0.35)' : 'rgba(186, 26, 26, 0.25)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.error, 0.14) : withAlpha(theme.Colors.error, 0.1),
+    borderColor: isDark ? withAlpha(theme.Colors.error, 0.35) : withAlpha(theme.Colors.error, 0.25),
   },
   statusTextOccupied: {
-    color: isDark ? '#FF6B6B' : '#ba1a1a',
+    color: isDark ? theme.Colors.error : theme.Colors.error,
     fontWeight: '600',
   },
   statusDotOccupied: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: isDark ? '#FF6B6B' : '#ba1a1a',
+    backgroundColor: isDark ? theme.Colors.error : theme.Colors.error,
   },
   statusDisabled: {
     opacity: 0.5,

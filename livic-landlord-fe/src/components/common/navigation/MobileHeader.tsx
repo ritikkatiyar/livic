@@ -9,21 +9,23 @@ import {
   TextInput,
   ScrollView,
   Platform,
+  type LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useProperties } from '@/src/hooks/useProperties';
 
+/** Height of the header row itself; the safe-area inset is added on top. */
+const HEADER_CONTENT_HEIGHT = 56;
+
 interface MobileHeaderProps {
-  title: string;
-  onMenuPress?: () => void;
   onNotificationPress?: () => void;
-  showBackButton?: boolean;
-  onBackPress?: () => void;
+  /** Reports the header size; it is positioned absolutely, so callers cannot measure it. */
+  onLayout?: (event: LayoutChangeEvent) => void;
 }
 
-export default function MobileHeader({ title, onMenuPress, onNotificationPress, showBackButton, onBackPress }: MobileHeaderProps) {
+export default function MobileHeader({ onNotificationPress, onLayout }: MobileHeaderProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const insets = useSafeAreaInsets();
@@ -63,7 +65,8 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress, 
         // @ts-ignore
         dataSet={{ mobileHeader: 'true', responsiveLayout: 'mobile' }}
         className="mobile-header-container"
-        style={[styles.headerWrapper, { paddingTop: insets.top, minHeight: 56 + insets.top }]}
+        onLayout={onLayout}
+        style={[styles.headerWrapper, { paddingTop: insets.top, minHeight: HEADER_CONTENT_HEIGHT + insets.top }]}
       >
         <View style={styles.headerContainer}>
           <View style={styles.headerLeftGroup}>
@@ -217,7 +220,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.Colors.outlineVariant,
     backgroundColor: theme.Colors.surfaceContainerLowest,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
     shadowRadius: 12,
@@ -286,12 +289,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.Colors.error || '#ba1a1a',
+    backgroundColor: theme.Colors.error || theme.Colors.error,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: theme.Colors.scrim || theme.Colors.scrim,
   },
   sheetContent: {
     borderTopLeftRadius: 24,

@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean, isDesktop: boolean) =>
   StyleSheet.create({
@@ -53,7 +54,7 @@ export const createStyles = (theme: any, isDark: boolean, isDesktop: boolean) =>
       backgroundColor: theme.Colors.surfaceContainerLow,
       borderWidth: 1,
       borderColor: theme.Colors.outlineVariant,
-      shadowColor: '#000',
+      shadowColor: theme.Colors.shadowColor,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.05,
       shadowRadius: 4,
@@ -156,12 +157,12 @@ export const createStyles = (theme: any, isDark: boolean, isDesktop: boolean) =>
       color: theme.Colors.primary,
     },
     blockBadge: {
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.08),
       paddingVertical: 2,
       paddingHorizontal: 6,
       borderRadius: 6,
       borderWidth: 1,
-      borderColor: 'rgba(0, 104, 117, 0.2)',
+      borderColor: withAlpha(theme.Colors.primary, 0.2),
     },
     blockBadgeText: {
       color: theme.Colors.primary,
@@ -196,7 +197,7 @@ export const createStyles = (theme: any, isDark: boolean, isDesktop: boolean) =>
     progressBarBg: {
       height: 6,
       borderRadius: 3,
-      backgroundColor: theme.Colors.surfaceContainerHigh || 'rgba(0,0,0,0.06)',
+      backgroundColor: theme.Colors.surfaceContainerHigh || withAlpha(theme.Colors.onSurface, 0.06),
       overflow: 'hidden',
       marginTop: 6,
     },

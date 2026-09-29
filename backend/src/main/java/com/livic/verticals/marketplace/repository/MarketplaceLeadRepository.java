@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -71,6 +72,23 @@ public interface MarketplaceLeadRepository extends JpaRepository<MarketplaceLead
     @Query("SELECT COUNT(l) FROM MarketplaceLeadTbl l WHERE l.propertyId = :propertyId AND l.leadType = com.livic.verticals.marketplace.domain.LeadType.TOUR_REQUEST " +
            "AND l.status = :status AND l.preferredSlot > :now")
     long countUpcomingTours(@Param("propertyId") UUID propertyId, @Param("status") LeadStatus status, @Param("now") Instant now);
+
+    /** Approved tours starting within (now, until] whose reminder hasn't been handled, soonest first. */
+    @Query("SELECT l FROM MarketplaceLeadTbl l WHERE l.leadType = com.livic.verticals.marketplace.domain.LeadType.TOUR_REQUEST " +
+           "AND l.status = com.livic.verticals.marketplace.domain.LeadStatus.APPROVED AND l.reminderSentAt IS NULL " +
+           "AND l.preferredSlot > :now AND l.preferredSlot <= :until ORDER BY l.preferredSlot ASC")
+    List<MarketplaceLeadTbl> findToursDueForReminder(@Param("now") Instant now, @Param("until") Instant until, Pageable pageable);
+
+    /**
+     * Claims one tour's reminder; returns 1 for the caller that wins, 0 if another run already claimed it or the tour
+     * is no longer approved. Doesn't bump the version: the reminder is bookkeeping and must not fail a concurrent
+     * cancellation.
+     */
+    @Transactional
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE MarketplaceLeadTbl l SET l.reminderSentAt = :now WHERE l.id = :id AND l.reminderSentAt IS NULL " +
+           "AND l.status = com.livic.verticals.marketplace.domain.LeadStatus.APPROVED")
+    int claimReminder(@Param("id") UUID id, @Param("now") Instant now);
 
     /** Bulk lifecycle transition for tours whose visit time has passed (NEW -> EXPIRED, APPROVED -> COMPLETED). */
     @Modifying(clearAutomatically = true, flushAutomatically = true)

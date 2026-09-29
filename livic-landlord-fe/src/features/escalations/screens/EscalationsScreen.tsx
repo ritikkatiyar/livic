@@ -25,6 +25,9 @@ export default function EscalationsScreen() {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { isDesktop } = useResponsive();
+  // Let the filter chip rows run to the right screen edge on mobile so they clearly scroll
+  const chipRowBleed = { flex: 1, marginRight: -theme.Spacing.containerPadding };
+  const chipRowBleedContent = { paddingRight: theme.Spacing.containerPadding };
 
   const { accessToken } = useAuth();
   const { properties } = useProperties();
@@ -64,13 +67,13 @@ export default function EscalationsScreen() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'URGENT':
-        return { bg: '#fee2e2', text: '#ef4444' };
+        return { bg: theme.Colors.errorContainer, text: theme.Colors.error };
       case 'HIGH':
-        return { bg: '#fef3c7', text: '#d97706' };
+        return { bg: theme.Colors.tertiaryContainer, text: theme.Colors.tertiary };
       case 'STANDARD':
-        return { bg: '#e0f2fe', text: '#0284c7' };
+        return { bg: theme.Colors.primaryContainer, text: theme.Colors.primary };
       default:
-        return { bg: '#f3f4f6', text: '#4b5563' };
+        return { bg: theme.Colors.surfaceContainerHigh, text: theme.Colors.onSurfaceVariant };
     }
   };
 
@@ -174,7 +177,12 @@ export default function EscalationsScreen() {
           <View style={styles.filtersContainer}>
             <View style={styles.filterGroup}>
               <Text style={styles.filterLabelText}>Status:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={!isDesktop && chipRowBleed}
+                contentContainerStyle={[{ gap: 8 }, !isDesktop && chipRowBleedContent]}
+              >
                 {['ALL', 'OPEN', 'IN_PROGRESS', 'ESCALATED', 'RESOLVED'].map((st) => (
                   <FilterPill
                     key={st}
@@ -192,7 +200,12 @@ export default function EscalationsScreen() {
           <View style={styles.filtersContainer}>
             <View style={styles.filterGroup}>
               <Text style={styles.filterLabelText}>Priority:</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={!isDesktop && chipRowBleed}
+                contentContainerStyle={[{ gap: 8 }, !isDesktop && chipRowBleedContent]}
+              >
                 {['ALL', 'LOW', 'STANDARD', 'HIGH', 'URGENT'].map((pr) => (
                   <FilterPill
                     key={pr}

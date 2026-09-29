@@ -1,5 +1,6 @@
 import { Platform, StyleSheet } from 'react-native';
 import { Theme } from '@/src/theme/Theme';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
@@ -71,12 +72,12 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.08),
     paddingHorizontal: 10,
     paddingVertical: theme.Spacing.xs,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.2)',
+    borderColor: withAlpha(theme.Colors.primary, 0.2),
   },
   activeDot: {
     width: 6,
@@ -121,8 +122,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.lg,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.04)',
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
+    borderBottomColor: withAlpha(theme.Colors.onSurface, 0.04),
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.04) : withAlpha(theme.Colors.onSurface, 0.02),
   },
   suggestionsLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -175,7 +176,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: 'rgba(0, 104, 117, 0.12)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.12),
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
@@ -196,7 +197,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
     borderBottomLeftRadius: 4,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 3,
@@ -249,7 +250,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : withAlpha(theme.Colors.onSurface, 0.05),
     borderRadius: 10,
     paddingVertical: 4,
     paddingHorizontal: 10,
@@ -274,7 +275,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.18) : withAlpha(theme.Colors.onSurface, 0.1),
   },
   attachButton: {
     width: 38,
@@ -282,7 +283,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.06) : withAlpha(theme.Colors.onSurface, 0.04),
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
   },
@@ -296,13 +297,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 160,
     height: 110,
     borderRadius: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+    backgroundColor: withAlpha(theme.Colors.onSurface, 0.08),
   },
   bubbleFileAttachment: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: withAlpha(theme.Colors.onPrimary, 0.15),
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -318,7 +319,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1.5,
-    borderColor: 'rgba(0, 104, 117, 0.25)',
+    borderColor: withAlpha(theme.Colors.primary, 0.25),
     borderRadius: 24,
     paddingHorizontal: theme.Spacing.md,
     paddingVertical: 6,

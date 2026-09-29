@@ -36,8 +36,10 @@ public class BillDTOs {
             UUID payerUserId
     ) {}
 
+    /** {@code activeLeases} counts tenants, so compare it with {@code totalBeds}: a shared room holds several. */
     public record PreFlightChecklistResponse(
             int totalUnits,
+            int totalBeds,
             int activeLeases,
             int meterReadingsExpected,
             int meterReadingsEntered,

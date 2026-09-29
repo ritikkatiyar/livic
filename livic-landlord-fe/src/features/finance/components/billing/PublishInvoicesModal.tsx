@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface PublishInvoicesModalProps {
   visible: boolean;
@@ -61,30 +62,30 @@ export function PublishInvoicesModal({
           <Text style={styles.sectionHeader}>Notification Channels Dispatched</Text>
           <View style={styles.channelsList}>
             <View style={styles.channelRow}>
-              <Ionicons name="phone-portrait-outline" size={18} color="#00897B" />
+              <Ionicons name="phone-portrait-outline" size={18} color={theme.Colors.primary} />
               <View style={styles.channelContent}>
                 <Text style={styles.channelTitle}>Mobile Push</Text>
                 <Text style={styles.channelDesc}>Instant push notification to all tenant devices</Text>
               </View>
-              <Ionicons name="checkmark-circle" size={18} color="#00897B" />
+              <Ionicons name="checkmark-circle" size={18} color={theme.Colors.primary} />
             </View>
 
             <View style={styles.channelRow}>
-              <Ionicons name="mail-outline" size={18} color="#1E88E5" />
+              <Ionicons name="mail-outline" size={18} color={theme.Colors.primary} />
               <View style={styles.channelContent}>
                 <Text style={styles.channelTitle}>Email Statement</Text>
                 <Text style={styles.channelDesc}>Itemized rent statement sent to registered email</Text>
               </View>
-              <Ionicons name="checkmark-circle" size={18} color="#1E88E5" />
+              <Ionicons name="checkmark-circle" size={18} color={theme.Colors.primary} />
             </View>
 
             <View style={styles.channelRow}>
-              <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
+              <Ionicons name="logo-whatsapp" size={18} color="#25D366" /> {/* allow-color: WhatsApp brand green */}
               <View style={styles.channelContent}>
                 <Text style={styles.channelTitle}>WhatsApp & SMS</Text>
                 <Text style={styles.channelDesc}>Rent due alert sent to primary contact number</Text>
               </View>
-              <Ionicons name="checkmark-circle" size={18} color="#25D366" />
+              <Ionicons name="checkmark-circle" size={18} color="#25D366" /> {/* allow-color: WhatsApp brand green */}
             </View>
           </View>
 
@@ -125,7 +126,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: theme.Colors.scrim || theme.Colors.scrim,
   },
   modalPopup: {
     width: 440,
@@ -146,7 +147,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: 'rgba(0, 104, 117, 0.12)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.12),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -222,7 +223,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    backgroundColor: withAlpha(theme.Colors.onSurface, 0.03),
     borderRadius: 10,
     marginBottom: theme.Spacing.lg,
   },

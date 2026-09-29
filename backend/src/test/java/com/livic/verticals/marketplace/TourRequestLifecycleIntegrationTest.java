@@ -16,6 +16,12 @@ import com.livic.verticals.marketplace.repository.OtpVerificationRepository;
 import com.livic.verticals.marketplace.service.interfaces.MarketplaceLeadService;
 import com.livic.verticals.marketplace.service.interfaces.MyTourRequestService;
 import com.livic.verticals.marketplace.service.interfaces.TourRequestManagementService;
+import com.livic.verticals.marketplace.service.interfaces.TourMessageSettingsService;
+import com.livic.verticals.marketplace.domain.TourMessageType;
+import com.livic.verticals.marketplace.dto.ChannelChoice;
+import com.livic.verticals.marketplace.dto.TourMessageSettingsResponse;
+import com.livic.verticals.marketplace.dto.UpdateTourMessageSettingsRequest;
+import com.livic.platform.notification.domain.NotificationChannel;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
 import com.livic.core.property.domain.FacingDirection;
 import com.livic.verticals.marketplace.domain.LeadStatus;
@@ -45,6 +51,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -70,6 +77,7 @@ class TourRequestLifecycleIntegrationTest {
     @Autowired private OtpVerificationRepository otpRepository;
     @Autowired private PropertyRepository propertyRepository;
     @Autowired private UnitRepository unitRepository;
+    @Autowired private TourMessageSettingsService messageSettingsService;
     @Autowired private com.livic.core.property.service.interfaces.BlockService blockService;
 
     @MockitoBean private AuthorizationService authorizationService;
@@ -140,7 +148,7 @@ class TourRequestLifecycleIntegrationTest {
 
     private MarketplaceLeadDTOs.LeadResponse requestTour(PropertyTbl p, UnitTbl u, Instant slot, String phone, String token) {
         return leadService.createLead(p.getId(), u.getId(), new MarketplaceLeadDTOs.CreateLeadRequest(
-                LeadType.TOUR_REQUEST, "Tour Tester", phone, "tester@example.com", slot, null, null, "MARKETPLACE"), token);
+                LeadType.TOUR_REQUEST, "Tour Tester", phone, "tester@example.com", slot, null, null, "MARKETPLACE", null), token);
     }
 
     private String verifiedSession(String phone) {
@@ -354,6 +362,60 @@ class TourRequestLifecycleIntegrationTest {
         leadRepository.saveAndFlush(activeTour(unitA));
 
         assertThrows(DataIntegrityViolationException.class, () -> leadRepository.saveAndFlush(activeTour(unitB)));
+    }
+
+    @Test
+    @DisplayName("The WhatsApp opt-in is stored with the tour request")
+    void whatsappOptInIsStored() {
+        MarketplaceLeadDTOs.LeadResponse optedIn = leadService.createLead(property.getId(), unitA.getId(), new MarketplaceLeadDTOs.CreateLeadRequest(
+                LeadType.TOUR_REQUEST, "Tour Tester", PHONE, null, slotAt(2, 11), null, null, "MARKETPLACE", true), sessionToken);
+
+        MarketplaceLeadTbl stored = leadRepository.findById(optedIn.id()).orElseThrow();
+        assertTrue(stored.isWhatsappOptIn());
+        assertNotNull(stored.getWhatsappOptInAt());
+        assertFalse(leadRepository.findById(requestTour(otherProperty, otherPropertyUnit, 2).id()).orElseThrow().isWhatsappOptIn());
+    }
+
+    @Test
+    @DisplayName("Message channel settings round-trip per property and message type")
+    void messageSettingsRoundTrip() {
+        UUID userId = UUID.randomUUID();
+        assertFalse(messageSettingsService.getSettings(property.getId()).customized());
+
+        messageSettingsService.updateSettings(property.getId(), new UpdateTourMessageSettingsRequest(
+                new ChannelChoice(false, true), new ChannelChoice(false, false)), userId);
+
+        TourMessageSettingsResponse saved = messageSettingsService.getSettings(property.getId());
+        assertTrue(saved.customized());
+        assertEquals(new ChannelChoice(false, true), saved.decision());
+        assertEquals(Set.of(NotificationChannel.WHATSAPP), messageSettingsService.channelsFor(property.getId(), TourMessageType.DECISION));
+        assertTrue(messageSettingsService.channelsFor(property.getId(), TourMessageType.REMINDER).isEmpty());
+        // Other properties keep the defaults
+        assertEquals(Set.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP),
+                messageSettingsService.channelsFor(otherProperty.getId(), TourMessageType.REMINDER));
+    }
+
+    @Test
+    @DisplayName("Reminder job marks approved tours starting within two hours, once")
+    void remindersAreClaimedOnce() {
+        MarketplaceLeadTbl dueSoon = activeTour(unitA);
+        dueSoon.setStatus(LeadStatus.APPROVED);
+        dueSoon.setDecidedAt(Instant.now().minus(1, ChronoUnit.DAYS));
+        dueSoon.setPreferredSlot(Instant.now().plus(90, ChronoUnit.MINUTES));
+        MarketplaceLeadTbl later = activeTour(otherPropertyUnit);
+        later.setPropertyId(otherProperty.getId());
+        later.setStatus(LeadStatus.APPROVED);
+        later.setDecidedAt(Instant.now().minus(1, ChronoUnit.DAYS));
+        later.setPreferredSlot(Instant.now().plus(5, ChronoUnit.HOURS));
+        UUID dueSoonId = leadRepository.saveAndFlush(dueSoon).getId();
+        UUID laterId = leadRepository.saveAndFlush(later).getId();
+
+        lifecycleJob.sendTourReminders();
+
+        Instant remindedAt = leadRepository.findById(dueSoonId).orElseThrow().getReminderSentAt();
+        assertNotNull(remindedAt);
+        assertNull(leadRepository.findById(laterId).orElseThrow().getReminderSentAt());
+        assertEquals(0, leadRepository.claimReminder(dueSoonId, Instant.now()), "a second run must not claim the same reminder");
     }
 
     private MarketplaceLeadTbl activeTour(UnitTbl unit) {

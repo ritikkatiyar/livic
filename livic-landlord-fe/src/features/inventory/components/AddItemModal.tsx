@@ -16,6 +16,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { createInventoryItem, type CreateInventoryItemPayload } from '../api/inventory.api';
 import { uploadAndConfirmMedia } from '@/src/features/storage/api/media.api';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface AddItemModalProps {
   visible: boolean;
@@ -216,7 +217,7 @@ export function AddItemModal({
                     <MaterialIcons
                       name={cat.icon as any}
                       size={14}
-                      color={isSelected ? theme.Colors.primary : '#6b7280'}
+                      color={isSelected ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
                     />
                     <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                       {cat.label}
@@ -232,14 +233,14 @@ export function AddItemModal({
                 style={[styles.toggleBtn, scope === 'UNIT_PRIVATE' && styles.toggleBtnActive]}
                 onPress={() => { setScope('UNIT_PRIVATE'); setStatus('AVAILABLE'); }}
               >
-                <MaterialIcons name="meeting-room" size={16} color={scope === 'UNIT_PRIVATE' ? theme.Colors.primary : '#6b7280'} />
+                <MaterialIcons name="meeting-room" size={16} color={scope === 'UNIT_PRIVATE' ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
                 <Text style={[styles.toggleText, scope === 'UNIT_PRIVATE' && styles.toggleTextActive]}>Private Unit</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.toggleBtn, scope === 'PROPERTY_SHARED' && styles.toggleBtnActive]}
                 onPress={() => { setScope('PROPERTY_SHARED'); setStatus('SHARED'); }}
               >
-                <MaterialIcons name="apartment" size={16} color={scope === 'PROPERTY_SHARED' ? theme.Colors.primary : '#6b7280'} />
+                <MaterialIcons name="apartment" size={16} color={scope === 'PROPERTY_SHARED' ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
                 <Text style={[styles.toggleText, scope === 'PROPERTY_SHARED' && styles.toggleTextActive]}>Shared Property</Text>
               </TouchableOpacity>
             </View>
@@ -331,7 +332,7 @@ export function AddItemModal({
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: theme.Colors.scrim,
     justifyContent: 'center',
     alignItems: 'center',
     padding: theme.Spacing.md,
@@ -340,10 +341,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: '100%',
     maxWidth: 580,
     maxHeight: '90%',
-    backgroundColor: theme.Surface.card,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 24,
     overflow: 'hidden',
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.25,
     shadowRadius: 24,
@@ -386,7 +387,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.outlineVariant,
     backgroundColor: theme.Colors.surfaceContainerLow,
   },
-  chipSelected: { borderColor: theme.Colors.primary, backgroundColor: 'rgba(0,104,117,0.08)' },
+  chipSelected: { borderColor: theme.Colors.primary, backgroundColor: withAlpha(theme.Colors.primary, 0.08) },
   chipText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant },
   chipTextSelected: { color: theme.Colors.primary, fontWeight: '600' },
   toggleRow: { flexDirection: 'row', gap: 10, marginTop: theme.Spacing.xs },
@@ -402,7 +403,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.outlineVariant,
     backgroundColor: theme.Colors.surfaceContainerLow,
   },
-  toggleBtnActive: { borderColor: theme.Colors.primary, backgroundColor: 'rgba(0,104,117,0.08)' },
+  toggleBtnActive: { borderColor: theme.Colors.primary, backgroundColor: withAlpha(theme.Colors.primary, 0.08) },
   toggleText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant },
   toggleTextActive: { color: theme.Colors.primary, fontWeight: '600' },
   dot: { width: 6, height: 6, borderRadius: 3 },
@@ -424,7 +425,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: 'rgba(0,104,117,0.1)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.1),
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 2,
@@ -437,7 +438,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
     height: 140,
     position: 'relative',
-    backgroundColor: 'black',
+    backgroundColor: theme.Colors.scrim,
   },
   previewImage: {
     width: '100%',
@@ -448,7 +449,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    backgroundColor: theme.Colors.scrim,
     paddingHorizontal: 12,
     paddingVertical: theme.Spacing.sm,
     flexDirection: 'row',

@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
@@ -76,9 +77,9 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingHorizontal: 16,
       paddingVertical: 8,
       borderRadius: 22,
-      backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.10)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.15) : withAlpha(theme.Colors.primary, 0.1),
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(0, 229, 255, 0.3)' : 'rgba(0, 104, 117, 0.25)',
+      borderColor: isDark ? withAlpha(theme.Colors.primary, 0.3) : withAlpha(theme.Colors.primary, 0.25),
     },
     toggleHistoryText: {
       fontSize: theme.Typography.labelSmall.fontSize,

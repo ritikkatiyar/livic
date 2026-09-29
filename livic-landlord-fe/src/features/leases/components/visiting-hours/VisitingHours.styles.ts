@@ -405,6 +405,29 @@ export const createVisitingHoursStyles = (theme: AppTheme) => StyleSheet.create(
     marginTop: theme.Spacing.sm,
   },
 
+  // Visitor messages
+  messageTitle: {
+    fontSize: theme.Typography.bodyLarge.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.onSurface,
+  },
+  channelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.Spacing.sm,
+  },
+  channelLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.Spacing.sm,
+    flexShrink: 1,
+  },
+  channelLabel: {
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    color: theme.Colors.onSurface,
+  },
+
   // Tours tab banner
   banner: {
     flexDirection: 'row',

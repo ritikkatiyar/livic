@@ -6,6 +6,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import type { ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface ExpenseConfigCardProps {
   charge: ChargeConfigResponse;
@@ -35,21 +36,21 @@ export function ExpenseConfigCard({
     const c = category.toLowerCase();
     
     if (n.includes('rent') || c.includes('rent')) {
-      return { name: 'vpn-key', bg: 'rgba(74, 222, 128, 0.12)', color: theme.Colors.tertiary };
+      return { name: 'vpn-key', bg: withAlpha(theme.Colors.success, 0.12), color: theme.Colors.tertiary };
     }
     if (n.includes('electricity') || c.includes('electricity') || n.includes('power')) {
-      return { name: 'flash-on', bg: 'rgba(250, 204, 21, 0.12)', color: theme.Colors.tertiary };
+      return { name: 'flash-on', bg: withAlpha(theme.Colors.tertiary, 0.12), color: theme.Colors.tertiary };
     }
     if (n.includes('water') || n.includes('sewage') || n.includes('utility')) {
-      return { name: 'opacity', bg: 'rgba(96, 165, 250, 0.12)', color: theme.Colors.secondary };
+      return { name: 'opacity', bg: withAlpha(theme.Colors.primary, 0.12), color: theme.Colors.secondary };
     }
     if (n.includes('internet') || n.includes('wifi') || n.includes('network')) {
-      return { name: 'router', bg: 'rgba(167, 139, 250, 0.12)', color: theme.Colors.secondary };
+      return { name: 'router', bg: withAlpha(theme.Colors.secondary, 0.12), color: theme.Colors.secondary };
     }
     if (n.includes('maintenance') || n.includes('cleaning') || c.includes('service')) {
-      return { name: 'build', bg: 'rgba(244, 63, 94, 0.12)', color: theme.Colors.error };
+      return { name: 'build', bg: withAlpha(theme.Colors.error, 0.12), color: theme.Colors.error };
     }
-    return { name: 'receipt', bg: 'rgba(148, 163, 184, 0.12)', color: theme.Colors.onSurfaceVariant };
+    return { name: 'receipt', bg: withAlpha(theme.Colors.onSurfaceVariant, 0.12), color: theme.Colors.onSurfaceVariant };
   };
 
   const formatEnum = (str: string) => {
@@ -84,7 +85,7 @@ export function ExpenseConfigCard({
               </Text>
             </View>
             <View style={styles.cardRight}>
-              <View style={[styles.badge, { backgroundColor: charge.isActive ? 'rgba(13,148,136,0.15)' : 'rgba(239,68,68,0.15)' }]}>
+              <View style={[styles.badge, { backgroundColor: charge.isActive ? withAlpha(theme.Colors.primary, 0.15) : withAlpha(theme.Colors.error, 0.15) }]}>
                  <Text style={[styles.badgeText, { color: charge.isActive ? theme.Colors.primary : theme.Colors.error }]}>
                    {charge.isActive ? 'ACTIVE' : 'INACTIVE'}
                  </Text>
@@ -245,7 +246,7 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
     alignItems: 'center',
     marginTop: theme.Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
+    borderTopColor: withAlpha(theme.Colors.onSurface, 0.05),
     paddingTop: theme.Spacing.md,
     minHeight: 44,
   },
@@ -258,9 +259,9 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
     height: 30,
     paddingHorizontal: 10,
     borderRadius: 8,
-    backgroundColor: 'rgba(148, 163, 184, 0.1)',
+    backgroundColor: withAlpha(theme.Colors.onSurfaceVariant, 0.1),
     borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.15)',
+    borderColor: theme.Colors.outline,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -14,13 +14,21 @@ export function StatusPill({ status, style }: StatusPillProps) {
   const normalized = (status || '').trim().toUpperCase();
 
   const getStatusStyles = () => {
+    // Status scheme: teal = active/healthy, green = money received, amber = needs attention,
+    // red = problem, grey = neutral (incl. vacant, matching the occupancy colors).
     switch (normalized) {
       case 'ACTIVE':
-      case 'PAID':
       case 'OCCUPIED':
       case 'SUCCESS':
       case 'APPROVED':
       case 'COMPLETED':
+      case 'CONFIGURED':
+        return {
+          bg: theme.Colors.primaryContainer,
+          text: theme.Colors.primary,
+          border: theme.Colors.primary,
+        };
+      case 'PAID':
         return {
           bg: theme.Colors.successContainer,
           text: theme.Colors.success,
@@ -28,7 +36,6 @@ export function StatusPill({ status, style }: StatusPillProps) {
         };
       case 'INACTIVE':
       case 'UNPAID':
-      case 'VACANT':
       case 'CANCELLED':
       case 'FAILED':
       case 'REJECTED':
@@ -39,6 +46,7 @@ export function StatusPill({ status, style }: StatusPillProps) {
         };
       case 'PENDING':
       case 'PARTIALLY_OCCUPIED':
+      case 'ENDING_SOON':
       case 'WARNING':
         return {
           bg: theme.Colors.tertiaryContainer,

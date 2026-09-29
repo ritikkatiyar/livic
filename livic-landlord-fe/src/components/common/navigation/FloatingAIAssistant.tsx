@@ -15,12 +15,16 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import { usePathname } from 'expo-router';
 import { runAICommand } from '@/src/features/ai/api/ai.api';
 import { createStyles } from './FloatingAIAssistant.styles';
+import { useScrollNav } from './ScrollContext';
+import { useAppChrome } from '@/src/components/common/layout/AppChrome';
+import { useAIScreenContext } from '@/src/features/ai/hooks/useAIScreenContext';
+import { AssistantMascot, MascotMood } from './AssistantMascot';
 
 type Message = {
   id: string;
@@ -28,19 +32,18 @@ type Message = {
   text: string;
 };
 
-// The assistant can only read data for now, so every example is a question.
-const EXAMPLES = [
-  'Which residents have overdue payments?',
-  'How much rent have we collected this month?',
-  'Show the open maintenance issues',
-];
+const CLOSED_BUBBLE_SIZE = 54;
 
 export default function FloatingAIAssistant() {
   const { isDesktop } = useResponsive();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { accessToken } = useAuth();
   const { theme, isDark } = useAppTheme();
-  const brandGradient = ['#00d4ff', '#0072ff'] as const;
+  const { subscribeNavHidden } = useScrollNav();
+  const { setSlotHeight } = useAppChrome();
+  const insets = useSafeAreaInsets();
+  const { context: screenContext, suggestions, label: contextLabel } = useAIScreenContext();
+  const brandGradient = [theme.Colors.primary, theme.Colors.primary] as const;
 
   const [isOpen, setIsOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -49,7 +52,7 @@ export default function FloatingAIAssistant() {
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Ask me about your properties, rent collection, overdue payments, issues and announcements.',
+      text: "Hi, I'm Livi! I can see which screen you're on, so just ask about it — or tell me what you want to set up.",
     },
   ]);
   const [isSending, setIsSending] = useState(false);
@@ -59,8 +62,28 @@ export default function FloatingAIAssistant() {
   // Animations
   const animValue = useRef(new Animated.Value(0)).current; // 0: closed, 1: open
   const bubbleScale = useRef(new Animated.Value(1)).current; // For bounce effect
+  const dockAnim = useRef(new Animated.Value(0)).current; // 0: above nav, 1: docked in corner
+  const [isDocked, setIsDocked] = useState(false);
+  const [isGreeting, setIsGreeting] = useState(false);
+  const mascotMood: MascotMood = isGreeting ? 'happy' : isDocked ? 'watching' : 'idle';
 
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
+  // Spring the bubble into the corner when the bottom nav hides, and back when it returns.
+  // Driven by its own spring (not the nav's timing curve) so it settles with a small bounce.
+  useEffect(
+    () =>
+      subscribeNavHidden((shouldDock) => {
+        setIsDocked(shouldDock);
+        Animated.spring(dockAnim, {
+          toValue: shouldDock ? 1 : 0,
+          friction: 6,
+          tension: 70,
+          useNativeDriver: false,
+        }).start();
+      }),
+    [subscribeNavHidden, dockAnim]
+  );
 
   useEffect(() => {
     Animated.spring(animValue, {
@@ -90,9 +113,14 @@ export default function FloatingAIAssistant() {
     };
   }, []);
 
-  const pathname = usePathname();
+  // Bubble sits above the bar; report the strip it covers so screens can pad for it
+  useEffect(() => {
+    setSlotHeight('assistant', isOpen ? 0 : CLOSED_BUBBLE_SIZE);
+  }, [isOpen, setSlotHeight]);
 
-  if (isDesktop || !accessToken || pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') {
+  // Rendered by the app shell only, so there is no route to check: it is simply absent
+  // on full-screen routes such as the AI desk and the auth screens.
+  if (isDesktop || !accessToken) {
     return null;
   }
 
@@ -101,7 +129,10 @@ export default function FloatingAIAssistant() {
       Animated.timing(bubbleScale, { toValue: 0.95, duration: 100, useNativeDriver: true }),
       Animated.spring(bubbleScale, { toValue: 1, friction: 8, useNativeDriver: true }),
     ]).start();
-    setIsOpen(true);
+    // Let Livi squint happily for a beat before the sheet expands over it
+    setIsGreeting(true);
+    setTimeout(() => setIsOpen(true), 220);
+    setTimeout(() => setIsGreeting(false), 700);
   };
 
   const handleClose = () => {
@@ -117,7 +148,8 @@ export default function FloatingAIAssistant() {
     setIsSending(true);
 
     try {
-      const response = await runAICommand({ message: text }, accessToken);
+      // The service answers in one call now, so there is no job to poll.
+      const response = await runAICommand({ message: text, context: screenContext }, accessToken);
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -161,6 +193,8 @@ export default function FloatingAIAssistant() {
 
   // Calculate bottom offset to float AI trigger cleanly above bottom navigation bar
   const defaultClosedBottom = Platform.OS === 'ios' ? 112 : 92;
+  // Distance to slide down so the bubble rests just above the gesture bar when the nav is hidden
+  const dockedShift = Math.max(0, defaultClosedBottom - (Math.max(insets.bottom, 8) + 16));
   const cardBottom = keyboardHeight > 0 
     ? keyboardHeight + 10 
     : animValue.interpolate({
@@ -198,6 +232,13 @@ export default function FloatingAIAssistant() {
             right: cardRight,
             bottom: cardBottom,
           },
+          // While the bottom nav is hidden on scroll, dock the closed bubble into the corner it vacated
+          !isOpen && keyboardHeight === 0 && {
+            transform: [
+              { translateY: dockAnim.interpolate({ inputRange: [0, 1], outputRange: [0, dockedShift] }) },
+              { scale: dockAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.88] }) },
+            ],
+          },
         ]}
       >
         {/* 1. Closed State Floating Bubble Trigger */}
@@ -215,11 +256,7 @@ export default function FloatingAIAssistant() {
             accessibilityLabel="Open AI Assistant"
           >
             <Animated.View style={{ transform: [{ scale: bubbleScale }] }}>
-              <View
-                style={[styles.bubbleGradient, { backgroundColor: theme.Colors.primary }]}
-              >
-                <MaterialIcons name="chat" size={24} color="#ffffff" />
-              </View>
+              <AssistantMascot size={54} color={theme.Colors.primary} mood={mascotMood} />
             </Animated.View>
           </TouchableOpacity>
         </Animated.View>
@@ -243,10 +280,8 @@ export default function FloatingAIAssistant() {
 
             <View style={styles.headerTitleRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={styles.headerIconWrapper}>
-                  <MaterialIcons name="chat" size={16} color={theme.Colors.primary} />
-                </View>
-                <Text style={styles.headerTitle}>AI Assistant</Text>
+                <AssistantMascot size={28} color={theme.Colors.primary} mood={isSending ? 'watching' : 'idle'} />
+                <Text style={styles.headerTitle}>Livi · AI Assistant</Text>
               </View>
               <TouchableOpacity 
                 style={styles.closeBtn} 
@@ -256,6 +291,12 @@ export default function FloatingAIAssistant() {
               >
                 <MaterialIcons name="close" size={20} color={theme.Colors.onSurfaceVariant} />
               </TouchableOpacity>
+            </View>
+
+            {/* What the assistant knows about the current screen */}
+            <View style={styles.contextChip} accessibilityLabel={`Assistant context: ${contextLabel}`}>
+              <MaterialIcons name="visibility" size={14} color={theme.Colors.primary} />
+              <Text style={styles.contextChipText}>Viewing: {contextLabel}</Text>
             </View>
           </View>
 
@@ -275,7 +316,7 @@ export default function FloatingAIAssistant() {
               {/* Example Queries */}
               <View style={styles.examplesWrapper}>
                 <Text style={styles.examplesHeader}>Try asking:</Text>
-                {EXAMPLES.map((ex) => (
+                {suggestions.map((ex) => (
                   <TouchableOpacity
                     key={ex}
                     style={styles.examplePill}
@@ -284,7 +325,7 @@ export default function FloatingAIAssistant() {
                     activeOpacity={0.7}
                   >
                     <MaterialIcons name="bolt" size={14} color={theme.Colors.primary} />
-                    <Text style={styles.exampleText} numberOfLines={1}>{ex}</Text>
+                    <Text style={styles.exampleText}>{ex}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -334,7 +375,7 @@ export default function FloatingAIAssistant() {
             <View style={styles.inputBar}>
               <TextInput
                 style={[styles.input, { borderColor: `${theme.Colors.primary}33`, color: theme.Colors.onSurface }]}
-                placeholder="Ask AI to help..."
+                placeholder="Ask Livi…"
                 placeholderTextColor={theme.Colors.onSurfaceVariant}
                 value={input}
                 onChangeText={setInput}
@@ -356,7 +397,7 @@ export default function FloatingAIAssistant() {
                 <View
                   style={[styles.sendGradient, { backgroundColor: theme.Colors.primary }]}
                 >
-                  <MaterialIcons name="send" size={16} color="#ffffff" />
+                  <MaterialIcons name="send" size={16} color={theme.Colors.onPrimary} />
                 </View>
               </TouchableOpacity>
             </View>

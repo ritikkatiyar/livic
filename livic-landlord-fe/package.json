@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "check:typography": "node ./scripts/check-typography-guardrails.js",
     "test": "jest",
-    "quality": "npm run check:typography && npm run lint && npm run typecheck && npm run test && npm run build"
+    "quality": "npm run check:typography && npm run check:colors && npm run lint && npm run typecheck && npm run test && npm run build",
+    "check:colors": "node ./scripts/check-color-guardrails.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

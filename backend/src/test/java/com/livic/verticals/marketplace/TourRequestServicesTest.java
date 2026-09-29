@@ -2,6 +2,7 @@ package com.livic.verticals.marketplace;
 
 import com.livic.verticals.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.verticals.marketplace.dto.TourRequestDTOs;
+import com.livic.verticals.marketplace.event.TourRequestDecidedEvent;
 import com.livic.verticals.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.verticals.marketplace.service.impl.MyTourRequestServiceImpl;
 import com.livic.verticals.marketplace.service.impl.TourRequestManagementServiceImpl;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -77,6 +79,7 @@ class TourRequestServicesTest {
         @Mock private UnitFacade unitFacade;
         @Mock private AuthorizationService authorizationService;
         @Mock private TourAvailabilityService tourAvailabilityService;
+        @Mock private ApplicationEventPublisher eventPublisher;
         @InjectMocks private TourRequestManagementServiceImpl service;
 
         private UUID propertyId;
@@ -169,6 +172,9 @@ class TourRequestServicesTest {
             assertEquals(LeadStatus.REJECTED, rejected.status());
             assertEquals("Fully booked that day", rejected.decisionNote());
             verify(leadRepository, times(2)).saveAndFlush(any(MarketplaceLeadTbl.class));
+            // Each decision triggers the prospect SMS (sent after commit by a listener)
+            verify(eventPublisher).publishEvent(new TourRequestDecidedEvent(first.getId()));
+            verify(eventPublisher).publishEvent(new TourRequestDecidedEvent(second.getId()));
         }
 
         @Test

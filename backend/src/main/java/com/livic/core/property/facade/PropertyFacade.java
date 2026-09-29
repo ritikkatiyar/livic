@@ -1,6 +1,7 @@
 package com.livic.core.property.facade;
 
 import com.livic.core.property.domain.PropertyType;
+import com.livic.core.property.dto.PropertyOccupancySummaryDTO;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.dto.PublicPropertyListingDTO;
 
@@ -28,8 +29,6 @@ public interface PropertyFacade {
     boolean existsPropertyById(UUID propertyId);
 
     // Analytics Read Methods
-    record PropertyOccupancySummaryDTO(UUID propertyId, String propertyName, int totalUnits, int occupiedUnits) {}
-
     List<PropertyOccupancySummaryDTO> getOccupancyByProperty(List<UUID> propertyIds);
 
     // Marketplace Read Methods (only publicly listed, active properties are exposed)

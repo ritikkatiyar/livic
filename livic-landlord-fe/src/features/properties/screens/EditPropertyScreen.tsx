@@ -19,6 +19,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { useEditProperty } from '@/src/features/properties/hooks/useEditProperty';
 import { MediaUploadGrid } from '@/src/components/common/display/MediaUploadGrid';
 import { createStyles } from './EditPropertyScreen.styles';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK' },
@@ -190,7 +191,7 @@ export default function EditPropertyScreen({
                 onChangeText={(val) => setTotalFloors(val.replace(/[^0-9]/g, ''))}
                 keyboardType="numeric"
               />
-              <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIcon} />
+              <MaterialIcons name="layers" size={20} color={theme.Colors.onSurfaceVariant} style={styles.inputIcon} />
             </View>
           </View>
 
@@ -200,7 +201,7 @@ export default function EditPropertyScreen({
               <TextInput
                 style={[
                   styles.inputWithIcon,
-                  hasConfiguredFloor && { opacity: 0.5, backgroundColor: 'rgba(230, 230, 230, 0.3)' },
+                  hasConfiguredFloor && { opacity: 0.5, backgroundColor: withAlpha(theme.Colors.onSurfaceVariant, 0.3) },
                 ]}
                 placeholder={hasConfiguredFloor ? 'Disabled (Units exist)' : 'Optional'}
                 value={globalUnitsPerFloor}
@@ -208,7 +209,7 @@ export default function EditPropertyScreen({
                 keyboardType="numeric"
                 editable={!hasConfiguredFloor}
               />
-              <MaterialIcons name="grid-on" size={20} color="#bac9cc" style={styles.inputIcon} />
+              <MaterialIcons name="grid-on" size={20} color={theme.Colors.onSurfaceVariant} style={styles.inputIcon} />
             </View>
           </View>
 

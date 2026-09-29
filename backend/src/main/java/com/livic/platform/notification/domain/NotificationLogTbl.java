@@ -15,7 +15,8 @@ import java.util.UUID;
 @ToString(callSuper = true)
 public class NotificationLogTbl extends BaseEntity {
 
-    @Column(name = "recipient_id", nullable = false)
+    /** Null when the recipient has no user account (e.g. a marketplace prospect reached by phone). */
+    @Column(name = "recipient_id")
     private UUID recipientId;
 
     @Enumerated(EnumType.STRING)
@@ -24,6 +25,10 @@ public class NotificationLogTbl extends BaseEntity {
 
     @Column(name = "recipient_address", nullable = false)
     private String recipientAddress;
+
+    /** The MessageTemplate used, for templated messages. */
+    @Column(name = "template", length = 40)
+    private String template;
 
     @Column(nullable = false)
     private String title;

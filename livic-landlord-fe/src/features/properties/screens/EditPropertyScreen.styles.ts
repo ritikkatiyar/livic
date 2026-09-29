@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
@@ -23,7 +24,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     height: 56,
     zIndex: 999,
     borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    borderBottomColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
   },
   headerContent: {
@@ -46,7 +47,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.Spacing.md,
@@ -62,7 +63,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLowest,
     overflow: 'hidden',
     padding: theme.Spacing.lg,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 12,
@@ -167,7 +168,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: isDark ? 'rgba(0, 212, 255, 0.15)' : 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.15) : withAlpha(theme.Colors.primary, 0.08),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -197,7 +198,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingTop: theme.Spacing.xl,
     paddingBottom: theme.Spacing.lg,
     borderRightWidth: 1,
-    borderRightColor: theme.Surface.border,
+    borderRightColor: theme.Colors.outline,
     backgroundColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
@@ -229,7 +230,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: theme.Rounded.lg,
   },
   sidebarLinkActive: {
-    backgroundColor: 'rgba(0, 224, 255, 0.10)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.1),
     borderRightWidth: 4,
     borderRightColor: theme.Colors.primaryContainer,
   },
@@ -312,7 +313,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: theme.Spacing.sm,
     backgroundColor: theme.Colors.primary,
     borderRadius: theme.Rounded.md,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -350,7 +351,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   desktop3DContainer: {
     height: 380,
-    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(255, 255, 255, 0.35)',
+    backgroundColor: isDark ? withAlpha(theme.Colors.surfaceDim, 0.25) : theme.Colors.surfaceContainerLowest,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: theme.Colors.glassStroke,
@@ -364,10 +365,10 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     bottom: 16,
     right: 16,
     padding: theme.Spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 999,
     zIndex: 10,
-    shadowColor: 'black',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,

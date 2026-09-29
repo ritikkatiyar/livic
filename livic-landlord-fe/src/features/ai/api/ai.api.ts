@@ -1,7 +1,17 @@
 import { apiRequest } from '@/src/api/client';
 
+/** What the user is looking at when they ask, so the AI can resolve "this property" etc. */
+export type AIScreenContext = {
+  route: string;
+  screenName: string;
+  propertyId?: string;
+  propertyName?: string;
+  blockId?: string;
+};
+
 export type AICommandRequest = {
   message: string;
+  context?: AIScreenContext;
 };
 
 export type AICommandResponse = {

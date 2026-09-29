@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { LedgerEntryResponse } from '../../api/ledger.api';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface LedgerTableProps {
   ledger: LedgerEntryResponse[];
@@ -39,17 +40,17 @@ export function LedgerTable({
     switch (type) {
       case 'RENT_CHARGE':
       case 'CHARGE':
-        return { text: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)' };
+        return { text: theme.Colors.error, bg: withAlpha(theme.Colors.error, 0.12) };
       case 'PAYMENT':
-        return { text: '#10b981', bg: 'rgba(16, 185, 129, 0.12)' };
+        return { text: theme.Colors.success, bg: withAlpha(theme.Colors.success, 0.12) };
       case 'SECURITY_DEPOSIT':
       case 'DEPOSIT':
-        return { text: '#3b82f6', bg: 'rgba(59, 130, 246, 0.12)' };
+        return { text: theme.Colors.primary, bg: withAlpha(theme.Colors.primary, 0.12) };
       case 'LATE_FEE':
-        return { text: '#f59e0b', bg: 'rgba(245, 158, 11, 0.12)' };
+        return { text: theme.Colors.tertiary, bg: withAlpha(theme.Colors.tertiary, 0.12) };
       case 'ADJUSTMENT':
       default:
-        return { text: '#4b5563', bg: '#f3f4f6' };
+        return { text: theme.Colors.onSurfaceVariant, bg: theme.Colors.surfaceContainerHigh };
     }
   };
 

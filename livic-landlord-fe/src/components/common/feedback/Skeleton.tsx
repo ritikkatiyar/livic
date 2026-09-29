@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleProp, StyleSheet, ViewStyle, DimensionValue, View } from 'react-native';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { GlassCard } from '../display/GlassCard';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface SkeletonProps {
   style?: StyleProp<ViewStyle>;
@@ -11,7 +12,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ style, width, height, borderRadius }: SkeletonProps) {
-  const { isDark } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
   const pulseAnim = useRef(new Animated.Value(0.35)).current;
 
   useEffect(() => {
@@ -39,7 +40,7 @@ export function Skeleton({ style, width, height, borderRadius }: SkeletonProps) 
       style={[
         styles.base,
         {
-          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.08)',
+          backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : withAlpha(theme.Colors.primary, 0.08),
           width: width,
           height: height,
           borderRadius: borderRadius ?? 12,

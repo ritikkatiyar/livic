@@ -1,5 +1,6 @@
 import { Platform, StyleSheet } from 'react-native';
 import { Theme } from '@/src/theme/Theme';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
@@ -70,7 +71,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     hubCardActive: {
       borderColor: theme.Colors.primary,
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.08),
     },
     hubCardHeader: {
       flexDirection: 'row',
@@ -169,12 +170,12 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginTop: 2,
     },
     customRolePill: {
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.08),
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: 'rgba(0, 104, 117, 0.2)',
+      borderColor: withAlpha(theme.Colors.primary, 0.2),
       alignSelf: 'flex-start',
       maxWidth: '100%',
     },
@@ -184,12 +185,12 @@ export const createStyles = (theme: any, isDark: boolean) =>
       color: theme.Colors.primary,
     },
     systemRolePill: {
-      backgroundColor: 'rgba(107, 122, 125, 0.08)',
+      backgroundColor: withAlpha(theme.Colors.onSurfaceVariant, 0.08),
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: 'rgba(107, 122, 125, 0.2)',
+      borderColor: theme.Colors.outline,
       alignSelf: 'flex-start',
       maxWidth: '100%',
     },
@@ -205,7 +206,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginTop: 14,
       paddingTop: 12,
       borderTopWidth: 1,
-      borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+      borderTopColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : withAlpha(theme.Colors.onSurface, 0.06),
       flexWrap: 'wrap',
       gap: 10,
     },
@@ -213,7 +214,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      backgroundColor: 'rgba(0, 104, 117, 0.06)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.06),
       paddingHorizontal: 10,
       paddingVertical: 4,
       borderRadius: 8,
@@ -262,12 +263,12 @@ export const createStyles = (theme: any, isDark: boolean) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.08),
       paddingHorizontal: 14,
       paddingVertical: 6,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: 'rgba(0, 104, 117, 0.2)',
+      borderColor: withAlpha(theme.Colors.primary, 0.2),
     },
     inviteCode: {
       fontSize: theme.Typography.bodyLarge.fontSize,
@@ -284,7 +285,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     inviteMetaCol: {
       flex: 1,
       minWidth: 120,
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.6)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.04) : theme.Colors.surfaceContainerLowest,
       padding: 12,
       borderRadius: 12,
       borderWidth: 1,
@@ -313,7 +314,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       borderRadius: 22,
       backgroundColor: theme.Colors.surfaceContainerLowest,
       borderWidth: 1,
-      borderColor: 'rgba(0, 104, 117, 0.3)',
+      borderColor: withAlpha(theme.Colors.primary, 0.3),
     },
     copyKeyBtnText: {
       fontSize: theme.Typography.bodyMedium.fontSize,
@@ -344,7 +345,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       alignItems: 'center',
       paddingVertical: 14,
       borderTopWidth: 1,
-      borderTopColor: 'rgba(0, 0, 0, 0.05)',
+      borderTopColor: withAlpha(theme.Colors.onSurface, 0.05),
     },
     prefItemName: {
       fontSize: theme.Typography.bodyMedium.fontSize,
@@ -360,9 +361,9 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 10,
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.08),
       borderWidth: 1,
-      borderColor: 'rgba(0, 104, 117, 0.2)',
+      borderColor: withAlpha(theme.Colors.primary, 0.2),
     },
     prefBadgeText: {
       fontSize: theme.Typography.bodySmall.fontSize,
@@ -371,7 +372,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     modalOverlay: {
       flex: 1,
-      backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: theme.Colors.modalOverlayBackground || theme.Colors.scrim || theme.Colors.scrim,
       justifyContent: 'center',
       alignItems: 'center',
       padding: 20,
@@ -432,7 +433,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       alignItems: 'center',
       paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: 'rgba(0, 0, 0, 0.04)',
+      borderBottomColor: withAlpha(theme.Colors.onSurface, 0.04),
     },
     permCheckRowDisabled: {
       opacity: 0.4,
@@ -491,7 +492,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     roleSelectChipActive: {
       borderColor: theme.Colors.primary,
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.08),
     },
     roleSelectChipText: {
       fontSize: theme.Typography.bodySmall.fontSize,

@@ -4,6 +4,12 @@ import { View, StyleSheet, Text, Animated, PanResponder, Platform } from 'react-
 import { useQuery } from '@tanstack/react-query';
 import { getAllFloorsLayout, UnitResponse } from '@/src/features/properties/api/unit.api';
 import { logger } from '@/src/utils/logger';
+import {
+  OCCUPANCY_LABELS,
+  OCCUPANCY_STATES,
+  getOccupancyColors,
+  getOccupancyState,
+} from '@/src/features/properties/utils/occupancy';
 
 // Design System & Motion Constants
 const SKELETON_PULSE_DURATION = 900;
@@ -33,6 +39,15 @@ const ISO_VISUAL_PROJECTION_FACTOR = 0.4;
 const LEGEND_Z_INDEX = 20;
 const SHADOW_OPACITY_DARK = 0.35;
 const SHADOW_OPACITY_LIGHT = 0.08;
+
+/**
+ * Maps a position within the building to a floor, splitting the height evenly between floors.
+ * `fractionFromBottom` is 0 at the bottom edge and 1 at the top. Floors are sorted lowest first.
+ */
+export function floorAtHeight(floorNumbers: number[], fractionFromBottom: number): number {
+  const idx = Math.floor(fractionFromBottom * floorNumbers.length);
+  return floorNumbers[Math.max(0, Math.min(idx, floorNumbers.length - 1))];
+}
 
 interface Building3DViewProps {
   propertyId: string;
@@ -156,6 +171,19 @@ export default function Building3DView({
   const lastRotationX = useRef(60);
 
   const [hoveredFloor, setHoveredFloor] = useState<number | null>(null);
+  // Mirrors hoveredFloor for the PanResponder, whose handlers are created once and would
+  // otherwise only ever see the initial (null) state.
+  const hoveredFloorRef = useRef<number | null>(null);
+  useEffect(() => {
+    hoveredFloorRef.current = hoveredFloor;
+  }, [hoveredFloor]);
+  // Building box in page coordinates, used to work out which floor a touch landed on
+  const containerBoxRef = useRef<{ pageY: number; height: number } | null>(null);
+  const measureContainer = () => {
+    containerRef.current?.measure((_x, _y, _w, height, _pageX, pageY) => {
+      if (height > 0) containerBoxRef.current = { pageY, height };
+    });
+  };
   const floorElevations = useRef<Record<number, Animated.Value>>({}).current;
   const isDragging = useRef(false);
 
@@ -169,10 +197,7 @@ export default function Building3DView({
     const state = stateRef.current;
     if (!state.floorNumbers.length) return;
 
-    const clickY = e.clientY - rect.top;
-    const itemHeight = rect.height / state.floorNumbers.length;
-    const idx = Math.floor((rect.height - clickY) / itemHeight);
-    const targetFloor = state.floorNumbers[Math.max(0, Math.min(idx, state.floorNumbers.length - 1))];
+    const targetFloor = floorAtHeight(state.floorNumbers, (rect.bottom - e.clientY) / rect.height);
     if (hoveredFloor !== targetFloor) {
       setHoveredFloor(targetFloor);
     }
@@ -300,6 +325,7 @@ export default function Building3DView({
       onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dx) > PAN_MOVE_THRESHOLD || Math.abs(gestureState.dy) > PAN_MOVE_THRESHOLD,
       onMoveShouldSetPanResponderCapture: (evt, gestureState) => Math.abs(gestureState.dx) > PAN_MOVE_THRESHOLD || Math.abs(gestureState.dy) > PAN_MOVE_THRESHOLD,
       onPanResponderGrant: () => {
+        measureContainer();
         isDragging.current = true;
         rotateZ.stopAnimation();
         rotateX.stopAnimation();
@@ -327,7 +353,13 @@ export default function Building3DView({
         if (Math.abs(gestureState.dx) < TAP_DISTANCE_THRESHOLD && Math.abs(gestureState.dy) < TAP_DISTANCE_THRESHOLD) {
           const state = stateRef.current;
           if (state.onFloorClick && state.floorNumbers.length > 0) {
-            const targetFloor = hoveredFloor ?? state.floorNumbers[0];
+            // Web: the floor under the mouse. Touch: the floor at the tap's height in the building.
+            let targetFloor = hoveredFloorRef.current;
+            const box = containerBoxRef.current;
+            if (targetFloor === null && box) {
+              targetFloor = floorAtHeight(state.floorNumbers, (box.pageY + box.height - gestureState.y0) / box.height);
+            }
+            targetFloor = targetFloor ?? state.floorNumbers[0];
             logger.debug('[Building3DView] Tap detected on floor:', targetFloor);
             state.onFloorClick(targetFloor);
           }
@@ -395,23 +427,28 @@ export default function Building3DView({
           {/* Glassmorphic Occupancy Status Legend Badge */}
           {!hideLegend && (
             <View style={styles.legendContainer} pointerEvents="none">
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: theme.Colors.primary }]} />
-                <Text style={styles.legendText}>Vacant</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: theme.Colors.tertiary }]} />
-                <Text style={styles.legendText}>Partial</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: theme.Colors.error }]} />
-                <Text style={styles.legendText}>Occupied</Text>
-              </View>
+              {OCCUPANCY_STATES.map((state) => {
+                const colors = getOccupancyColors(theme, state);
+                return (
+                  <View key={state} style={styles.legendItem}>
+                    <View
+                      style={[
+                        styles.legendDot,
+                        colors.hollow
+                          ? { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.border }
+                          : { backgroundColor: colors.fill },
+                      ]}
+                    />
+                    <Text style={styles.legendText}>{OCCUPANCY_LABELS[state]}</Text>
+                  </View>
+                );
+              })}
             </View>
           )}
 
           <View 
             ref={containerRef}
+            onLayout={measureContainer}
             style={[
               styles.container, 
               { 
@@ -480,25 +517,12 @@ export default function Building3DView({
                         const width = unit.gridWidth * dynamicCellSize;
                         const height = unit.gridHeight * dynamicCellSize;
 
-                        const activeCount = unit.activeLeases ? unit.activeLeases.length : 0;
-                        const capacity = unit.capacity || 1;
-                        
-                        let unitBackgroundColor = '';
-                        let unitBorderColor = '';
-
-                        if (activeCount === 0) {
-                          // VACANT: Primary Brand Color
-                          unitBackgroundColor = isHovered ? theme.Colors.primary : theme.Colors.primaryContainer;
-                          unitBorderColor = isHovered ? theme.Colors.surfaceContainerLowest : theme.Colors.primary;
-                        } else if (activeCount < capacity) {
-                          // PARTIAL: Tertiary Warning Color
-                          unitBackgroundColor = isHovered ? theme.Colors.tertiaryFixedDim : theme.Colors.tertiaryContainer;
-                          unitBorderColor = isHovered ? theme.Colors.surfaceContainerLowest : theme.Colors.tertiary;
-                        } else {
-                          // OCCUPIED: Error Color
-                          unitBackgroundColor = isHovered ? theme.Colors.error : theme.Colors.errorContainer;
-                          unitBorderColor = isHovered ? theme.Colors.surfaceContainerLowest : theme.Colors.error;
-                        }
+                        const occupancyColors = getOccupancyColors(
+                          theme,
+                          getOccupancyState(unit.activeLeases ? unit.activeLeases.length : 0, unit.capacity)
+                        );
+                        const unitBackgroundColor = isHovered ? occupancyColors.fill : occupancyColors.tint;
+                        const unitBorderColor = isHovered ? theme.Colors.surfaceContainerLowest : occupancyColors.border;
 
                         return (
                           <View
@@ -617,7 +641,7 @@ const createStyles = (theme: AppTheme, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.Spacing.sm,
-    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.75)',
+    backgroundColor: isDark ? theme.Colors.scrim : theme.Colors.surfaceContainerLowest,
     borderColor: theme.Colors.glassStroke,
     borderWidth: theme.Borders.card,
     borderRadius: theme.Rounded.default,
@@ -625,7 +649,7 @@ const createStyles = (theme: AppTheme, isDark: boolean) => StyleSheet.create({
     paddingVertical: theme.Spacing.xs,
     zIndex: LEGEND_Z_INDEX,
     ...theme.Shadows.low,
-    shadowColor: theme.Surface.shadowColor,
+    shadowColor: theme.Colors.shadowColor,
     shadowOpacity: isDark ? SHADOW_OPACITY_DARK : SHADOW_OPACITY_LIGHT,
   },
   legendItem: {

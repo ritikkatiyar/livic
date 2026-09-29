@@ -65,7 +65,7 @@ export function PlanCard({
               <MaterialIcons
                 name={feat.included ? 'check' : 'close'}
                 size={16}
-                color={feat.included ? theme.Colors.primaryContainer : '#94a3b8'}
+                color={feat.included ? theme.Colors.primaryContainer : theme.Colors.onSurfaceVariant}
               />
               <Text style={[styles.bulletText, !feat.included && styles.bulletTextDisabled]}>
                 {feat.displayLabel}

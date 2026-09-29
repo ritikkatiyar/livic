@@ -7,6 +7,7 @@ import { useAdminTutorial } from '../context/AdminTutorialContext';
 import { AdminStepId } from '../types/adminTutorial.types';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface ContextualStepGuideBarProps {
   stepId: AdminStepId;
@@ -213,7 +214,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isSmallMo
       width: 34,
       height: 34,
       borderRadius: 17,
-      backgroundColor: isDark ? 'rgba(0, 114, 255, 0.25)' : 'rgba(0, 114, 255, 0.12)',
+      backgroundColor: isDark ? withAlpha(theme.Colors.primary, 0.25) : withAlpha(theme.Colors.primary, 0.12),
       justifyContent: 'center',
       alignItems: 'center',
       marginTop: 2,

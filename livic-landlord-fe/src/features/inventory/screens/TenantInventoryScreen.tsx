@@ -7,6 +7,7 @@ import { Theme } from '@/src/theme/Theme';
 import { inventoryItems, tenantAmenities, type InventoryItem } from '@/src/features/inventory/mockInventoryData';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 const tenantVisibleItems = inventoryItems.filter((item) => item.location === 'Unit 402' || item.shared);
 
@@ -210,7 +211,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   itemBody: { padding: theme.Spacing.md, gap: 12 },
   itemTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
   itemTitle: { flex: 1, fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
-  conditionPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(0,104,117,0.1)', paddingHorizontal: 9, paddingVertical: 5, borderRadius: Theme.Rounded.lg },
+  conditionPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: withAlpha(theme.Colors.primary, 0.1), paddingHorizontal: 9, paddingVertical: 5, borderRadius: Theme.Rounded.lg },
   conditionPillWarn: { backgroundColor: theme.Colors.tertiaryFixed },
   conditionPillText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600' },
   conditionPillTextWarn: { color: theme.Colors.tertiary },
@@ -227,9 +228,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   amenityGridDesktop: { flexDirection: 'row' },
   amenityCard: { flex: 1, minHeight: 230, borderRadius: Theme.Rounded.lg, overflow: 'hidden', backgroundColor: theme.Colors.surfaceVariant },
   amenityImage: { position: 'absolute', width: '100%', height: '100%' },
-  amenityOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.34)' },
+  amenityOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: theme.Colors.scrim },
   amenityContent: { flex: 1, justifyContent: 'flex-end', padding: 18, gap: 5 },
   amenityTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   amenityTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', flex: 1 },
-  amenityMeta: { color: 'rgba(255,255,255,0.84)', fontWeight: '600', fontSize: theme.Typography.bodyMedium.fontSize },
+  amenityMeta: { color: withAlpha(theme.Colors.onPrimary, 0.84), fontWeight: '600', fontSize: theme.Typography.bodyMedium.fontSize },
 });

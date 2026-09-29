@@ -19,6 +19,7 @@ import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { createStyles } from './SettingsMenuScreen.styles';
 import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 import { usePermissions } from '@/src/features/auth/hooks/usePermissions';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export default function SettingsMenuScreen() {
   const { theme, isDark } = useAppTheme();
@@ -67,9 +68,9 @@ export default function SettingsMenuScreen() {
       description: 'Set up rents, utilities & billing logic',
       icon: 'receipt-long',
       route: `/expenses/charge-config${querySuffix}`,
-      gradientColors: [theme.Colors.primary, '#06b6d4'] as const,
+      gradientColors: [theme.Colors.primary, theme.Colors.primary] as const,
       accentColor: theme.Colors.primary,
-      bg: 'rgba(0, 104, 117, 0.1)',
+      bg: withAlpha(theme.Colors.primary, 0.1),
     },
     {
       id: 'meter-readings',
@@ -78,9 +79,9 @@ export default function SettingsMenuScreen() {
       icon: 'speed',
       // Placeholder segment keeps the route matchable for permissions; navigation requires a selected property.
       route: `/properties/${propertyId || 'select'}/meter-readings`,
-      gradientColors: [theme.Colors.tertiary, '#f59e0b'] as const,
+      gradientColors: [theme.Colors.tertiary, theme.Colors.tertiary] as const,
       accentColor: theme.Colors.tertiary,
-      bg: 'rgba(245, 158, 11, 0.1)',
+      bg: withAlpha(theme.Colors.tertiary, 0.1),
     },
     {
       id: 'worksheets',
@@ -88,9 +89,9 @@ export default function SettingsMenuScreen() {
       description: 'Input meter readings & variable charges',
       icon: 'edit-document',
       route: `/expenses/billing-worksheet${querySuffix}`,
-      gradientColors: [theme.Colors.secondary, '#7c3aed'] as const,
+      gradientColors: [theme.Colors.secondary, theme.Colors.secondary] as const,
       accentColor: theme.Colors.secondary,
-      bg: 'rgba(79, 70, 229, 0.1)',
+      bg: withAlpha(theme.Colors.secondary, 0.1),
     },
     {
       id: 'rent-roll',
@@ -98,9 +99,9 @@ export default function SettingsMenuScreen() {
       description: 'Publish monthly invoices to tenants',
       icon: 'point-of-sale',
       route: `/expenses/rent-roll${querySuffix}`,
-      gradientColors: [theme.Colors.primary, '#10b981'] as const,
+      gradientColors: [theme.Colors.primary, theme.Colors.success] as const,
       accentColor: theme.Colors.primary,
-      bg: 'rgba(5, 150, 105, 0.1)',
+      bg: withAlpha(theme.Colors.success, 0.1),
     },
     {
       id: 'ledger',
@@ -108,9 +109,9 @@ export default function SettingsMenuScreen() {
       description: 'Audit trail of all transactions',
       icon: 'account-balance',
       route: `/expenses/ledger${querySuffix}`,
-      gradientColors: ['#0d9488', '#14b8a6'] as const,
-      accentColor: '#0d9488',
-      bg: 'rgba(13, 148, 136, 0.1)',
+      gradientColors: [theme.Colors.primary, theme.Colors.primary] as const,
+      accentColor: theme.Colors.primary,
+      bg: withAlpha(theme.Colors.primary, 0.1),
     },
   ]
     .filter((item) => canRoute(item.route))

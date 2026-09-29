@@ -23,7 +23,9 @@ public class MarketplaceLeadDTOs {
         Instant preferredSlot,
         LocalDate expectedMoveInDate,
         BigDecimal tokenAmount,
-        String source
+        String source,
+        /** The prospect agreed to receive updates about this request on WhatsApp (Meta requires opt-in). */
+        Boolean whatsappOptIn
     ) {}
 
     public record LeadResponse(

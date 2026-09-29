@@ -25,6 +25,7 @@ import { useProperties } from '@/src/hooks/useProperties';
 import { TrajectoryChart } from '../components/TrajectoryChart';
 import { SystemEventsFeed } from '../components/SystemEventsFeed';
 import { createStyles } from './AnalyticsDashboardScreen.styles';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export default function AnalyticsDashboardScreen() {
   const { theme, isDark } = useAppTheme();
@@ -155,14 +156,25 @@ export default function AnalyticsDashboardScreen() {
     return filteredOccupancy.reduce((acc, p) => acc + (p.totalUnits || 0), 0);
   }, [filteredOccupancy]);
 
-  const activeTenants = useMemo(() => {
+  const occupiedUnits = useMemo(() => {
     return filteredOccupancy.reduce((acc, p) => acc + (p.occupiedUnits || 0), 0);
   }, [filteredOccupancy]);
 
+  // Tenants fill beds, not units: a shared room holds several, so compare them with bed capacity.
+  const activeTenants = useMemo(() => {
+    return filteredOccupancy.reduce((acc, p) => acc + (p.activeLeases ?? p.occupiedUnits ?? 0), 0);
+  }, [filteredOccupancy]);
+
+  const bedOccupancy = useMemo(() => {
+    const totalBeds = filteredOccupancy.reduce((acc, p) => acc + (p.totalBeds ?? p.totalUnits ?? 0), 0);
+    const occupiedBeds = filteredOccupancy.reduce((acc, p) => acc + (p.occupiedBeds ?? p.occupiedUnits ?? 0), 0);
+    return totalBeds > 0 ? Math.min(100, (occupiedBeds / totalBeds) * 100) : 0;
+  }, [filteredOccupancy]);
+
   const avgOccupancy = useMemo(() => {
-    if (totalUnits > 0) return (activeTenants / totalUnits) * 100;
+    if (totalUnits > 0) return (occupiedUnits / totalUnits) * 100;
     return summary?.collectionRate || 0;
-  }, [totalUnits, activeTenants, summary]);
+  }, [totalUnits, occupiedUnits, summary]);
 
   const mrrProjected = summary?.expectedRevenue || 0;
   const mrrCollected = summary?.collectedRevenue || 0;
@@ -218,10 +230,10 @@ export default function AnalyticsDashboardScreen() {
         <StatCard
           label="Active Tenants"
           value={activeTenants > 0 ? activeTenants.toLocaleString() : '0'}
-          helperText={`${totalUnits > 0 ? ((activeTenants / totalUnits) * 100).toFixed(0) : 0}% capacity`}
+          helperText={`${bedOccupancy.toFixed(0)}% of beds filled`}
           iconName="people"
-          iconColor="#00e0ff"
-          iconBg="rgba(0, 224, 255, 0.15)"
+          iconColor={theme.Colors.primary}
+          iconBg={withAlpha(theme.Colors.primary, 0.15)}
         />
 
         <StatCard
@@ -231,8 +243,8 @@ export default function AnalyticsDashboardScreen() {
           trend={avgOccupancy >= 80 ? 'Healthy' : undefined}
           trendType="positive"
           iconName="pie-chart"
-          iconColor="#10b981"
-          iconBg="rgba(16, 185, 129, 0.15)"
+          iconColor={theme.Colors.success}
+          iconBg={withAlpha(theme.Colors.success, 0.15)}
         />
 
         <StatCard
@@ -242,8 +254,8 @@ export default function AnalyticsDashboardScreen() {
           trend={`${summary?.collectionRate?.toFixed(1) || 0}% rate`}
           trendType={(summary?.collectionRate || 0) >= 80 ? 'positive' : 'neutral'}
           iconName="payments"
-          iconColor="#a78bfa"
-          iconBg="rgba(123, 44, 191, 0.15)"
+          iconColor={theme.Colors.secondary}
+          iconBg={withAlpha(theme.Colors.secondary, 0.15)}
         />
       </View>
 
@@ -294,6 +306,7 @@ export default function AnalyticsDashboardScreen() {
                   </Text>
                   <Text style={styles.tableCellSub} numberOfLines={1}>
                     {prop.occupiedUnits} / {prop.totalUnits} Units
+                    {prop.totalBeds != null ? ` · ${prop.occupiedBeds ?? 0} / ${prop.totalBeds} Beds` : ''}
                   </Text>
                 </View>
 
@@ -329,8 +342,9 @@ export default function AnalyticsDashboardScreen() {
                   </View>
 
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={styles.mobileCardSub}>
+                    <Text style={[styles.mobileCardSub, { flexShrink: 1 }]}>
                       {prop.occupiedUnits} of {prop.totalUnits} Units Occupied
+                      {prop.totalBeds != null ? ` · ${prop.occupiedBeds ?? 0} of ${prop.totalBeds} beds` : ''}
                     </Text>
                     <Text style={[styles.mobileCardSub, { fontWeight: '600', color: theme.Colors.primary }]}>
                       {prop.occupancyRate !== undefined ? `${prop.occupancyRate.toFixed(1)}%` : '0.0%'}
@@ -455,7 +469,7 @@ export default function AnalyticsDashboardScreen() {
                       <Text style={styles.mobileCardSub} numberOfLines={1}>
                         Unit {def.unitNumber} • {def.propertyName}
                       </Text>
-                      <View style={[styles.yieldBadge, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
+                      <View style={[styles.yieldBadge, { backgroundColor: withAlpha(theme.Colors.error, 0.12) }]}>
                         <Text style={[styles.yieldBadgeText, { color: theme.Colors.error }]}>
                           {def.daysOverdue} days overdue
                         </Text>

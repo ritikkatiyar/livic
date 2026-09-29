@@ -287,7 +287,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                         disabled={floorPage === 1}
                         onPress={() => setFloorPage(prev => Math.max(1, prev - 1))}
                       >
-                        <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : theme.Colors.primary} />
+                        <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
                         <Text style={[styles.pageButtonText, floorPage === 1 && styles.pageButtonTextDisabled]}>Prev Floors</Text>
                       </TouchableOpacity>
                       
@@ -301,7 +301,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                         onPress={() => setFloorPage(prev => Math.min(totalFloorPages, prev + 1))}
                       >
                         <Text style={[styles.pageButtonText, floorPage === totalFloorPages && styles.pageButtonTextDisabled]}>Next Floors</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : theme.Colors.primary} />
+                        <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
                       </TouchableOpacity>
                     </View>
                   )}

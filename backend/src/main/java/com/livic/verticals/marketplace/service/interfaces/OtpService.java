@@ -7,7 +7,12 @@ import com.livic.verticals.marketplace.dto.OtpDTOs.OtpVerifyResponse;
 
 public interface OtpService {
 
-    OtpRequestResponse requestOtp(OtpRequestRequest request);
+    /**
+     * Creates a code and sends it on the configured OTP channels (SMS and/or WhatsApp).
+     *
+     * @param clientIp the caller's address, for the per-IP request limit
+     */
+    OtpRequestResponse requestOtp(OtpRequestRequest request, String clientIp);
 
     OtpVerifyResponse verifyOtp(OtpVerifyRequest request);
 
@@ -15,4 +20,7 @@ public interface OtpService {
 
     /** Validates a verified, unexpired OTP session and returns the phone number it was issued for. */
     String resolveVerifiedPhone(String sessionToken);
+
+    /** Deletes verification rows old enough that neither their code nor their session can still be used. */
+    int deleteStaleVerifications();
 }

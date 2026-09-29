@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 interface RateCalculationCardProps {
   calcMethod: string;
@@ -220,7 +221,7 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     borderColor: theme.Colors.primary,
   },
   radioCircleInactive: {
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.25)' : theme.Colors.outlineVariant,
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.25) : theme.Colors.outlineVariant,
   },
   radioDot: {
     width: 10,
@@ -242,8 +243,8 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     height: 48,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.glassStroke,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : theme.Colors.glassFill,
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.12) : theme.Colors.glassStroke,
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.glassFill,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: theme.Spacing.md,
@@ -279,13 +280,13 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
   unitBtn: {
     paddingVertical: theme.Spacing.sm,
     paddingHorizontal: 14,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : theme.Colors.glassFill,
+    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.04) : theme.Colors.glassFill,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.Colors.glassStroke,
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : theme.Colors.glassStroke,
   },
   unitBtnActiveDark: {
-    backgroundColor: 'rgba(0, 229, 255, 0.15)',
+    backgroundColor: withAlpha(theme.Colors.primary, 0.15),
     borderColor: theme.Colors.primary,
   },
   unitBtnActiveLight: {
@@ -310,10 +311,10 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     height: 90,
     position: 'relative',
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.glassStroke,
+    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.12) : theme.Colors.glassStroke,
     borderTopRightRadius: 14,
     borderBottomRightRadius: 14,
-    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : theme.Colors.glassFill,
+    backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.glassFill,
   },
   scrollItem: {
     height: 40,
@@ -324,6 +325,6 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
   scrollText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '500',
-    color: 'rgba(132, 148, 149, 0.4)',
+    color: withAlpha(theme.Colors.onSurfaceVariant, 0.4),
   },
 });

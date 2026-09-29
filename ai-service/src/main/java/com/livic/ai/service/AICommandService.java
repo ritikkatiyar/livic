@@ -35,12 +35,21 @@ public class AICommandService {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "AI service is disabled");
         }
         var context = new AgentContext(UUID.fromString(userId), userToken, requestId, managedProperties(userToken));
-        AgentResult result = agentRuntime.run(landlordAssistant, context, request.getMessage());
+        AgentResult result = agentRuntime.run(landlordAssistant, context, withScreenContext(request));
         return AICommandResponse.builder()
                 .message(result.responseText())
                 .executionId(result.executionId().toString())
                 .status(result.status().name())
                 .build();
+    }
+
+    /**
+     * The question with the screen it was asked from, when the client sent one. It rides in the user's
+     * turn rather than the system prompt, because the client supplies it and it is never trusted.
+     */
+    private String withScreenContext(AICommandRequest request) {
+        String screen = ScreenContextPrompt.describe(request.getContext());
+        return screen.isEmpty() ? request.getMessage() : screen + "\n\n" + request.getMessage();
     }
 
     /**

@@ -12,20 +12,24 @@ import static org.junit.jupiter.api.Assertions.*;
 class MarketplaceMessagingConfigTest {
 
     @Test
-    @DisplayName("Starts when at least one OTP channel can deliver")
+    @DisplayName("OTP can be delivered when at least one configured channel works")
     void oneWorkingChannelIsEnough() {
-        assertDoesNotThrow(() -> MarketplaceMessagingConfig.validate(
+        assertTrue(MarketplaceMessagingConfig.canDeliver(
                 List.of(NotificationChannel.SMS, NotificationChannel.WHATSAPP), Set.of(NotificationChannel.WHATSAPP)));
     }
 
     @Test
-    @DisplayName("Refuses to start when OTP could never be delivered, or the setting is empty or not a messaging channel")
-    void refusesUndeliverableOtp() {
+    @DisplayName("Reports undeliverable OTP without refusing to start")
+    void undeliverableOtpOnlyReports() {
+        assertFalse(MarketplaceMessagingConfig.canDeliver(List.of(NotificationChannel.SMS), Set.of()));
+    }
+
+    @Test
+    @DisplayName("Refuses to start when the setting is empty or not a messaging channel")
+    void refusesInvalidSetting() {
         assertThrows(IllegalStateException.class,
-                () -> MarketplaceMessagingConfig.validate(List.of(NotificationChannel.SMS), Set.of()));
+                () -> MarketplaceMessagingConfig.canDeliver(List.of(), Set.of(NotificationChannel.SMS)));
         assertThrows(IllegalStateException.class,
-                () -> MarketplaceMessagingConfig.validate(List.of(), Set.of(NotificationChannel.SMS)));
-        assertThrows(IllegalStateException.class,
-                () -> MarketplaceMessagingConfig.validate(List.of(NotificationChannel.EMAIL), Set.of(NotificationChannel.SMS)));
+                () -> MarketplaceMessagingConfig.canDeliver(List.of(NotificationChannel.EMAIL), Set.of(NotificationChannel.SMS)));
     }
 }

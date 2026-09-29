@@ -6,7 +6,7 @@ import com.livic.core.property.domain.BlockTbl;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.facade.PropertyFacade;
-import com.livic.core.property.facade.PropertyFacade.PropertyOccupancySummaryDTO;
+import com.livic.core.property.dto.PropertyOccupancySummaryDTO;
 import com.livic.core.property.repository.PropertyRepository;
 import com.livic.core.property.repository.UnitRepository;
 import com.livic.core.property.service.interfaces.BlockService;

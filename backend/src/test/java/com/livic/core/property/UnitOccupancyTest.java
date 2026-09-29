@@ -1,6 +1,6 @@
 package com.livic.core.property;
 
-import com.livic.core.property.facade.PropertyFacade.UnitOccupancy;
+import com.livic.core.property.domain.UnitOccupancy;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

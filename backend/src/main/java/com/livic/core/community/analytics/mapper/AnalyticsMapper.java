@@ -6,7 +6,7 @@ import com.livic.core.community.analytics.dto.PortfolioOccupancyResponse;
 import com.livic.core.community.analytics.dto.SummaryResponse;
 import com.livic.core.finance.facade.FinanceFacade.DefaulterRecordDTO;
 import com.livic.core.finance.facade.FinanceFacade.RevenueMetricsDTO;
-import com.livic.core.property.facade.PropertyFacade.PropertyOccupancySummaryDTO;
+import com.livic.core.property.dto.PropertyOccupancySummaryDTO;
 import com.livic.platform.user.dto.UserSummaryDTO;
 
 import java.math.BigDecimal;

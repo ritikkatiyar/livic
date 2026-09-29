@@ -10,7 +10,7 @@ import com.livic.core.finance.domain.MeterReadingTbl;
 import com.livic.core.finance.dto.BillDTOs;
 import com.livic.core.finance.service.interfaces.BillService;
 import com.livic.core.property.dto.UnitSummaryDTO;
-import com.livic.core.property.facade.PropertyFacade.UnitOccupancy;
+import com.livic.core.property.domain.UnitOccupancy;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.core.finance.domain.CalculationStrategyType;
 import com.livic.verticals.rental.billing.service.interfaces.RentGenerationService;

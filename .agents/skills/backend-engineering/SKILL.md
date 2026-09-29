@@ -53,7 +53,9 @@ module/
   * `verticals` - Only what is unique to one product line:
     12. `rental` - Leases, unit bookings, deposits, roommate splits, and `inventory` (move-in/move-out asset tracking).
     13. `marketplace` - Public listings, prospect OTP verification, tour requests and bookings, landlord visiting hours.
-    14. (planned) `society` - Ownership transfer, committee, visitors/gate, amenities, parking.
+    14. `hostel` - PG and hostel living: `mess` (the weekly mess menu). Planned: beds and attendance.
+    15. (planned) `society` - Ownership transfer, committee, visitors/gate, amenities, parking.
+* A property opts into a vertical's feature through `property_module_tbl`, read and written via `PropertyFacade` (`isModuleActive`, `setModuleActive`). The module name is owned by the vertical (e.g. `MESS` in `verticals.hostel.mess`); core stores the switch and never interprets it.
 * Dependencies flow `verticals` -> `core` -> `platform`, and modules must stay free of cycles (enforced by `ModuleBoundaryTest`). Never the reverse: `platform` must not reference `core` or `verticals`, `core` must not reference `verticals`, and one vertical must not reference another.
 * **Core must never know about a vertical.** This is what keeps residential, society and hostel additive rather than rewrites. Anything that needs to know "who is in this unit" reads `unit_member` in `core.property`, never leases in `verticals.rental`.
 * When a lower layer needs something from a higher one, declare an SPI in the lower layer and implement it in the higher one (e.g. `platform.subscription.spi.PropertyUsageProvider` implemented by `core.property`), or publish a synchronous event.

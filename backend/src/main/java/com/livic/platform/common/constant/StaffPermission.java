@@ -38,13 +38,16 @@ public enum StaffPermission {
     ANNOUNCEMENT_VIEW(Module.ANNOUNCEMENTS, "View Announcements", "View the notice board"),
     ANNOUNCEMENT_CREATE(Module.ANNOUNCEMENTS, "Broadcast Notices", "Post announcements to tenants"),
 
+    MESS_VIEW(Module.MESS, "View Mess Menu", "View the weekly mess menu"),
+    MESS_MANAGE(Module.MESS, "Manage Mess Menu", "Turn the mess menu on or off and edit meals and meal times"),
+
     ANALYTICS_VIEW(Module.INSIGHTS, "View Analytics", "View occupancy, collections and defaulters"),
     REPORTS_VIEW(Module.INSIGHTS, "View Reports", "View and export reports"),
 
     STAFF_VIEW(Module.STAFF, "View Staff", "View staff members on the property"),
     MANAGE_STAFF(Module.STAFF, "Manage Staff", "Invite staff and manage their access");
 
-    public enum Module { PROPERTY, LEASES, FINANCE, INVENTORY, ISSUES, ANNOUNCEMENTS, INSIGHTS, STAFF }
+    public enum Module { PROPERTY, LEASES, FINANCE, INVENTORY, ISSUES, ANNOUNCEMENTS, MESS, INSIGHTS, STAFF }
 
     private static final Set<String> ALL_CODES = Arrays.stream(values())
             .map(Enum::name)

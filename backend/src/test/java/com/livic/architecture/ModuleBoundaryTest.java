@@ -35,7 +35,8 @@ class ModuleBoundaryTest {
             "core.property", "core.finance",
             "core.community.announcement", "core.community.analytics", "core.community.issue",
             "verticals.rental.inventory", "verticals.rental.lease", "verticals.rental.billing",
-            "verticals.marketplace"
+            "verticals.marketplace",
+            "verticals.hostel.mess"
     };
 
     @BeforeAll
@@ -80,9 +81,8 @@ class ModuleBoundaryTest {
     @Test
     @DisplayName("One vertical must not depend on another")
     void verticalsDoNotDependOnEachOther() {
-        ArchRule rule = noClasses()
-                .that().resideInAPackage("com.livic.verticals.marketplace..")
-                .should().dependOnClassesThat().resideInAPackage("com.livic.verticals.rental..")
+        ArchRule rule = slices().matching("com.livic.verticals.(*)..").namingSlices("verticals.$1")
+                .should().notDependOnEachOther()
                 .because("verticals are separate products; shared behaviour belongs in core");
 
         rule.check(classes);

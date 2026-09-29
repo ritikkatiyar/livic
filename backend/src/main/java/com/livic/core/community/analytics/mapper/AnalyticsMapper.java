@@ -49,7 +49,7 @@ public final class AnalyticsMapper {
         BigDecimal netYield = occRate.multiply(BigDecimal.valueOf(0.08));
 
         return new PortfolioOccupancyResponse(
-                row.propertyId().toString(), row.propertyName(),
+                row.propertyId(), row.propertyName(),
                 row.totalUnits(), row.occupiedUnits(), occRate, netYield,
                 row.vacantUnits(), row.partialUnits(), row.fullUnits(),
                 row.totalBeds(), row.occupiedBeds(), percent(row.occupiedBeds(), row.totalBeds()),

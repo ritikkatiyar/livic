@@ -1,8 +1,5 @@
 import { apiRequest } from '@/src/api/client';
-
-export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
-
-export const DAYS_OF_WEEK: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+import { DayOfWeek } from '@/src/utils/weekdays';
 
 /** Times are `HH:mm` (the backend may also send `HH:mm:ss`). */
 export interface TimeWindow {

@@ -4,10 +4,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import { DAYS_OF_WEEK, DayOfWeek, TimeWindow } from '../../api/tourAvailability.api';
+import { DAY_LABELS, DAYS_OF_WEEK, DayOfWeek } from '@/src/utils/weekdays';
+import { TimeWindow } from '../../api/tourAvailability.api';
 import {
   countSlots,
-  DAY_LABELS,
   MAX_WINDOWS_PER_DAY,
   nextWindow,
   TIME_OPTIONS,

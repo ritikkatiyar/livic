@@ -5,7 +5,8 @@ import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { Skeleton } from '@/src/components/common/feedback/Skeleton';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { TourSlots, TourSlotStatus } from '../../api/tourAvailability.api';
-import { formatIsoDate, formatTime, toHHmm } from '../../utils/visitingHours';
+import { formatTime, toHHmm } from '@/src/utils/weekdays';
+import { formatIsoDate } from '../../utils/visitingHours';
 import { createVisitingHoursStyles } from './VisitingHours.styles';
 
 type SlotPreviewCardProps = {

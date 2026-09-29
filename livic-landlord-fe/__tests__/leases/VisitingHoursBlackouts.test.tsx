@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import VisitingHoursScreen from '../../src/features/leases/screens/VisitingHoursScreen';
 import * as availabilityApi from '../../src/features/leases/api/tourAvailability.api';
+import { DAYS_OF_WEEK } from '../../src/utils/weekdays';
 
 const mockShowToast = jest.fn();
 
@@ -69,7 +70,7 @@ const mondayOnly: availabilityApi.TourAvailability = {
   minNoticeMinutes: 60,
   bookingWindowDays: 14,
   maxVisitorsPerSlot: null,
-  weeklyHours: availabilityApi.DAYS_OF_WEEK.map((dayOfWeek) => ({
+  weeklyHours: DAYS_OF_WEEK.map((dayOfWeek) => ({
     dayOfWeek,
     windows: dayOfWeek === 'MONDAY' ? [{ start: '10:00', end: '13:00' }] : [],
   })),

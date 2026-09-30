@@ -47,25 +47,27 @@ export function MealSlotCard({ slot, items, readOnly, onChange }: MealSlotCardPr
             <Text style={styles.itemNameText}>{item.name}</Text>
           </View>
         ) : (
-          <View key={item.key} style={styles.itemRow}>
-            <TextInput
-              style={[styles.input, styles.itemName, !item.name.trim() && styles.inputError]}
-              value={item.name}
-              onChangeText={(name) => updateItem(item.key, { name })}
-              maxLength={MAX_ITEM_NAME}
-              placeholder="Dish name"
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
-              accessibilityLabel={`${slot.name} dish name`}
-            />
+          <View key={item.key} style={styles.itemBlock}>
+            <View style={styles.addRow}>
+              <TextInput
+                style={[styles.input, styles.addInput, !item.name.trim() && styles.inputError]}
+                value={item.name}
+                onChangeText={(name) => updateItem(item.key, { name })}
+                maxLength={MAX_ITEM_NAME}
+                placeholder="Dish name"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                accessibilityLabel={`${slot.name} dish name`}
+              />
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => onChange(items.filter((other) => other.key !== item.key))}
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${item.name || 'dish'} from ${slot.name}`}
+              >
+                <MaterialIcons name="close" size={theme.IconSizes.sm} color={theme.Colors.onSurfaceVariant} />
+              </TouchableOpacity>
+            </View>
             <DietTagPicker value={item.dietType} onChange={(dietType) => updateItem(item.key, { dietType })} itemName={item.name} />
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => onChange(items.filter((other) => other.key !== item.key))}
-              accessibilityRole="button"
-              accessibilityLabel={`Remove ${item.name || 'dish'} from ${slot.name}`}
-            >
-              <MaterialIcons name="close" size={theme.IconSizes.sm} color={theme.Colors.onSurfaceVariant} />
-            </TouchableOpacity>
           </View>
         ),
       )}

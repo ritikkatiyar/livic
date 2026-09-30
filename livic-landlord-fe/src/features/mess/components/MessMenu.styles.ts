@@ -243,16 +243,9 @@ export const createMessMenuStyles = (theme: AppTheme) => StyleSheet.create({
   },
 
   // Dish row
-  itemRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: theme.Spacing.sm,
-  },
-  itemName: {
-    flexGrow: 1,
-    flexBasis: 180,
-    minWidth: 0,
+  itemBlock: {
+    gap: theme.Spacing.xs,
+    paddingBottom: theme.Spacing.xs,
   },
   itemNameText: {
     flex: 1,

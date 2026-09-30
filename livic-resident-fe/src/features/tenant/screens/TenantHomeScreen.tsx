@@ -294,7 +294,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { flexGrow: 1, paddingBottom: 100 },
+  scrollContent: { flexGrow: 1, paddingBottom: 100, gap: theme.Spacing.md },
   scrollContentDesktop: { paddingTop: theme.Spacing.xl, paddingHorizontal: theme.Spacing.xl },
   mobileScrollPadding: { paddingTop: theme.Spacing.xl * 2.2 },
   greetingHeader: { marginBottom: theme.Spacing.xs },

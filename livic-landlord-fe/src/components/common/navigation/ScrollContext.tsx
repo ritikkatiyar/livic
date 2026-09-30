@@ -14,6 +14,9 @@ interface ScrollContextProps {
 }
 
 export const NAV_HIDDEN_OFFSET = 120;
+
+/** `dataSet={{ navScroll: NAV_SCROLL_IGNORE }}` on an overlay keeps its scrolling from hiding the bottom bar (web). */
+export const NAV_SCROLL_IGNORE = 'ignore';
 // Ignore tiny jitters so the nav doesn't flicker on small finger movements
 const DIRECTION_THRESHOLD = 4;
 const TOP_ZONE = 10;
@@ -147,6 +150,8 @@ export const ScrollProvider = ({ children }: { children: ReactNode }) => {
 
     const handleWebScroll = (e: any) => {
       const target = e.target;
+      // Scrolling inside an overlay such as Livi's chat is not the page moving
+      if (target instanceof Element && target.closest(`[data-nav-scroll="${NAV_SCROLL_IGNORE}"]`)) return;
       const isElement = target && target !== document && target.scrollTop !== undefined;
       const currentOffsetY = isElement
         ? target.scrollTop

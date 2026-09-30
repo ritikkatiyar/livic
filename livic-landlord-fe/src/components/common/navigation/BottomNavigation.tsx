@@ -3,19 +3,28 @@ import {
   View,
   TouchableOpacity,
   StyleSheet,
-  Platform,
   Text,
   Animated,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import type { AppTheme } from '@/src/theme/ThemeContext';
 import { usePermissions } from '@/src/features/auth/hooks/usePermissions';
 import { useScrollNav } from './ScrollContext';
 import { useAppChrome } from '@/src/components/common/layout/AppChrome';
-
-/** Gap between the floating pill and the bottom of the screen. */
-const BOTTOM_BAR_OFFSET = Platform.OS === 'ios' ? 24 : 16;
+import {
+  ASSISTANT_SIZE,
+  DOCK_GAP,
+  DOCK_SIDE_PADDING,
+  dockBottom,
+  PILL_BORDER,
+  PILL_HEIGHT,
+  PILL_ITEM_HEIGHT,
+  PILL_MAX_WIDTH,
+  PILL_PADDING,
+} from './bottomDock';
 
 interface BottomNavigationProps extends BottomTabBarProps {
   onMorePress: () => void;
@@ -37,7 +46,9 @@ interface NavTabItem {
 /** Custom tab bar for the Tabs navigator in app/(tabs)/_layout.tsx (mobile only). */
 export default function BottomNavigation({ state, navigation, onMorePress }: BottomNavigationProps) {
   const { theme, isDark } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const insets = useSafeAreaInsets();
+  const bottomOffset = dockBottom(insets.bottom);
+  const styles = React.useMemo(() => createStyles(theme, isDark, bottomOffset), [theme, isDark, bottomOffset]);
   const { canRoute } = usePermissions();
   const { navTranslateY } = useScrollNav();
   const { setSlotHeight } = useAppChrome();
@@ -45,7 +56,7 @@ export default function BottomNavigation({ state, navigation, onMorePress }: Bot
   const focusedTab = state.routes[state.index]?.name;
   const canSeeRentRoll = canRoute('/expenses/rent-roll');
   const navItems: NavTabItem[] = ([
-    { id: 'home', label: 'Home', icon: 'apartment', tabName: '(home)', route: '/command-center', initialScreen: 'command-center' },
+    { id: 'portfolio', label: 'Portfolio', icon: 'apartment', tabName: '(home)', route: '/command-center', initialScreen: 'command-center' },
     { id: 'leases', label: 'Leases', icon: 'receipt-long', tabName: '(leases)', route: '/leases', initialScreen: 'leases' },
     {
       id: 'finance',
@@ -55,7 +66,7 @@ export default function BottomNavigation({ state, navigation, onMorePress }: Bot
       route: canSeeRentRoll ? '/expenses/rent-roll' : '/expenses',
       initialScreen: canSeeRentRoll ? 'expenses/rent-roll' : 'expenses/index',
     },
-    { id: 'alerts', label: 'Alerts', icon: 'report-problem', tabName: '(alerts)', route: '/escalations', initialScreen: 'escalations' },
+    { id: 'issues', label: 'Issues', icon: 'inbox', tabName: '(alerts)', route: '/escalations', initialScreen: 'escalations' },
   ] satisfies NavTabItem[]).filter((item) => canRoute(item.route));
 
   // More sections (analytics, settings...) are tabs without a button: highlight "More" for them
@@ -66,7 +77,7 @@ export default function BottomNavigation({ state, navigation, onMorePress }: Bot
     if (!route) return;
     const isFocused = route.name === focusedTab;
     // Emitting tabPress lets the tab's stack pop back to its first screen when the focused
-    // tab is tapped again (e.g. Home while on a property's floor editor).
+    // tab is tapped again (e.g. Portfolio while on a property's floor editor).
     const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
     if (isFocused || event.defaultPrevented) return;
     if (!route.state && item.initialScreen) {
@@ -76,157 +87,106 @@ export default function BottomNavigation({ state, navigation, onMorePress }: Bot
     }
   };
 
-  return (
-    <>
-      {Platform.OS === 'web' && (
-        <style dangerouslySetInnerHTML={{ __html: `
-          .mobile-bottom-nav-container {
-            position: fixed !important;
-            bottom: 16px !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 9999 !important;
-          }
-          @media (min-width: 900px) {
-            .mobile-bottom-nav-container {
-              display: none !important;
-            }
-          }
-        `}} />
-      )}
-      <Animated.View
-        // @ts-ignore
-        dataSet={{ bottomNav: 'true', responsiveLayout: 'mobile' }}
-        className="mobile-bottom-nav-container"
-        style={[
-          styles.outerContainer,
-          {
-            transform: [{ translateY: navTranslateY }],
-            opacity: navTranslateY.interpolate({ inputRange: [0, 120], outputRange: [1, 0], extrapolate: 'clamp' }),
-          },
-        ]}
-        pointerEvents="box-none"
-        // The bar floats over content: report what it covers so screens can pad for it
-        onLayout={(e) => setSlotHeight('tabBar', e.nativeEvent.layout.height + BOTTOM_BAR_OFFSET)}
-      >
-        <View style={styles.pillContainer}>
-          {navItems.map((item) => {
-            const active = item.tabName === focusedTab;
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.navItem}
-                onPress={() => handleTabPress(item)}
-                activeOpacity={0.75}
-                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={item.label}
-              >
-                <View style={[styles.iconCircle, active && styles.iconCircleActive]}>
-                  <MaterialIcons
-                    name={item.icon}
-                    size={20}
-                    color={active ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.navText,
-                    { color: active ? theme.Colors.primary : theme.Colors.onSurfaceVariant },
-                    active && styles.navTextActive,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+  const renderItem = (key: string, label: string, icon: NavTabItem['icon'], active: boolean, onPress: () => void, accessibilityLabel = label) => (
+    <TouchableOpacity
+      key={key}
+      style={[styles.navItem, active && styles.navItemActive]}
+      onPress={onPress}
+      activeOpacity={0.75}
+      accessibilityRole="tab"
+      aria-selected={active}
+      accessibilityLabel={accessibilityLabel}
+    >
+      <MaterialIcons name={icon} size={20} color={active ? theme.Colors.onPrimary : theme.Colors.onSurfaceVariant} />
+      <Text style={[styles.navText, active && styles.navTextActive]} numberOfLines={1}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
 
-          {/* More Drawer Sheet Trigger */}
-          <TouchableOpacity
-            style={styles.navItem}
-            onPress={onMorePress}
-            activeOpacity={0.75}
-            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            accessibilityRole="button"
-            accessibilityState={{ selected: isMoreActive }}
-            accessibilityLabel="More options"
-          >
-            <View style={[styles.iconCircle, isMoreActive && styles.iconCircleActive]}>
-              <MaterialIcons name="grid-view" size={20} color={isMoreActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
-            </View>
-            <Text
-              style={[
-                styles.navText,
-                { color: isMoreActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant },
-                isMoreActive && styles.navTextActive,
-              ]}
-              numberOfLines={1}
-            >
-              More
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-    </>
+  return (
+    <Animated.View
+      // @ts-ignore react-native-web forwards dataSet to data-* attributes; app/+html.tsx pins and hides the bar by them
+      dataSet={{ bottomNav: 'true', responsiveLayout: 'mobile' }}
+      style={[
+        styles.outerContainer,
+        {
+          transform: [{ translateY: navTranslateY }],
+          opacity: navTranslateY.interpolate({ inputRange: [0, 120], outputRange: [1, 0], extrapolate: 'clamp' }),
+        },
+      ]}
+      pointerEvents="box-none"
+      // The bar floats over content (Livi sits beside it): report what it covers so screens can pad for it
+      onLayout={(e) => setSlotHeight('tabBar', e.nativeEvent.layout.height + bottomOffset)}
+    >
+      <View style={styles.pillContainer} accessibilityRole="tablist">
+        {navItems.map((item) =>
+          renderItem(item.id, item.label, item.icon, item.tabName === focusedTab, () => handleTabPress(item)),
+        )}
+        {renderItem('more', 'More', 'grid-view', isMoreActive, onMorePress, 'More options')}
+      </View>
+      {/* Livi's bubble is drawn by FloatingAIAssistant; this keeps its place in the row */}
+      <View style={styles.assistantSlot} pointerEvents="none" />
+    </Animated.View>
   );
 }
 
-const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
+const createStyles = (theme: AppTheme, isDark: boolean, bottomOffset: number) => StyleSheet.create({
   outerContainer: {
     position: 'absolute',
-    bottom: BOTTOM_BAR_OFFSET,
+    bottom: bottomOffset,
     left: 0,
     right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-    paddingHorizontal: 12,
-  },
-  pillContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    borderRadius: 32,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    justifyContent: 'center',
+    gap: DOCK_GAP,
+    zIndex: 1000,
+    paddingHorizontal: DOCK_SIDE_PADDING,
+  },
+  pillContainer: {
+    flex: 1,
+    maxWidth: PILL_MAX_WIDTH,
+    height: PILL_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: PILL_PADDING,
+    gap: 2,
+    borderRadius: PILL_HEIGHT / 2,
     backgroundColor: theme.Colors.surfaceContainerLowest,
-    borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    // A hairline only in dark mode, where a shadow can't lift the bar off the page
+    borderWidth: PILL_BORDER,
+    borderColor: isDark ? theme.Colors.outlineVariant : 'transparent',
     shadowColor: theme.Colors.shadowColor,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 8,
-    maxWidth: 440,
-    width: '100%',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: isDark ? 0.4 : 0.12,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  assistantSlot: {
+    width: ASSISTANT_SIZE,
+    height: ASSISTANT_SIZE,
   },
   navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
     flex: 1,
-    paddingVertical: 2,
-    gap: 2,
-    minHeight: 44,
-  },
-  iconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    height: PILL_ITEM_HEIGHT,
+    // Concentric with the pill: its radius minus the inset around the capsule
+    borderRadius: PILL_ITEM_HEIGHT / 2,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 2,
   },
-  iconCircleActive: {
-    backgroundColor: theme.Colors.primaryContainer,
+  navItemActive: {
+    backgroundColor: theme.Colors.primary,
   },
   navText: {
     fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '500',
     letterSpacing: 0.1,
+    color: theme.Colors.onSurfaceVariant,
   },
   navTextActive: {
     fontWeight: '600',
+    color: theme.Colors.onPrimary,
   },
 });

@@ -89,7 +89,7 @@ export default function SidebarNavigation() {
         {renderSidebarLink('groups', 'AI Desk', '/ai')}
         {renderSidebarLink('description', 'Leases', '/leases' as Href)}
         {renderSidebarLink('inventory', 'Inventory', '/inventory' as Href)}
-        {renderSidebarLink('build', 'Escalations', '/escalations')}
+        {renderSidebarLink('inbox', 'Issues', '/escalations')}
         {renderSidebarLink('campaign', 'Announcements', '/announcements')}
         {renderSidebarLink('restaurant-menu', 'Mess Menu', '/mess' as Href)}
         {renderSidebarLink('account-balance', 'Finance & Billing', '/expenses')}

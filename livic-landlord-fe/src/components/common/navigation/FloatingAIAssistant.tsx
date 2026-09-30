@@ -21,10 +21,10 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { runAICommand } from '@/src/features/ai/api/ai.api';
 import { createStyles } from './FloatingAIAssistant.styles';
-import { useScrollNav } from './ScrollContext';
-import { useAppChrome } from '@/src/components/common/layout/AppChrome';
+import { NAV_SCROLL_IGNORE, useScrollNav } from './ScrollContext';
 import { useAIScreenContext } from '@/src/features/ai/hooks/useAIScreenContext';
 import { AssistantMascot, MascotMood } from './AssistantMascot';
+import { ASSISTANT_SIZE, assistantDockBottom, assistantDockRight } from './bottomDock';
 
 type Message = {
   id: string;
@@ -32,15 +32,12 @@ type Message = {
   text: string;
 };
 
-const CLOSED_BUBBLE_SIZE = 54;
-
 export default function FloatingAIAssistant() {
   const { isDesktop } = useResponsive();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { accessToken } = useAuth();
   const { theme, isDark } = useAppTheme();
   const { subscribeNavHidden } = useScrollNav();
-  const { setSlotHeight } = useAppChrome();
   const insets = useSafeAreaInsets();
   const { context: screenContext, suggestions, label: contextLabel } = useAIScreenContext();
   const brandGradient = [theme.Colors.primary, theme.Colors.primary] as const;
@@ -62,28 +59,14 @@ export default function FloatingAIAssistant() {
   // Animations
   const animValue = useRef(new Animated.Value(0)).current; // 0: closed, 1: open
   const bubbleScale = useRef(new Animated.Value(1)).current; // For bounce effect
-  const dockAnim = useRef(new Animated.Value(0)).current; // 0: above nav, 1: docked in corner
-  const [isDocked, setIsDocked] = useState(false);
+  const [isNavHidden, setIsNavHidden] = useState(false);
   const [isGreeting, setIsGreeting] = useState(false);
-  const mascotMood: MascotMood = isGreeting ? 'happy' : isDocked ? 'watching' : 'idle';
+  const mascotMood: MascotMood = isGreeting ? 'happy' : isNavHidden ? 'watching' : 'idle';
 
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  // Spring the bubble into the corner when the bottom nav hides, and back when it returns.
-  // Driven by its own spring (not the nav's timing curve) so it settles with a small bounce.
-  useEffect(
-    () =>
-      subscribeNavHidden((shouldDock) => {
-        setIsDocked(shouldDock);
-        Animated.spring(dockAnim, {
-          toValue: shouldDock ? 1 : 0,
-          friction: 6,
-          tension: 70,
-          useNativeDriver: false,
-        }).start();
-      }),
-    [subscribeNavHidden, dockAnim]
-  );
+  // Livi stays in the corner beside the bar; while the bar hides on scroll it looks down at the page
+  useEffect(() => subscribeNavHidden(setIsNavHidden), [subscribeNavHidden]);
 
   useEffect(() => {
     Animated.spring(animValue, {
@@ -112,11 +95,6 @@ export default function FloatingAIAssistant() {
       hideSub.remove();
     };
   }, []);
-
-  // Bubble sits above the bar; report the strip it covers so screens can pad for it
-  useEffect(() => {
-    setSlotHeight('assistant', isOpen ? 0 : CLOSED_BUBBLE_SIZE);
-  }, [isOpen, setSlotHeight]);
 
   // Rendered by the app shell only, so there is no route to check: it is simply absent
   // on full-screen routes such as the AI desk and the auth screens.
@@ -169,37 +147,34 @@ export default function FloatingAIAssistant() {
   // Interpolations for open sheet layout
   const cardWidth = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [56, windowWidth * 0.92],
+    outputRange: [ASSISTANT_SIZE, windowWidth * 0.92],
   });
 
-  const cardMaxHeight = keyboardHeight > 0 
-    ? Math.min(360, windowHeight * 0.42) 
+  const cardMaxHeight = keyboardHeight > 0
+    ? Math.min(360, windowHeight * 0.42)
     : Math.min(520, windowHeight * 0.65);
 
   const cardHeight = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [56, cardMaxHeight],
+    outputRange: [ASSISTANT_SIZE, cardMaxHeight],
   });
 
   const cardBorderRadius = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [28, 24],
+    outputRange: [ASSISTANT_SIZE / 2, 24],
   });
 
+  // Closed, Livi sits in the bottom bar's row, beside the pill
   const cardRight = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [20, (windowWidth * 0.08) / 2],
+    outputRange: [assistantDockRight(windowWidth), (windowWidth * 0.08) / 2],
   });
 
-  // Calculate bottom offset to float AI trigger cleanly above bottom navigation bar
-  const defaultClosedBottom = Platform.OS === 'ios' ? 112 : 92;
-  // Distance to slide down so the bubble rests just above the gesture bar when the nav is hidden
-  const dockedShift = Math.max(0, defaultClosedBottom - (Math.max(insets.bottom, 8) + 16));
-  const cardBottom = keyboardHeight > 0 
-    ? keyboardHeight + 10 
+  const cardBottom = keyboardHeight > 0
+    ? keyboardHeight + 10
     : animValue.interpolate({
         inputRange: [0, 1],
-        outputRange: [defaultClosedBottom, 20],
+        outputRange: [assistantDockBottom(insets.bottom), 20],
       });
 
   const contentOpacity = animValue.interpolate({
@@ -223,6 +198,8 @@ export default function FloatingAIAssistant() {
       )}
 
       <Animated.View
+        // @ts-ignore react-native-web forwards dataSet to data-* attributes
+        dataSet={{ navScroll: NAV_SCROLL_IGNORE }}
         style={[
           styles.container,
           {
@@ -231,13 +208,6 @@ export default function FloatingAIAssistant() {
             borderRadius: cardBorderRadius,
             right: cardRight,
             bottom: cardBottom,
-          },
-          // While the bottom nav is hidden on scroll, dock the closed bubble into the corner it vacated
-          !isOpen && keyboardHeight === 0 && {
-            transform: [
-              { translateY: dockAnim.interpolate({ inputRange: [0, 1], outputRange: [0, dockedShift] }) },
-              { scale: dockAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.88] }) },
-            ],
           },
         ]}
       >

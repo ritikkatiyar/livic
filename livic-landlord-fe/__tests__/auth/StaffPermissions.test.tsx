@@ -7,7 +7,7 @@ import { PermissionPicker } from '../../src/features/settings/components/Permiss
 import { canAccessRoute, hasPermission } from '../../src/features/auth/permissions';
 import type { MyContextResponse } from '../../src/features/auth/api/me.api';
 
-const ALL_MODULE_LABELS = ['Analytics', 'Portfolio', 'Reports', 'AI Desk', 'Leases', 'Inventory', 'Escalations', 'Announcements', 'Mess Menu', 'Finance & Billing', 'Settings'];
+const ALL_MODULE_LABELS = ['Analytics', 'Portfolio', 'Reports', 'AI Desk', 'Leases', 'Inventory', 'Issues', 'Announcements', 'Mess Menu', 'Finance & Billing', 'Settings'];
 
 // Codes a caretaker receives from a custom-access join code in the end-to-end flow.
 const CARETAKER_CODES = ['METER_READING_VIEW', 'METER_READING_CREATE', 'ISSUE_VIEW'];
@@ -124,12 +124,12 @@ describe('PermissionPicker', () => {
 });
 
 describe('SidebarNavigation left panel', () => {
-  it('shows a join-code caretaker only Portfolio, Escalations, Finance & Billing and Settings', async () => {
+  it('shows a join-code caretaker only Portfolio, Issues, Finance & Billing and Settings', async () => {
     mockContext = contextWith({ accessType: 'CUSTOM_ACCESS', permissionCodes: CARETAKER_CODES });
     const { queryByText } = await render(<SidebarNavigation />);
 
     const visible = ALL_MODULE_LABELS.filter((label) => queryByText(label) !== null);
-    expect(visible).toEqual(['Portfolio', 'Escalations', 'Finance & Billing', 'Settings']);
+    expect(visible).toEqual(['Portfolio', 'Issues', 'Finance & Billing', 'Settings']);
     expect(queryByText('UPGRADE PLAN')).toBeNull();
   });
 

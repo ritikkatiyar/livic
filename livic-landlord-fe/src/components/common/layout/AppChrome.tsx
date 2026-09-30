@@ -2,8 +2,8 @@ import React, { createContext, useCallback, useContext, useMemo, useState } from
 
 /**
  * How much of the screen the app's chrome covers, in px. Every piece of it floats over
- * content — the header is positioned absolute (fixed on web), and the bottom bar and
- * assistant bubble hover above the bottom edge — so screens must pad by these amounts.
+ * content — the header is positioned absolute (fixed on web), and the bottom bar (with
+ * Livi's bubble beside it) hovers above the bottom edge — so screens must pad by these amounts.
  *
  * Screens read this through `useAppChromeInsets()` instead of hardcoding sizes, and each
  * piece of chrome reports its own measured height, so resizing the header or the bottom
@@ -15,7 +15,7 @@ export interface AppChromeInsets {
   bottom: number;
 }
 
-type ChromeSlot = 'header' | 'tabBar' | 'assistant';
+type ChromeSlot = 'header' | 'tabBar';
 
 interface AppChromeValue {
   insets: AppChromeInsets;
@@ -31,7 +31,7 @@ const AppChromeContext = createContext<AppChromeValue>({
 });
 
 export function AppChromeProvider({ children }: { children: React.ReactNode }) {
-  const [heights, setHeights] = useState<Record<ChromeSlot, number>>({ header: 0, tabBar: 0, assistant: 0 });
+  const [heights, setHeights] = useState<Record<ChromeSlot, number>>({ header: 0, tabBar: 0 });
 
   const setSlotHeight = useCallback((slot: ChromeSlot, height: number) => {
     const rounded = Math.round(height);
@@ -40,9 +40,7 @@ export function AppChromeProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AppChromeValue>(
     () => ({
-      // The assistant bubble floats above the bottom bar, so together they cover the
-      // bottom edge; content must clear both.
-      insets: { top: heights.header, bottom: heights.tabBar + heights.assistant },
+      insets: { top: heights.header, bottom: heights.tabBar },
       setSlotHeight,
     }),
     [heights, setSlotHeight]

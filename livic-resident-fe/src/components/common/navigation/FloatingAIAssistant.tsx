@@ -21,6 +21,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import { usePathname } from 'expo-router';
 import { runAICommand } from '@/src/features/ai/api/ai.api';
 import { createStyles } from './FloatingAIAssistant.styles';
+import { AssistantMascot } from './AssistantMascot';
 
 type Message = {
   id: string;
@@ -28,10 +29,10 @@ type Message = {
   text: string;
 };
 
+// Livi answers with the resident's own access, so suggest what it can look up for them
 const EXAMPLES = [
-  'Generate rent roll for this month',
-  'Send billing notification to all defaulters',
-  'Help me plan units for a 5 floor PG with 4 rooms per floor',
+  'Any new notices from my landlord?',
+  "What's happening with my maintenance requests?",
 ];
 
 export default function FloatingAIAssistant() {
@@ -47,13 +48,14 @@ export default function FloatingAIAssistant() {
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Tell me what you want to do in Tenant Living. I can guide and perform tasks for you!',
+      text: "Hi, I'm Livi! Ask me about your home — your landlord's notices, your maintenance requests, or how to get something done in the app.",
     },
   ]);
   const [isSending, setIsSending] = useState(false);
+  const [isGreeting, setIsGreeting] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
-  
+
   // Animations
   const animValue = useRef(new Animated.Value(0)).current; // 0: closed, 1: open
   const bubbleScale = useRef(new Animated.Value(1)).current; // For bounce effect
@@ -99,7 +101,10 @@ export default function FloatingAIAssistant() {
       Animated.timing(bubbleScale, { toValue: 0.95, duration: 100, useNativeDriver: true }),
       Animated.spring(bubbleScale, { toValue: 1, friction: 8, useNativeDriver: true }),
     ]).start();
-    setIsOpen(true);
+    // Let Livi squint happily for a beat before the sheet expands over it
+    setIsGreeting(true);
+    setTimeout(() => setIsOpen(true), 220);
+    setTimeout(() => setIsGreeting(false), 700);
   };
 
   const handleClose = () => {
@@ -213,11 +218,7 @@ export default function FloatingAIAssistant() {
             accessibilityLabel="Open AI Assistant"
           >
             <Animated.View style={{ transform: [{ scale: bubbleScale }] }}>
-              <View
-                style={[styles.bubbleGradient, { backgroundColor: theme.Colors.primary }]}
-              >
-                <MaterialIcons name="chat" size={24} color="#ffffff" />
-              </View>
+              <AssistantMascot size={54} color={theme.Colors.primary} mood={isGreeting ? 'happy' : 'idle'} />
             </Animated.View>
           </TouchableOpacity>
         </Animated.View>
@@ -241,10 +242,8 @@ export default function FloatingAIAssistant() {
 
             <View style={styles.headerTitleRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={styles.headerIconWrapper}>
-                  <MaterialIcons name="chat" size={16} color={theme.Colors.primary} />
-                </View>
-                <Text style={styles.headerTitle}>AI Assistant</Text>
+                <AssistantMascot size={28} color={theme.Colors.primary} mood={isSending ? 'watching' : 'idle'} />
+                <Text style={styles.headerTitle}>Livi · AI Assistant</Text>
               </View>
               <TouchableOpacity 
                 style={styles.closeBtn} 
@@ -282,7 +281,7 @@ export default function FloatingAIAssistant() {
                     activeOpacity={0.7}
                   >
                     <MaterialIcons name="bolt" size={14} color={theme.Colors.primary} />
-                    <Text style={styles.exampleText} numberOfLines={1}>{ex}</Text>
+                    <Text style={styles.exampleText}>{ex}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -332,7 +331,7 @@ export default function FloatingAIAssistant() {
             <View style={styles.inputBar}>
               <TextInput
                 style={[styles.input, { borderColor: `${theme.Colors.primary}33`, color: theme.Colors.onSurface }]}
-                placeholder="Ask AI to help..."
+                placeholder="Ask Livi…"
                 placeholderTextColor={theme.Colors.onSurfaceVariant}
                 value={input}
                 onChangeText={setInput}
@@ -354,7 +353,7 @@ export default function FloatingAIAssistant() {
                 <View
                   style={[styles.sendGradient, { backgroundColor: theme.Colors.primary }]}
                 >
-                  <MaterialIcons name="send" size={16} color="#ffffff" />
+                  <MaterialIcons name="send" size={16} color={theme.Colors.onPrimary} />
                 </View>
               </TouchableOpacity>
             </View>

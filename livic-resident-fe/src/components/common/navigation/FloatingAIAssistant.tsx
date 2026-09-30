@@ -15,6 +15,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -22,6 +23,8 @@ import { usePathname } from 'expo-router';
 import { runAICommand } from '@/src/features/ai/api/ai.api';
 import { createStyles } from './FloatingAIAssistant.styles';
 import { AssistantMascot } from './AssistantMascot';
+import { ASSISTANT_SIZE, assistantDockBottom, assistantDockRight } from './bottomDock';
+import { NAV_SCROLL_IGNORE } from './ScrollContext';
 
 type Message = {
   id: string;
@@ -40,6 +43,7 @@ export default function FloatingAIAssistant() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { accessToken } = useAuth();
   const { theme, isDark } = useAppTheme();
+  const insets = useSafeAreaInsets();
 
   const [isOpen, setIsOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -140,7 +144,7 @@ export default function FloatingAIAssistant() {
   // Interpolations for open sheet layout
   const cardWidth = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [56, windowWidth * 0.92],
+    outputRange: [ASSISTANT_SIZE, windowWidth * 0.92],
   });
 
   const cardMaxHeight = keyboardHeight > 0 
@@ -149,26 +153,25 @@ export default function FloatingAIAssistant() {
 
   const cardHeight = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [56, cardMaxHeight],
+    outputRange: [ASSISTANT_SIZE, cardMaxHeight],
   });
 
   const cardBorderRadius = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [28, 24],
+    outputRange: [ASSISTANT_SIZE / 2, 24],
   });
 
+  // Closed, Livi sits in the bottom bar's row, beside the pill
   const cardRight = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [20, (windowWidth * 0.08) / 2],
+    outputRange: [assistantDockRight(windowWidth), (windowWidth * 0.08) / 2],
   });
 
-  // Calculate bottom offset to float AI trigger cleanly above bottom navigation bar
-  const defaultClosedBottom = Platform.OS === 'ios' ? 112 : 92;
   const cardBottom = keyboardHeight > 0 
     ? keyboardHeight + 10 
     : animValue.interpolate({
         inputRange: [0, 1],
-        outputRange: [defaultClosedBottom, 20],
+        outputRange: [assistantDockBottom(insets.bottom), 20],
       });
 
   const contentOpacity = animValue.interpolate({
@@ -192,6 +195,8 @@ export default function FloatingAIAssistant() {
       )}
 
       <Animated.View
+        // @ts-ignore react-native-web forwards dataSet to data-* attributes
+        dataSet={{ navScroll: NAV_SCROLL_IGNORE }}
         style={[
           styles.container,
           {

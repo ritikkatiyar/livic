@@ -46,7 +46,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
       ? [{ title: 'Mess Menu', subtitle: 'Weekly Meals', route: '/tenant-mess', icon: 'restaurant-menu' as const, color: theme.Colors.tertiary }]
       : []),
     { title: 'Payments', subtitle: 'Invoices & Receipts', route: '/tenant-payments', icon: 'payments', color: theme.Colors.primary },
-    { title: 'Support & Repair', subtitle: 'Maintenance Requests', route: '/tenant-maintenance', icon: 'build', color: theme.Colors.error },
+    { title: 'Requests', subtitle: 'Maintenance & Repairs', route: '/tenant-maintenance', icon: 'build', color: theme.Colors.primary },
     { title: 'Settings', subtitle: 'Profile & App Config', route: '/settings', icon: 'settings', color: theme.Colors.onSurfaceVariant },
   ], [theme, messEnabled]);
 

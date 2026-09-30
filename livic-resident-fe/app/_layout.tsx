@@ -41,7 +41,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/tenant-inventory': 'Items',
   '/tenant-mess': 'Mess Menu',
   '/tenant-payments': 'Payments',
-  '/tenant-maintenance': 'Support',
+  '/tenant-maintenance': 'Requests',
   '/settings': 'Settings',
 };
 

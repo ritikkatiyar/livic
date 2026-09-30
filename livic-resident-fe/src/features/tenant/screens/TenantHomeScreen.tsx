@@ -177,7 +177,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.quickActionBtn} onPress={() => router.push('/tenant-maintenance')} activeOpacity={0.8} hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}>
                   <MaterialIcons name="build" size={16} color={theme.Colors.primary} />
-                  <Text style={styles.quickActionText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>Maintenance</Text>
+                  <Text style={styles.quickActionText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>Requests</Text>
                 </TouchableOpacity>
               </View>
             </View>

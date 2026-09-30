@@ -77,7 +77,7 @@ export default function SidebarNavigation() {
         {renderSidebarLink('inventory', 'Inventory', '/tenant-inventory' as Href)}
         {messEnabled ? renderSidebarLink('restaurant-menu', 'Mess Menu', '/tenant-mess' as Href) : null}
         {renderSidebarLink('payments', 'Payments', '/tenant-payments')}
-        {renderSidebarLink('support-agent', 'Support', '/tenant-maintenance')}
+        {renderSidebarLink('build', 'Requests', '/tenant-maintenance')}
         {renderSidebarLink('settings', 'Settings', '/settings' as Href)}
       </ScrollView>
 

@@ -1,6 +1,6 @@
-package com.livic.core.finance.service.interfaces;
+package com.livic.core.property.service.interfaces;
 
-import com.livic.core.finance.dto.MeDTOs;
+import com.livic.core.property.dto.MeDTOs;
 import java.util.UUID;
 
 public interface MeService {

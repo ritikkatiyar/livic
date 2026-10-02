@@ -1,8 +1,8 @@
-package com.livic.core.finance.controller;
+package com.livic.core.property.controller;
 
 import com.livic.platform.common.response.ApiResponse;
-import com.livic.core.finance.dto.MeDTOs;
-import com.livic.core.finance.service.interfaces.MeService;
+import com.livic.core.property.dto.MeDTOs;
+import com.livic.core.property.service.interfaces.MeService;
 import com.livic.platform.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,18 +14,18 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 /**
- * Post-login context: global role (user), property memberships (auth) and active lease.
- * Lives in finance because finance already depends on auth and user; placing it in
- * user would recreate the auth/user cycle.
+ * Post-login context: global role (user), property memberships (auth) and unit memberships.
+ * Lives in property because property owns units and already depends on auth and user;
+ * placing it in user would recreate the auth/user cycle.
  */
 @RestController
-@RequestMapping({"/api/v1/user", "/api/v1"})
+@RequestMapping("/api/v1/me")
 @RequiredArgsConstructor
 public class MeContextController {
 
     private final MeService meService;
 
-    @GetMapping("/me/context")
+    @GetMapping("/context")
     public ResponseEntity<ApiResponse<MeDTOs.MyContextResponse>> getContext(
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {

@@ -1,4 +1,4 @@
-package com.livic.core.finance.dto;
+package com.livic.core.property.dto;
 
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.common.domain.UserRole;

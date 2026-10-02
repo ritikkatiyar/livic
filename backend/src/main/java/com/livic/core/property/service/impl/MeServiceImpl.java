@@ -1,16 +1,16 @@
-package com.livic.core.finance.service.impl;
+package com.livic.core.property.service.impl;
 
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.common.exception.BusinessException;
-import com.livic.core.finance.dto.MeDTOs;
-import com.livic.core.finance.service.interfaces.MeService;
+import com.livic.core.property.domain.PropertyTbl;
+import com.livic.core.property.dto.MeDTOs;
+import com.livic.core.property.dto.UnitResidentDTO;
+import com.livic.core.property.service.interfaces.MeService;
+import com.livic.core.property.service.interfaces.PropertyQueryService;
+import com.livic.core.property.service.interfaces.UnitMemberService;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
-import com.livic.core.property.dto.PropertySummaryDTO;
-import com.livic.core.property.dto.UnitResidentDTO;
-import com.livic.core.property.facade.PropertyFacade;
-import com.livic.core.property.facade.UnitMemberFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -29,8 +30,8 @@ public class MeServiceImpl implements MeService {
 
     private final UserFacade userFacade;
     private final AuthFacade authFacade;
-    private final UnitMemberFacade unitMemberFacade;
-    private final PropertyFacade propertyFacade;
+    private final UnitMemberService unitMemberService;
+    private final PropertyQueryService propertyQueryService;
 
     @Override
     @Transactional(readOnly = true)
@@ -45,18 +46,19 @@ public class MeServiceImpl implements MeService {
         Map<UUID, Set<String>> permissionCodes = authFacade.getEffectivePermissionCodes(userId);
 
         // Every unit this person belongs to — owned, rented, or lived in with family.
-        List<UnitResidentDTO> residences = unitMemberFacade.getActiveResidencesByUserId(userId);
+        List<UnitResidentDTO> residences = unitMemberService.findActiveResidencesByUserId(userId);
 
         // One lookup names both lists; auth and unit membership only carry the property id.
-        Map<UUID, PropertySummaryDTO> propertiesById = propertyFacade.getPropertiesByIds(Stream.concat(
+        Map<UUID, String> propertyNames = propertyQueryService.getPropertiesByIds(Stream.concat(
                         memberships.stream().map(MembershipSummaryDTO::propertyId),
                         residences.stream().map(UnitResidentDTO::propertyId))
                 .filter(Objects::nonNull)
                 .distinct()
-                .toList());
+                .toList()).stream()
+                .collect(Collectors.toMap(PropertyTbl::getId, PropertyTbl::getName, (a, b) -> a));
 
         List<MeDTOs.MembershipSummary> managedProperties = memberships.stream()
-                .map(m -> MeDTOs.MembershipSummary.from(m, propertyName(propertiesById, m.propertyId()),
+                .map(m -> MeDTOs.MembershipSummary.from(m, propertyNames.get(m.propertyId()),
                         permissionCodes.getOrDefault(m.propertyId(), Set.of())))
                 .toList();
 
@@ -69,7 +71,7 @@ public class MeServiceImpl implements MeService {
                         residence.unitNumber(),
                         residence.floor(),
                         residence.propertyId(),
-                        propertyName(propertiesById, residence.propertyId()),
+                        propertyNames.get(residence.propertyId()),
                         residence.role(),
                         residence.leaseId()))
                 .toList();
@@ -80,10 +82,5 @@ public class MeServiceImpl implements MeService {
                 tenantProperties,
                 unitMemberships
         );
-    }
-
-    private static String propertyName(Map<UUID, PropertySummaryDTO> propertiesById, UUID propertyId) {
-        PropertySummaryDTO property = propertiesById.get(propertyId);
-        return property != null ? property.name() : null;
     }
 }

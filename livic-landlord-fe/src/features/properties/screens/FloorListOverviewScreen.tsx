@@ -14,7 +14,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { formatErrorMessage } from '@/src/utils/errors';
 import { getProperty } from '@/src/features/properties/api/property.api';
 import { getBlocks } from '@/src/features/properties/api/block.api';
-import { getFloorSummaries, FloorSummaryResponse, generateBatchUnits } from '@/src/features/properties/api/unit.api';
+import { getFloorSummaries, FloorSummaryResponse, generateBatchUnits, type UnitTypeCode } from '@/src/features/properties/api/unit.api';
 import { useFocusEffect } from 'expo-router';
 
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
@@ -151,7 +151,7 @@ export default function FloorListOverviewScreen({
         startingFloorNumber: floorNum,
         prefix: '',
         capacity: 1,
-        unitType: unitType,
+        unitType: unitType as UnitTypeCode,
         blockId: blockId ?? null
       }, userToken);
 

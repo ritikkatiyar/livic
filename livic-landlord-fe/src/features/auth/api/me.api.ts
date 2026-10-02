@@ -1,32 +1,11 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
-export interface MembershipSummary {
-  propertyId: string;
-  propertyName: string;
-  title: string;
-  accessType?: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
-  /** Effective staff permission codes on this property; FULL_ACCESS members receive every code. */
-  permissionCodes?: string[];
-}
+export type MembershipSummary = ApiModel<'MembershipSummary', 'accessType' | 'permissionCodes'>;
 
-export interface ActiveLeaseSummary {
-  leaseId: string;
-  propertyId: string;
-  propertyName: string;
-  unitId: string;
-  unitNumber: string;
-  rentAmount: number;
-  status: string;
-}
+export type ActiveLeaseSummary = ApiModel<'ActiveLeaseSummary'>;
 
-export interface MyContextResponse {
-  globalRole: string;
-  managedProperties: MembershipSummary[];
-  tenantProperties: MembershipSummary[];
-  activeLeases: ActiveLeaseSummary[];
-  isLandlord: boolean;
-  isTenant: boolean;
-}
+export type MyContextResponse = ApiModel<'MyContextResponse'>;
 
 export function getMyContext(token: string): Promise<MyContextResponse> {
   return apiRequest<MyContextResponse>('/api/v1/me/context', {

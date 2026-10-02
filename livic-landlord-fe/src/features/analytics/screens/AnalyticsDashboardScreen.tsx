@@ -413,7 +413,7 @@ export default function AnalyticsDashboardScreen() {
                 </View>
 
                 {paginatedDefaulters.map((def, idx) => (
-                  <View key={def.rentCycleId || idx} style={styles.tableRow}>
+                  <View key={def.billId || idx} style={styles.tableRow}>
                     <View style={{ flex: 2 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Text style={styles.tableCellName} numberOfLines={1}>
@@ -448,7 +448,7 @@ export default function AnalyticsDashboardScreen() {
               /* Mobile Overdue Entity Cards */
               <View style={styles.mobileCardList}>
                 {paginatedDefaulters.map((def, idx) => (
-                  <View key={def.rentCycleId || idx} style={styles.mobileCard}>
+                  <View key={def.billId || idx} style={styles.mobileCard}>
                     <View style={styles.mobileCardHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
                         <Text style={styles.mobileCardTitle} numberOfLines={1}>

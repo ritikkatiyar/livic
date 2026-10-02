@@ -1,26 +1,11 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export interface MembershipResponse {
-  id: string;
-  userId: string;
-  fullName: string;
-  email: string;
-  title: string;
-  accessType: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
-  isActive: boolean;
-  permissionCodes?: string[];
-}
+export type MembershipResponse = ApiModel<'MembershipResponse', 'permissionCodes'>;
 
-export interface UpdateMembershipRequest {
-  title?: string;
-  accessType?: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
-  isActive?: boolean;
-  permissionCodes?: string[];
-}
+export type UpdateMembershipRequest = ApiInput<'UpdateMembershipRequest'>;
 
-export interface TransferOwnershipRequest {
-  toUserId: string;
-}
+export type TransferOwnershipRequest = ApiInput<'TransferOwnershipRequest'>;
 
 export interface MembershipPageResponse {
   content: MembershipResponse[];

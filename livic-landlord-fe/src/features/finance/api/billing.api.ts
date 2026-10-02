@@ -1,53 +1,17 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export type FeatureDisplayItem = {
-  featureKey: string;
-  displayLabel: string;
-  limitValue: number;
-  included: boolean;
-};
+export type FeatureDisplayItem = ApiModel<'FeatureDisplayItem'>;
 
-export type PlanResponse = {
-  id: string;
-  planKey: string;
-  name: string;
-  priceMonthly: number;
-  priceYearly: number;
-  currency: string;
-  features: FeatureDisplayItem[];
-};
+export type PlanResponse = ApiModel<'PlanResponse'>;
 
-export type SubscriptionDetails = {
-  id: string;
-  userId: string;
-  planName: 'STARTER' | 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | string;
-  status: 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'TRIALING';
-  price?: number;
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  autoRenew: boolean;
-  gatewaySubscriptionId?: string;
-};
+export type SubscriptionDetails = ApiModel<'SubscriptionDetailsDto', 'price' | 'gatewaySubscriptionId'>;
 
-export type WalletDetails = {
-  id: string;
-  userId: string;
-  creditBalance: number;
-  currency: string;
-  lastToppedUp?: string;
-};
+export type WalletDetails = ApiModel<'WalletDetailsDto', 'lastToppedUp'>;
 
-export type BillingStatusResponse = {
-  subscription: SubscriptionDetails;
-  wallet: WalletDetails;
-};
+export type BillingStatusResponse = ApiModel<'BillingStatusResponse'>;
 
-export type SubscribeRequestPayload = {
-  planName: string;
-  amount: number;
-  billingCycle: 'MONTHLY' | 'YEARLY';
-  gateway?: 'RAZORPAY' | 'STRIPE' | 'PAYPAL';
-};
+export type SubscribeRequestPayload = ApiInput<'SubscriptionRequest'>;
 
 export type TopUpRequestPayload = {
   amount: number;
@@ -65,13 +29,7 @@ export type SubscriptionResponse = {
   createdAt: string;
 };
 
-export type PaymentIntentResponse = {
-  transactionId: string;
-  clientSecret?: string;
-  gatewayTransactionId: string;
-  paymentUrl?: string;
-  status: string;
-};
+export type PaymentIntentResponse = ApiModel<'PaymentIntentResponse', 'clientSecret' | 'paymentUrl'>;
 
 export function getPlans(token?: string): Promise<PlanResponse[]> {
   return apiRequest<PlanResponse[]>('/api/v1/billing/plans', {
@@ -103,11 +61,7 @@ export function topUpWallet(payload: TopUpRequestPayload, token: string): Promis
   });
 }
 
-export type PaymentVerificationPayload = {
-  razorpayPaymentId: string;
-  razorpayOrderId: string;
-  razorpaySignature?: string;
-};
+export type PaymentVerificationPayload = ApiInput<'PaymentVerificationRequest'>;
 
 export function verifyPayment(payload: PaymentVerificationPayload, token: string): Promise<string> {
   return apiRequest<string>('/api/v1/payments/verify', {

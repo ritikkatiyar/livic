@@ -1,12 +1,7 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
-export interface JoinCodeResultResponse {
-  propertyId: string;
-  propertyName: string;
-  title: string;
-  accessType: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
-  membershipId: string;
-}
+export type JoinCodeResultResponse = ApiModel<'JoinCodeResultResponse'>;
 
 export function validateAndApplyJoinCode(token: string, code: string): Promise<JoinCodeResultResponse> {
   return apiRequest<JoinCodeResultResponse>(`/api/v1/properties/join-codes/validate`, {

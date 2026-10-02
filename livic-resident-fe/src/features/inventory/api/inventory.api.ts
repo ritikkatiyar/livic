@@ -1,29 +1,9 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
-export interface BackendInventoryItem {
-  id: string;
-  propertyId: string;
-  unitId?: string | null;
-  name: string;
-  category: string;
-  location?: string | null;
-  serialNumber?: string | null;
-  modelNumber?: string | null;
-  condition: string;
-  status: string;
-  nextService?: string | null;
-  value?: number | null;
-  shared: boolean;
-  icon?: string | null;
-  image?: string | null;
-  notes?: string | null;
-  createdAt?: string;
-}
+export type BackendInventoryItem = ApiModel<'InventoryItemResponse', 'unitId' | 'location' | 'modelNumber' | 'nextService' | 'value' | 'icon' | 'image' | 'notes' | 'createdAt', 'unitId' | 'location' | 'modelNumber' | 'nextService' | 'value' | 'icon' | 'image' | 'notes'>;
 
-export interface TenantVisibleInventoryResponse {
-  unitItems: BackendInventoryItem[];
-  sharedItems: BackendInventoryItem[];
-}
+export type TenantVisibleInventoryResponse = ApiModel<'TenantVisibleInventoryResponse'>;
 
 export async function getTenantVisibleInventory(token: string, propertyId?: string): Promise<TenantVisibleInventoryResponse> {
   try {

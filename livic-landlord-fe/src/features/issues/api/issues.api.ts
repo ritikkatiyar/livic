@@ -1,4 +1,5 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
 export interface PaginatedResponse<T> {
   content: T[];
@@ -8,39 +9,9 @@ export interface PaginatedResponse<T> {
   number: number;
 }
 
-export interface IssueTimelineResponse {
-  id: string;
-  authorUserId: string;
-  authorName: string;
-  entryType: 'CREATION' | 'STATUS_CHANGE' | 'ESCALATION' | 'COMMENT';
-  content: string;
-  createdAt: string;
-}
+export type IssueTimelineResponse = ApiModel<'IssueTimelineResponse'>;
 
-export interface IssueResponse {
-  id: string;
-  propertyId: string;
-  blockId?: string;
-  blockName?: string;
-  unitId?: string;
-  leaseId?: string;
-  tenantId?: string;
-  reportedByUserId: string;
-  title: string;
-  description: string;
-  category: 'GENERAL' | 'PLUMBING' | 'ELECTRICAL' | 'STRUCTURAL' | 'SECURITY' | 'CLEANLINESS' | 'INTERNET' | 'OTHER';
-  priority: 'LOW' | 'STANDARD' | 'HIGH' | 'URGENT';
-  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
-  scope: 'UNIT' | 'BUILDING' | 'COMMON_AREA';
-  escalationStatus: 'NONE' | 'ESCALATED' | 'RESOLVED';
-  escalationLevel: number;
-  assignedContactName: string;
-  assignedContactPhone?: string;
-  createdAt: string;
-  updatedAt: string;
-  ticketNumber: string;
-  timeline: IssueTimelineResponse[];
-}
+export type IssueResponse = ApiModel<'IssueResponse', 'blockId' | 'blockName' | 'unitId' | 'leaseId' | 'tenantId' | 'assignedContactPhone'>;
 
 export const getIssues = async (
   token: string,

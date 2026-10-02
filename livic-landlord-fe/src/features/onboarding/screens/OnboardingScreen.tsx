@@ -45,7 +45,6 @@ export default function OnboardingScreen() {
     try {
       await saveUserPreference({
         activeMode: selectedModule,
-        onboardingDone: true
       }, accessToken!);
       setLocalOnboardingStatus(accessToken, true);
       router.replace('/command-center' as any);
@@ -68,7 +67,6 @@ export default function OnboardingScreen() {
       try {
         await saveUserPreference({
           activeMode: 'RENTAL',
-          onboardingDone: true
         }, accessToken!);
       } catch {
         // Backend marks onboarding done upon code application

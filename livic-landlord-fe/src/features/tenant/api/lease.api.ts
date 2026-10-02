@@ -1,34 +1,9 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export interface CreateLeaseRequest {
-  userId?: string | null;
-  unitId: string;
-  monthlyRentAmount: number;
-  securityDeposit: number;
-  splitStrategy: 'FULL_UNIT' | 'PER_OCCUPANT' | 'CUSTOM';
-  moveInDate: string;
-  moveOutDate?: string | null;
-  status?: 'ACTIVE' | 'ENDED';
-  bookingId?: string | null;
-}
+export type CreateLeaseRequest = ApiInput<'CreateLeaseRequest'>;
 
-export interface LeaseResponse {
-  id: string;
-  userId: string;
-  unitId: string;
-  blockId?: string | null;
-  blockName?: string | null;
-  unitNumber: string;
-  monthlyRentAmount: number;
-  securityDeposit: number;
-  splitStrategy: string;
-  moveInDate: string;
-  moveOutDate?: string | null;
-  status: string;
-  tenantName?: string;
-  tenantPhone?: string;
-  propertyName?: string;
-}
+export type LeaseResponse = ApiModel<'LeaseResponse', 'blockId' | 'blockName' | 'moveOutDate' | 'tenantName' | 'tenantPhone' | 'propertyName', 'blockId' | 'blockName' | 'moveOutDate'>;
 
 export function createLease(payload: CreateLeaseRequest, token: string): Promise<LeaseResponse> {
   return apiRequest<LeaseResponse>('/api/v1/finance/leases', {

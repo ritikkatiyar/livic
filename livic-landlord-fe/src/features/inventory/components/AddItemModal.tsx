@@ -110,10 +110,11 @@ export function AddItemModal({
       const payload: CreateInventoryItemPayload = {
         propertyId,
         name: name.trim(),
-        category,
+        // The pickers hold the enum codes as plain strings.
+        category: category as CreateInventoryItemPayload['category'],
         scope,
-        currentCondition: condition,
-        status: scope === 'PROPERTY_SHARED' ? 'SHARED' : status,
+        currentCondition: condition as CreateInventoryItemPayload['currentCondition'],
+        status: (scope === 'PROPERTY_SHARED' ? 'SHARED' : status) as CreateInventoryItemPayload['status'],
         serialNumber: serialNumber.trim() || undefined,
         replacementValue: val,
         notes: notes.trim() || undefined,

@@ -1,39 +1,11 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export interface CreateBookingRequest {
-  unitId: string;
-  propertyId: string;
-  prospectiveTenantUserId?: string | null;
-  prospectiveTenantName: string;
-  prospectiveTenantPhone: string;
-  prospectiveTenantEmail?: string | null;
-  tokenAmount: number;
-  expectedMoveInDate: string;
-}
+export type CreateBookingRequest = ApiInput<'CreateBookingRequest'>;
 
-export interface UnitBookingResponse {
-  id: string;
-  unitId: string;
-  unitNumber: string;
-  prospectiveTenantUserId: string | null;
-  prospectiveTenantName: string;
-  prospectiveTenantPhone: string;
-  prospectiveTenantEmail: string | null;
-  tokenAmount: number;
-  expectedMoveInDate: string;
-  status: 'BOOKED' | 'CONVERTED' | 'FORFEITED' | 'REFUNDED';
-  paymentTransactionId: string | null;
-  convertedLeaseId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+export type UnitBookingResponse = ApiModel<'UnitBookingResponse', never, 'prospectiveTenantUserId' | 'prospectiveTenantEmail' | 'paymentTransactionId' | 'convertedLeaseId'>;
 
-export interface VacatingUnitResponse {
-  id: string;
-  unitNumber: string;
-  propertyName: string;
-  // include other properties as returned by UnitResponse DTO if needed
-}
+export type VacatingUnitResponse = ApiModel<'UnitResponse'>;
 
 export async function createUnitBooking(payload: CreateBookingRequest, token: string): Promise<UnitBookingResponse> {
   return await apiRequest<UnitBookingResponse>('/api/v1/finance/unit-bookings', {

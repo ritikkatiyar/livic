@@ -1,23 +1,14 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export interface MembershipResponse {
-  id: string;
-  userId: string;
-  fullName: string;
-  email: string;
-  roleId: string;
-  roleName: string;
-  accessType?: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
-}
+export type MembershipResponse = ApiModel<'MembershipResponse', 'accessType'>;
 
 export interface AssignRoleRequest {
   userId: string;
   roleId: string;
 }
 
-export interface TransferOwnershipRequest {
-  toUserId: string;
-}
+export type TransferOwnershipRequest = ApiInput<'TransferOwnershipRequest'>;
 
 export function getMemberships(token: string, propertyId: string): Promise<MembershipResponse[]> {
   return apiRequest<MembershipResponse[]>(`/api/v1/properties/${propertyId}/memberships`, {

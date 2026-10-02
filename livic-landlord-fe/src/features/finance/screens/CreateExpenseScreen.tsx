@@ -23,6 +23,7 @@ import { useProperties } from '@/src/hooks/useProperties';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useChargeConfig } from '@/src/features/finance/hooks/useChargeConfig';
 import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
+import type { ChargeConfigRequest } from '@/src/features/finance/api/charge.api';
 
 // Sub-components
 import { ChargeIdentityCard } from '../components/billing/ChargeIdentityCard';
@@ -106,10 +107,10 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
     setNameError('');
 
     try {
-        let calcStrategyEnum = 'FIXED_RATE';
+        let calcStrategyEnum: ChargeConfigRequest['calculationStrategy'] = 'FIXED_RATE';
         if (calcMethod === 'Metered/Consumption') calcStrategyEnum = 'METERED';
-        
-        let freqEnum = 'MONTHLY';
+
+        let freqEnum: ChargeConfigRequest['billingFrequency'] = 'MONTHLY';
         if (billingFrequency === 'Annual') freqEnum = 'ANNUAL';
         if (billingFrequency === 'Weekly') freqEnum = 'WEEKLY';
 

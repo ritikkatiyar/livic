@@ -1,11 +1,7 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export interface FloorSummaryResponse {
-  floorNumber: number;
-  displayLabel: string;
-  configured: boolean;
-  unitCount: number;
-}
+export type FloorSummaryResponse = ApiModel<'FloorSummaryResponse'>;
 
 /** Floors belong to a block. Omitting blockId means the property's default block. */
 export function getFloorSummaries(
@@ -26,29 +22,9 @@ export function getFloorSummaries(
   });
 }
 
-export interface UnitResponse {
-  id: string;
-  blockId?: string | null;
-  unitNumber: string;
-  floor: number;
-  gridX: number;
-  gridY: number;
-  gridWidth: number;
-  gridHeight: number;
-  type: string;
-  capacity: number;
-  facing: string;
-  activeLeases?: ActiveLeaseSummary[];
-}
+export type UnitResponse = ApiModel<'UnitResponse', 'blockId' | 'activeLeases', 'blockId'>;
 
-export interface ActiveLeaseSummary {
-  leaseId: string;
-  tenantUserId: string;
-  tenantName?: string | null;
-  tenantPhone?: string | null;
-  rentAmount: number;
-  status: string;
-}
+export type ActiveLeaseSummary = ApiModel<'ActiveLeaseSummary', 'tenantName' | 'tenantPhone', 'tenantName' | 'tenantPhone'>;
 
 export function getFloorLayout(
   propertyId: string,
@@ -73,16 +49,10 @@ export function getAllFloorsLayout(propertyId: string, token: string, blockId?: 
   });
 }
 
-export interface BatchUnitRequest {
-  totalFloors: number;
-  unitsPerFloor: number;
-  startingFloorNumber: number;
-  prefix: string;
-  capacity: number;
-  unitType: string;
-  /** Null means the property's default block. */
-  blockId?: string | null;
-}
+/** The unit type's code; the backend accepts it as well as the display name it sends back. */
+export type UnitTypeCode = 'SINGLE_UNIT' | 'SHARED_UNIT' | 'ONE_BHK' | 'TWO_BHK' | 'STUDIO';
+
+export type BatchUnitRequest = Omit<ApiInput<'BatchUnitRequest'>, 'unitType'> & { unitType?: UnitTypeCode | null };
 
 export function generateBatchUnits(propertyId: string, request: BatchUnitRequest, token: string): Promise<UnitResponse[]> {
   const path = `/api/v1/properties/${propertyId}/units/batch`;

@@ -1,4 +1,5 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
 /**
  * Blocks are the buildings inside one property.
@@ -7,15 +8,7 @@ import { apiRequest } from '@/src/api/client';
  * single building never sees the concept. Two buildings on one plot belong in one property
  * with two blocks — that keeps their staff, charges and books together.
  */
-export interface BlockResponse {
-  id: string;
-  propertyId: string;
-  name: string;
-  sortOrder: number;
-  isDefault: boolean;
-  totalFloors: number | null;
-  unitCount: number;
-}
+export type BlockResponse = ApiModel<'BlockResponse', never, 'totalFloors'>;
 
 export interface BlockRequest {
   name: string;

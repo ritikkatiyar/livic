@@ -1,16 +1,7 @@
 import { apiRequest, apiRawTextRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
-export interface RentCycle {
-  id: string;
-  leaseId: string;
-  billingMonth: string;
-  rentAmount: number;
-  utilityAmount: number;
-  totalAmount: number;
-  dueDate: string;
-  status: 'PENDING' | 'PUBLISHED' | 'PAID' | 'OVERDUE';
-  paidAt?: string | null;
-}
+export type RentCycle = ApiModel<'BillResponse', 'paidAt', 'paidAt'>;
 
 export function getTenantRentCycles(token: string, leaseId?: string): Promise<RentCycle[]> {
   const query = leaseId ? `?leaseId=${leaseId}` : '';

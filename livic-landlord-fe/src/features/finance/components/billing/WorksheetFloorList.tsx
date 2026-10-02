@@ -88,19 +88,12 @@ export function WorksheetFloorList({
                     return (
                       <View key={entry.id} style={[styles.rowCard, isLast && { borderBottomWidth: 0 }]}>
                         <View style={styles.rowLeft}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            {Boolean(entry.blockName) && (
-                              <View style={styles.blockBadge}>
-                                <Text style={styles.blockBadgeText}>{entry.blockName}</Text>
-                              </View>
-                            )}
-                            <Text style={styles.unitName}>{entry.unitName}</Text>
-                          </View>
+                          <Text style={styles.unitName}>{entry.unitName}</Text>
                           <Text style={styles.tenantName} numberOfLines={1}>{entry.tenantName}</Text>
                         </View>
                         
                         <View style={styles.rowRight}>
-                          {entry.isBilled ? (
+                          {entry.billed ? (
                             <View style={styles.billedBadge}>
                               <Text style={styles.billedBadgeText}>BILLED (₹{entry.enteredValue})</Text>
                             </View>
@@ -115,11 +108,9 @@ export function WorksheetFloorList({
                               </TouchableOpacity>
                             ) : (
                               <View style={styles.inputWrapper}>
-                                {selectedCharge?.calculationStrategy !== 'METERED' && (
-                                  <Text style={styles.currencySymbol}>₹</Text>
-                                )}
+                                <Text style={styles.currencySymbol}>₹</Text>
                                 <TextInput
-                                  style={[styles.input, selectedCharge?.calculationStrategy !== 'METERED' && { paddingLeft: theme.Spacing.lg }]}
+                                  style={[styles.input, { paddingLeft: theme.Spacing.lg }]}
                                   value={editValues[entry.unitId] || ''}
                                   onChangeText={(val) => setEditValues(prev => ({ ...prev, [entry.unitId]: val }))}
                                   keyboardType="numeric"
@@ -209,19 +200,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
-  },
-  blockBadge: {
-    backgroundColor: withAlpha(theme.Colors.primary, 0.08),
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: withAlpha(theme.Colors.primary, 0.2),
-  },
-  blockBadgeText: {
-    color: theme.Colors.primary,
-    fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '600',
   },
   tenantName: {
     fontSize: theme.Typography.bodySmall.fontSize,

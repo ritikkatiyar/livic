@@ -1,75 +1,32 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
 
 export const DAYS_OF_WEEK: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
 /** Times are `HH:mm` (the backend may also send `HH:mm:ss`). */
-export interface TimeWindow {
-  start: string;
-  end: string;
-}
+export type TimeWindow = ApiModel<'TimeWindow'>;
 
-export interface DayHours {
-  dayOfWeek: DayOfWeek;
-  windows: TimeWindow[];
-}
+export type DayHours = ApiModel<'DayHours'>;
 
-export interface TourBlackout {
-  id: string;
-  /** `YYYY-MM-DD` in the property's timezone. */
-  date: string;
-  /** Both null when the whole day is blocked. */
-  startTime: string | null;
-  endTime: string | null;
-  reason: string | null;
-}
+/** `date` is `YYYY-MM-DD` in the property's timezone; both times are null when the whole day is blocked. */
+export type TourBlackout = ApiModel<'BlackoutResponse', never, 'startTime' | 'endTime' | 'reason'>;
 
-export interface TourAvailability {
-  propertyId: string;
-  /** False while the property still uses the default hours. */
-  customized: boolean;
-  timezone: string;
-  slotMinutes: number;
-  minNoticeMinutes: number;
-  bookingWindowDays: number;
-  /** Null means no limit. */
-  maxVisitorsPerSlot: number | null;
-  weeklyHours: DayHours[];
+/** `maxVisitorsPerSlot` null means no limit. */
+export type TourAvailability = Omit<ApiModel<'TourAvailabilityResponse', never, 'maxVisitorsPerSlot'>, 'blackouts'> & {
   blackouts: TourBlackout[];
-}
+};
 
-export interface UpdateTourAvailabilityRequest {
-  slotMinutes: number;
-  minNoticeMinutes: number;
-  bookingWindowDays: number;
-  maxVisitorsPerSlot: number | null;
-  timezone: string;
-  weeklyHours: DayHours[];
-}
+export type UpdateTourAvailabilityRequest = ApiInput<'UpdateTourAvailabilityRequest'>;
 
-export interface CreateBlackoutRequest {
-  date: string;
-  startTime: string | null;
-  endTime: string | null;
-  reason: string | null;
-}
+export type CreateBlackoutRequest = ApiInput<'CreateBlackoutRequest'>;
 
 export type TourSlotStatus = 'AVAILABLE' | 'FULL' | 'DECLINED' | 'UNAVAILABLE';
 
-export interface TourSlotDay {
-  date: string;
-  dayOfWeek: DayOfWeek;
-  closed: boolean;
-  slots: { start: string; localTime: string; status: TourSlotStatus }[];
-}
+export type TourSlotDay = ApiModel<'TourSlotDay'>;
 
-export interface TourSlots {
-  propertyId: string;
-  timezone: string;
-  slotMinutes: number;
-  days: TourSlotDay[];
-}
+export type TourSlots = ApiModel<'TourSlotsResponse'>;
 
 export async function getTourAvailability(propertyId: string, token: string): Promise<TourAvailability> {
   return apiRequest<TourAvailability>(`/api/v1/marketplace/properties/${propertyId}/tour-availability`, { token });

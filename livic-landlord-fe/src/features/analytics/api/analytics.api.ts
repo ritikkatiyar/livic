@@ -1,54 +1,18 @@
 import { apiRequest } from '@/src/api/client';
 import { Platform } from 'react-native';
+import type { ApiModel } from '@/src/api/models';
 
-export interface SummaryResponse {
-  expectedRevenue: number;
-  collectedRevenue: number;
-  collectionRate: number;
-  totalExpenses: number;
-  expenseGrowthRate: number;
-  netProfit: number;
-  profitGrowthRate: number;
-}
+export type SummaryResponse = ApiModel<'SummaryResponse'>;
 
 /**
  * Unit fields count rooms (a shared room with any tenant is one occupied unit); bed fields count capacity.
  * Both rates are percentages in [0, 100]. activeLeases is the tenant count.
  */
-export interface PortfolioOccupancyResponse {
-  propertyId: string;
-  propertyName: string;
-  totalUnits: number;
-  /** Units with at least one active lease (partialUnits + fullUnits). */
-  occupiedUnits: number;
-  occupancyRate: number;
-  netYield: number;
-  vacantUnits?: number;
-  partialUnits?: number;
-  fullUnits?: number;
-  totalBeds?: number;
-  occupiedBeds?: number;
-  bedOccupancyRate?: number;
-  activeLeases?: number;
-}
+export type PortfolioOccupancyResponse = ApiModel<'PortfolioOccupancyResponse', 'vacantUnits' | 'partialUnits' | 'fullUnits' | 'totalBeds' | 'occupiedBeds' | 'bedOccupancyRate' | 'activeLeases'>;
 
-export interface DefaulterResponse {
-  tenantName: string;
-  unitNumber: string;
-  propertyName: string;
-  daysOverdue: number;
-  amountDue: number;
-  billId?: string;
-  rentCycleId?: string;
-  blockId?: string;
-  blockName?: string;
-}
+export type DefaulterResponse = ApiModel<'DefaulterResponse', 'billId' | 'blockId' | 'blockName'>;
 
-export interface ExpensesBreakdownResponse {
-  totalExpenses: number;
-  growthFromLastMonth: number;
-  operationalOverhead: Record<string, number>;
-}
+export type ExpensesBreakdownResponse = ApiModel<'ExpensesBreakdownResponse'>;
 
 export function getAnalyticsSummary(token: string, billingMonth?: string): Promise<SummaryResponse> {
   let url = '/api/v1/analytics/summary';

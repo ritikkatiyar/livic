@@ -1,32 +1,14 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
 /** Backend lead status for a tour request. `NEW` means pending the landlord's decision. */
 export type TourRequestStatus = 'NEW' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED' | 'EXPIRED';
 
 export type TourRequestFilter = 'PENDING' | 'UPCOMING' | 'PAST';
 
-export interface TourRequestResponse {
-  id: string;
-  propertyId: string;
-  unitId: string;
-  unitNumber: string | null;
-  prospectName: string;
-  prospectPhone: string;
-  prospectEmail: string | null;
-  /** ISO timestamp of the requested visit. */
-  preferredSlot: string;
-  status: TourRequestStatus;
-  decisionNote: string | null;
-  decidedAt: string | null;
-  createdAt: string;
-  /** A pending or upcoming visit that no longer falls inside the property's visiting hours. */
-  outsideVisitingHours?: boolean;
-}
+export type TourRequestResponse = ApiModel<'LandlordTourRequestResponse', 'outsideVisitingHours', 'unitNumber' | 'prospectEmail' | 'decisionNote' | 'decidedAt'>;
 
-export interface TourRequestSummary {
-  pending: number;
-  upcoming: number;
-}
+export type TourRequestSummary = ApiModel<'TourRequestSummaryResponse'>;
 
 export interface TourRequestPage {
   content: TourRequestResponse[];

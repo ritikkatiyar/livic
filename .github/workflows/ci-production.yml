@@ -43,6 +43,11 @@ jobs:
       - name: Build and test with Maven
         run: mvn -B verify --file backend/pom.xml
 
+      # ApiSpecExportTest rewrote api/openapi.json from the code; the apps generate their types from
+      # the committed copy, so an API change must commit the regenerated spec with it.
+      - name: Check the committed API spec is current
+        run: git diff --exit-code api/openapi.json
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -89,6 +94,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check the generated API types match the spec
+        run: npm run gen:api && git diff --exit-code src/api/schema.generated.ts
 
       # Catches an API change the app was not updated for, such as a renamed field or enum value.
       - name: Type check

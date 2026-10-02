@@ -208,7 +208,7 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
         securityDeposit: depositAmount,
         splitStrategy: 'FULL_UNIT' as const,
         moveInDate: today,
-        status: 'ACTIVE' as const,
+        status: 'Active' as const,
       };
 
       const lease = await createLease(payload, token);

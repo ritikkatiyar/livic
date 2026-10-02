@@ -1,12 +1,7 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
-export interface UserSearchResponse {
-  id: string;
-  email: string;
-  fullName: string;
-  phoneNumber?: string | null;
-  globalRole: string;
-}
+export type UserSearchResponse = ApiModel<'UserSearchResponse', 'phoneNumber', 'phoneNumber'>;
 
 /**
  * Looks up the account behind a full phone number. Partial numbers match nothing, and the caller

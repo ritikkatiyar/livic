@@ -12,34 +12,17 @@ import java.util.UUID;
 
 public class BillDTOs {
 
-    public record GenerateBillRequest(
-            @NotNull UUID leaseId,
-            @NotNull @Pattern(regexp = "\\d{4}-\\d{2}", message = "billingMonth must use yyyy-MM") String billingMonth,
-            @NotNull LocalDate dueDate
-    ) {}
-
-    public record BatchGenerateBillRequest(
-            @NotNull UUID propertyId,
-            UUID blockId,
-            @NotNull @Pattern(regexp = "\\d{4}-\\d{2}", message = "billingMonth must use yyyy-MM") String billingMonth,
-            @NotNull LocalDate dueDate
-    ) {
-        public BatchGenerateBillRequest(UUID propertyId, String billingMonth, LocalDate dueDate) {
-            this(propertyId, null, billingMonth, dueDate);
-        }
-    }
-
-    public record RecordRentCashPaymentRequest(
+    public record RecordCashPaymentRequest(
             @NotNull BigDecimal amount,
             String note,
             UUID payerUserId
     ) {}
 
-    /** {@code activeLeases} counts tenants, so compare it with {@code totalBeds}: a shared room holds several. */
+    /** {@code activePayers} counts people who pay, so compare it with {@code totalBeds}: a shared room holds several. */
     public record PreFlightChecklistResponse(
             int totalUnits,
             int totalBeds,
-            int activeLeases,
+            int activePayers,
             int meterReadingsExpected,
             int meterReadingsEntered,
             boolean isReady
@@ -92,18 +75,7 @@ public class BillDTOs {
             int totalPages,
             int size,
             int number,
-            RentRollMetricsDTO metrics
-    ) {}
-
-    public record BatchGenerateFailure(
-            UUID leaseId,
-            String unitNumber,
-            String reason
-    ) {}
-
-    public record BatchGenerateResult(
-            List<BillResponse> succeeded,
-            List<BatchGenerateFailure> failed
+            BillMetricsDTO metrics
     ) {}
 
     public record BatchPublishFailure(

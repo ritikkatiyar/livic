@@ -13,8 +13,9 @@ import com.livic.core.finance.domain.MeterReadingTbl;
 import com.livic.core.finance.domain.BillLineTbl;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.BillTbl;
+import com.livic.core.finance.domain.CalculationStrategyType;
 import com.livic.core.finance.dto.BillDTOs;
-import com.livic.core.finance.dto.RentRollMetricsDTO;
+import com.livic.core.finance.dto.BillMetricsDTO;
 import com.livic.core.finance.mapper.BillMapper;
 import com.livic.core.finance.service.interfaces.BillService;
 import com.livic.core.finance.specification.BillSpecifications;
@@ -23,6 +24,7 @@ import com.livic.platform.payment.dto.PaymentInitiationResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.domain.UnitMemberRole;
+import com.livic.core.property.domain.UnitOccupancy;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
@@ -43,6 +45,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -92,7 +96,7 @@ public class BillServiceImpl implements BillService {
         BigDecimal remainingAmount = bill.getTotalAmount().subtract(amountPaid);
 
         if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Rent cycle is already fully paid");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Bill is already fully paid");
         }
 
         PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
@@ -101,7 +105,7 @@ public class BillServiceImpl implements BillService {
                 .referenceId(billId)
                 .amount(remainingAmount)
                 .paymentMethod("ONLINE")
-                .description("Rent Cycle Online Payment")
+                .description("Bill online payment")
                 .build();
 
         return paymentFacade.initiateOnlinePayment(initRequest);
@@ -128,7 +132,7 @@ public class BillServiceImpl implements BillService {
                 .paymentMethod("CASH")
                 .confirmedBy(confirmedBy)
                 .note(note)
-                .description("Rent Cycle Cash Payment")
+                .description("Bill cash payment")
                 .build();
 
         return paymentFacade.recordCashPayment(initRequest);
@@ -159,7 +163,7 @@ public class BillServiceImpl implements BillService {
                     if (!ownedPropertyIds.contains(propertyId)) {
                         return new BillDTOs.BillListResponse(
                                 List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                                new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                                new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
                         );
                     }
                     targetPropertyIds.add(propertyId);
@@ -167,7 +171,7 @@ public class BillServiceImpl implements BillService {
                     if (ownedPropertyIds.isEmpty()) {
                         return new BillDTOs.BillListResponse(
                                 List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                                new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                                new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
                         );
                     }
                     targetPropertyIds.addAll(ownedPropertyIds);
@@ -180,7 +184,7 @@ public class BillServiceImpl implements BillService {
         if (isTenantView && status == BillStatus.PENDING) {
             return new BillDTOs.BillListResponse(
                     List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                    new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                    new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
             );
         }
 
@@ -197,7 +201,7 @@ public class BillServiceImpl implements BillService {
             if (payerMemberId == null) {
                 return new BillDTOs.BillListResponse(
                         List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                        new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                        new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
                 );
             }
         } else {
@@ -223,8 +227,8 @@ public class BillServiceImpl implements BillService {
         Page<BillTbl> page = billRepository.findAll(spec, pageable);
         List<BillDTOs.BillResponse> content = toResponses(page.getContent());
 
-        RentRollMetricsDTO rentRollMetrics = !targetPropertyIds.isEmpty() ?
-                billRepository.getRentRollMetrics(
+        BillMetricsDTO billMetrics = !targetPropertyIds.isEmpty() ?
+                billRepository.getBillMetrics(
                         targetPropertyIds,
                         billingMonth,
                         BillStatus.PENDING,
@@ -233,8 +237,8 @@ public class BillServiceImpl implements BillService {
                         BillStatus.OVERDUE,
                         BillStatus.PARTIALLY_PAID
                 ) : null;
-        if (rentRollMetrics == null) {
-            rentRollMetrics = new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
+        if (billMetrics == null) {
+            billMetrics = new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L);
         }
 
         return new BillDTOs.BillListResponse(
@@ -243,8 +247,42 @@ public class BillServiceImpl implements BillService {
                 page.getTotalPages(),
                 page.getSize(),
                 page.getNumber(),
-                rentRollMetrics
+                billMetrics
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BillDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth) {
+        YearMonth month;
+        try {
+            month = YearMonth.parse(billingMonth);
+        } catch (DateTimeParseException | NullPointerException e) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "billingMonth must use yyyy-MM");
+        }
+
+        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        // People who pay (tenants, or owners in a residential building), not units: a shared
+        // room has several, so they are measured against beds.
+        List<UnitResidentDTO> payers = unitMemberFacade.getActiveResidentsByPropertyId(propertyId).stream()
+                .filter(r -> r.role() == UnitMemberRole.TENANT || r.role() == UnitMemberRole.OWNER)
+                .toList();
+        int totalBeds = units.stream().mapToInt(u -> UnitOccupancy.beds(u.capacity())).sum();
+
+        // Meters are read per unit, so a shared room needs one reading, not one per payer.
+        Set<UUID> occupiedUnitIds = payers.stream().map(UnitResidentDTO::unitId).collect(Collectors.toSet());
+        long meteredCharges = chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(propertyId).stream()
+                .filter(c -> c.getCalculationStrategy() == CalculationStrategyType.METERED)
+                .count();
+        int readingsExpected = occupiedUnitIds.size() * (int) meteredCharges;
+        int readingsEntered = (int) meterReadingRepository
+                .findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month.getMonthValue(), month.getYear()).stream()
+                .filter(r -> occupiedUnitIds.contains(r.getUnitId()) && r.getCurrentReading() != null)
+                .count();
+
+        boolean isReady = readingsEntered >= readingsExpected || payers.isEmpty();
+        return new BillDTOs.PreFlightChecklistResponse(
+                units.size(), totalBeds, payers.size(), readingsExpected, readingsEntered, isReady);
     }
 
     @Override

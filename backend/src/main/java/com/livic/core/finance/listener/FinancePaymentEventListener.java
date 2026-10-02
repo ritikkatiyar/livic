@@ -1,11 +1,10 @@
 package com.livic.core.finance.listener;
 
 import com.livic.core.finance.repository.UnitBookingRepository;
-import com.livic.core.finance.repository.FinanceLedgerRepository;
 import com.livic.core.finance.repository.BillRepository;
 import com.livic.core.finance.domain.LedgerTransactionType;
 import com.livic.core.finance.domain.BillStatus;
-import com.livic.core.finance.domain.FinanceLedgerTbl;
+import com.livic.core.finance.service.interfaces.LedgerService;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.core.finance.domain.BillTbl;
@@ -28,7 +27,7 @@ public class FinancePaymentEventListener {
 
     private final BillRepository billRepository;
     private final UnitBookingRepository unitBookingRepository;
-    private final FinanceLedgerRepository financeLedgerRepository;
+    private final LedgerService ledgerService;
     private final UnitMemberFacade unitMemberFacade;
 
     @EventListener
@@ -72,25 +71,10 @@ public class FinancePaymentEventListener {
         UnitResidentDTO payer = bill.getMemberId() == null ? null
                 : unitMemberFacade.getResidentByMemberId(bill.getMemberId()).orElse(null);
         if (payer != null) {
-            BigDecimal currentBalance = financeLedgerRepository.sumAmountByMemberId(bill.getMemberId());
-            BigDecimal ledgerAmount = event.getAmount().negate();
-            BigDecimal newBalance = currentBalance.add(ledgerAmount);
-
             boolean isFullPayment = bill.getStatus() == BillStatus.PAID;
-            String description = (isFullPayment ? "Rent Payment (Full)" : "Rent Payment (Partial)") + " via " + event.getGatewayName();
-
-            FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
-                    .unitId(payer.unitId())
-                    .memberId(bill.getMemberId())
-                    .leaseId(payer.leaseId())
-                    .transactionType(LedgerTransactionType.PAYMENT_RECEIVED)
-                    .amount(ledgerAmount)
-                    .balance(newBalance)
-                    .referenceId(event.getTransactionId())
-                    .description(description)
-                    .build();
-
-            financeLedgerRepository.save(ledgerEntry);
+            ledgerService.post(bill.getMemberId(), payer.unitId(), LedgerTransactionType.PAYMENT_RECEIVED,
+                    event.getAmount().negate(), event.getTransactionId(),
+                    (isFullPayment ? "Payment (full)" : "Payment (partial)") + " via " + event.getGatewayName());
         }
 
         log.info("[OBSERVER: FINANCE] Successfully updated Bill: {} status to: {}, totalPaid: {}", bill.getId(), bill.getStatus(), newTotalPaid);

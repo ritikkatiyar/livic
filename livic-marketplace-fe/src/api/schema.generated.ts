@@ -429,7 +429,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["recordRentCashPayment"];
+        post: operations["recordCashPayment"];
         delete?: never;
         options?: never;
         head?: never;
@@ -461,7 +461,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["initiateRentOnlinePayment"];
+        post: operations["initiateOnlinePayment"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2472,7 +2472,7 @@ export interface components {
         };
         BillListResponse: {
             content?: components["schemas"]["BillResponse"][];
-            metrics?: components["schemas"]["RentRollMetricsDTO"];
+            metrics?: components["schemas"]["BillMetricsDTO"];
             /** Format: int32 */
             number?: number;
             /** Format: int32 */
@@ -2481,6 +2481,13 @@ export interface components {
             totalElements?: number;
             /** Format: int32 */
             totalPages?: number;
+        };
+        BillMetricsDTO: {
+            /** Format: int64 */
+            pendingDraftsCount?: number;
+            /** Format: int64 */
+            publishedCount?: number;
+            totalExpectedRevenue?: number;
         };
         BillPropertyBillingMonthRequest: {
             billingMonth: string;
@@ -3600,7 +3607,7 @@ export interface components {
         };
         PreFlightChecklistResponse: {
             /** Format: int32 */
-            activeLeases?: number;
+            activePayers?: number;
             isReady?: boolean;
             /** Format: int32 */
             meterReadingsEntered?: number;
@@ -3669,7 +3676,7 @@ export interface components {
             /** Format: int32 */
             totalUnitsCount?: number;
         };
-        RecordRentCashPaymentRequest: {
+        RecordCashPaymentRequest: {
             amount: number;
             note?: string;
             /** Format: uuid */
@@ -3685,13 +3692,6 @@ export interface components {
         };
         RejectTourRequest: {
             note?: string;
-        };
-        RentRollMetricsDTO: {
-            /** Format: int64 */
-            pendingDraftsCount?: number;
-            /** Format: int64 */
-            publishedCount?: number;
-            totalExpectedRevenue?: number;
         };
         ResendVerificationRequest: {
             /** Format: email */
@@ -4128,12 +4128,15 @@ export interface components {
         };
         WorksheetEntryResponse: {
             billed?: boolean;
+            /** Format: uuid */
+            blockId?: string;
+            blockName?: string;
             enteredValue?: number;
             /** Format: int32 */
             floor?: number;
             /** Format: uuid */
             id?: string;
-            tenantName?: string;
+            payerName?: string;
             /** Format: uuid */
             unitId?: string;
             unitName?: string;
@@ -4787,7 +4790,7 @@ export interface operations {
             };
         };
     };
-    recordRentCashPayment: {
+    recordCashPayment: {
         parameters: {
             query?: never;
             header?: never;
@@ -4798,7 +4801,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RecordRentCashPaymentRequest"];
+                "application/json": components["schemas"]["RecordCashPaymentRequest"];
             };
         };
         responses: {
@@ -4835,7 +4838,7 @@ export interface operations {
             };
         };
     };
-    initiateRentOnlinePayment: {
+    initiateOnlinePayment: {
         parameters: {
             query?: never;
             header?: never;

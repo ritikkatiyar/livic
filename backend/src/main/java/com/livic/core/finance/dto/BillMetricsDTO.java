@@ -2,18 +2,18 @@ package com.livic.core.finance.dto;
 
 import java.math.BigDecimal;
 
-public record RentRollMetricsDTO(
+public record BillMetricsDTO(
         BigDecimal totalExpectedRevenue,
         long pendingDraftsCount,
         long publishedCount
 ) {
-    public RentRollMetricsDTO(BigDecimal totalExpectedRevenue, long pendingDraftsCount, long publishedCount) {
+    public BillMetricsDTO(BigDecimal totalExpectedRevenue, long pendingDraftsCount, long publishedCount) {
         this.totalExpectedRevenue = totalExpectedRevenue != null ? totalExpectedRevenue : BigDecimal.ZERO;
         this.pendingDraftsCount = pendingDraftsCount;
         this.publishedCount = publishedCount;
     }
 
-    public RentRollMetricsDTO(Object totalExpectedRevenue, Object pendingDraftsCount, Object publishedCount) {
+    public BillMetricsDTO(Object totalExpectedRevenue, Object pendingDraftsCount, Object publishedCount) {
         this(
                 totalExpectedRevenue != null
                         ? (totalExpectedRevenue instanceof BigDecimal bd ? bd : new BigDecimal(totalExpectedRevenue.toString()))

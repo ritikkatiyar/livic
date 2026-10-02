@@ -18,7 +18,7 @@ export type BatchUnpublishFailure = ApiModel<'BatchUnpublishFailure', never, 'un
 
 export type BatchUnpublishResult = ApiModel<'BatchUnpublishResult'>;
 
-/** totalBeds sums unit capacities: activeLeases counts tenants, so it is measured against beds, not units. */
+/** totalBeds sums unit capacities: activePayers counts people who pay, so it is measured against beds, not units. */
 export type PreFlightChecklistResponse = ApiModel<'PreFlightChecklistResponse', 'totalBeds'>;
 
 export const batchGenerateRentCycle = async (

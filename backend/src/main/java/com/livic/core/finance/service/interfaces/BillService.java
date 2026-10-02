@@ -22,6 +22,9 @@ public interface BillService {
 
     BillDTOs.BillResponse markPaid(UUID id);
 
+    /** Before generating a month's bills: payers against beds, and meter readings against occupied units. */
+    BillDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth);
+
     BillDTOs.BillResponse publish(UUID id);
 
     BillDTOs.BillResponse unpublish(UUID id);

@@ -88,8 +88,15 @@ export function WorksheetFloorList({
                     return (
                       <View key={entry.id} style={[styles.rowCard, isLast && { borderBottomWidth: 0 }]}>
                         <View style={styles.rowLeft}>
-                          <Text style={styles.unitName}>{entry.unitName}</Text>
-                          <Text style={styles.tenantName} numberOfLines={1}>{entry.tenantName}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            {Boolean(entry.blockName) && (
+                              <View style={styles.blockBadge}>
+                                <Text style={styles.blockBadgeText}>{entry.blockName}</Text>
+                              </View>
+                            )}
+                            <Text style={styles.unitName}>{entry.unitName}</Text>
+                          </View>
+                          <Text style={styles.payerName} numberOfLines={1}>{entry.payerName}</Text>
                         </View>
                         
                         <View style={styles.rowRight}>
@@ -201,7 +208,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },
-  tenantName: {
+  blockBadge: {
+    backgroundColor: withAlpha(theme.Colors.primary, 0.08),
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: withAlpha(theme.Colors.primary, 0.2),
+  },
+  blockBadgeText: {
+    color: theme.Colors.primary,
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '600',
+  },
+  payerName: {
     fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,

@@ -1,5 +1,10 @@
 package com.livic.core.finance.facade;
 
+import java.util.Set;
+import com.livic.core.finance.dto.BillDraft;
+import com.livic.core.finance.dto.BillDTOs;
+import com.livic.core.finance.domain.LedgerTransactionType;
+import com.livic.core.finance.domain.BillType;
 import com.livic.core.finance.dto.ChargeConfigResponse;
 import com.livic.core.finance.dto.UnitBookingDTOs;
 import org.springframework.data.domain.Page;
@@ -32,6 +37,23 @@ public interface FinanceFacade {
     BigDecimal getTotalExpenses(List<UUID> propertyIds);
 
     Map<String, BigDecimal> getOperationalOverhead(List<UUID> propertyIds);
+
+    // Bill generation, for the verticals that know what a bill should contain
+
+    /** Generates one bill from a draft, or regenerates it if it exists and is not paid. */
+    BillDTOs.BillResponse generateBill(BillDraft draft);
+
+    /** Generates each draft in its own transaction; outcomes come back in the order of the drafts. */
+    List<BillDraft.Outcome> generateBills(List<BillDraft> drafts);
+
+    /** Members who already have a bill of this type for the month. */
+    Set<UUID> getBilledMemberIds(UUID propertyId, String billingMonth, BillType billType);
+
+    /** Whether the member has any bill other than this month's bill of this type. */
+    boolean hasOtherBills(UUID memberId, String billingMonth, BillType billType);
+
+    /** Appends to a member's ledger; a debit is positive, a payment or credit negative. */
+    void postLedgerEntry(UUID memberId, UUID unitId, LedgerTransactionType type, BigDecimal amount, UUID referenceId, String description);
 
     // Booking Write Methods
     UnitBookingDTOs.UnitBookingResponse createPaidBooking(UnitBookingDTOs.PaidBookingRequest request);

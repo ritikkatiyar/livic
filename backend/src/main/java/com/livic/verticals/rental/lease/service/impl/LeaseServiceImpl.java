@@ -1,13 +1,12 @@
 package com.livic.verticals.rental.lease.service.impl;
 
 import com.livic.core.finance.repository.UnitBookingRepository;
-import com.livic.core.finance.repository.FinanceLedgerRepository;
+import com.livic.core.finance.facade.FinanceFacade;
 import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.core.finance.domain.LedgerTransactionType;
 import com.livic.core.finance.domain.UnitBookingStatus;
 import com.livic.platform.common.exception.BusinessException;
-import com.livic.core.finance.domain.FinanceLedgerTbl;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.domain.UnitBookingTbl;
 import com.livic.verticals.rental.lease.dto.LeaseDTOs;
@@ -41,7 +40,7 @@ public class LeaseServiceImpl implements LeaseService {
     private final UnitMemberFacade unitMemberFacade;
     private final UserFacade userFacade;
     private final UnitBookingRepository unitBookingRepository;
-    private final FinanceLedgerRepository financeLedgerRepository;
+    private final FinanceFacade financeFacade;
 
     @Override
     public LeaseTbl createLease(LeaseDTOs.CreateLeaseRequest request, UUID assignedByUserId) {
@@ -120,21 +119,9 @@ public class LeaseServiceImpl implements LeaseService {
             unitBookingRepository.save(booking);
         }
 
-        // 4. Log Security Deposit Billing DEBIT in ledger
-        BigDecimal currentBalance = financeLedgerRepository.sumAmountByMemberId(tenantMember.id());
-        BigDecimal newBalance = currentBalance.add(request.securityDeposit());
-
-        FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
-                .unitId(unitSummary.id())
-                .memberId(tenantMember.id())
-                .leaseId(saved.getId())
-                .transactionType(LedgerTransactionType.INVOICE_GENERATED)
-                .amount(request.securityDeposit())
-                .balance(newBalance)
-                .referenceId(saved.getId())
-                .description("Security Deposit Invoice")
-                .build();
-        financeLedgerRepository.save(ledgerEntry);
+        // 4. The security deposit is owed from move-in, so it opens the tenant's ledger.
+        financeFacade.postLedgerEntry(tenantMember.id(), unitSummary.id(), LedgerTransactionType.INVOICE_GENERATED,
+                request.securityDeposit(), saved.getId(), "Security Deposit Invoice");
 
         log.info("lease_created leaseId={} userId={} unitId={} status={}",
                 saved.getId(), saved.getUserId(), saved.getUnitId(), saved.getStatus());

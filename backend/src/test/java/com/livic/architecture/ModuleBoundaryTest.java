@@ -134,19 +134,25 @@ class ModuleBoundaryTest {
     }
 
     @Test
-    @DisplayName("Only verticals may build on finance's service contracts, entities and repositories")
-    void financeContractsAreOpenToVerticalsOnly() {
+    @DisplayName("Finance's tables, repositories and services stay inside finance")
+    void financeIsReachedOnlyThroughItsFacade() {
+        DescribedPredicate<JavaClass> financeInternals = DescribedPredicate.describe(
+                "finance's entities, repositories, services or charge calculation",
+                (JavaClass target) -> {
+                    String pkg = target.getPackageName();
+                    boolean internal = pkg.startsWith("com.livic.core.finance.repository")
+                            || pkg.startsWith("com.livic.core.finance.service")
+                            || pkg.startsWith("com.livic.core.finance.strategy")
+                            || (pkg.startsWith("com.livic.core.finance.domain") && target.isAnnotatedWith(Entity.class));
+                    // Bookings are rental's and still sit in finance; they move to verticals/rental next.
+                    return internal && !target.getSimpleName().startsWith("UnitBooking");
+                });
+
         ArchRule rule = noClasses()
                 .that().resideOutsideOfPackage("com.livic.core.finance..")
-                .and().resideOutsideOfPackage("com.livic.verticals..")
-                .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.core.finance.service.interfaces..",
-                        "com.livic.core.finance.domain..",
-                        "com.livic.core.finance.repository.."
-                )
-                .because("core is the foundation verticals are built on, so rental may hold a BillTbl, store it "
-                        + "through BillRepository and call BillService directly; everyone else goes through "
-                        + "com.livic.core.finance.facade");
+                .should().dependOnClassesThat(financeInternals)
+                .because("a vertical supplies what only it knows (a lease's rent, a roommate split) and asks "
+                        + "com.livic.core.finance.facade for the rest; it never writes core's bills itself");
 
         rule.check(classes);
     }

@@ -1542,7 +1542,7 @@
             "type" : "array"
           },
           "metrics" : {
-            "$ref" : "#/components/schemas/RentRollMetricsDTO"
+            "$ref" : "#/components/schemas/BillMetricsDTO"
           },
           "number" : {
             "format" : "int32",
@@ -1559,6 +1559,22 @@
           "totalPages" : {
             "format" : "int32",
             "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "BillMetricsDTO" : {
+        "properties" : {
+          "pendingDraftsCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "publishedCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalExpectedRevenue" : {
+            "type" : "number"
           }
         },
         "type" : "object"
@@ -4393,7 +4409,7 @@
       },
       "PreFlightChecklistResponse" : {
         "properties" : {
-          "activeLeases" : {
+          "activePayers" : {
             "format" : "int32",
             "type" : "integer"
           },
@@ -4580,7 +4596,7 @@
         },
         "type" : "object"
       },
-      "RecordRentCashPaymentRequest" : {
+      "RecordCashPaymentRequest" : {
         "properties" : {
           "amount" : {
             "type" : "number"
@@ -4626,22 +4642,6 @@
             "maxLength" : 500,
             "minLength" : 0,
             "type" : "string"
-          }
-        },
-        "type" : "object"
-      },
-      "RentRollMetricsDTO" : {
-        "properties" : {
-          "pendingDraftsCount" : {
-            "format" : "int64",
-            "type" : "integer"
-          },
-          "publishedCount" : {
-            "format" : "int64",
-            "type" : "integer"
-          },
-          "totalExpectedRevenue" : {
-            "type" : "number"
           }
         },
         "type" : "object"
@@ -5795,6 +5795,13 @@
           "billed" : {
             "type" : "boolean"
           },
+          "blockId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "blockName" : {
+            "type" : "string"
+          },
           "enteredValue" : {
             "type" : "number"
           },
@@ -5806,7 +5813,7 @@
             "format" : "uuid",
             "type" : "string"
           },
-          "tenantName" : {
+          "payerName" : {
             "type" : "string"
           },
           "unitId" : {
@@ -6631,7 +6638,7 @@
             "description" : "OK"
           }
         },
-        "tags" : [ "rent-generation-controller" ]
+        "tags" : [ "bill-controller" ]
       }
     },
     "/api/v1/finance/bills/preflight" : {
@@ -6665,12 +6672,12 @@
             "description" : "OK"
           }
         },
-        "tags" : [ "rent-generation-controller" ]
+        "tags" : [ "bill-controller" ]
       }
     },
     "/api/v1/finance/bills/{billId}/cash" : {
       "post" : {
-        "operationId" : "recordRentCashPayment",
+        "operationId" : "recordCashPayment",
         "parameters" : [ {
           "in" : "path",
           "name" : "billId",
@@ -6684,7 +6691,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/RecordRentCashPaymentRequest"
+                "$ref" : "#/components/schemas/RecordCashPaymentRequest"
               }
             }
           },
@@ -6734,7 +6741,7 @@
     },
     "/api/v1/finance/bills/{billId}/online" : {
       "post" : {
-        "operationId" : "initiateRentOnlinePayment",
+        "operationId" : "initiateOnlinePayment",
         "parameters" : [ {
           "in" : "path",
           "name" : "billId",

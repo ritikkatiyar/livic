@@ -1,7 +1,7 @@
 import { apiRequest } from '@/src/api/client';
 import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export type MaintenanceTicket = ApiModel<'IssueResponse', 'tenantId' | 'leaseId' | 'unitId' | 'assignedContactPhone', 'tenantId' | 'leaseId' | 'unitId' | 'assignedContactPhone'>;
+export type MaintenanceTicket = ApiModel<'IssueResponse', 'tenantId' | 'unitId' | 'assignedContactPhone', 'tenantId' | 'unitId' | 'assignedContactPhone'>;
 
 type IssueInput = ApiInput<'CreateIssueRequest'>;
 

@@ -76,8 +76,7 @@ class BillServiceTest {
     void setUp() {
         propertyId = UUID.randomUUID();
         memberId = UUID.randomUUID();
-        payer = new UnitResidentDTO(memberId, UUID.randomUUID(), UnitMemberRole.TENANT,
-                UUID.randomUUID(), UUID.randomUUID(), "101", 1, propertyId);
+        payer = new UnitResidentDTO(memberId, UUID.randomUUID(), UnitMemberRole.TENANT, UUID.randomUUID(), "101", 1, propertyId);
     }
 
     @Test
@@ -115,7 +114,7 @@ class BillServiceTest {
         Pageable pageable = PageRequest.of(0, 20);
         when(billRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(emptyPage(pageable));
 
-        BillDTOs.BillListResponse result = billService.list(landlordId, null, null, "2026-08", null, null, pageable);
+        BillDTOs.BillListResponse result = billService.list(landlordId, null, "2026-08", null, null, pageable);
 
         assertNotNull(result);
         assertEquals(0, result.totalElements());
@@ -130,7 +129,7 @@ class BillServiceTest {
         when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of());
         Pageable pageable = PageRequest.of(0, 20);
 
-        BillDTOs.BillListResponse result = billService.list(landlordId, UUID.randomUUID(), null, "2026-08", null, null, pageable);
+        BillDTOs.BillListResponse result = billService.list(landlordId, UUID.randomUUID(), "2026-08", null, null, pageable);
 
         assertTrue(result.content().isEmpty());
         verify(billRepository, never()).findAll(any(Specification.class), any(Pageable.class));
@@ -144,7 +143,7 @@ class BillServiceTest {
         Pageable pageable = PageRequest.of(0, 20);
         when(billRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(emptyPage(pageable));
 
-        assertNotNull(billService.list(tenantId, null, null, "2026-08", null, null, pageable));
+        assertNotNull(billService.list(tenantId, null, "2026-08", null, null, pageable));
         verify(propertyFacade, never()).getPropertiesByUserId(any());
     }
 
@@ -161,7 +160,7 @@ class BillServiceTest {
         when(billRepository.getBillMetrics(any(), eq("2026-08"), any(), any(), any(), any(), any()))
                 .thenReturn(new BillMetricsDTO(BigDecimal.valueOf(50000), 2L, 8L));
 
-        BillDTOs.BillListResponse result = billService.list(landlordId, null, null, "2026-08", null, null, pageable);
+        BillDTOs.BillListResponse result = billService.list(landlordId, null, "2026-08", null, null, pageable);
 
         assertEquals(BigDecimal.valueOf(50000), result.metrics().totalExpectedRevenue());
         assertEquals(2L, result.metrics().pendingDraftsCount());

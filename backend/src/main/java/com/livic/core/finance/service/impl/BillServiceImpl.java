@@ -140,19 +140,20 @@ public class BillServiceImpl implements BillService {
 
     @Override
     @Transactional(readOnly = true)
-    public BillDTOs.BillListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, BillStatus status, String search, Pageable pageable) {
+    public BillDTOs.BillListResponse list(UUID currentUserId, UUID propertyId, String billingMonth, BillStatus status, String search, Pageable pageable) {
         List<UUID> targetPropertyIds = new ArrayList<>();
 
         boolean isTenantView = false;
-        // Set when the caller is themselves a tenant: we already hold their member row, so
-        // there is no need to go back through the lease to find it again.
-        UUID scopedMemberId = null;
+        // Set when the caller pays for a unit themselves (a tenant, or an owner in a residential
+        // building): they see their own bills, under each of their memberships.
+        Set<UUID> scopedMemberIds = Set.of();
         if (currentUserId != null) {
-            Optional<UnitResidentDTO> tenancyOpt = unitMemberFacade.getActiveResidencesByUserId(currentUserId).stream()
-                    .filter(r -> r.role() == UnitMemberRole.TENANT)
-                    .findFirst();
-            if (tenancyOpt.isPresent()) {
-                scopedMemberId = tenancyOpt.get().memberId();
+            Set<UUID> payerMemberIds = unitMemberFacade.getActiveResidencesByUserId(currentUserId).stream()
+                    .filter(r -> r.role() == UnitMemberRole.TENANT || r.role() == UnitMemberRole.OWNER)
+                    .map(UnitResidentDTO::memberId)
+                    .collect(Collectors.toSet());
+            if (!payerMemberIds.isEmpty()) {
+                scopedMemberIds = payerMemberIds;
                 propertyId = null;
                 isTenantView = true;
             } else {
@@ -188,22 +189,11 @@ public class BillServiceImpl implements BillService {
             );
         }
 
-        // A bill carries its property and payer, so a lease is resolved to its member and a
-        // property filters directly — no walk through units any more.
+        // A bill carries its property and payer, so a property filters directly; no walk
+        // through units.
         Specification<BillTbl> spec;
-        if (scopedMemberId != null) {
-            spec = Specification.where(BillSpecifications.hasMemberId(scopedMemberId));
-        } else if (leaseId != null) {
-            UUID payerMemberId = unitMemberFacade.getResidentByLeaseId(leaseId)
-                    .map(UnitResidentDTO::memberId)
-                    .orElse(null);
-            spec = Specification.where(BillSpecifications.hasMemberId(payerMemberId));
-            if (payerMemberId == null) {
-                return new BillDTOs.BillListResponse(
-                        List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                        new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
-                );
-            }
+        if (!scopedMemberIds.isEmpty()) {
+            spec = Specification.where(BillSpecifications.hasMemberIdIn(scopedMemberIds));
         } else {
             spec = Specification.where(BillSpecifications.hasPropertyIdIn(targetPropertyIds));
         }
@@ -248,6 +238,27 @@ public class BillServiceImpl implements BillService {
                 page.getSize(),
                 page.getNumber(),
                 billMetrics
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BillDTOs.BillListResponse listForMember(UUID memberId, String billingMonth, BillStatus status,
+                                                  boolean includeUnpublished, Pageable pageable) {
+        Specification<BillTbl> spec = Specification.where(BillSpecifications.hasMemberId(memberId))
+                .and(BillSpecifications.hasBillingMonth(billingMonth))
+                .and(BillSpecifications.hasStatus(status));
+        if (!includeUnpublished) {
+            spec = spec.and(BillSpecifications.hasStatusNot(BillStatus.PENDING));
+        }
+        Page<BillTbl> page = billRepository.findAll(spec, pageable);
+        return new BillDTOs.BillListResponse(
+                toResponses(page.getContent()),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.getSize(),
+                page.getNumber(),
+                new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
         );
     }
 
@@ -310,8 +321,8 @@ public class BillServiceImpl implements BillService {
         recordCashPayment(id, remainingAmount, "Recorded via legacy markPaid", payerUserIdOf(cycle), confirmedBy);
 
         BillTbl updated = billRepository.findById(id).orElse(cycle);
-        log.info("bill_marked_paid billId={} leaseId={} paidAt={}",
-                updated.getId(), payerLeaseIdOf(updated), updated.getPaidAt());
+        log.info("bill_marked_paid billId={} memberId={} paidAt={}",
+                updated.getId(), updated.getMemberId(), updated.getPaidAt());
         return buildSingleResponse(updated);
     }
 
@@ -367,8 +378,8 @@ public class BillServiceImpl implements BillService {
                     cycle.getDueDate()
             ));
 
-            log.info("bill_published billId={} leaseId={} billingMonth={}",
-                    cycle.getId(), payerLeaseIdOf(cycle), cycle.getBillingMonth());
+            log.info("bill_published billId={} memberId={} billingMonth={}",
+                    cycle.getId(), cycle.getMemberId(), cycle.getBillingMonth());
         }
 
         return buildSingleResponse(cycle);
@@ -418,8 +429,8 @@ public class BillServiceImpl implements BillService {
                 }
             }
 
-            log.info("bill_unpublished billId={} leaseId={} billingMonth={}",
-                    cycle.getId(), payerLeaseIdOf(cycle), cycle.getBillingMonth());
+            log.info("bill_unpublished billId={} memberId={} billingMonth={}",
+                    cycle.getId(), cycle.getMemberId(), cycle.getBillingMonth());
         }
 
         return buildSingleResponse(cycle);
@@ -644,10 +655,9 @@ public class BillServiceImpl implements BillService {
                                              UnitSummaryDTO unit, List<BillLineTbl> charges) {
         String tenantName = (user != null && user.fullName() != null) ? user.fullName() : "Unknown Tenant";
         String unitNumber = (unit != null) ? unit.unitNumber() : "Vacant";
-        UUID leaseId = payer != null ? payer.leaseId() : null;
         UUID blockId = unit != null ? unit.blockId() : null;
         String blockName = unit != null ? unit.blockName() : null;
-        return BillMapper.toResponse(bill, leaseId, blockId, blockName, tenantName, unitNumber, charges);
+        return BillMapper.toResponse(bill, blockId, blockName, tenantName, unitNumber, charges);
     }
 
     /** The member who owes a bill, active or not — a bill outlives the tenancy behind it. */
@@ -679,10 +689,5 @@ public class BillServiceImpl implements BillService {
     private UUID payerUnitIdOf(BillTbl bill) {
         UnitResidentDTO payer = payerOf(bill);
         return payer != null ? payer.unitId() : null;
-    }
-
-    private UUID payerLeaseIdOf(BillTbl bill) {
-        UnitResidentDTO payer = payerOf(bill);
-        return payer != null ? payer.leaseId() : null;
     }
 }

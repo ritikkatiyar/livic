@@ -14,7 +14,6 @@ import java.util.UUID;
 @Repository
 public interface IssueRepository extends JpaRepository<IssueTbl, UUID> {
     Page<IssueTbl> findByPropertyId(UUID propertyId, Pageable pageable);
-    Page<IssueTbl> findByLeaseId(UUID leaseId, Pageable pageable);
 
     Page<IssueTbl> findByUnitIdIn(Collection<UUID> unitIds, Pageable pageable);
     Page<IssueTbl> findByUnitIdInOrBlockId(Collection<UUID> unitIds, UUID blockId, Pageable pageable);

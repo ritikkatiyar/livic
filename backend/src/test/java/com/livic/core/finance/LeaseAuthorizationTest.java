@@ -119,14 +119,15 @@ class LeaseAuthorizationTest {
     }
 
     @Test
-    @DisplayName("Invoice HTML requires lease access on the rent cycle, with no role escape hatch")
+    @DisplayName("Invoice HTML needs bill access: staff with BILL_VIEW or the payer, with no role escape hatch")
     void invoiceEndpointIsAuthorized() throws NoSuchMethodException {
         Method invoice = InvoiceController.class.getMethod("getPaymentStatementHtml", UUID.class);
         PreAuthorize preAuthorize = invoice.getAnnotation(PreAuthorize.class);
 
         assertThat(preAuthorize).isNotNull();
         assertThat(preAuthorize.value()).doesNotContain("hasAnyRole");
-        assertThat(preAuthorize.value()).contains("BILL, #billId, 'LEASE_VIEW'");
-        assertThat(preAuthorize.value()).contains("BILL, #billId, 'LEASE_VIEW_OWN'");
+        assertThat(preAuthorize.value()).contains("BILL, #billId, 'BILL_VIEW'");
+        assertThat(preAuthorize.value()).contains("BILL, #billId, 'BILL_VIEW_OWN'");
+        assertThat(preAuthorize.value()).doesNotContain("LEASE");
     }
 }

@@ -212,67 +212,57 @@ class AuthorizationServiceImplTest {
     }
 
     @Test
-    @DisplayName("Cross-Tenant Rent Cycle: User without property membership cannot access rent cycle")
+    @DisplayName("A user outside the bill's property cannot see it, not even as an owner of nothing")
     void billCrossTenantAccessBlocked() {
         authenticateUser(userId, UserRole.USER);
         UUID billId = UUID.randomUUID();
-        UUID foreignLeaseId = UUID.randomUUID();
         UUID foreignPropertyId = UUID.randomUUID();
-        LeaseSummaryDTO foreignLease = new LeaseSummaryDTO(foreignLeaseId, UUID.randomUUID(), "101", 1,
-                foreignPropertyId, "Other Property", UUID.randomUUID(), "ACTIVE", null, null, null);
 
-        when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(foreignLeaseId));
-        when(leaseFacade.getLeaseById(foreignLeaseId)).thenReturn(Optional.of(foreignLease));
+        when(financeFacade.getBillScope(billId)).thenReturn(Optional.of(
+                new com.livic.core.finance.facade.FinanceFacade.BillScope(foreignPropertyId, UUID.randomUUID())));
         when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, foreignPropertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, foreignPropertyId))
                 .thenReturn(Set.of());
 
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "PROPERTY_VIEW")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "PROPERTY_EDIT")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "LEASE_VIEW_OWN")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_MANAGE")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW_OWN")).isFalse();
     }
 
     @Test
-    @DisplayName("Rent cycle follows its lease: the tenant sees their own invoice, staff need LEASE_VIEW")
-    void billDelegatesToItsLease() {
+    @DisplayName("A bill belongs to its payer: they see their own bill, staff need BILL_VIEW, and no lease is involved")
+    void billBelongsToItsPayer() {
         authenticateUser(userId, UserRole.USER);
         UUID billId = UUID.randomUUID();
-        UUID leaseId = UUID.randomUUID();
-        LeaseSummaryDTO ownLease = new LeaseSummaryDTO(leaseId, UUID.randomUUID(), "101", 1, propertyId,
-                "Property A", userId, "ACTIVE", null, null, null);
 
-        when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(leaseId));
-        when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(ownLease));
+        when(financeFacade.getBillScope(billId)).thenReturn(Optional.of(new com.livic.core.finance.facade.FinanceFacade.BillScope(propertyId, userId)));
         when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
                 .thenReturn(Set.of());
 
-        // The tenant on the lease can view their own rent cycle …
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "LEASE_VIEW_OWN")).isTrue();
-        // … but ownership alone does not grant staff permissions on it
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "LEASE_VIEW")).isFalse();
+        // The payer (a tenant, or an owner with no lease) can see their own bill …
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW_OWN")).isTrue();
+        // … but paying it does not grant staff permissions on it
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW")).isFalse();
         assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_MANAGE")).isFalse();
     }
 
     @Test
-    @DisplayName("Staff with LEASE_VIEW on the property can view a rent cycle they do not own")
-    void billVisibleToStaffWithLeaseView() {
+    @DisplayName("Staff with BILL_VIEW on the property can view a bill they do not pay")
+    void billVisibleToStaffWithBillView() {
         authenticateUser(userId, UserRole.USER);
         UUID billId = UUID.randomUUID();
-        UUID leaseId = UUID.randomUUID();
-        LeaseSummaryDTO othersLease = new LeaseSummaryDTO(leaseId, UUID.randomUUID(), "102", 1, propertyId,
-                "Property A", UUID.randomUUID(), "ACTIVE", null, null, null);
 
-        when(financeFacade.getLeaseIdByBillId(billId)).thenReturn(Optional.of(leaseId));
-        when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(othersLease));
+        when(financeFacade.getBillScope(billId)).thenReturn(Optional.of(new com.livic.core.finance.facade.FinanceFacade.BillScope(propertyId, UUID.randomUUID())));
         when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
-                .thenReturn(Set.of("LEASE_VIEW"));
+                .thenReturn(Set.of("BILL_VIEW"));
 
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "LEASE_VIEW")).isTrue();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW")).isTrue();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW_OWN")).isFalse();
     }
 
     @Test

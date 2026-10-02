@@ -3,9 +3,7 @@ package com.livic.verticals.rental.billing.job;
 import com.livic.core.finance.domain.BillType;
 import com.livic.core.finance.facade.FinanceFacade;
 import com.livic.core.property.dto.PropertySummaryDTO;
-import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.facade.PropertyFacade;
-import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.GenerateBillRequest;
 import com.livic.verticals.rental.billing.service.interfaces.RentGenerationService;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
@@ -17,10 +15,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -31,7 +27,6 @@ public class AutoBillingJob {
     private final LeaseQueryService leaseQueryService;
     private final RentGenerationService rentGenerationService;
     private final FinanceFacade financeFacade;
-    private final UnitMemberFacade unitMemberFacade;
 
     /**
      * Runs once a day, at midnight, and bills the properties whose bill day it is. It used to run
@@ -58,12 +53,9 @@ public class AutoBillingJob {
     private void billProperty(UUID propertyId, String billingMonth, LocalDate dueDate) {
         try {
             Set<UUID> billedMemberIds = financeFacade.getBilledMemberIds(propertyId, billingMonth, BillType.RENT);
-            Map<UUID, UUID> memberIdByLeaseId = unitMemberFacade.getActiveResidentsByPropertyId(propertyId).stream()
-                    .filter(resident -> resident.leaseId() != null)
-                    .collect(Collectors.toMap(UnitResidentDTO::leaseId, UnitResidentDTO::memberId, (a, b) -> a));
 
             for (LeaseTbl lease : leaseQueryService.findActiveLeasesByProperty(propertyId)) {
-                if (billedMemberIds.contains(memberIdByLeaseId.get(lease.getId()))) {
+                if (billedMemberIds.contains(lease.getMemberId())) {
                     continue;
                 }
                 try {

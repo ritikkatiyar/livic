@@ -1623,10 +1623,6 @@
             "format" : "uuid",
             "type" : "string"
           },
-          "leaseId" : {
-            "format" : "uuid",
-            "type" : "string"
-          },
           "paidAt" : {
             "format" : "date-time",
             "type" : "string"
@@ -2089,10 +2085,6 @@
           },
           "description" : {
             "minLength" : 1,
-            "type" : "string"
-          },
-          "leaseId" : {
-            "format" : "uuid",
             "type" : "string"
           },
           "priority" : {
@@ -2586,10 +2578,6 @@
             "type" : "string"
           },
           "id" : {
-            "format" : "uuid",
-            "type" : "string"
-          },
-          "leaseId" : {
             "format" : "uuid",
             "type" : "string"
           },
@@ -5216,10 +5204,6 @@
             "format" : "int32",
             "type" : "integer"
           },
-          "leaseId" : {
-            "format" : "uuid",
-            "type" : "string"
-          },
           "memberId" : {
             "format" : "uuid",
             "type" : "string"
@@ -6444,14 +6428,6 @@
           }
         }, {
           "in" : "query",
-          "name" : "leaseId",
-          "required" : false,
-          "schema" : {
-            "format" : "uuid",
-            "type" : "string"
-          }
-        }, {
-          "in" : "query",
           "name" : "billingMonth",
           "required" : false,
           "schema" : {
@@ -7273,6 +7249,55 @@
           }
         },
         "tags" : [ "lease-controller" ]
+      }
+    },
+    "/api/v1/finance/leases/{leaseId}/bills" : {
+      "get" : {
+        "operationId" : "listForLease",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "leaseId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "billingMonth",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "PENDING", "PUBLISHED", "PAID", "OVERDUE", "PARTIALLY_PAID" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "pageable",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/components/schemas/Pageable"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseBillListResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "lease-bill-controller" ]
       }
     },
     "/api/v1/finance/ledger" : {

@@ -64,6 +64,9 @@ public class PropertyServiceIntegrationTest {
     private LeaseRepository leaseRepository;
 
     @Autowired
+    private com.livic.core.property.service.interfaces.UnitMemberService unitMemberService;
+
+    @Autowired
     private MembershipRepository membershipRepository;
 
     @Autowired
@@ -152,16 +155,7 @@ public class PropertyServiceIntegrationTest {
     @Test
     public void testDeletePropertyBlockedWhenLeaseExists() {
         // Arrange - Create a lease on the property's unit
-        LeaseTbl lease = LeaseTbl.builder()
-                .userId(tenant.getId())
-                .unitId(unit.getId())
-                .status(LeaseStatus.ACTIVE)
-                .monthlyRentAmount(BigDecimal.valueOf(1000.00))
-                .moveInDate(LocalDate.now().minusDays(10))
-                .securityDeposit(BigDecimal.valueOf(30000))
-                .splitStrategy(LeaseSplitStrategy.FULL_UNIT)
-                .build();
-        leaseRepository.save(lease);
+        leaseRepository.save(activeLease());
 
         // Act & Assert - Deletion is blocked with BAD_REQUEST
         BusinessException exception = assertThrows(BusinessException.class, () -> {
@@ -229,10 +223,13 @@ public class PropertyServiceIntegrationTest {
         assertEquals("Tenant User", leasedUnit.activeLeases().get(0).tenantName());
     }
 
+    /** A lease as the lease service makes one: the tenant becomes a unit member, and the lease points at it. */
     private LeaseTbl activeLease() {
+        var member = unitMemberService.addTenant(unit.getId(), tenant.getId(), LocalDate.now().minusDays(10), null);
         return LeaseTbl.builder()
                 .userId(tenant.getId())
                 .unitId(unit.getId())
+                .memberId(member.getId())
                 .status(LeaseStatus.ACTIVE)
                 .monthlyRentAmount(BigDecimal.valueOf(1000.00))
                 .moveInDate(LocalDate.now().minusDays(10))

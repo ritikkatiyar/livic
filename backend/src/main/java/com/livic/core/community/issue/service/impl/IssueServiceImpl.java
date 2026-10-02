@@ -68,7 +68,6 @@ public class IssueServiceImpl implements IssueService {
     public IssueResponse createIssue(CreateIssueRequest request, UUID callerUserId) {
         UUID propertyId = request.propertyId();
         UUID tenantId = null;
-        UUID leaseId = request.leaseId();
         UUID unitId = request.unitId();
 
         boolean isStaff = hasStaffPermission(callerUserId, propertyId, StaffPermission.ISSUE_MANAGE);
@@ -87,7 +86,6 @@ public class IssueServiceImpl implements IssueService {
                     .orElseThrow(() -> new BusinessException(HttpStatus.FORBIDDEN, "Caller does not live in the selected property"));
 
             tenantId = callerUserId;
-            leaseId = residence.leaseId();
             unitId = residence.unitId();
         } else {
             // Staff caller
@@ -98,7 +96,6 @@ public class IssueServiceImpl implements IssueService {
 
         IssueTbl issue = IssueMapper.toEntity(request, callerUserId, tenantId);
         // Overwrite resolved values
-        issue.setLeaseId(leaseId);
         issue.setUnitId(unitId);
         issue.setTenantId(tenantId);
         if (!isStaff) {

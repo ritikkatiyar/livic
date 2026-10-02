@@ -75,6 +75,6 @@ class BillingWorksheetServiceTest {
     }
 
     private UnitResidentDTO resident(UUID unitId, UnitMemberRole role) {
-        return new UnitResidentDTO(UUID.randomUUID(), UUID.randomUUID(), role, null, unitId, "1", 1, propertyId);
+        return new UnitResidentDTO(UUID.randomUUID(), UUID.randomUUID(), role, unitId, "1", 1, propertyId);
     }
 }

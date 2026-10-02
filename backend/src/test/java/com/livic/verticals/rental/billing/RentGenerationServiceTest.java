@@ -6,11 +6,8 @@ import com.livic.core.finance.dto.BillDTOs;
 import com.livic.core.finance.dto.BillDraft;
 import com.livic.core.finance.facade.FinanceFacade;
 import com.livic.verticals.rental.booking.facade.BookingFacade;
-import com.livic.core.property.domain.UnitMemberRole;
-import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
-import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.BatchGenerateBillRequest;
 import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.BatchGenerateResult;
 import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.GenerateBillRequest;
@@ -45,7 +42,6 @@ import static org.mockito.Mockito.when;
 class RentGenerationServiceTest {
 
     @Mock private LeaseQueryService leaseQueryService;
-    @Mock private UnitMemberFacade unitMemberFacade;
     @Mock private UnitFacade unitFacade;
     @Mock private FinanceFacade financeFacade;
     @Mock private BookingFacade bookingFacade;
@@ -108,7 +104,7 @@ class RentGenerationServiceTest {
         payerFor(alsoInA);
         payerFor(inB);
         when(leaseQueryService.findActiveLeasesByProperty(propertyId)).thenReturn(List.of(inA, alsoInA, inB));
-        BillDTOs.BillResponse bill = new BillDTOs.BillResponse(UUID.randomUUID(), null, "Tenant", "101", "2026-08",
+        BillDTOs.BillResponse bill = new BillDTOs.BillResponse(UUID.randomUUID(), "Tenant", "101", "2026-08",
                 BigDecimal.valueOf(500), null, BillStatus.PENDING, null, null, null, List.of());
         when(financeFacade.generateBills(anyList())).thenReturn(List.of(
                 new BillDraft.Outcome(bill, null),
@@ -138,10 +134,10 @@ class RentGenerationServiceTest {
         return lease;
     }
 
+    /** The lease points at its tenant member, as the lease service sets it up. */
     private UUID payerFor(LeaseTbl lease) {
         UUID memberId = UUID.randomUUID();
-        when(unitMemberFacade.getResidentByLeaseId(lease.getId())).thenReturn(Optional.of(
-                new UnitResidentDTO(memberId, UUID.randomUUID(), UnitMemberRole.TENANT, lease.getId(), lease.getUnitId(), "101", 1, propertyId)));
+        lease.setMemberId(memberId);
         return memberId;
     }
 

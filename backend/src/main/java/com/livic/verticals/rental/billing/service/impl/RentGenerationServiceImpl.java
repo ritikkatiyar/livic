@@ -5,10 +5,8 @@ import com.livic.core.finance.dto.BillDTOs;
 import com.livic.core.finance.dto.BillDraft;
 import com.livic.core.finance.facade.FinanceFacade;
 import com.livic.verticals.rental.booking.facade.BookingFacade;
-import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
-import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.BatchGenerateBillRequest;
 import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.BatchGenerateFailure;
@@ -40,7 +38,6 @@ import java.util.stream.Collectors;
 public class RentGenerationServiceImpl implements RentGenerationService {
 
     private final LeaseQueryService leaseQueryService;
-    private final UnitMemberFacade unitMemberFacade;
     private final UnitFacade unitFacade;
     private final FinanceFacade financeFacade;
     private final BookingFacade bookingFacade;
@@ -93,21 +90,17 @@ public class RentGenerationServiceImpl implements RentGenerationService {
 
     /** What the lease contributes to a rent bill; core adds the property's charges. */
     private BillDraft draftFor(LeaseTbl lease, String billingMonth, LocalDate dueDate, int roommates) {
-        UnitResidentDTO payer = unitMemberFacade.getResidentByLeaseId(lease.getId())
-                .orElseThrow(() -> new BusinessException(HttpStatus.CONFLICT,
-                        "Lease " + lease.getId() + " has no active unit member to bill"));
-
         List<BillDraft.Line> lines = new ArrayList<>();
         BigDecimal rent = lease.getMonthlyRentAmount();
         if (rent != null && rent.signum() > 0) {
             lines.add(new BillDraft.Line("Rent", rent));
         }
         // The token paid when the unit was booked is credited once, on the tenant's first bill.
-        if (!financeFacade.hasOtherBills(payer.memberId(), billingMonth, BillType.RENT)) {
+        if (!financeFacade.hasOtherBills(lease.getMemberId(), billingMonth, BillType.RENT)) {
             bookingFacade.findConvertedToken(lease.getId()).ifPresent(token -> lines.add(
                     new BillDraft.Line("Token amount adjustment from unit booking", token.negate())));
         }
-        return new BillDraft(payer.memberId(), null, BillType.RENT, billingMonth, dueDate, lines, Math.max(1, roommates));
+        return new BillDraft(lease.getMemberId(), null, BillType.RENT, billingMonth, dueDate, lines, Math.max(1, roommates));
     }
 
     private static boolean isInBlock(UnitSummaryDTO unit, UUID blockId) {

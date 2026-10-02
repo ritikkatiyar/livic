@@ -11,7 +11,7 @@ export interface PaginatedResponse<T> {
 
 export type IssueTimelineResponse = ApiModel<'IssueTimelineResponse'>;
 
-export type IssueResponse = ApiModel<'IssueResponse', 'blockId' | 'blockName' | 'unitId' | 'leaseId' | 'tenantId' | 'assignedContactPhone'>;
+export type IssueResponse = ApiModel<'IssueResponse', 'blockId' | 'blockName' | 'unitId' | 'tenantId' | 'assignedContactPhone'>;
 
 export const getIssues = async (
   token: string,

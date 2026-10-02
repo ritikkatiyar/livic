@@ -4,8 +4,9 @@ import type { ApiModel } from '@/src/api/models';
 export type RentCycle = ApiModel<'BillResponse', 'paidAt', 'paidAt'>;
 
 export function getTenantRentCycles(token: string, leaseId?: string): Promise<RentCycle[]> {
-  const query = leaseId ? `?leaseId=${leaseId}` : '';
-  return apiRequest<any>(`/api/v1/finance/bills${query}`, {
+  // A lease's bills come from rental; without one, the caller's own bills come from core.
+  const path = leaseId ? `/api/v1/finance/leases/${leaseId}/bills` : '/api/v1/finance/bills';
+  return apiRequest<any>(path, {
     method: 'GET',
     token,
   }).then((res) => {

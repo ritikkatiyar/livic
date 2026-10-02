@@ -4,7 +4,7 @@ import type { ApiInput, ApiModel } from '@/src/api/models';
 export type MembershipSummary = ApiModel<'MembershipSummary', 'accessType'>;
 
 /** A unit this person belongs to, as owner, tenant or family member. */
-export type UnitMembershipSummary = ApiModel<'UnitMembershipSummary', never, 'floor' | 'propertyName' | 'leaseId'>;
+export type UnitMembershipSummary = ApiModel<'UnitMembershipSummary', never, 'floor' | 'propertyName'>;
 
 export type MyContextResponse = ApiModel<'MyContextResponse'>;
 

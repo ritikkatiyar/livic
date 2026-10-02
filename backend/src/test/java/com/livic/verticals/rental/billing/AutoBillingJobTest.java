@@ -2,11 +2,8 @@ package com.livic.verticals.rental.billing;
 
 import com.livic.core.finance.domain.BillType;
 import com.livic.core.finance.facade.FinanceFacade;
-import com.livic.core.property.domain.UnitMemberRole;
 import com.livic.core.property.dto.PropertySummaryDTO;
-import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.facade.PropertyFacade;
-import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.GenerateBillRequest;
 import com.livic.verticals.rental.billing.job.AutoBillingJob;
 import com.livic.verticals.rental.billing.service.interfaces.RentGenerationService;
@@ -42,7 +39,6 @@ class AutoBillingJobTest {
     @Mock private LeaseQueryService leaseQueryService;
     @Mock private RentGenerationService rentGenerationService;
     @Mock private FinanceFacade financeFacade;
-    @Mock private UnitMemberFacade unitMemberFacade;
 
     @InjectMocks private AutoBillingJob job;
 
@@ -57,11 +53,7 @@ class AutoBillingJobTest {
 
         LeaseTbl alreadyBilled = lease();
         LeaseTbl notYetBilled = lease();
-        UUID alreadyBilledMemberId = UUID.randomUUID();
-        when(unitMemberFacade.getActiveResidentsByPropertyId(propertyId)).thenReturn(List.of(
-                resident(alreadyBilledMemberId, alreadyBilled, propertyId),
-                resident(UUID.randomUUID(), notYetBilled, propertyId)));
-        when(financeFacade.getBilledMemberIds(propertyId, billingMonth, BillType.RENT)).thenReturn(Set.of(alreadyBilledMemberId));
+        when(financeFacade.getBilledMemberIds(propertyId, billingMonth, BillType.RENT)).thenReturn(Set.of(alreadyBilled.getMemberId()));
         when(leaseQueryService.findActiveLeasesByProperty(propertyId)).thenReturn(List.of(alreadyBilled, notYetBilled));
 
         job.executeAutoBilling();
@@ -84,10 +76,8 @@ class AutoBillingJobTest {
         LeaseTbl lease = new LeaseTbl();
         lease.setId(UUID.randomUUID());
         lease.setUnitId(UUID.randomUUID());
+        lease.setMemberId(UUID.randomUUID());
         return lease;
     }
 
-    private static UnitResidentDTO resident(UUID memberId, LeaseTbl lease, UUID propertyId) {
-        return new UnitResidentDTO(memberId, UUID.randomUUID(), UnitMemberRole.TENANT, lease.getId(), lease.getUnitId(), "101", 1, propertyId);
-    }
 }

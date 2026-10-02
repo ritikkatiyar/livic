@@ -74,7 +74,7 @@ class BillGenerationServiceTest {
 
     @BeforeEach
     void setUp() {
-        payer = new UnitResidentDTO(memberId, UUID.randomUUID(), UnitMemberRole.TENANT, null, unitId, "101", 1, propertyId);
+        payer = new UnitResidentDTO(memberId, UUID.randomUUID(), UnitMemberRole.TENANT, unitId, "101", 1, propertyId);
         when(unitMemberFacade.getResidentByMemberId(memberId)).thenReturn(Optional.of(payer));
         when(unitMemberFacade.getResidentsByMemberIds(any())).thenReturn(List.of(payer));
         when(billRepository.findByMemberIdAndBillingMonthAndBillType(memberId, "2026-08", BillType.RENT)).thenReturn(Optional.empty());
@@ -155,7 +155,7 @@ class BillGenerationServiceTest {
         when(chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(propertyId)).thenReturn(List.of());
         when(billService.toResponses(anyList())).thenAnswer(i -> {
             List<BillTbl> bills = i.getArgument(0);
-            return bills.stream().map(b -> new BillDTOs.BillResponse(b.getId(), null, "Payer", "101", "2026-08",
+            return bills.stream().map(b -> new BillDTOs.BillResponse(b.getId(), "Payer", "101", "2026-08",
                     b.getTotalAmount(), null, BillStatus.PENDING, null, null, null, List.of())).toList();
         });
 

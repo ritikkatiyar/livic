@@ -12,6 +12,7 @@ import com.livic.core.finance.dto.BillDTOs;
 import com.livic.core.finance.dto.BillDraft;
 import com.livic.core.finance.service.interfaces.BillGenerationService;
 import com.livic.core.finance.service.interfaces.LedgerService;
+import com.livic.core.finance.service.interfaces.BillService;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import org.springframework.data.domain.Page;
@@ -41,6 +42,7 @@ public class FinanceFacadeImpl implements FinanceFacade {
     private final com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
     private final BillGenerationService billGenerationService;
     private final LedgerService ledgerService;
+    private final BillService billService;
 
     public FinanceFacadeImpl(
             BillRepository billRepository,
@@ -48,13 +50,15 @@ public class FinanceFacadeImpl implements FinanceFacade {
             com.livic.core.property.facade.UnitFacade unitFacade,
             com.livic.core.property.facade.UnitMemberFacade unitMemberFacade,
             BillGenerationService billGenerationService,
-            LedgerService ledgerService) {
+            LedgerService ledgerService,
+            BillService billService) {
         this.billRepository = billRepository;
         this.chargeConfigQueryService = chargeConfigQueryService;
         this.unitFacade = unitFacade;
         this.unitMemberFacade = unitMemberFacade;
         this.billGenerationService = billGenerationService;
         this.ledgerService = ledgerService;
+        this.billService = billService;
     }
 
     @Override
@@ -85,6 +89,12 @@ public class FinanceFacadeImpl implements FinanceFacade {
     }
 
     @Override
+    public BillDTOs.BillListResponse listBillsForMember(UUID memberId, String billingMonth, BillStatus status,
+                                                        boolean includeUnpublished, Pageable pageable) {
+        return billService.listForMember(memberId, billingMonth, status, includeUnpublished, pageable);
+    }
+
+    @Override
     @Transactional
     public void postLedgerEntry(UUID memberId, UUID unitId, LedgerTransactionType type, BigDecimal amount, UUID referenceId, String description) {
         ledgerService.post(memberId, unitId, type, amount, referenceId, description);
@@ -92,10 +102,12 @@ public class FinanceFacadeImpl implements FinanceFacade {
 
 
     @Override
-    public Optional<UUID> getLeaseIdByBillId(UUID billId) {
-        return billRepository.findById(billId)
-                .flatMap(bill -> unitMemberFacade.getResidentByMemberId(bill.getMemberId()))
-                .map(com.livic.core.property.dto.UnitResidentDTO::leaseId);
+    public Optional<BillScope> getBillScope(UUID billId) {
+        return billRepository.findById(billId).map(bill -> new BillScope(
+                bill.getPropertyId(),
+                bill.getMemberId() == null ? null : unitMemberFacade.getResidentByMemberId(bill.getMemberId())
+                        .map(UnitResidentDTO::userId)
+                        .orElse(null)));
     }
 
     @Override

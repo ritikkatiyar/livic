@@ -96,12 +96,13 @@ public class LeaseServiceImpl implements LeaseService {
         userFacade.getUserById(targetUserId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
 
-        LeaseTbl lease = LeaseMapper.toEntity(request, unitSummary.id(), targetUserId);
-        LeaseTbl saved = leaseRepository.save(lease);
-
         // The tenant becomes a member of the unit, in the same transaction as the lease, so
-        // everything that asks "who is in this flat" sees them without reading leases.
-        var tenantMember = unitMemberFacade.addTenant(unitSummary.id(), targetUserId, saved.getId(), saved.getMoveInDate(), assignedByUserId);
+        // everything that asks "who is in this flat" sees them without reading leases. The lease
+        // keeps the member's id; core never learns there is a lease.
+        LeaseTbl lease = LeaseMapper.toEntity(request, unitSummary.id(), targetUserId);
+        var tenantMember = unitMemberFacade.addTenant(unitSummary.id(), targetUserId, lease.getMoveInDate(), assignedByUserId);
+        lease.setMemberId(tenantMember.id());
+        LeaseTbl saved = leaseRepository.save(lease);
 
         // 3. Mark booking as converted
         if (booking != null) {
@@ -127,7 +128,7 @@ public class LeaseServiceImpl implements LeaseService {
             lease.setMoveOutDate(LocalDate.now());
         }
         LeaseTbl ended = leaseRepository.save(lease);
-        unitMemberFacade.endTenancy(ended.getId(), ended.getMoveOutDate());
+        unitMemberFacade.endMembership(ended.getMemberId(), ended.getMoveOutDate());
         return ended;
     }
 

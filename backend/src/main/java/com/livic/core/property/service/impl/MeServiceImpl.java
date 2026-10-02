@@ -72,8 +72,7 @@ public class MeServiceImpl implements MeService {
                         residence.floor(),
                         residence.propertyId(),
                         propertyNames.get(residence.propertyId()),
-                        residence.role(),
-                        residence.leaseId()))
+                        residence.role()))
                 .toList();
 
         return MeDTOs.MyContextResponse.build(

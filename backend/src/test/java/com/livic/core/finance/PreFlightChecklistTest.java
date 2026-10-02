@@ -118,6 +118,6 @@ class PreFlightChecklistTest {
     }
 
     private UnitResidentDTO member(UUID unitId, UnitMemberRole role) {
-        return new UnitResidentDTO(UUID.randomUUID(), UUID.randomUUID(), role, null, unitId, "101", 1, propertyId);
+        return new UnitResidentDTO(UUID.randomUUID(), UUID.randomUUID(), role, unitId, "101", 1, propertyId);
     }
 }

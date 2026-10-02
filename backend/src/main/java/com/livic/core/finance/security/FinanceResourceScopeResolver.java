@@ -25,10 +25,11 @@ public class FinanceResourceScopeResolver implements ResourceScopeResolver {
     @Override
     public Optional<ResourceScope> resolve(ResourceType type, UUID resourceId) {
         return switch (type) {
-            // A bill inherits access from its payer's lease, so the tenant it belongs to can see
-            // it (LEASE_VIEW_OWN) while staff still need the property-level permission.
-            case BILL -> financeFacade.getLeaseIdByBillId(resourceId)
-                    .map(leaseId -> new ResourceScope.Delegated(ResourceType.LEASE, leaseId, null));
+            // A bill sits under its property, and belongs to the user who pays it: staff need a
+            // property permission, the payer only the self-service one (BILL_VIEW_OWN). Owners
+            // with no lease are payers too, so this must not go through a lease.
+            case BILL -> financeFacade.getBillScope(resourceId)
+                    .map(bill -> new ResourceScope.Property(bill.propertyId(), bill.payerUserId()));
             case CHARGE_CONFIG -> Optional.ofNullable(financeFacade.getChargeConfigById(resourceId))
                     .map(chargeConfig -> new ResourceScope.Property(chargeConfig.getPropertyId(), null));
             default -> Optional.empty();

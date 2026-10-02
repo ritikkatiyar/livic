@@ -122,7 +122,7 @@ class MeterReadingCalculationTest {
         when(unitMemberFacade.getActiveMembersByPropertyId(propertyId)).thenReturn(List.of(
                 new com.livic.core.property.dto.UnitMemberSummaryDTO(
                         UUID.randomUUID(), unitId, userId,
-                        com.livic.core.property.domain.UnitMemberRole.TENANT, true, leaseId,
+                        com.livic.core.property.domain.UnitMemberRole.TENANT, true,
                         LocalDate.of(2026, 1, 1), null, true)));
         when(userFacade.getUsersByIds(Set.of(userId))).thenReturn(Map.of(userId, userSummary));
 
@@ -198,7 +198,7 @@ class MeterReadingCalculationTest {
         when(unitMemberFacade.getActiveMembersByPropertyId(propertyId)).thenReturn(List.of(
                 new com.livic.core.property.dto.UnitMemberSummaryDTO(
                         UUID.randomUUID(), unitId, userId,
-                        com.livic.core.property.domain.UnitMemberRole.TENANT, true, leaseId,
+                        com.livic.core.property.domain.UnitMemberRole.TENANT, true,
                         LocalDate.of(2026, 1, 1), null, true)));
         when(userFacade.getUsersByIds(Set.of(userId))).thenReturn(Map.of(userId, userSummary));
 

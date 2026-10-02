@@ -18,9 +18,13 @@ public interface BillService {
     /** Converts a collection of bill entities into enriched DTO responses using batch queries. */
     List<BillDTOs.BillResponse> toResponses(List<BillTbl> bills);
 
-    BillDTOs.BillListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, BillStatus status, String search, Pageable pageable);
+    BillDTOs.BillListResponse list(UUID currentUserId, UUID propertyId, String billingMonth, BillStatus status, String search, Pageable pageable);
 
     BillDTOs.BillResponse markPaid(UUID id);
+
+    /** One payer's bills, e.g. for a vertical showing the bills of its agreement with them. */
+    BillDTOs.BillListResponse listForMember(UUID memberId, String billingMonth, BillStatus status,
+                                            boolean includeUnpublished, Pageable pageable);
 
     /** Before generating a month's bills: payers against beds, and meter readings against occupied units. */
     BillDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth);

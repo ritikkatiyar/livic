@@ -11,16 +11,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Who belongs to a unit. Tenants are kept in step with their lease by the rental module;
- * owners and family members are assigned directly.
+ * Who belongs to a unit. A vertical adds the tenants it has an agreement with (rental, for a
+ * lease) through {@link #addTenant}; owners and family members are assigned directly.
  */
 public interface UnitMemberService {
 
-    /** Adds the tenant of a lease, or reuses the row if it already exists. */
-    UnitMemberTbl addTenant(UUID unitId, UUID userId, UUID leaseId, LocalDate from, UUID assignedBy);
-
-    /** Ends the member row behind a lease when the tenancy ends. */
-    void endTenancy(UUID leaseId, LocalDate on);
+    /** Adds a tenant; the vertical that holds the tenancy keeps the member's id. */
+    UnitMemberTbl addTenant(UUID unitId, UUID userId, LocalDate from, UUID assignedBy);
 
     UnitMemberTbl addMember(UUID unitId, UUID userId, UnitMemberRole role, boolean isPrimary,
                             LocalDate from, UUID assignedBy);
@@ -35,7 +32,6 @@ public interface UnitMemberService {
 
     List<UnitMemberTbl> findActiveByPropertyId(UUID propertyId);
 
-    Optional<UnitMemberTbl> findActiveByLeaseId(UUID leaseId);
 
     /** Active members of a property, with each unit's floor, for targeting notices. */
     List<UnitResidentDTO> findActiveResidentsByPropertyId(UUID propertyId);
@@ -48,8 +44,6 @@ public interface UnitMemberService {
 
     List<UUID> findMemberIdsByUserIds(Collection<UUID> userIds);
 
-    /** The active tenant behind a lease, with unit and property. */
-    Optional<UnitResidentDTO> findResidentByLeaseId(UUID leaseId);
 
     /** Every unit a person is currently attached to, primary first. */
     List<UnitResidentDTO> findActiveResidencesByUserId(UUID userId);

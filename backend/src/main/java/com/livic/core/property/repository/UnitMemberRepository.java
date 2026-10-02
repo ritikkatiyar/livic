@@ -25,16 +25,12 @@ public interface UnitMemberRepository extends JpaRepository<UnitMemberTbl, UUID>
 
     List<UnitMemberTbl> findByUnitIdAndRoleAndIsActiveTrue(UUID unitId, UnitMemberRole role);
 
-    Optional<UnitMemberTbl> findFirstByLeaseIdAndIsActiveTrue(UUID leaseId);
-
-    List<UnitMemberTbl> findByLeaseId(UUID leaseId);
-
     boolean existsByUnitIdAndUserIdAndRoleAndIsActiveTrue(UUID unitId, UUID userId, UnitMemberRole role);
 
     /** Active members of a property's units, with the unit's place in the building. */
     @Query("""
             SELECT new com.livic.core.property.dto.UnitResidentDTO(
-                m.id, m.userId, m.role, m.leaseId, u.id, u.unitNumber, u.floor, u.property.id)
+                m.id, m.userId, m.role, u.id, u.unitNumber, u.floor, u.property.id)
             FROM UnitMemberTbl m, UnitTbl u
             WHERE m.unitId = u.id AND m.isActive = true AND u.property.id = :propertyId
             """)
@@ -43,7 +39,7 @@ public interface UnitMemberRepository extends JpaRepository<UnitMemberTbl, UUID>
     /** Every unit a person is currently attached to, in any role. */
     @Query("""
             SELECT new com.livic.core.property.dto.UnitResidentDTO(
-                m.id, m.userId, m.role, m.leaseId, u.id, u.unitNumber, u.floor, u.property.id)
+                m.id, m.userId, m.role, u.id, u.unitNumber, u.floor, u.property.id)
             FROM UnitMemberTbl m, UnitTbl u
             WHERE m.unitId = u.id AND m.isActive = true AND m.userId = :userId
             ORDER BY m.isPrimary DESC, m.fromDate DESC
@@ -56,7 +52,7 @@ public interface UnitMemberRepository extends JpaRepository<UnitMemberTbl, UUID>
      */
     @Query("""
             SELECT new com.livic.core.property.dto.UnitResidentDTO(
-                m.id, m.userId, m.role, m.leaseId, u.id, u.unitNumber, u.floor, u.property.id)
+                m.id, m.userId, m.role, u.id, u.unitNumber, u.floor, u.property.id)
             FROM UnitMemberTbl m, UnitTbl u
             WHERE m.unitId = u.id AND m.id IN :memberIds
             """)
@@ -69,15 +65,6 @@ public interface UnitMemberRepository extends JpaRepository<UnitMemberTbl, UUID>
     /** Members belonging to these people, past and present. */
     @Query("SELECT m.id FROM UnitMemberTbl m WHERE m.userId IN :userIds")
     List<UUID> findMemberIdsByUserIds(@Param("userIds") Collection<UUID> userIds);
-
-    /** The active tenant behind a lease, with its unit and property, in one query. */
-    @Query("""
-            SELECT new com.livic.core.property.dto.UnitResidentDTO(
-                m.id, m.userId, m.role, m.leaseId, u.id, u.unitNumber, u.floor, u.property.id)
-            FROM UnitMemberTbl m, UnitTbl u
-            WHERE m.unitId = u.id AND m.leaseId = :leaseId AND m.isActive = true
-            """)
-    List<UnitResidentDTO> findResidentsByLeaseId(@Param("leaseId") UUID leaseId);
 
     /** Active members of every unit in a property, for notices and resident lookups. */
     @Query("""

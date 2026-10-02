@@ -92,7 +92,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             return resourceScopeRegistry.resolve(resourceType, resourceId)
                     .map(scope -> switch (scope) {
                         case ResourceScope.Property property -> {
-                            if (resourceType == ResourceType.LEASE && "LEASE_VIEW_OWN".equals(permissionCode)
+                            // A self-service code (…_OWN) is held by the user the resource belongs
+                            // to: the tenant of a lease, the payer of a bill.
+                            if (permissionCode != null && permissionCode.endsWith("_OWN")
                                     && property.ownerUserId() != null && property.ownerUserId().equals(userId)) {
                                 yield true;
                             }

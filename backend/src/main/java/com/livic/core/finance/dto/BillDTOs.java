@@ -30,7 +30,6 @@ public class BillDTOs {
 
     public record BillResponse(
             UUID id,
-            UUID leaseId,
             UUID blockId,
             String blockName,
             String tenantName,
@@ -46,7 +45,6 @@ public class BillDTOs {
     ) {
         public BillResponse(
                 UUID id,
-                UUID leaseId,
                 String tenantName,
                 String unitNumber,
                 String billingMonth,
@@ -58,7 +56,7 @@ public class BillDTOs {
                 LocalDateTime updatedAt,
                 List<ChargeResponse> charges
         ) {
-            this(id, leaseId, null, null, tenantName, unitNumber, billingMonth, totalAmount, dueDate, status, paidAt, createdAt, updatedAt, charges);
+            this(id, null, null, tenantName, unitNumber, billingMonth, totalAmount, dueDate, status, paidAt, createdAt, updatedAt, charges);
         }
     }
 

@@ -112,9 +112,12 @@ public class AnnouncementIntegrationTest {
                 .build();
         unit = unitRepository.save(unit);
 
+        // The lease service makes the tenant a unit member and points the lease at it; do the same.
+        var member = unitMemberService.addTenant(unit.getId(), tenant.getId(), LocalDate.now().minusDays(10), null);
         lease = LeaseTbl.builder()
                 .userId(tenant.getId())
                 .unitId(unit.getId())
+                .memberId(member.getId())
                 .status(LeaseStatus.ACTIVE)
                 .monthlyRentAmount(BigDecimal.valueOf(1000.00))
                 .moveInDate(LocalDate.now().minusDays(10))
@@ -122,8 +125,6 @@ public class AnnouncementIntegrationTest {
                 .splitStrategy(LeaseSplitStrategy.FULL_UNIT)
                 .build();
         lease = leaseRepository.save(lease);
-        // The lease is saved directly here, so add the unit member the lease service would create.
-        unitMemberService.addTenant(unit.getId(), tenant.getId(), lease.getId(), lease.getMoveInDate(), null);
     }
 
     @Test

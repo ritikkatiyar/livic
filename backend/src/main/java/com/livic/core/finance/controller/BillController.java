@@ -65,14 +65,13 @@ public class BillController {
     public ResponseEntity<ApiResponse<BillDTOs.BillListResponse>> list(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) UUID propertyId,
-            @RequestParam(required = false) UUID leaseId,
             @RequestParam(required = false) String billingMonth,
             @RequestParam(required = false) BillStatus status,
             @RequestParam(required = false) String search,
             @PageableDefault(sort = "dueDate", direction = Sort.Direction.DESC, size = 20) Pageable pageable
     ) {
         UUID currentUserId = currentUser != null ? UUID.fromString(currentUser.getId()) : null;
-        return ResponseEntity.ok(ApiResponse.success(billService.list(currentUserId, propertyId, leaseId, billingMonth, status, search, pageable)));
+        return ResponseEntity.ok(ApiResponse.success(billService.list(currentUserId, propertyId, billingMonth, status, search, pageable)));
     }
 
     @GetMapping({"/pre-flight", "/preflight"})
@@ -93,7 +92,7 @@ public class BillController {
     }
 
     @PostMapping("/{billId}/online")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'LEASE_VIEW_OWN')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'BILL_VIEW_OWN')")
     public ResponseEntity<ApiResponse<PaymentInitiationResponse>> initiateOnlinePayment(
             @PathVariable UUID billId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -104,7 +103,7 @@ public class BillController {
     }
 
     @PostMapping("/{billId}/cash")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'BILL_MANAGE')")
     public ResponseEntity<ApiResponse<PaymentInitiationResponse>> recordCashPayment(
             @PathVariable UUID billId,
             @Valid @RequestBody BillDTOs.RecordCashPaymentRequest request,

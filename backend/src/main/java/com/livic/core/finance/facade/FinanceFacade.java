@@ -1,5 +1,6 @@
 package com.livic.core.finance.facade;
 
+import com.livic.core.finance.domain.BillStatus;
 import java.util.Set;
 import com.livic.core.finance.dto.BillDraft;
 import com.livic.core.finance.dto.BillDTOs;
@@ -18,8 +19,11 @@ import java.util.UUID;
 
 public interface FinanceFacade {
 
-    /** The lease a bill's payer is on, for the rental vertical's own scope resolution. */
-    Optional<UUID> getLeaseIdByBillId(UUID billId);
+
+    /** Where a bill sits and who pays it, for authorizing access to it. */
+    Optional<BillScope> getBillScope(UUID billId);
+
+    record BillScope(UUID propertyId, UUID payerUserId) {}
 
     ChargeConfigResponse getChargeConfigById(UUID chargeConfigId);
 
@@ -50,6 +54,10 @@ public interface FinanceFacade {
 
     /** Whether the member has any bill other than this month's bill of this type. */
     boolean hasOtherBills(UUID memberId, String billingMonth, BillType billType);
+
+    /** One payer's bills; a vertical shows the bills of its agreement with them. */
+    BillDTOs.BillListResponse listBillsForMember(UUID memberId, String billingMonth, BillStatus status,
+                                                 boolean includeUnpublished, Pageable pageable);
 
     /** Appends to a member's ledger; a debit is positive, a payment or credit negative. */
     void postLedgerEntry(UUID memberId, UUID unitId, LedgerTransactionType type, BigDecimal amount, UUID referenceId, String description);

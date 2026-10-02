@@ -47,10 +47,6 @@ public class UnitMemberTbl extends BaseEntity {
     @Builder.Default
     private boolean isPrimary = false;
 
-    /** Set for tenants; the contract behind the tenancy. */
-    @Column(name = "lease_id")
-    private UUID leaseId;
-
     /** Phone used to invite someone who has no account yet. */
     @Column(name = "invited_phone", length = 20)
     private String invitedPhone;

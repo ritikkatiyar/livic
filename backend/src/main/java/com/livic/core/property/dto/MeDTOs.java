@@ -49,8 +49,7 @@ public class MeDTOs {
             Integer floor,
             UUID propertyId,
             String propertyName,
-            UnitMemberRole role,
-            UUID leaseId
+            UnitMemberRole role
     ) {}
 
     public record MembershipSummary(

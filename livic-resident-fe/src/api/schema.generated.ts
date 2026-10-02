@@ -692,6 +692,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/finance/leases/{leaseId}/bills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listForLease"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/finance/ledger": {
         parameters: {
             query?: never;
@@ -2506,8 +2522,6 @@ export interface components {
             dueDate?: string;
             /** Format: uuid */
             id?: string;
-            /** Format: uuid */
-            leaseId?: string;
             /** Format: date-time */
             paidAt?: string;
             /** @enum {string} */
@@ -2689,8 +2703,6 @@ export interface components {
             /** @enum {string} */
             category: "MAINTENANCE" | "BILLING" | "SAFETY" | "OTHER";
             description: string;
-            /** Format: uuid */
-            leaseId?: string;
             /** @enum {string} */
             priority: "LOW" | "STANDARD" | "HIGH" | "URGENT";
             /** Format: uuid */
@@ -2882,8 +2894,6 @@ export interface components {
             escalationStatus?: "NONE" | "ESCALATED";
             /** Format: uuid */
             id?: string;
-            /** Format: uuid */
-            leaseId?: string;
             /** @enum {string} */
             priority?: "LOW" | "STANDARD" | "HIGH" | "URGENT";
             /** Format: uuid */
@@ -3907,8 +3917,6 @@ export interface components {
             /** Format: int32 */
             floor?: number;
             /** Format: uuid */
-            leaseId?: string;
-            /** Format: uuid */
             memberId?: string;
             /** Format: uuid */
             propertyId?: string;
@@ -4625,7 +4633,6 @@ export interface operations {
         parameters: {
             query: {
                 propertyId?: string;
-                leaseId?: string;
                 billingMonth?: string;
                 status?: "PENDING" | "PUBLISHED" | "PAID" | "OVERDUE" | "PARTIALLY_PAID";
                 search?: string;
@@ -5251,6 +5258,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseLeaseResponse"];
+                };
+            };
+        };
+    };
+    listForLease: {
+        parameters: {
+            query: {
+                billingMonth?: string;
+                status?: "PENDING" | "PUBLISHED" | "PAID" | "OVERDUE" | "PARTIALLY_PAID";
+                pageable: components["schemas"]["Pageable"];
+            };
+            header?: never;
+            path: {
+                leaseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseBillListResponse"];
                 };
             };
         };

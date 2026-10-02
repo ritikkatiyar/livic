@@ -24,6 +24,10 @@ public class LeaseTbl extends BaseEntity {
     @Column(name = "unit_id", nullable = false)
     private UUID unitId;
 
+    /** The unit member this lease made a tenant. Core keeps the member; rental keeps the link. */
+    @Column(name = "member_id", nullable = false)
+    private UUID memberId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LeaseStatus status;

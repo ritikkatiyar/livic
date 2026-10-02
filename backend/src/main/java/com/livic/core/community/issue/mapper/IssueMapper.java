@@ -22,7 +22,6 @@ public final class IssueMapper {
         return IssueTbl.builder()
                 .propertyId(request.propertyId())
                 .unitId(request.unitId())
-                .leaseId(request.leaseId())
                 .tenantId(tenantId)
                 .reportedByUserId(reportedByUserId)
                 .title(request.title())
@@ -71,7 +70,6 @@ public final class IssueMapper {
                 blockId,
                 blockName,
                 entity.getUnitId(),
-                entity.getLeaseId(),
                 entity.getTenantId(),
                 entity.getReportedByUserId(),
                 entity.getTitle(),

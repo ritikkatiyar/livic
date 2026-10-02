@@ -46,6 +46,7 @@ class PortfolioOccupancyIntegrationTest {
     @Autowired private UnitRepository unitRepository;
     @Autowired private BlockService blockService;
     @Autowired private LeaseRepository leaseRepository;
+    @Autowired private com.livic.core.property.service.interfaces.UnitMemberService unitMemberService;
     @Autowired private UserRepository userRepository;
 
     @Test
@@ -130,9 +131,14 @@ class PortfolioOccupancyIntegrationTest {
                 .failedLoginAttempts(0)
                 .globalRole(UserRole.USER)
                 .build());
+        var member = unitMemberService.addTenant(unit.getId(), tenant.getId(), LocalDate.now().minusDays(30), null);
+        if (status == LeaseStatus.ENDED) {
+            unitMemberService.endMember(member.getId(), LocalDate.now());
+        }
         return LeaseTbl.builder()
                 .userId(tenant.getId())
                 .unitId(unit.getId())
+                .memberId(member.getId())
                 .status(status)
                 .monthlyRentAmount(BigDecimal.valueOf(8000))
                 .securityDeposit(BigDecimal.valueOf(16000))

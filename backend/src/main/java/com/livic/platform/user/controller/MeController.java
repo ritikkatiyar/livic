@@ -13,35 +13,35 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping({"/api/v1/user", "/api/v1"})
+@RequestMapping("/api/v1/me")
 @RequiredArgsConstructor
 public class MeController {
 
     private final UserQueryService userQueryService;
     private final UserService userService;
 
-    @GetMapping("/tenant/profile")
-    public ResponseEntity<ApiResponse<UserDTOs.TenantProfileResponse>> getTenantProfile(
+    @GetMapping("/profile")
+    public ResponseEntity<ApiResponse<UserDTOs.ProfileResponse>> getProfile(
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {
         UUID userId = UUID.fromString(currentUser.getId());
         return ResponseEntity.ok(ApiResponse.success(
-                userQueryService.getTenantProfile(userId)
+                userQueryService.getProfile(userId)
         ));
     }
 
-    @PutMapping("/tenant/profile")
-    public ResponseEntity<ApiResponse<UserDTOs.TenantProfileResponse>> updateTenantProfile(
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponse<UserDTOs.ProfileResponse>> updateProfile(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
-            @RequestBody UserDTOs.UpdateTenantProfileRequest request
+            @RequestBody UserDTOs.UpdateProfileRequest request
     ) {
         UUID userId = UUID.fromString(currentUser.getId());
         return ResponseEntity.ok(ApiResponse.success(
-                userService.updateTenantProfile(userId, request)
+                userService.updateProfile(userId, request)
         ));
     }
 
-    @PostMapping("/me/device-token")
+    @PostMapping("/device-token")
     public ResponseEntity<ApiResponse<Void>> registerDeviceToken(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @jakarta.validation.Valid @RequestBody UserDTOs.RegisterDeviceTokenRequest request

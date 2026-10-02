@@ -29,8 +29,37 @@ export interface MyContextResponse {
 }
 
 export function getMyContext(token: string): Promise<MyContextResponse> {
-  return apiRequest<MyContextResponse>('/api/v1/user/me/context', {
+  return apiRequest<MyContextResponse>('/api/v1/me/context', {
     method: 'GET',
     token,
+  });
+}
+
+export interface MyProfile {
+  userId: string;
+  fullName: string;
+  email: string;
+  phone: string;
+}
+
+export interface UpdateMyProfileRequest {
+  phone?: string;
+}
+
+export function getMyProfile(token: string): Promise<MyProfile | null> {
+  return apiRequest<MyProfile>('/api/v1/me/profile', {
+    method: 'GET',
+    token,
+  }).catch((err) => {
+    console.warn('[Profile API] Failed to fetch profile:', err?.message);
+    return null;
+  });
+}
+
+export function updateMyProfile(token: string, data: UpdateMyProfileRequest): Promise<MyProfile> {
+  return apiRequest<MyProfile>('/api/v1/me/profile', {
+    method: 'PUT',
+    token,
+    body: JSON.stringify(data),
   });
 }

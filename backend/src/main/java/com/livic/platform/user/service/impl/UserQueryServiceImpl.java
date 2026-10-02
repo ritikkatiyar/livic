@@ -33,8 +33,8 @@ public class UserQueryServiceImpl implements UserQueryService {
     }
 
     @Override
-    public UserDTOs.TenantProfileResponse getTenantProfile(UUID userId) {
-        return UserDTOs.TenantProfileResponse.from(getUserById(userId));
+    public UserDTOs.ProfileResponse getProfile(UUID userId) {
+        return UserDTOs.ProfileResponse.from(getUserById(userId));
     }
 
     @Override

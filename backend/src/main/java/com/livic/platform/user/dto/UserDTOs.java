@@ -37,14 +37,14 @@ public class UserDTOs {
             String phoneNumber
     ) {}
 
-    public record TenantProfileResponse(
+    public record ProfileResponse(
             UUID userId,
             String fullName,
             String email,
             String phone
     ) {
-        public static TenantProfileResponse from(UserTbl user) {
-            return new TenantProfileResponse(
+        public static ProfileResponse from(UserTbl user) {
+            return new ProfileResponse(
                     user.getId(),
                     user.getFullName(),
                     user.getAuthUid(),
@@ -53,7 +53,7 @@ public class UserDTOs {
         }
     }
 
-    public record UpdateTenantProfileRequest(
+    public record UpdateProfileRequest(
             String phone
     ) {}
 

@@ -62,13 +62,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTOs.TenantProfileResponse updateTenantProfile(UUID userId, UserDTOs.UpdateTenantProfileRequest request) {
+    public UserDTOs.ProfileResponse updateProfile(UUID userId, UserDTOs.UpdateProfileRequest request) {
         UserTbl user = userQueryService.getUserById(userId);
         if (request.phone() != null && !request.phone().isBlank()) {
             user.setPhoneNumber(request.phone().trim());
             userRepository.save(user);
         }
-        return UserDTOs.TenantProfileResponse.from(user);
+        return UserDTOs.ProfileResponse.from(user);
     }
 
     @Override

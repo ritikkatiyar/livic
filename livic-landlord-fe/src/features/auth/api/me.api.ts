@@ -29,7 +29,7 @@ export interface MyContextResponse {
 }
 
 export function getMyContext(token: string): Promise<MyContextResponse> {
-  return apiRequest<MyContextResponse>('/api/v1/user/me/context', {
+  return apiRequest<MyContextResponse>('/api/v1/me/context', {
     method: 'GET',
     token,
   });

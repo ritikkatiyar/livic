@@ -90,8 +90,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
 
   useEffect(() => {
     if (charges.length > 0 && !selectedChargeId) {
-      const rentCharge = charges.find(c => c.chargeCategory === 'RENT');
-      setSelectedChargeId(rentCharge ? rentCharge.id : charges[0].id);
+      setSelectedChargeId(charges[0].id);
     }
   }, [charges]);
 

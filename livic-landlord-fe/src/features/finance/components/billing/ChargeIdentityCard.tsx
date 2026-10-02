@@ -7,8 +7,6 @@ import { withAlpha } from '@/src/theme/colorUtils';
 interface ChargeIdentityCardProps {
   expenseName: string;
   setExpenseName: (val: string) => void;
-  chargeCategory: string;
-  setChargeCategory: (val: string) => void;
   billingFrequency: string;
   setBillingFrequency: (val: string) => void;
   nameError: string;
@@ -19,8 +17,6 @@ interface ChargeIdentityCardProps {
 export function ChargeIdentityCard({
   expenseName,
   setExpenseName,
-  chargeCategory,
-  setChargeCategory,
   billingFrequency,
   setBillingFrequency,
   nameError,
@@ -51,29 +47,6 @@ export function ChargeIdentityCard({
         />
       </View>
       {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
-
-      <Text style={styles.label}>CATEGORY</Text>
-      <View style={styles.categoryRow}>
-        {['RENT', 'ELECTRICITY', 'SERVICE', 'PENALTY', 'DISCOUNT', 'CUSTOM'].map((cat) => {
-          const isActive = chargeCategory === cat;
-          return (
-            <TouchableOpacity
-              key={cat}
-              style={[
-                styles.categoryButton,
-                isActive && (isDark ? styles.categoryButtonActiveDark : styles.categoryButtonActiveLight),
-              ]}
-              onPress={() => setChargeCategory(cat)}
-              activeOpacity={0.8}
-            >
-              <Text style={[
-                styles.categoryText,
-                isActive && (isDark ? styles.categoryTextActiveDark : styles.categoryTextActiveLight),
-              ]}>{cat}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
 
       <Text style={styles.label}>BILLING FREQUENCY</Text>
       <View style={styles.segmentContainer}>
@@ -151,42 +124,6 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     fontSize: theme.Typography.bodySmall.fontSize,
     marginTop: -12,
     marginBottom: 18,
-    fontWeight: '600',
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.Spacing.sm,
-    marginTop: theme.Spacing.xs,
-    marginBottom: theme.Spacing.lg,
-  },
-  categoryButton: {
-    paddingVertical: theme.Spacing.sm,
-    paddingHorizontal: 14,
-    backgroundColor: isDark ? withAlpha(theme.Colors.onSurface, 0.04) : theme.Colors.glassFill,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: isDark ? withAlpha(theme.Colors.onSurface, 0.08) : theme.Colors.glassStroke,
-  },
-  categoryButtonActiveDark: {
-    backgroundColor: withAlpha(theme.Colors.primary, 0.15),
-    borderColor: theme.Colors.primary,
-  },
-  categoryButtonActiveLight: {
-    backgroundColor: theme.Colors.primary,
-    borderColor: theme.Colors.primary,
-  },
-  categoryText: {
-    fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '600',
-    color: theme.Colors.onSurfaceVariant,
-  },
-  categoryTextActiveDark: {
-    color: theme.Colors.primary,
-    fontWeight: '600',
-  },
-  categoryTextActiveLight: {
-    color: theme.Colors.onPrimary,
     fontWeight: '600',
   },
   segmentContainer: {

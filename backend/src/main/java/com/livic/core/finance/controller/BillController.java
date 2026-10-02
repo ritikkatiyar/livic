@@ -29,7 +29,7 @@ public class BillController {
     private final BillService billService;
 
     @PostMapping("/{id}/publish")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'RENT_ROLL_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'BILL_MANAGE')")
     public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> publish(
             @PathVariable UUID id
     ) {
@@ -37,7 +37,7 @@ public class BillController {
     }
 
     @PostMapping("/{id}/unpublish")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'RENT_ROLL_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'BILL_MANAGE')")
     public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> unpublish(
             @PathVariable UUID id
     ) {
@@ -45,7 +45,7 @@ public class BillController {
     }
 
     @PostMapping("/batch-publish")
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'RENT_ROLL_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'BILL_MANAGE')")
     public ResponseEntity<ApiResponse<BillDTOs.BatchPublishResult>> batchPublish(
             @Valid @RequestBody BillDTOs.BillPropertyBillingMonthRequest request
     ) {
@@ -53,7 +53,7 @@ public class BillController {
     }
 
     @PostMapping("/batch-unpublish")
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'RENT_ROLL_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'BILL_MANAGE')")
     public ResponseEntity<ApiResponse<BillDTOs.BatchUnpublishResult>> batchUnpublish(
             @Valid @RequestBody BillDTOs.BillPropertyBillingMonthRequest request
     ) {
@@ -61,7 +61,7 @@ public class BillController {
     }
 
     @GetMapping
-    @PreAuthorize("#propertyId == null or @authorizationService.hasPermission(#propertyId, 'RENT_ROLL_VIEW')")
+    @PreAuthorize("#propertyId == null or @authorizationService.hasPermission(#propertyId, 'BILL_VIEW')")
     public ResponseEntity<ApiResponse<BillDTOs.BillListResponse>> list(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) UUID propertyId,
@@ -76,7 +76,7 @@ public class BillController {
     }
 
     @PostMapping("/{id}/mark-paid")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'RENT_ROLL_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'BILL_MANAGE')")
     public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> markPaid(
             @PathVariable UUID id
     ) {

@@ -1,6 +1,5 @@
 package com.livic.core.finance.controller;
 
-import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.core.finance.dto.ChargeConfigRequest;
 import com.livic.core.finance.dto.ChargeConfigResponse;
@@ -12,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -66,11 +64,9 @@ public class ChargeConfigController {
     public ResponseEntity<ApiResponse<Page<ChargeConfigResponse>>> getChargesForProperty(
             @PathVariable UUID propertyId,
             @RequestParam(required = false, defaultValue = "false") boolean includeInactive,
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        UUID userId = userDetails != null ? UUID.fromString(userDetails.getId()) : null;
-        Page<ChargeConfigResponse> responses = chargeConfigQueryService.getChargesForProperty(propertyId, includeInactive, userId, pageable);
+        Page<ChargeConfigResponse> responses = chargeConfigQueryService.getChargesForProperty(propertyId, includeInactive, pageable);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 

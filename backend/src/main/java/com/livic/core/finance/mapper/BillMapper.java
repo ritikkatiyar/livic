@@ -41,7 +41,6 @@ public final class BillMapper {
     public static BillDTOs.ChargeResponse toResponse(BillLineTbl charge) {
         return new BillDTOs.ChargeResponse(
                 charge.getId(),
-                charge.getChargeType(),
                 charge.getAmount(),
                 charge.getDescription(),
                 charge.getCreatedAt()

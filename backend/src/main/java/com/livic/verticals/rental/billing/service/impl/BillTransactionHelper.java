@@ -4,15 +4,11 @@ import com.livic.core.finance.repository.UnitBookingRepository;
 import com.livic.core.finance.repository.FinanceLedgerRepository;
 import com.livic.core.finance.repository.ChargeConfigRepository;
 import com.livic.core.finance.repository.BillLineRepository;
-import com.livic.core.finance.repository.BillingWorksheetRepository;
 import com.livic.core.finance.repository.BillRepository;
-import com.livic.core.finance.domain.ChargeCategory;
 import com.livic.core.finance.domain.LedgerTransactionType;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
-import com.livic.core.finance.domain.RentChargeType;
 import com.livic.core.finance.domain.UnitBookingStatus;
 import com.livic.platform.common.exception.BusinessException;
-import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.core.finance.domain.FinanceLedgerTbl;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
@@ -59,7 +55,6 @@ public class BillTransactionHelper {
     private final BillLineRepository billLineRepository;
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
-    private final BillingWorksheetRepository billingWorksheetRepository;
     private final LeaseQueryService leaseQueryService;
     private final ChargeConfigRepository chargeConfigRepository;
     private final ChargeCalculationService chargeCalculationService;
@@ -72,7 +67,6 @@ public class BillTransactionHelper {
             BillLineRepository billLineRepository,
             UnitFacade unitFacade,
             UnitMemberFacade unitMemberFacade,
-            BillingWorksheetRepository billingWorksheetRepository,
             LeaseQueryService leaseQueryService,
             ChargeConfigRepository chargeConfigRepository,
             ChargeCalculationService chargeCalculationService,
@@ -84,7 +78,6 @@ public class BillTransactionHelper {
         this.billLineRepository = billLineRepository;
         this.unitFacade = unitFacade;
         this.unitMemberFacade = unitMemberFacade;
-        this.billingWorksheetRepository = billingWorksheetRepository;
         this.leaseQueryService = leaseQueryService;
         this.chargeConfigRepository = chargeConfigRepository;
         this.chargeCalculationService = chargeCalculationService;
@@ -95,7 +88,7 @@ public class BillTransactionHelper {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public BillTbl generateSingleInTransaction(LeaseTbl lease, String billingMonthStr, LocalDate dueDate, Map<UUID, Integer> roommateCounts) {
-        return processLeaseGeneration(lease, billingMonthStr, dueDate, roommateCounts, null, null, null);
+        return processLeaseGeneration(lease, billingMonthStr, dueDate, roommateCounts, null, null);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -104,11 +97,10 @@ public class BillTransactionHelper {
             String billingMonthStr,
             LocalDate dueDate,
             Map<UUID, Integer> roommateCounts,
-            List<BillingWorksheetEntryTbl> propertyWorksheets,
             List<ChargeConfigTbl> propertyActiveConfigs,
             Map<UUID, String> unitNumbers
     ) {
-        return processLeaseGeneration(lease, billingMonthStr, dueDate, roommateCounts, propertyWorksheets, propertyActiveConfigs, unitNumbers);
+        return processLeaseGeneration(lease, billingMonthStr, dueDate, roommateCounts, propertyActiveConfigs, unitNumbers);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -122,7 +114,7 @@ public class BillTransactionHelper {
     }
 
     public BillTbl processLeaseGeneration(LeaseTbl lease, String billingMonthStr, LocalDate dueDate, Map<UUID, Integer> roommateCounts) {
-        return processLeaseGeneration(lease, billingMonthStr, dueDate, roommateCounts, null, null, null);
+        return processLeaseGeneration(lease, billingMonthStr, dueDate, roommateCounts, null, null);
     }
 
     public BillTbl processLeaseGeneration(
@@ -130,7 +122,6 @@ public class BillTransactionHelper {
             String billingMonthStr,
             LocalDate dueDate,
             Map<UUID, Integer> roommateCounts,
-            List<BillingWorksheetEntryTbl> propertyWorksheets,
             List<ChargeConfigTbl> propertyActiveConfigs,
             Map<UUID, String> unitNumbers
     ) {
@@ -169,31 +160,15 @@ public class BillTransactionHelper {
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<BillLineTbl> chargesToSave = new ArrayList<>();
 
+        // Rent comes from the lease alone; a one-off change is an ordinary charge in the worksheet.
         BigDecimal baseRentAmount = lease.getMonthlyRentAmount() != null ? lease.getMonthlyRentAmount() : BigDecimal.ZERO;
 
-        List<BillingWorksheetEntryTbl> worksheetEntries = propertyWorksheets;
-        if (worksheetEntries == null) {
-            UnitSummaryDTO unitSummary = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
-            UUID propertyId = unitSummary != null ? unitSummary.propertyId() : null;
-            worksheetEntries = propertyId == null ? List.of() :
-                    billingWorksheetRepository.findAllByPropertyIdAndBillingMonth(propertyId, billingMonthStr);
-        }
-
-        Optional<BillingWorksheetEntryTbl> rentWorksheetOpt = worksheetEntries.stream()
-                .filter(w -> w.getUnitId() != null && w.getUnitId().equals(lease.getUnitId()))
-                .filter(w -> w.getChargeConfig() != null && w.getChargeConfig().getChargeCategory() == ChargeCategory.RENT)
-                .findFirst();
-        if (rentWorksheetOpt.isPresent() && rentWorksheetOpt.get().getEnteredValue() != null) {
-            baseRentAmount = rentWorksheetOpt.get().getEnteredValue();
-        }
-
-        if (baseRentAmount != null && baseRentAmount.compareTo(BigDecimal.ZERO) > 0) {
+        if (baseRentAmount.compareTo(BigDecimal.ZERO) > 0) {
             BillLineTbl rentCharge = BillLineTbl.builder()
                     .bill(cycle)
-                    .chargeType(RentChargeType.BASE_RENT)
                     .customChargeConfig(null)
                     .amount(baseRentAmount)
-                    .description("Base Rent")
+                    .description("Rent")
                     .build();
             chargesToSave.add(rentCharge);
             totalAmount = totalAmount.add(baseRentAmount);
@@ -215,9 +190,6 @@ public class BillTransactionHelper {
         }
 
         for (ChargeConfigTbl config : activeConfigs) {
-            if (config.getChargeCategory() == ChargeCategory.RENT) {
-                continue;
-            }
             CalculationResult result = chargeCalculationService.executeChargePipeline(config, lease.getUnitId(), billingMonthStr, false);
 
             BigDecimal chargeAmount = result.amount();
@@ -229,7 +201,6 @@ public class BillTransactionHelper {
                 chargeAmount = chargeAmount.divide(BigDecimal.valueOf(roommateCount), 2, RoundingMode.HALF_UP);
             }
 
-            RentChargeType chargeType = mapCategoryToType(config.getChargeCategory());
             String desc = config.getChargeName();
             if (result.descriptionDetail() != null) {
                 desc += " (" + result.descriptionDetail() + ")";
@@ -237,18 +208,14 @@ public class BillTransactionHelper {
 
             BillLineTbl charge = BillLineTbl.builder()
                     .bill(cycle)
-                    .chargeType(chargeType)
                     .customChargeConfig(config)
                     .amount(chargeAmount)
                     .description(desc)
                     .build();
             chargesToSave.add(charge);
 
-            if (chargeType == RentChargeType.DISCOUNT) {
-                totalAmount = totalAmount.subtract(chargeAmount);
-            } else {
-                totalAmount = totalAmount.add(chargeAmount);
-            }
+            // Signed: a discount is entered as a negative amount.
+            totalAmount = totalAmount.add(chargeAmount);
         }
 
         List<BillTbl> existingCycles = billRepository.findByMemberId(payer.memberId());
@@ -262,14 +229,13 @@ public class BillTransactionHelper {
                     unitBookingRepository.findByStatusAndConvertedLeaseId(UnitBookingStatus.CONVERTED.name(), lease.getId());
             if (bookingOpt.isPresent()) {
                 UnitBookingTbl booking = bookingOpt.get();
-                BillLineTbl discountCharge = BillLineTbl.builder()
+                BillLineTbl tokenAdjustment = BillLineTbl.builder()
                         .bill(cycle)
-                        .chargeType(RentChargeType.DISCOUNT)
-                        .amount(booking.getTokenAmount())
+                        .amount(booking.getTokenAmount().negate())
                         .description("Token amount adjustment from unit booking")
                         .build();
-                chargesToSave.add(discountCharge);
-                totalAmount = totalAmount.subtract(booking.getTokenAmount());
+                chargesToSave.add(tokenAdjustment);
+                totalAmount = totalAmount.add(tokenAdjustment.getAmount());
             }
         }
 
@@ -299,16 +265,5 @@ public class BillTransactionHelper {
                 savedCycle.getId(), lease.getId(), savedCycle.getBillingMonth(), savedCycle.getTotalAmount());
 
         return savedCycle;
-    }
-
-    private RentChargeType mapCategoryToType(ChargeCategory category) {
-        return switch (category) {
-            case RENT -> RentChargeType.BASE_RENT;
-            case ELECTRICITY -> RentChargeType.ELECTRICITY;
-            case SERVICE -> RentChargeType.MAINTENANCE;
-            case PENALTY -> RentChargeType.PENALTY;
-            case DISCOUNT -> RentChargeType.DISCOUNT;
-            default -> RentChargeType.CUSTOM;
-        };
     }
 }

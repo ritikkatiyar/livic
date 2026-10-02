@@ -35,7 +35,7 @@ public class RentGenerationController {
     }
 
     @PostMapping("/batch-generate")
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'RENT_ROLL_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'BILL_MANAGE')")
     public ResponseEntity<ApiResponse<BillDTOs.BatchGenerateResult>> batchGenerate(
             @Valid @RequestBody BillDTOs.BatchGenerateBillRequest request
     ) {
@@ -44,7 +44,7 @@ public class RentGenerationController {
     }
 
     @GetMapping({"/pre-flight", "/preflight"})
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'RENT_ROLL_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'BILL_VIEW')")
     public ResponseEntity<ApiResponse<BillDTOs.PreFlightChecklistResponse>> getPreFlightChecklist(
             @RequestParam UUID propertyId,
             @RequestParam String billingMonth

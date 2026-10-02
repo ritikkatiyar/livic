@@ -11,7 +11,6 @@ import com.livic.core.finance.mapper.ChargeConfigMapper;
 import com.livic.core.finance.service.interfaces.ChargeConfigService;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
-import com.livic.core.finance.domain.ChargeCategory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,9 +32,6 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
 
     @Override
     public ChargeConfigResponse createChargeConfig(ChargeConfigRequest request) {
-        if (request.getChargeCategory() == ChargeCategory.RENT) {
-            throw new BusinessException("Rent is no longer configured here — it's set per lease when the lease is created");
-        }
         PropertySummaryDTO propSummary = propertyFacade.getPropertyById(request.getPropertyId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Property not found"));
         ChargeConfigTbl config = ChargeConfigMapper.toEntity(request, propSummary.id());
@@ -48,11 +44,6 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
         ChargeConfigTbl config = chargeConfigRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
 
-        if (config.getChargeCategory() != request.getChargeCategory() && 
-            (config.getChargeCategory() == ChargeCategory.RENT || request.getChargeCategory() == ChargeCategory.RENT)) {
-            throw new BusinessException("Rent is no longer configured here — it's set per lease when the lease is created");
-        }
-
         ChargeConfigMapper.updateEntity(request, config);
         chargeConfigRepository.save(config);
         return ChargeConfigMapper.toResponse(config);
@@ -62,10 +53,6 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
     public void deactivateChargeConfig(UUID id) {
         ChargeConfigTbl config = chargeConfigRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
-
-        if (Boolean.TRUE.equals(config.getIsSystemRequired())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot deactivate a system-required charge configuration.");
-        }
 
         config.setIsActive(false);
         chargeConfigRepository.save(config);
@@ -83,10 +70,6 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
     public void deleteChargeConfigPermanently(UUID id) {
         ChargeConfigTbl config = chargeConfigRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
-
-        if (Boolean.TRUE.equals(config.getIsSystemRequired())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot delete a system-required charge configuration.");
-        }
 
         if (billingWorksheetRepository.existsByChargeConfigId(id) ||
                 meterReadingRepository.existsByChargeConfigId(id) ||

@@ -81,14 +81,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
             BillingWorksheetEntryTbl entry = existingEntriesMap.get(unitSummary.id());
             if (entry == null) {
                 BigDecimal initialValue = BigDecimal.ZERO;
-                if (chargeConfig.getChargeCategory() == com.livic.core.finance.domain.ChargeCategory.RENT) {
-                    List<LeaseTbl> leasesForUnit = unitToLeasesMap.get(unitSummary.id());
-                    if (leasesForUnit != null && !leasesForUnit.isEmpty() && leasesForUnit.get(0).getMonthlyRentAmount() != null) {
-                        initialValue = leasesForUnit.get(0).getMonthlyRentAmount();
-                    } else if (chargeConfig.getBaseRate() != null) {
-                        initialValue = chargeConfig.getBaseRate();
-                    }
-                } else if (Boolean.TRUE.equals(chargeConfig.getAutoCarryForward())) {
+                if (Boolean.TRUE.equals(chargeConfig.getAutoCarryForward())) {
                     initialValue = carryForwardValues.getOrDefault(unitSummary.id(), BigDecimal.ZERO);
                 } else if (chargeConfig.getBaseRate() != null) {
                     initialValue = chargeConfig.getBaseRate();
@@ -174,7 +167,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
         );
 
         if (isLocked) {
-            throw new BusinessException("Cannot update worksheet entries because rent bills for this month have already been published or paid");
+            throw new BusinessException("Cannot update worksheet entries because bills for this month have already been published or paid");
         }
 
         List<BillingWorksheetEntryTbl> existing = billingWorksheetRepository.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(

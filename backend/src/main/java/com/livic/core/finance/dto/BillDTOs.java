@@ -1,6 +1,5 @@
 package com.livic.core.finance.dto;
 
-import com.livic.core.finance.domain.RentChargeType;
 import com.livic.core.finance.domain.BillStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -46,12 +45,6 @@ public class BillDTOs {
             boolean isReady
     ) {}
 
-    public record ChargeRequest(
-            @NotNull RentChargeType chargeType,
-            @NotNull BigDecimal amount,
-            String description
-    ) {}
-
     public record BillResponse(
             UUID id,
             UUID leaseId,
@@ -88,7 +81,6 @@ public class BillDTOs {
 
     public record ChargeResponse(
             UUID id,
-            RentChargeType chargeType,
             BigDecimal amount,
             String description,
             LocalDateTime createdAt

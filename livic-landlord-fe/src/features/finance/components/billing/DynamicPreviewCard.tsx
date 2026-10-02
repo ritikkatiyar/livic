@@ -5,7 +5,6 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import { withAlpha } from '@/src/theme/colorUtils';
 
 interface DynamicPreviewCardProps {
-  chargeCategory: string;
   expenseName: string;
   billingFrequency: string;
   calcMethod: string;
@@ -17,7 +16,6 @@ interface DynamicPreviewCardProps {
 }
 
 export function DynamicPreviewCard({
-  chargeCategory,
   expenseName,
   billingFrequency,
   calcMethod,
@@ -44,7 +42,7 @@ export function DynamicPreviewCard({
         <View style={styles.previewHeaderRow}>
           <View style={{ flex: 1, marginRight: 12 }}>
             <View style={styles.categoryBadge}>
-              <Text style={styles.previewCategory}>{chargeCategory} CHARGE</Text>
+              <Text style={styles.previewCategory}>{calcMethod === 'Fixed Rate' ? 'FIXED' : 'METERED'} CHARGE</Text>
             </View>
             <Text style={styles.previewName} numberOfLines={1}>
               {expenseName || 'Unnamed Charge'}

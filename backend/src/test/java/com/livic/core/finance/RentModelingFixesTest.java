@@ -9,13 +9,10 @@ import com.livic.core.finance.repository.BillingWorksheetRepository;
 import com.livic.core.finance.repository.BillRepository;
 import com.livic.core.finance.domain.BillingFrequency;
 import com.livic.core.finance.domain.CalculationStrategyType;
-import com.livic.core.finance.domain.ChargeCategory;
 import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
-import com.livic.core.finance.domain.RentChargeType;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.platform.common.event.RentPublishedEvent;
-import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.core.finance.domain.BillLineTbl;
@@ -23,12 +20,12 @@ import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.domain.UnitMemberRole;
 import java.util.concurrent.atomic.AtomicReference;
+import com.livic.core.finance.strategy.CalculationResult;
 import com.livic.core.finance.strategy.ChargeCalculationService;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.domain.BillType;
 import com.livic.core.finance.dto.BillingWorksheetDTOs.WorksheetEntryResponse;
-import com.livic.core.finance.dto.ChargeConfigRequest;
 import com.livic.verticals.rental.lease.dto.LeaseDTOs;
 import com.livic.core.finance.dto.BillDTOs;
 import com.livic.core.finance.dto.RentRollMetricsDTO;
@@ -124,7 +121,7 @@ public class RentModelingFixesTest {
     private PropertyTbl property;
     private UnitTbl unit;
     private LeaseTbl lease;
-    private ChargeConfigTbl rentConfig;
+    private ChargeConfigTbl waterConfig;
 
     @BeforeEach
     void setUp() {
@@ -155,17 +152,15 @@ public class RentModelingFixesTest {
                 .build();
         lease.setId(leaseId);
 
-        rentConfig = ChargeConfigTbl.builder()
+        waterConfig = ChargeConfigTbl.builder()
                 .propertyId(propertyId)
-                .chargeName("Rent Charge")
-                .chargeCategory(ChargeCategory.RENT)
+                .chargeName("Water")
                 .billingFrequency(BillingFrequency.MONTHLY)
                 .calculationStrategy(CalculationStrategyType.FIXED_RATE)
-                .baseRate(BigDecimal.valueOf(9999.00)) // Legacy base rate should be ignored
-                .isSystemRequired(true)
+                .baseRate(BigDecimal.valueOf(250.00))
                 .isActive(true)
                 .build();
-        rentConfig.setId(chargeConfigId);
+        waterConfig.setId(chargeConfigId);
 
         payerResident = new UnitResidentDTO(
                 memberId, UUID.randomUUID(), UnitMemberRole.TENANT,
@@ -176,7 +171,6 @@ public class RentModelingFixesTest {
                 billLineRepository,
                 unitFacade,
                 unitMemberFacade,
-                billingWorksheetRepository,
                 leaseQueryService,
                 chargeConfigRepository,
                 chargeCalculationService,
@@ -189,7 +183,6 @@ public class RentModelingFixesTest {
                 chargeConfigRepository,
                 meterReadingRepository,
                 unitFacade,
-                billingWorksheetRepository,
                 transactionHelper,
                 billService
         );
@@ -209,18 +202,37 @@ public class RentModelingFixesTest {
     }
 
     @Test
-    @DisplayName("Verification 3 & 4: ChargeConfigServiceImpl rejects category RENT")
-    void testCreateChargeConfig_RejectsRentCategory() {
-        ChargeConfigRequest request = new ChargeConfigRequest();
-        request.setPropertyId(propertyId);
-        request.setChargeName("Custom Rent Config");
-        request.setChargeCategory(ChargeCategory.RENT);
+    @DisplayName("A discount is a negative line and lowers the bill's total")
+    void testProcessLeaseGeneration_NegativeChargeLowersTotal() {
+        ChargeConfigTbl discount = ChargeConfigTbl.builder()
+                .propertyId(propertyId)
+                .chargeName("Loyalty discount")
+                .billingFrequency(BillingFrequency.MONTHLY)
+                .calculationStrategy(CalculationStrategyType.FIXED_RATE)
+                .isActive(true)
+                .build();
+        discount.setId(UUID.randomUUID());
 
-        BusinessException exception = assertThrows(BusinessException.class, () ->
-                chargeConfigService.createChargeConfig(request)
-        );
+        when(leaseQueryService.getLeaseById(leaseId)).thenReturn(lease);
+        when(unitMemberFacade.getResidentByLeaseId(leaseId)).thenReturn(Optional.of(payerResident));
+        when(billRepository.findByMemberIdAndBillingMonthAndBillType(memberId, "2026-08", BillType.RENT)).thenReturn(Optional.empty());
+        when(unitFacade.getUnitById(unitId)).thenReturn(Optional.of(UnitSummaryDTO.from(unit)));
+        when(chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(propertyId)).thenReturn(List.of(discount));
+        when(chargeCalculationService.executeChargePipeline(discount, unitId, "2026-08", false))
+                .thenReturn(new CalculationResult(BigDecimal.valueOf(-200.00), null));
+        AtomicReference<BillTbl> saved = new AtomicReference<>();
+        when(billRepository.save(any(BillTbl.class))).thenAnswer(i -> {
+            BillTbl c = i.getArgument(0);
+            if (c.getId() == null) c.setId(UUID.randomUUID());
+            saved.set(c);
+            return c;
+        });
+        when(billRepository.findById(any(UUID.class))).thenAnswer(i -> Optional.ofNullable(saved.get()));
+        when(unitMemberFacade.getResidentByMemberId(memberId)).thenReturn(Optional.of(payerResident));
 
-        assertTrue(exception.getMessage().contains("Rent is no longer configured here"));
+        rentGenerationService.generate(new BillDTOs.GenerateBillRequest(leaseId, "2026-08", LocalDate.now().plusDays(10)));
+
+        assertEquals(0, BigDecimal.valueOf(1300.00).compareTo(saved.get().getTotalAmount()));
     }
 
     @Test
@@ -248,20 +260,20 @@ public class RentModelingFixesTest {
         verify(billLineRepository, times(1)).saveAll(chargeCaptor.capture());
 
         BillLineTbl savedCharge = chargeCaptor.getValue().get(0);
-        assertEquals(RentChargeType.BASE_RENT, savedCharge.getChargeType());
-        assertEquals(BigDecimal.valueOf(1500.00), savedCharge.getAmount()); // Matches lease, NOT charge_config baseRate (9999.00)
+        assertEquals("Rent", savedCharge.getDescription());
+        assertEquals(BigDecimal.valueOf(1500.00), savedCharge.getAmount()); // the lease's rent
     }
 
     @Test
-    @DisplayName("Verification 6: Billing worksheet defaults RENT category from lease.monthlyRentAmount")
-    void testGetOrCreateWorksheet_PrefillsRentFromLease() {
+    @DisplayName("A new worksheet entry starts from the charge's base rate")
+    void testGetOrCreateWorksheet_PrefillsFromBaseRate() {
         org.springframework.security.core.context.SecurityContext securityContext = mock(org.springframework.security.core.context.SecurityContext.class);
         org.springframework.security.core.Authentication authentication = mock(org.springframework.security.core.Authentication.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(UUID.randomUUID().toString());
         org.springframework.security.core.context.SecurityContextHolder.setContext(securityContext);
 
-        when(chargeConfigRepository.findById(chargeConfigId)).thenReturn(Optional.of(rentConfig));
+        when(chargeConfigRepository.findById(chargeConfigId)).thenReturn(Optional.of(waterConfig));
         when(unitFacade.getUnitsByPropertyId(propertyId)).thenReturn(List.of(UnitSummaryDTO.from(unit)));
         when(leaseQueryService.findActiveLeasesByProperty(propertyId)).thenReturn(List.of(lease));
         when(billingWorksheetRepository.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(propertyId, chargeConfigId, "2026-08")).thenReturn(List.of());
@@ -271,7 +283,7 @@ public class RentModelingFixesTest {
         List<WorksheetEntryResponse> responses = billingWorksheetService.getOrCreateWorksheetForMonth(propertyId, chargeConfigId, "2026-08");
 
         assertEquals(1, responses.size());
-        assertEquals(BigDecimal.valueOf(1500.00), responses.get(0).getEnteredValue()); // Prefilled from lease
+        assertEquals(BigDecimal.valueOf(250.00), responses.get(0).getEnteredValue());
         org.springframework.security.core.context.SecurityContextHolder.clearContext();
     }
 
@@ -432,7 +444,6 @@ public class RentModelingFixesTest {
                 chargeConfigRepository,
                 meterReadingRepository,
                 unitFacade,
-                billingWorksheetRepository,
                 mockTxHelper,
                 mockBillService
         );
@@ -464,9 +475,9 @@ public class RentModelingFixesTest {
         BillTbl bill2 = new BillTbl();
         bill2.setId(UUID.randomUUID());
 
-        when(mockTxHelper.generateSingleInTransaction(eq(lease1), any(), any(), any(), any(), any(), any()))
+        when(mockTxHelper.generateSingleInTransaction(eq(lease1), any(), any(), any(), any(), any()))
                 .thenReturn(bill1);
-        when(mockTxHelper.generateSingleInTransaction(eq(lease2), any(), any(), any(), any(), any(), any()))
+        when(mockTxHelper.generateSingleInTransaction(eq(lease2), any(), any(), any(), any(), any()))
                 .thenReturn(bill2);
 
         BillDTOs.BillResponse response1 = new BillDTOs.BillResponse(

@@ -253,7 +253,7 @@ class AuthorizationServiceImplTest {
         assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "LEASE_VIEW_OWN")).isTrue();
         // … but ownership alone does not grant staff permissions on it
         assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "LEASE_VIEW")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "RENT_ROLL_MANAGE")).isFalse();
+        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_MANAGE")).isFalse();
     }
 
     @Test

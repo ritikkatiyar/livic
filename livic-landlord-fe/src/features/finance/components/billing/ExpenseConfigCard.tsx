@@ -31,14 +31,13 @@ export function ExpenseConfigCard({
   const styles = React.useMemo(() => createStyles(theme, isDesktop), [theme, isDesktop]);
   const router = useRouter();
 
-  const getIconData = (name: string, category: string) => {
+  const getIconData = (name: string) => {
     const n = name.toLowerCase();
-    const c = category.toLowerCase();
-    
-    if (n.includes('rent') || c.includes('rent')) {
+
+    if (n.includes('rent')) {
       return { name: 'vpn-key', bg: withAlpha(theme.Colors.success, 0.12), color: theme.Colors.tertiary };
     }
-    if (n.includes('electricity') || c.includes('electricity') || n.includes('power')) {
+    if (n.includes('electricity') || n.includes('power')) {
       return { name: 'flash-on', bg: withAlpha(theme.Colors.tertiary, 0.12), color: theme.Colors.tertiary };
     }
     if (n.includes('water') || n.includes('sewage') || n.includes('utility')) {
@@ -47,7 +46,7 @@ export function ExpenseConfigCard({
     if (n.includes('internet') || n.includes('wifi') || n.includes('network')) {
       return { name: 'router', bg: withAlpha(theme.Colors.secondary, 0.12), color: theme.Colors.secondary };
     }
-    if (n.includes('maintenance') || n.includes('cleaning') || c.includes('service')) {
+    if (n.includes('maintenance') || n.includes('cleaning') || n.includes('service')) {
       return { name: 'build', bg: withAlpha(theme.Colors.error, 0.12), color: theme.Colors.error };
     }
     return { name: 'receipt', bg: withAlpha(theme.Colors.onSurfaceVariant, 0.12), color: theme.Colors.onSurfaceVariant };
@@ -58,7 +57,7 @@ export function ExpenseConfigCard({
     return str.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   };
 
-  const iconObj = getIconData(charge.chargeName, charge.chargeCategory);
+  const iconObj = getIconData(charge.chargeName);
 
   return (
     <View 
@@ -81,7 +80,7 @@ export function ExpenseConfigCard({
             <View style={styles.cardTextContainer}>
               <Text style={styles.cardTitle}>{charge.chargeName}</Text>
               <Text style={styles.cardSub}>
-                {formatEnum(charge.chargeCategory)} • {formatEnum(charge.billingFrequency)}
+                {formatEnum(charge.calculationStrategy)} • {formatEnum(charge.billingFrequency)}
               </Text>
             </View>
             <View style={styles.cardRight}>
@@ -126,8 +125,7 @@ export function ExpenseConfigCard({
           </View>
 
           <View style={styles.footerRightContainer}>
-            {!charge.isSystemRequired ? (
-              <View style={{ flexDirection: 'row', gap: theme.Spacing.sm, alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', gap: theme.Spacing.sm, alignItems: 'center' }}>
                 {charge.isActive ? (
                   <ActionButton
                     label="Deactivate"
@@ -154,14 +152,7 @@ export function ExpenseConfigCard({
                     />
                   </>
                 )}
-              </View>
-            ) : (
-              <View style={styles.systemRequiredBadge}>
-                <Text style={{ color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600' }}>
-                  System Required
-                </Text>
-              </View>
-            )}
+            </View>
           </View>
         </View>
       </GlassCard>
@@ -254,16 +245,6 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
     minHeight: 32,
     justifyContent: 'center',
     alignItems: 'flex-end',
-  },
-  systemRequiredBadge: {
-    height: 30,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    backgroundColor: withAlpha(theme.Colors.onSurfaceVariant, 0.1),
-    borderWidth: 1,
-    borderColor: theme.Colors.outline,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   glassCardInner: {
     padding: 20,

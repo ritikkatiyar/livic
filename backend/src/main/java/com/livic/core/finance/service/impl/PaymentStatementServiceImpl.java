@@ -92,17 +92,15 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
 
         StringBuilder chargesRows = new StringBuilder();
         for (BillLineTbl charge : charges) {
-            String amountFormatted = String.format("₹%,.2f", charge.getAmount());
-            if (com.livic.core.finance.domain.RentChargeType.DISCOUNT.name().equals(charge.getChargeType().name())) {
-                amountFormatted = "-" + amountFormatted;
-            }
+            // Amounts are signed: a discount or adjustment in the payer's favour is negative.
+            String amountFormatted = charge.getAmount().signum() < 0
+                    ? String.format("-₹%,.2f", charge.getAmount().negate())
+                    : String.format("₹%,.2f", charge.getAmount());
             chargesRows.append(String.format(
                     "<tr>" +
                     "  <td>%s</td>" +
-                    "  <td>%s</td>" +
                     "  <td style=\"text-align: right;\">%s</td>" +
                     "</tr>",
-                    charge.getChargeType(),
                     charge.getDescription(),
                     amountFormatted
             ));
@@ -211,8 +209,7 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
                 "  <table class=\"invoice-table\">\n" +
                 "    <thead>\n" +
                 "      <tr>\n" +
-                "        <th style=\"width: 25%;\">Type</th>\n" +
-                "        <th style=\"width: 55%;\">Description</th>\n" +
+                "        <th style=\"width: 80%;\">Description</th>\n" +
                 "        <th style=\"width: 20%; text-align: right;\">Amount</th>\n" +
                 "      </tr>\n" +
                 "    </thead>\n" +

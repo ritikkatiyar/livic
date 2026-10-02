@@ -2,7 +2,7 @@ import { apiRequest } from '@/src/api/client';
 
 export interface ChargeResponse {
   id: string;
-  chargeType: string;
+  /** Signed: a discount or adjustment in the payer's favour is negative. */
   amount: number;
   description: string;
   createdAt: string;

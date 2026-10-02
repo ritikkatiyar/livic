@@ -1,9 +1,7 @@
 package com.livic.verticals.rental.billing.service.impl;
 
 import com.livic.core.finance.repository.MeterReadingRepository;
-import com.livic.core.finance.repository.BillingWorksheetRepository;
 import com.livic.core.finance.repository.ChargeConfigRepository;
-import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.core.finance.domain.ChargeConfigTbl;
 import com.livic.core.finance.domain.BillTbl;
 import com.livic.core.finance.domain.MeterReadingTbl;
@@ -38,7 +36,6 @@ public class RentGenerationServiceImpl implements RentGenerationService {
     private final ChargeConfigRepository chargeConfigRepository;
     private final MeterReadingRepository meterReadingRepository;
     private final UnitFacade unitFacade;
-    private final BillingWorksheetRepository billingWorksheetRepository;
     private final BillTransactionHelper transactionHelper;
     private final BillService billService;
 
@@ -59,7 +56,6 @@ public class RentGenerationServiceImpl implements RentGenerationService {
         Map<UUID, Integer> roommateCounts = activeLeases.stream()
                 .collect(Collectors.groupingBy(LeaseTbl::getUnitId, Collectors.collectingAndThen(Collectors.toList(), List::size)));
 
-        List<BillingWorksheetEntryTbl> propertyWorksheets = billingWorksheetRepository.findAllByPropertyIdAndBillingMonth(request.propertyId(), request.billingMonth());
         List<ChargeConfigTbl> propertyActiveConfigs = chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(request.propertyId());
 
         List<BillTbl> successes = new ArrayList<>();
@@ -73,7 +69,6 @@ public class RentGenerationServiceImpl implements RentGenerationService {
                         request.billingMonth(),
                         request.dueDate(),
                         roommateCounts,
-                        propertyWorksheets,
                         propertyActiveConfigs,
                         unitNumbers
                 );

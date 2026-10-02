@@ -48,7 +48,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   const isEditMode = !!chargeId;
 
   const [expenseName, setExpenseName] = useState('');
-  const [chargeCategory, setChargeCategory] = useState('CUSTOM');
   const [billingFrequency, setBillingFrequency] = useState('Monthly');
   const [calcMethod, setCalcMethod] = useState('Fixed Rate');
   const [baseRate, setBaseRate] = useState('');
@@ -71,7 +70,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   useEffect(() => {
     if (isEditMode && chargeConfig) {
       setExpenseName(chargeConfig.chargeName);
-      setChargeCategory(chargeConfig.chargeCategory || 'CUSTOM');
       
       let uiFreq = 'Monthly';
       if (chargeConfig.billingFrequency === 'ANNUAL') uiFreq = 'Annual';
@@ -118,7 +116,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         const payload = {
             propertyId: propertyId as string,
             chargeName: expenseName,
-            chargeCategory: chargeCategory, 
             billingFrequency: freqEnum,
             calculationStrategy: calcStrategyEnum,
             unitType: unitType,
@@ -187,8 +184,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
           <ChargeIdentityCard
             expenseName={expenseName}
             setExpenseName={setExpenseName}
-            chargeCategory={chargeCategory}
-            setChargeCategory={setChargeCategory}
             billingFrequency={billingFrequency}
             setBillingFrequency={setBillingFrequency}
             nameError={nameError}
@@ -223,7 +218,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         {isDesktop && (
           <View style={styles.desktopPreviewCol}>
             <DynamicPreviewCard
-              chargeCategory={chargeCategory}
               expenseName={expenseName}
               billingFrequency={billingFrequency}
               calcMethod={calcMethod}
@@ -239,7 +233,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
 
       {!isDesktop && (
         <DynamicPreviewCard
-          chargeCategory={chargeCategory}
           expenseName={expenseName}
           billingFrequency={billingFrequency}
           calcMethod={calcMethod}

@@ -3,7 +3,6 @@ import { apiRequest } from '@/src/api/client';
 export interface ChargeConfigRequest {
     propertyId: string;
     chargeName: string;
-    chargeCategory: string;
     billingFrequency: string;
     calculationStrategy: string;
     unitType?: string;
@@ -17,7 +16,6 @@ export interface ChargeConfigResponse {
     id: string;
     propertyId: string;
     chargeName: string;
-    chargeCategory: string;
     billingFrequency: string;
     calculationStrategy: string;
     unitType?: string;
@@ -25,7 +23,6 @@ export interface ChargeConfigResponse {
     applySalesTax: boolean;
     lateFeePercentage: number | null;
     autoCarryForward?: boolean;
-    isSystemRequired: boolean;
     isActive: boolean;
 }
 

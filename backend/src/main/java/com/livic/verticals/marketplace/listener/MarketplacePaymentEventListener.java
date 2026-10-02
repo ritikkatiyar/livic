@@ -5,8 +5,7 @@ import com.livic.verticals.marketplace.domain.LeadType;
 import com.livic.verticals.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.verticals.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
-import com.livic.core.finance.dto.UnitBookingDTOs;
-import com.livic.core.finance.facade.FinanceFacade;
+import com.livic.core.property.spi.PaidUnitBooking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -21,7 +21,8 @@ import java.time.LocalDate;
 public class MarketplacePaymentEventListener {
 
     private final MarketplaceLeadRepository leadRepository;
-    private final FinanceFacade financeFacade;
+    // Booking a unit is rental's; the marketplace reaches it through core, never directly.
+    private final PaidUnitBooking paidUnitBooking;
 
     @EventListener
     @Transactional
@@ -45,7 +46,7 @@ public class MarketplacePaymentEventListener {
                     ? lead.getExpectedMoveInDate()
                     : LocalDate.now().plusDays(7);
 
-            UnitBookingDTOs.UnitBookingResponse booking = financeFacade.createPaidBooking(new UnitBookingDTOs.PaidBookingRequest(
+            UUID bookingId = paidUnitBooking.bookPaidUnit(new PaidUnitBooking.Request(
                     lead.getUnitId(),
                     lead.getProspectName(),
                     lead.getProspectPhone(),
@@ -55,11 +56,11 @@ public class MarketplacePaymentEventListener {
                     event.getTransactionId()
             ));
 
-            lead.setConvertedUnitBookingId(booking.id());
+            lead.setConvertedUnitBookingId(bookingId);
             lead.setStatus(LeadStatus.CONVERTED);
 
             log.info("[OBSERVER: MARKETPLACE] Spawning unit_booking_tbl entry: id={} for Marketplace Lead: {}",
-                    booking.id(), lead.getId());
+                    bookingId, lead.getId());
         }
 
         leadRepository.save(lead);

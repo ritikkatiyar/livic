@@ -34,7 +34,7 @@ class ModuleBoundaryTest {
             "platform.subscription",
             "core.property", "core.finance",
             "core.community.announcement", "core.community.analytics", "core.community.issue",
-            "verticals.rental.inventory", "verticals.rental.lease", "verticals.rental.billing",
+            "verticals.rental.inventory", "verticals.rental.lease", "verticals.rental.billing", "verticals.rental.booking",
             "verticals.marketplace"
     };
 
@@ -107,9 +107,6 @@ class ModuleBoundaryTest {
     @DisplayName("No module repository should be accessed from outside its own module package")
     void noCrossModuleRepositoryAccess() {
         for (String module : MODULES) {
-            if (module.equals("core.finance")) {
-                continue; // open to verticals only, see financeContractsAreOpenToVerticalsOnly
-            }
             String modulePackage = "com.livic." + module + "..";
             String repositoryPackage = "com.livic." + module + ".repository..";
 
@@ -140,12 +137,10 @@ class ModuleBoundaryTest {
                 "finance's entities, repositories, services or charge calculation",
                 (JavaClass target) -> {
                     String pkg = target.getPackageName();
-                    boolean internal = pkg.startsWith("com.livic.core.finance.repository")
+                    return pkg.startsWith("com.livic.core.finance.repository")
                             || pkg.startsWith("com.livic.core.finance.service")
                             || pkg.startsWith("com.livic.core.finance.strategy")
                             || (pkg.startsWith("com.livic.core.finance.domain") && target.isAnnotatedWith(Entity.class));
-                    // Bookings are rental's and still sit in finance; they move to verticals/rental next.
-                    return internal && !target.getSimpleName().startsWith("UnitBooking");
                 });
 
         ArchRule rule = noClasses()

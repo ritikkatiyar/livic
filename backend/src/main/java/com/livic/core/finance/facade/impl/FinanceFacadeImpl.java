@@ -1,11 +1,8 @@
 package com.livic.core.finance.facade.impl;
 
-import com.livic.core.finance.repository.UnitBookingRepository;
 import com.livic.core.finance.repository.BillRepository;
 import com.livic.core.finance.dto.ChargeConfigResponse;
-import com.livic.core.finance.dto.UnitBookingDTOs;
 import com.livic.core.finance.facade.FinanceFacade;
-import com.livic.core.finance.mapper.UnitBookingMapper;
 import com.livic.core.finance.service.interfaces.ChargeConfigQueryService;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.BillTbl;
@@ -40,7 +37,6 @@ public class FinanceFacadeImpl implements FinanceFacade {
 
     private final BillRepository billRepository;
     private final ChargeConfigQueryService chargeConfigQueryService;
-    private final UnitBookingRepository unitBookingRepository;
     private final com.livic.core.property.facade.UnitFacade unitFacade;
     private final com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
     private final BillGenerationService billGenerationService;
@@ -49,14 +45,12 @@ public class FinanceFacadeImpl implements FinanceFacade {
     public FinanceFacadeImpl(
             BillRepository billRepository,
             ChargeConfigQueryService chargeConfigQueryService,
-            UnitBookingRepository unitBookingRepository,
             com.livic.core.property.facade.UnitFacade unitFacade,
             com.livic.core.property.facade.UnitMemberFacade unitMemberFacade,
             BillGenerationService billGenerationService,
             LedgerService ledgerService) {
         this.billRepository = billRepository;
         this.chargeConfigQueryService = chargeConfigQueryService;
-        this.unitBookingRepository = unitBookingRepository;
         this.unitFacade = unitFacade;
         this.unitMemberFacade = unitMemberFacade;
         this.billGenerationService = billGenerationService;
@@ -175,14 +169,5 @@ public class FinanceFacadeImpl implements FinanceFacade {
     @Override
     public Map<String, BigDecimal> getOperationalOverhead(List<UUID> propertyIds) {
         return Collections.emptyMap();
-    }
-
-    @Override
-    @Transactional
-    public UnitBookingDTOs.UnitBookingResponse createPaidBooking(UnitBookingDTOs.PaidBookingRequest request) {
-        String unitNumber = unitFacade.getUnitById(request.unitId())
-                .map(com.livic.core.property.dto.UnitSummaryDTO::unitNumber)
-                .orElse(null);
-        return UnitBookingMapper.toResponse(unitBookingRepository.save(UnitBookingMapper.toEntity(request)), unitNumber);
     }
 }

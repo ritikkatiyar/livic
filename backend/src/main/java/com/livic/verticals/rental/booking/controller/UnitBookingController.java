@@ -1,10 +1,10 @@
-package com.livic.core.finance.controller;
+package com.livic.verticals.rental.booking.controller;
 
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.common.response.ApiResponse;
-import com.livic.core.finance.dto.UnitBookingDTOs.CreateBookingRequest;
-import com.livic.core.finance.dto.UnitBookingDTOs.UnitBookingResponse;
-import com.livic.core.finance.service.interfaces.UnitBookingService;
+import com.livic.verticals.rental.booking.dto.UnitBookingDTOs.CreateBookingRequest;
+import com.livic.verticals.rental.booking.dto.UnitBookingDTOs.UnitBookingResponse;
+import com.livic.verticals.rental.booking.service.interfaces.UnitBookingService;
 import com.livic.platform.payment.dto.PaymentTransactionResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

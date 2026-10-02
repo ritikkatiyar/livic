@@ -1,4 +1,4 @@
-package com.livic.core.finance.dto;
+package com.livic.verticals.rental.booking.dto;
 
    import jakarta.validation.constraints.NotBlank;
    import jakarta.validation.constraints.NotNull;

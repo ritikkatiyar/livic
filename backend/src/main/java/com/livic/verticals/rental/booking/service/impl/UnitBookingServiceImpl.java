@@ -1,16 +1,16 @@
-package com.livic.core.finance.service.impl;
+package com.livic.verticals.rental.booking.service.impl;
 
-import com.livic.core.finance.repository.UnitBookingRepository;
+import com.livic.verticals.rental.booking.repository.UnitBookingRepository;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
-import com.livic.core.finance.domain.UnitBookingStatus;
+import com.livic.verticals.rental.booking.domain.UnitBookingStatus;
 import com.livic.platform.common.enums.ResourceType;
 import com.livic.platform.common.exception.BusinessException;
-import com.livic.core.finance.domain.UnitBookingTbl;
-import com.livic.core.finance.dto.UnitBookingDTOs;
-import com.livic.core.finance.dto.UnitBookingDTOs.UnitBookingResponse;
-import com.livic.core.finance.mapper.UnitBookingMapper;
+import com.livic.verticals.rental.booking.domain.UnitBookingTbl;
+import com.livic.verticals.rental.booking.dto.UnitBookingDTOs;
+import com.livic.verticals.rental.booking.dto.UnitBookingDTOs.UnitBookingResponse;
+import com.livic.verticals.rental.booking.mapper.UnitBookingMapper;
 import com.livic.core.property.spi.UnitOccupancyProvider;
-import com.livic.core.finance.service.interfaces.UnitBookingService;
+import com.livic.verticals.rental.booking.service.interfaces.UnitBookingService;
 import com.livic.platform.payment.dto.PaymentTransactionResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.core.property.dto.PropertySummaryDTO;

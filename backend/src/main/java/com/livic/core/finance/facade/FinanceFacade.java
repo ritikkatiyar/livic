@@ -6,7 +6,6 @@ import com.livic.core.finance.dto.BillDTOs;
 import com.livic.core.finance.domain.LedgerTransactionType;
 import com.livic.core.finance.domain.BillType;
 import com.livic.core.finance.dto.ChargeConfigResponse;
-import com.livic.core.finance.dto.UnitBookingDTOs;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -54,7 +53,4 @@ public interface FinanceFacade {
 
     /** Appends to a member's ledger; a debit is positive, a payment or credit negative. */
     void postLedgerEntry(UUID memberId, UUID unitId, LedgerTransactionType type, BigDecimal amount, UUID referenceId, String description);
-
-    // Booking Write Methods
-    UnitBookingDTOs.UnitBookingResponse createPaidBooking(UnitBookingDTOs.PaidBookingRequest request);
 }

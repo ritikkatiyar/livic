@@ -1,11 +1,10 @@
 package com.livic.verticals.rental.billing.service.impl;
 
 import com.livic.core.finance.domain.BillType;
-import com.livic.core.finance.domain.UnitBookingStatus;
 import com.livic.core.finance.dto.BillDTOs;
 import com.livic.core.finance.dto.BillDraft;
 import com.livic.core.finance.facade.FinanceFacade;
-import com.livic.core.finance.repository.UnitBookingRepository;
+import com.livic.verticals.rental.booking.facade.BookingFacade;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
@@ -44,8 +43,7 @@ public class RentGenerationServiceImpl implements RentGenerationService {
     private final UnitMemberFacade unitMemberFacade;
     private final UnitFacade unitFacade;
     private final FinanceFacade financeFacade;
-    // Bookings still live in finance; they move into rental with the booking module.
-    private final UnitBookingRepository unitBookingRepository;
+    private final BookingFacade bookingFacade;
 
     @Override
     public BillDTOs.BillResponse generate(GenerateBillRequest request) {
@@ -106,10 +104,8 @@ public class RentGenerationServiceImpl implements RentGenerationService {
         }
         // The token paid when the unit was booked is credited once, on the tenant's first bill.
         if (!financeFacade.hasOtherBills(payer.memberId(), billingMonth, BillType.RENT)) {
-            unitBookingRepository.findByStatusAndConvertedLeaseId(UnitBookingStatus.CONVERTED.name(), lease.getId())
-                    .filter(booking -> booking.getTokenAmount() != null && booking.getTokenAmount().signum() > 0)
-                    .ifPresent(booking -> lines.add(
-                            new BillDraft.Line("Token amount adjustment from unit booking", booking.getTokenAmount().negate())));
+            bookingFacade.findConvertedToken(lease.getId()).ifPresent(token -> lines.add(
+                    new BillDraft.Line("Token amount adjustment from unit booking", token.negate())));
         }
         return new BillDraft(payer.memberId(), null, BillType.RENT, billingMonth, dueDate, lines, Math.max(1, roommates));
     }

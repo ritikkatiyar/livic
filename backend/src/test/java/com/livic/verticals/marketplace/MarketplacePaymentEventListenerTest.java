@@ -6,8 +6,7 @@ import com.livic.verticals.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.verticals.marketplace.listener.MarketplacePaymentEventListener;
 import com.livic.verticals.marketplace.repository.MarketplaceLeadRepository;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
-import com.livic.core.finance.dto.UnitBookingDTOs;
-import com.livic.core.finance.facade.FinanceFacade;
+import com.livic.core.property.spi.PaidUnitBooking;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +32,7 @@ public class MarketplacePaymentEventListenerTest {
     private MarketplaceLeadRepository leadRepository;
 
     @Mock
-    private FinanceFacade financeFacade;
+    private PaidUnitBooking paidUnitBooking;
 
     @InjectMocks
     private MarketplacePaymentEventListener eventListener;
@@ -77,13 +76,7 @@ public class MarketplacePaymentEventListenerTest {
                 .build();
 
         when(leadRepository.findById(leadId)).thenReturn(Optional.of(bookingLead));
-        when(financeFacade.createPaidBooking(any(UnitBookingDTOs.PaidBookingRequest.class))).thenAnswer(i -> {
-            UnitBookingDTOs.PaidBookingRequest req = i.getArgument(0);
-            return new UnitBookingDTOs.UnitBookingResponse(
-                    bookingId, req.unitId(), "301", null, req.prospectiveTenantName(), req.prospectiveTenantPhone(),
-                    req.prospectiveTenantEmail(), req.tokenAmount(), req.expectedMoveInDate(), "BOOKED",
-                    req.paymentTransactionId(), null, null, null);
-        });
+        when(paidUnitBooking.bookPaidUnit(any(PaidUnitBooking.Request.class))).thenReturn(bookingId);
 
         eventListener.onPaymentCompleted(event);
 
@@ -92,12 +85,12 @@ public class MarketplacePaymentEventListenerTest {
         assertEquals(bookingId, bookingLead.getConvertedUnitBookingId());
 
         // Verify booking requested with correct data
-        ArgumentCaptor<UnitBookingDTOs.PaidBookingRequest> captor = ArgumentCaptor.forClass(UnitBookingDTOs.PaidBookingRequest.class);
-        verify(financeFacade).createPaidBooking(captor.capture());
-        UnitBookingDTOs.PaidBookingRequest booking = captor.getValue();
+        ArgumentCaptor<PaidUnitBooking.Request> captor = ArgumentCaptor.forClass(PaidUnitBooking.Request.class);
+        verify(paidUnitBooking).bookPaidUnit(captor.capture());
+        PaidUnitBooking.Request booking = captor.getValue();
         assertEquals(unitId, booking.unitId());
-        assertEquals("Alice Smith", booking.prospectiveTenantName());
-        assertEquals("9988776655", booking.prospectiveTenantPhone());
+        assertEquals("Alice Smith", booking.name());
+        assertEquals("9988776655", booking.phone());
         assertEquals(new BigDecimal("2000.00"), booking.tokenAmount());
         assertEquals(txId, booking.paymentTransactionId());
 
@@ -119,7 +112,7 @@ public class MarketplacePaymentEventListenerTest {
 
         eventListener.onPaymentCompleted(event);
 
-        verify(financeFacade, never()).createPaidBooking(any());
+        verify(paidUnitBooking, never()).bookPaidUnit(any());
         verify(leadRepository).save(bookingLead);
     }
 
@@ -134,6 +127,6 @@ public class MarketplacePaymentEventListenerTest {
         eventListener.onPaymentCompleted(event);
 
         verify(leadRepository, never()).findById(any());
-        verify(financeFacade, never()).createPaidBooking(any());
+        verify(paidUnitBooking, never()).bookPaidUnit(any());
     }
 }

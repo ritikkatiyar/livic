@@ -1,6 +1,5 @@
 package com.livic.core.finance.listener;
 
-import com.livic.core.finance.repository.UnitBookingRepository;
 import com.livic.core.finance.repository.BillRepository;
 import com.livic.core.finance.domain.LedgerTransactionType;
 import com.livic.core.finance.domain.BillStatus;
@@ -8,7 +7,6 @@ import com.livic.core.finance.service.interfaces.LedgerService;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.core.finance.domain.BillTbl;
-import com.livic.core.finance.domain.UnitBookingTbl;
 import com.livic.platform.payment.constant.PaymentConstants;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +24,6 @@ import java.time.LocalDateTime;
 public class FinancePaymentEventListener {
 
     private final BillRepository billRepository;
-    private final UnitBookingRepository unitBookingRepository;
     private final LedgerService ledgerService;
     private final UnitMemberFacade unitMemberFacade;
 
@@ -35,8 +32,6 @@ public class FinancePaymentEventListener {
     public void onPaymentCompleted(PaymentCompletedEvent event) {
         if (PaymentConstants.ReferenceType.BILL.equalsIgnoreCase(event.getReferenceType())) {
             handleBillPayment(event);
-        } else if (PaymentConstants.ReferenceType.UNIT_BOOKING.equalsIgnoreCase(event.getReferenceType())) {
-            handleUnitBookingPayment(event);
         }
     }
 
@@ -78,19 +73,5 @@ public class FinancePaymentEventListener {
         }
 
         log.info("[OBSERVER: FINANCE] Successfully updated Bill: {} status to: {}, totalPaid: {}", bill.getId(), bill.getStatus(), newTotalPaid);
-    }
-
-    private void handleUnitBookingPayment(PaymentCompletedEvent event) {
-        log.info("[OBSERVER: FINANCE] Processing PaymentCompletedEvent for Unit Booking: {}", event);
-
-        UnitBookingTbl booking = unitBookingRepository.findById(event.getReferenceId())
-                .orElse(null);
-
-        if (booking == null) {
-            log.warn("[OBSERVER: FINANCE] UnitBooking not found for ID: {}", event.getReferenceId());
-            return;
-        }
-
-        log.info("[OBSERVER: FINANCE] Successfully processed token payment for UnitBooking: {}", booking.getId());
     }
 }

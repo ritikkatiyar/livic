@@ -1,10 +1,10 @@
-package com.livic.core.finance.mapper;
+package com.livic.verticals.rental.booking.mapper;
 
-import com.livic.core.finance.domain.UnitBookingStatus;
-import com.livic.core.finance.domain.UnitBookingTbl;
-import com.livic.core.finance.dto.UnitBookingDTOs.CreateBookingRequest;
-import com.livic.core.finance.dto.UnitBookingDTOs.PaidBookingRequest;
-import com.livic.core.finance.dto.UnitBookingDTOs.UnitBookingResponse;
+import com.livic.verticals.rental.booking.domain.UnitBookingStatus;
+import com.livic.verticals.rental.booking.domain.UnitBookingTbl;
+import com.livic.verticals.rental.booking.dto.UnitBookingDTOs.CreateBookingRequest;
+import com.livic.verticals.rental.booking.dto.UnitBookingDTOs.PaidBookingRequest;
+import com.livic.verticals.rental.booking.dto.UnitBookingDTOs.UnitBookingResponse;
 
 import java.util.UUID;
 

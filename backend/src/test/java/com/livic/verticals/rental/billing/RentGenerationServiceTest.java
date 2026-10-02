@@ -2,12 +2,10 @@ package com.livic.verticals.rental.billing;
 
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.BillType;
-import com.livic.core.finance.domain.UnitBookingStatus;
-import com.livic.core.finance.domain.UnitBookingTbl;
 import com.livic.core.finance.dto.BillDTOs;
 import com.livic.core.finance.dto.BillDraft;
 import com.livic.core.finance.facade.FinanceFacade;
-import com.livic.core.finance.repository.UnitBookingRepository;
+import com.livic.verticals.rental.booking.facade.BookingFacade;
 import com.livic.core.property.domain.UnitMemberRole;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
@@ -50,7 +48,7 @@ class RentGenerationServiceTest {
     @Mock private UnitMemberFacade unitMemberFacade;
     @Mock private UnitFacade unitFacade;
     @Mock private FinanceFacade financeFacade;
-    @Mock private UnitBookingRepository unitBookingRepository;
+    @Mock private BookingFacade bookingFacade;
 
     @InjectMocks private RentGenerationServiceImpl rentGenerationService;
 
@@ -83,10 +81,7 @@ class RentGenerationServiceTest {
         when(leaseQueryService.getLeaseById(lease.getId())).thenReturn(lease);
         when(leaseQueryService.findByUnitIdAndStatus(unitId, LeaseStatus.ACTIVE)).thenReturn(List.of(lease, lease(unitId, 1500)));
         when(financeFacade.hasOtherBills(memberId, "2026-08", BillType.RENT)).thenReturn(false);
-        UnitBookingTbl booking = new UnitBookingTbl();
-        booking.setTokenAmount(BigDecimal.valueOf(2000));
-        when(unitBookingRepository.findByStatusAndConvertedLeaseId(UnitBookingStatus.CONVERTED.name(), lease.getId()))
-                .thenReturn(Optional.of(booking));
+        when(bookingFacade.findConvertedToken(lease.getId())).thenReturn(Optional.of(BigDecimal.valueOf(2000)));
 
         rentGenerationService.generate(new GenerateBillRequest(lease.getId(), "2026-08", LocalDate.now()));
 

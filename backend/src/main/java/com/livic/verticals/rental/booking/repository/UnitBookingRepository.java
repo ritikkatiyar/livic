@@ -1,6 +1,6 @@
-package com.livic.core.finance.repository;
+package com.livic.verticals.rental.booking.repository;
 
-import com.livic.core.finance.domain.UnitBookingTbl;
+import com.livic.verticals.rental.booking.domain.UnitBookingTbl;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

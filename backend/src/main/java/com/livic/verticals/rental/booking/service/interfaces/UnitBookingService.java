@@ -1,6 +1,6 @@
-package com.livic.core.finance.service.interfaces;
+package com.livic.verticals.rental.booking.service.interfaces;
 
-import com.livic.core.finance.dto.UnitBookingDTOs;
+import com.livic.verticals.rental.booking.dto.UnitBookingDTOs;
 import com.livic.platform.payment.dto.PaymentTransactionResponse;
 
 import org.springframework.data.domain.Page;

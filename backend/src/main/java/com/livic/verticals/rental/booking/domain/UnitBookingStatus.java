@@ -1,4 +1,4 @@
-package com.livic.core.finance.domain;
+package com.livic.verticals.rental.booking.domain;
 
 public enum UnitBookingStatus {
     BOOKED,

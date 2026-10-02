@@ -1,14 +1,13 @@
 package com.livic.verticals.rental.lease.service.impl;
 
-import com.livic.core.finance.repository.UnitBookingRepository;
+import com.livic.verticals.rental.booking.dto.UnitBookingDTOs.UnitBookingResponse;
+import com.livic.verticals.rental.booking.facade.BookingFacade;
 import com.livic.core.finance.facade.FinanceFacade;
 import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.core.finance.domain.LedgerTransactionType;
-import com.livic.core.finance.domain.UnitBookingStatus;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
-import com.livic.core.finance.domain.UnitBookingTbl;
 import com.livic.verticals.rental.lease.dto.LeaseDTOs;
 import com.livic.verticals.rental.lease.mapper.LeaseMapper;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseService;
@@ -39,7 +38,7 @@ public class LeaseServiceImpl implements LeaseService {
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
     private final UserFacade userFacade;
-    private final UnitBookingRepository unitBookingRepository;
+    private final BookingFacade bookingFacade;
     private final FinanceFacade financeFacade;
 
     @Override
@@ -57,41 +56,33 @@ public class LeaseServiceImpl implements LeaseService {
             throw new BusinessException("moveOutDate cannot be before moveInDate");
         }
 
-        UnitBookingTbl booking = null;
+        UnitBookingResponse booking = null;
         UUID targetUserId = request.userId();
 
         // 2. Process booking conversion and auto-register prospective tenant if needed
         if (request.bookingId() != null) {
-            booking = unitBookingRepository.findById(request.bookingId())
-                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit booking not found"));
-
-            if (!UnitBookingStatus.BOOKED.name().equals(booking.getStatus())) {
-                throw new BusinessException(HttpStatus.BAD_REQUEST, "Booking is not in BOOKED status");
-            }
-            if (booking.getPaymentTransactionId() == null) {
-                throw new BusinessException(HttpStatus.BAD_REQUEST, "Token payment has not been collected for this booking");
-            }
+            booking = bookingFacade.getConvertibleBooking(request.bookingId());
 
             if (targetUserId == null) {
                 // Check if user already exists
                 UserSummaryDTO existingUser = null;
-                if (booking.getProspectiveTenantEmail() != null) {
-                    existingUser = userFacade.getUserByEmail(booking.getProspectiveTenantEmail()).orElse(null);
+                if (booking.prospectiveTenantEmail() != null) {
+                    existingUser = userFacade.getUserByEmail(booking.prospectiveTenantEmail()).orElse(null);
                 }
 
                 if (existingUser != null) {
                     targetUserId = existingUser.id();
                 } else {
                     // Create prospective tenant account dynamically
-                    String email = booking.getProspectiveTenantEmail();
+                    String email = booking.prospectiveTenantEmail();
                     if (email == null || email.isBlank()) {
-                        email = "tenant_" + booking.getProspectiveTenantPhone() + "@tenantliving.com";
+                        email = "tenant_" + booking.prospectiveTenantPhone() + "@tenantliving.com";
                     }
                     UserSummaryDTO createdUser = userFacade.createUser(
                             email,
-                            booking.getProspectiveTenantName(),
-                            booking.getProspectiveTenantPhone(),
-                            booking.getProspectiveTenantPhone()
+                            booking.prospectiveTenantName(),
+                            booking.prospectiveTenantPhone(),
+                            booking.prospectiveTenantPhone()
                     );
                     targetUserId = createdUser.id();
                 }
@@ -114,9 +105,7 @@ public class LeaseServiceImpl implements LeaseService {
 
         // 3. Mark booking as converted
         if (booking != null) {
-            booking.setStatus(UnitBookingStatus.CONVERTED.name());
-            booking.setConvertedLeaseId(saved.getId());
-            unitBookingRepository.save(booking);
+            bookingFacade.markConverted(booking.id(), saved.getId());
         }
 
         // 4. The security deposit is owed from move-in, so it opens the tenant's ledger.

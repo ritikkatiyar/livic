@@ -31,28 +31,28 @@ public class ChargeConfigController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
     public ResponseEntity<ApiResponse<ChargeConfigResponse>> updateChargeConfig(@PathVariable UUID id, @RequestBody ChargeConfigRequest request) {
         ChargeConfigResponse response = chargeConfigService.updateChargeConfig(id, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> deactivateChargeConfig(@PathVariable UUID id) {
         chargeConfigService.deactivateChargeConfig(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PostMapping("/{id}/reactivate")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> reactivateChargeConfig(@PathVariable UUID id) {
         chargeConfigService.reactivateChargeConfig(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @DeleteMapping("/{id}/permanent")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> deleteChargeConfigPermanently(@PathVariable UUID id) {
         chargeConfigService.deleteChargeConfigPermanently(id);
         return ResponseEntity.ok(ApiResponse.success(null));
@@ -71,7 +71,7 @@ public class ChargeConfigController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_VIEW')")
     public ResponseEntity<ApiResponse<ChargeConfigResponse>> getChargeConfigById(@PathVariable UUID id) {
         ChargeConfigResponse response = chargeConfigQueryService.getChargeConfigById(id);
         return ResponseEntity.ok(ApiResponse.success(response));

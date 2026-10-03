@@ -11,9 +11,9 @@ import com.livic.verticals.rental.inventory.facade.InventoryFacade;
 import com.livic.platform.storage.controller.MediaController;
 import com.livic.platform.storage.dto.FileType;
 import com.livic.platform.storage.dto.MediaDTOs;
-import com.livic.platform.common.enums.OwnerModule;
 import com.livic.platform.storage.dto.StorageProvider;
-import com.livic.platform.storage.facade.StorageFacade;
+import com.livic.platform.storage.security.MediaAuthorization;
+import com.livic.platform.storage.service.interfaces.StorageService;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,9 +48,10 @@ class MediaAuthorizationTest {
     private InventoryFacade inventoryFacade;
 
     @Mock
-    private StorageFacade storageFacade;
+    private StorageService storageService;
 
     private AuthorizationServiceImpl authorizationService;
+    private MediaAuthorization mediaAuthorization;
 
     private UUID propertyId;
     private UUID leaseId;
@@ -62,7 +63,8 @@ class MediaAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, leaseFacade, inventoryFacade, storageFacade);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, leaseFacade, inventoryFacade);
+        mediaAuthorization = new MediaAuthorization(authorizationService, storageService);
         propertyId = UUID.randomUUID();
         leaseId = UUID.randomUUID();
         itemId = UUID.randomUUID();
@@ -97,8 +99,8 @@ class MediaAuthorizationTest {
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("PROPERTY_EDIT", "PROPERTY_VIEW"));
 
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.PROPERTY, propertyId, "READ")).isTrue();
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.PROPERTY, propertyId, "WRITE")).isTrue();
+        assertThat(mediaAuthorization.canAccess("PROPERTY", propertyId, "READ")).isTrue();
+        assertThat(mediaAuthorization.canAccess("PROPERTY", propertyId, "WRITE")).isTrue();
     }
 
     @Test
@@ -109,8 +111,8 @@ class MediaAuthorizationTest {
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("PROPERTY_VIEW"));
 
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.PROPERTY, propertyId, "READ")).isTrue();
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.PROPERTY, propertyId, "WRITE")).isFalse();
+        assertThat(mediaAuthorization.canAccess("PROPERTY", propertyId, "READ")).isTrue();
+        assertThat(mediaAuthorization.canAccess("PROPERTY", propertyId, "WRITE")).isFalse();
     }
 
     @Test
@@ -121,8 +123,8 @@ class MediaAuthorizationTest {
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(strangerUserId, propertyId))
                 .thenReturn(Set.of());
 
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.PROPERTY, propertyId, "READ")).isFalse();
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.PROPERTY, propertyId, "WRITE")).isFalse();
+        assertThat(mediaAuthorization.canAccess("PROPERTY", propertyId, "READ")).isFalse();
+        assertThat(mediaAuthorization.canAccess("PROPERTY", propertyId, "WRITE")).isFalse();
     }
 
     @Test
@@ -148,8 +150,8 @@ class MediaAuthorizationTest {
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("LEASE_UPDATE", "LEASE_VIEW"));
 
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.LEASE, leaseId, "READ")).isTrue();
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.LEASE, leaseId, "WRITE")).isTrue();
+        assertThat(mediaAuthorization.canAccess("LEASE", leaseId, "READ")).isTrue();
+        assertThat(mediaAuthorization.canAccess("LEASE", leaseId, "WRITE")).isTrue();
     }
 
     @Test
@@ -173,8 +175,8 @@ class MediaAuthorizationTest {
 
         when(leaseFacade.getLeaseById(leaseId)).thenReturn(Optional.of(leaseSummary));
 
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.LEASE, leaseId, "READ")).isTrue();
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.LEASE, leaseId, "WRITE")).isFalse();
+        assertThat(mediaAuthorization.canAccess("LEASE", leaseId, "READ")).isTrue();
+        assertThat(mediaAuthorization.canAccess("LEASE", leaseId, "WRITE")).isFalse();
     }
 
     @Test
@@ -200,8 +202,8 @@ class MediaAuthorizationTest {
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(strangerUserId, propertyId))
                 .thenReturn(Set.of());
 
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.LEASE, leaseId, "READ")).isFalse();
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.LEASE, leaseId, "WRITE")).isFalse();
+        assertThat(mediaAuthorization.canAccess("LEASE", leaseId, "READ")).isFalse();
+        assertThat(mediaAuthorization.canAccess("LEASE", leaseId, "WRITE")).isFalse();
     }
 
 
@@ -214,8 +216,8 @@ class MediaAuthorizationTest {
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("INVENTORY_MANAGE", "INVENTORY_VIEW"));
 
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.INVENTORY, itemId, "READ")).isTrue();
-        assertThat(authorizationService.hasMediaAccess(OwnerModule.INVENTORY, itemId, "WRITE")).isTrue();
+        assertThat(mediaAuthorization.canAccess("INVENTORY_ITEM", itemId, "READ")).isTrue();
+        assertThat(mediaAuthorization.canAccess("INVENTORY_ITEM", itemId, "WRITE")).isTrue();
     }
 
     @Test
@@ -225,7 +227,7 @@ class MediaAuthorizationTest {
 
         MediaDTOs.MediaAssetDTO asset = new MediaDTOs.MediaAssetDTO(
                 mediaAssetId,
-                OwnerModule.PROPERTY,
+                "PROPERTY",
                 propertyId,
                 StorageProvider.CLOUDINARY,
                 "ext_123",
@@ -236,9 +238,9 @@ class MediaAuthorizationTest {
                 Instant.now()
         );
 
-        when(storageFacade.getAssetById(mediaAssetId)).thenReturn(Optional.of(asset));
+        when(storageService.getAssetById(mediaAssetId)).thenReturn(Optional.of(asset));
 
-        assertThat(authorizationService.hasMediaAssetAccess(mediaAssetId, "DELETE")).isTrue();
+        assertThat(mediaAuthorization.canAccessAsset(mediaAssetId, "DELETE")).isTrue();
     }
 
     @Test
@@ -248,7 +250,7 @@ class MediaAuthorizationTest {
 
         MediaDTOs.MediaAssetDTO asset = new MediaDTOs.MediaAssetDTO(
                 mediaAssetId,
-                OwnerModule.PROPERTY,
+                "PROPERTY",
                 propertyId,
                 StorageProvider.CLOUDINARY,
                 "ext_123",
@@ -259,11 +261,11 @@ class MediaAuthorizationTest {
                 Instant.now()
         );
 
-        when(storageFacade.getAssetById(mediaAssetId)).thenReturn(Optional.of(asset));
+        when(storageService.getAssetById(mediaAssetId)).thenReturn(Optional.of(asset));
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(ownerUserId, propertyId))
                 .thenReturn(Set.of("PROPERTY_EDIT"));
 
-        assertThat(authorizationService.hasMediaAssetAccess(mediaAssetId, "DELETE")).isTrue();
+        assertThat(mediaAuthorization.canAccessAsset(mediaAssetId, "DELETE")).isTrue();
     }
 
     @Test
@@ -273,7 +275,7 @@ class MediaAuthorizationTest {
 
         MediaDTOs.MediaAssetDTO asset = new MediaDTOs.MediaAssetDTO(
                 mediaAssetId,
-                OwnerModule.PROPERTY,
+                "PROPERTY",
                 propertyId,
                 StorageProvider.CLOUDINARY,
                 "ext_123",
@@ -284,19 +286,31 @@ class MediaAuthorizationTest {
                 Instant.now()
         );
 
-        when(storageFacade.getAssetById(mediaAssetId)).thenReturn(Optional.of(asset));
+        when(storageService.getAssetById(mediaAssetId)).thenReturn(Optional.of(asset));
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(strangerUserId, propertyId))
                 .thenReturn(Set.of());
 
-        assertThat(authorizationService.hasMediaAssetAccess(mediaAssetId, "DELETE")).isFalse();
+        assertThat(mediaAuthorization.canAccessAsset(mediaAssetId, "DELETE")).isFalse();
     }
 
     @Test
     @DisplayName("Global Super Admin can delete any media asset")
     void superAdminCanDeleteAnyMediaAsset() {
         authenticateUser(ownerUserId, "superadmin@example.com", UserRole.SUPER_ADMIN);
+        when(storageService.getAssetById(mediaAssetId)).thenReturn(Optional.of(new MediaDTOs.MediaAssetDTO(
+                mediaAssetId, "PROPERTY", propertyId, StorageProvider.CLOUDINARY, "ext_123",
+                "https://cloudinary.com/photo.jpg", FileType.IMAGE, null, tenantUserId, Instant.now())));
 
-        assertThat(authorizationService.hasMediaAssetAccess(mediaAssetId, "DELETE")).isTrue();
+        assertThat(mediaAuthorization.canAccessAsset(mediaAssetId, "DELETE")).isTrue();
+    }
+
+    @Test
+    @DisplayName("A file attached to a type no module declares is refused")
+    void undeclaredOwnerTypeIsRefused() {
+        authenticateUser(ownerUserId, "owner@example.com", UserRole.USER);
+
+        assertThat(mediaAuthorization.canAccess("INVENTORY", itemId, "READ")).isFalse();
+        assertThat(mediaAuthorization.canAccess(null, itemId, "READ")).isFalse();
     }
 
     @Test
@@ -307,21 +321,21 @@ class MediaAuthorizationTest {
         Method uploadAuth = clazz.getMethod("requestUploadAuthorization", MediaDTOs.UploadAuthorizationRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthUploadAuth = uploadAuth.getAnnotation(PreAuthorize.class);
         assertThat(preAuthUploadAuth).isNotNull();
-        assertThat(preAuthUploadAuth.value()).isEqualTo("@authorizationService.hasMediaAccess(#request.ownerModule(), #request.referenceId(), 'WRITE')");
+        assertThat(preAuthUploadAuth.value()).isEqualTo("@mediaAuthorization.canAccess(#request.ownerModule(), #request.referenceId(), 'WRITE')");
 
         Method confirm = clazz.getMethod("confirmUpload", MediaDTOs.ConfirmUploadRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthConfirm = confirm.getAnnotation(PreAuthorize.class);
         assertThat(preAuthConfirm).isNotNull();
-        assertThat(preAuthConfirm.value()).isEqualTo("@authorizationService.hasMediaAccess(#request.ownerModule(), #request.referenceId(), 'WRITE')");
+        assertThat(preAuthConfirm.value()).isEqualTo("@mediaAuthorization.canAccess(#request.ownerModule(), #request.referenceId(), 'WRITE')");
 
-        Method list = clazz.getMethod("listMediaAssets", OwnerModule.class, UUID.class);
+        Method list = clazz.getMethod("listMediaAssets", String.class, UUID.class);
         PreAuthorize preAuthList = list.getAnnotation(PreAuthorize.class);
         assertThat(preAuthList).isNotNull();
-        assertThat(preAuthList.value()).isEqualTo("@authorizationService.hasMediaAccess(#ownerModule, #referenceId, 'READ')");
+        assertThat(preAuthList.value()).isEqualTo("@mediaAuthorization.canAccess(#ownerModule, #referenceId, 'READ')");
 
         Method delete = clazz.getMethod("deleteMediaAsset", UUID.class, UserDetailsImpl.class);
         PreAuthorize preAuthDelete = delete.getAnnotation(PreAuthorize.class);
         assertThat(preAuthDelete).isNotNull();
-        assertThat(preAuthDelete.value()).isEqualTo("@authorizationService.hasMediaAssetAccess(#id, 'DELETE')");
+        assertThat(preAuthDelete.value()).isEqualTo("@mediaAuthorization.canAccessAsset(#id, 'DELETE')");
     }
 }

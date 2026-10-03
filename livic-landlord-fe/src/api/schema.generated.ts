@@ -2597,8 +2597,7 @@ export interface components {
             externalId: string;
             /** @enum {string} */
             fileType: "IMAGE" | "DOCUMENT";
-            /** @enum {string} */
-            ownerModule: "PROPERTY" | "LEASE" | "INVENTORY";
+            ownerModule: string;
             /** Format: uuid */
             referenceId: string;
             url: string;
@@ -3072,8 +3071,7 @@ export interface components {
             fileType?: "IMAGE" | "DOCUMENT";
             /** Format: uuid */
             id?: string;
-            /** @enum {string} */
-            ownerModule?: "PROPERTY" | "LEASE" | "INVENTORY";
+            ownerModule?: string;
             /** Format: uuid */
             referenceId?: string;
             /** @enum {string} */
@@ -4071,8 +4069,7 @@ export interface components {
             /** @enum {string} */
             fileType: "IMAGE" | "DOCUMENT";
             filename?: string;
-            /** @enum {string} */
-            ownerModule: "PROPERTY" | "LEASE" | "INVENTORY";
+            ownerModule: string;
             /** Format: uuid */
             referenceId: string;
         };
@@ -6646,7 +6643,7 @@ export interface operations {
     listMediaAssets: {
         parameters: {
             query: {
-                ownerModule: "PROPERTY" | "LEASE" | "INVENTORY";
+                ownerModule: string;
                 referenceId: string;
             };
             header?: never;

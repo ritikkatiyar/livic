@@ -33,8 +33,8 @@ public class LeaseBillController {
     private final LeaseBillService leaseBillService;
 
     @GetMapping("/{leaseId}/bills")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW')"
-            + " or @authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW_OWN')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_VIEW')"
+            + " or @authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_VIEW_OWN')")
     public ResponseEntity<ApiResponse<BillDTOs.BillListResponse>> listForLease(
             @PathVariable UUID leaseId,
             @RequestParam(required = false) String billingMonth,

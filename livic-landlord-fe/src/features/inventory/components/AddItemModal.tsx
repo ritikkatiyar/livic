@@ -128,7 +128,7 @@ export function AddItemModal({
         await uploadAndConfirmMedia(
           selectedFile,
           {
-            ownerModule: 'INVENTORY',
+            ownerModule: 'INVENTORY_ITEM',
             referenceId: createdItem.id,
             fileType: 'IMAGE',
             caption: 'asset',

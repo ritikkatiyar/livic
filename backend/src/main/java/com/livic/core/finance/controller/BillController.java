@@ -1,7 +1,6 @@
 package com.livic.core.finance.controller;
 
 import com.livic.platform.security.UserDetailsImpl;
-import com.livic.platform.common.enums.ResourceType;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.dto.BillDTOs;
@@ -29,7 +28,7 @@ public class BillController {
     private final BillService billService;
 
     @PostMapping("/{id}/publish")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'BILL_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).BILL, #id, 'BILL_MANAGE')")
     public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> publish(
             @PathVariable UUID id
     ) {
@@ -37,7 +36,7 @@ public class BillController {
     }
 
     @PostMapping("/{id}/unpublish")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'BILL_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).BILL, #id, 'BILL_MANAGE')")
     public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> unpublish(
             @PathVariable UUID id
     ) {
@@ -84,7 +83,7 @@ public class BillController {
     }
 
     @PostMapping("/{id}/mark-paid")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #id, 'BILL_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).BILL, #id, 'BILL_MANAGE')")
     public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> markPaid(
             @PathVariable UUID id
     ) {
@@ -92,7 +91,7 @@ public class BillController {
     }
 
     @PostMapping("/{billId}/online")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'BILL_VIEW_OWN')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).BILL, #billId, 'BILL_VIEW_OWN')")
     public ResponseEntity<ApiResponse<PaymentInitiationResponse>> initiateOnlinePayment(
             @PathVariable UUID billId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -103,7 +102,7 @@ public class BillController {
     }
 
     @PostMapping("/{billId}/cash")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'BILL_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).BILL, #billId, 'BILL_MANAGE')")
     public ResponseEntity<ApiResponse<PaymentInitiationResponse>> recordCashPayment(
             @PathVariable UUID billId,
             @Valid @RequestBody BillDTOs.RecordCashPaymentRequest request,

@@ -30,7 +30,7 @@ public class RentGenerationController {
     private final RentGenerationService rentGenerationService;
 
     @PostMapping("/generate")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #request.leaseId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #request.leaseId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<BillDTOs.BillResponse>> generate(@Valid @RequestBody GenerateBillRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(rentGenerationService.generate(request)));

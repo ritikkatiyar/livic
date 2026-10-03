@@ -1,5 +1,6 @@
 package com.livic.verticals.rental.inventory;
 
+import com.livic.verticals.rental.inventory.security.InventoryResources;
 import com.livic.verticals.rental.inventory.dto.CreateInventoryItemRequest;
 import com.livic.verticals.rental.inventory.dto.InventoryItemResponse;
 import com.livic.verticals.rental.inventory.dto.TenantVisibleInventoryResponse;
@@ -13,7 +14,6 @@ import com.livic.verticals.rental.inventory.domain.enums.InventoryStatus;
 import com.livic.verticals.rental.inventory.repository.InventoryItemRepository;
 import com.livic.verticals.rental.inventory.service.impl.InventoryItemServiceImpl;
 import com.livic.core.property.facade.PropertyFacade;
-import com.livic.platform.common.enums.OwnerModule;
 import com.livic.platform.storage.facade.StorageFacade;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -143,7 +143,7 @@ class InventoryItemServiceTest {
                 .thenReturn(List.of(sharedItem));
         when(inventoryItemRepository.findAllByPropertyIdAndUnitId(propertyId, unitId))
                 .thenReturn(List.of(unitItem));
-        when(storageFacade.getAssetsForReferences(eq(OwnerModule.INVENTORY), any(Set.class)))
+        when(storageFacade.getAssetsForReferences(eq(InventoryResources.ITEM), any(Set.class)))
                 .thenReturn(Map.of());
 
         TenantVisibleInventoryResponse response = itemService.getTenantVisibleItems(userId, propertyId);

@@ -22,7 +22,7 @@ public class InvoiceController {
     private final PaymentStatementService paymentStatementService;
 
     @GetMapping(value = "/{billId}/invoice", produces = MediaType.TEXT_HTML_VALUE)
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'BILL_VIEW') or @authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).BILL, #billId, 'BILL_VIEW_OWN')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).BILL, #billId, 'BILL_VIEW') or @authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).BILL, #billId, 'BILL_VIEW_OWN')")
     public ResponseEntity<String> getPaymentStatementHtml(@PathVariable UUID billId) {
         log.info("API request: Get payment statement HTML for Bill: {}", billId);
         String html = paymentStatementService.generateStatementHtml(billId);

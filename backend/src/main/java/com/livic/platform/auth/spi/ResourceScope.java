@@ -1,6 +1,5 @@
 package com.livic.platform.auth.spi;
 
-import com.livic.platform.common.enums.ResourceType;
 
 import java.util.UUID;
 

@@ -1,7 +1,8 @@
 package com.livic.platform.auth.service.interfaces;
 
-import com.livic.platform.common.enums.OwnerModule;
-import com.livic.platform.common.enums.ResourceType;
+import com.livic.platform.auth.spi.ResourceType;
+
+import java.util.Optional;
 
 import java.util.UUID;
 
@@ -21,8 +22,6 @@ public interface AuthorizationService {
 
     boolean hasFullAccess(ResourceType resourceType, UUID resourceId);
 
-    // Media Authorization
-    boolean hasMediaAccess(OwnerModule ownerModule, UUID referenceId, String action);
-
-    boolean hasMediaAssetAccess(UUID mediaAssetId, String action);
+    /** The declared resource type with that name, for references stored as text. */
+    Optional<ResourceType> findResourceType(String name);
 }

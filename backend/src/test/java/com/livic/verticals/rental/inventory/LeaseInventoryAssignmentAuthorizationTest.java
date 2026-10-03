@@ -1,11 +1,12 @@
 package com.livic.verticals.rental.inventory;
 
+import com.livic.verticals.rental.lease.security.LeaseResources;
+import com.livic.verticals.rental.inventory.security.InventoryResources;
 import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.AuthorizationTestSupport;
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.auth.service.impl.AuthorizationServiceImpl;
 import com.livic.platform.common.domain.UserRole;
-import com.livic.platform.common.enums.ResourceType;
 import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
 import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import com.livic.verticals.rental.inventory.controller.LeaseInventoryAssignmentController;
@@ -59,7 +60,7 @@ class LeaseInventoryAssignmentAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, leaseFacade, inventoryFacade, null);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, leaseFacade, inventoryFacade);
         propertyId = UUID.randomUUID();
         leaseId = UUID.randomUUID();
         assignmentId = UUID.randomUUID();
@@ -110,11 +111,11 @@ class LeaseInventoryAssignmentAuthorizationTest {
         when(inventoryFacade.getLeaseIdForAssignment(assignmentId)).thenReturn(Optional.of(leaseId));
 
         // Owner has LEASE_UPDATE by leaseId
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_UPDATE")).isTrue();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseId, "LEASE_UPDATE")).isTrue();
         // Owner has LEASE_VIEW by leaseId
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_VIEW")).isTrue();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseId, "LEASE_VIEW")).isTrue();
         // Owner has LEASE_UPDATE by assignmentId
-        assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ASSIGNMENT, assignmentId, "LEASE_UPDATE")).isTrue();
+        assertThat(authorizationService.hasPermission(InventoryResources.ASSIGNMENT, assignmentId, "LEASE_UPDATE")).isTrue();
     }
 
     @Test
@@ -142,11 +143,11 @@ class LeaseInventoryAssignmentAuthorizationTest {
         when(inventoryFacade.getLeaseIdForAssignment(assignmentId)).thenReturn(Optional.of(leaseId));
 
         // Tenant CAN read own lease assignments
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_VIEW_OWN")).isTrue();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseId, "LEASE_VIEW_OWN")).isTrue();
         // Tenant CANNOT perform LEASE_UPDATE (create assignments, generate checklist, approve deductions)
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_UPDATE")).isFalse();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseId, "LEASE_UPDATE")).isFalse();
         // Tenant CANNOT verify return by assignmentId
-        assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ASSIGNMENT, assignmentId, "LEASE_UPDATE")).isFalse();
+        assertThat(authorizationService.hasPermission(InventoryResources.ASSIGNMENT, assignmentId, "LEASE_UPDATE")).isFalse();
     }
 
     @Test
@@ -174,12 +175,12 @@ class LeaseInventoryAssignmentAuthorizationTest {
         when(inventoryFacade.getLeaseIdForAssignment(assignmentId)).thenReturn(Optional.of(leaseId));
 
         // Stranger is rejected from read
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_VIEW")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_VIEW_OWN")).isFalse();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseId, "LEASE_VIEW")).isFalse();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseId, "LEASE_VIEW_OWN")).isFalse();
         // Stranger is rejected from write
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_UPDATE")).isFalse();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseId, "LEASE_UPDATE")).isFalse();
         // Stranger is rejected from verifyReturn by assignmentId
-        assertThat(authorizationService.hasPermission(ResourceType.INVENTORY_ASSIGNMENT, assignmentId, "LEASE_UPDATE")).isFalse();
+        assertThat(authorizationService.hasPermission(InventoryResources.ASSIGNMENT, assignmentId, "LEASE_UPDATE")).isFalse();
     }
 
     @Test
@@ -190,31 +191,31 @@ class LeaseInventoryAssignmentAuthorizationTest {
         Method createAssignments = clazz.getMethod("createAssignments", UUID.class, CreateAssignmentRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthCreate = createAssignments.getAnnotation(PreAuthorize.class);
         assertThat(preAuthCreate).isNotNull();
-        assertThat(preAuthCreate.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_UPDATE')");
+        assertThat(preAuthCreate.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_UPDATE')");
 
         Method getAssignments = clazz.getMethod("getAssignments", UUID.class, Pageable.class);
         PreAuthorize preAuthGet = getAssignments.getAnnotation(PreAuthorize.class);
         assertThat(preAuthGet).isNotNull();
-        assertThat(preAuthGet.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW_OWN')");
+        assertThat(preAuthGet.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_VIEW_OWN')");
 
         Method generateChecklist = clazz.getMethod("generateMoveOutChecklist", UUID.class, MoveOutChecklistRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthChecklist = generateChecklist.getAnnotation(PreAuthorize.class);
         assertThat(preAuthChecklist).isNotNull();
-        assertThat(preAuthChecklist.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_UPDATE')");
+        assertThat(preAuthChecklist.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_UPDATE')");
 
         Method verifyReturn = clazz.getMethod("verifyReturn", UUID.class, ReturnVerificationRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthVerify = verifyReturn.getAnnotation(PreAuthorize.class);
         assertThat(preAuthVerify).isNotNull();
-        assertThat(preAuthVerify.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ASSIGNMENT, #assignmentId, 'LEASE_UPDATE')");
+        assertThat(preAuthVerify.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.verticals.rental.inventory.security.InventoryResources).ASSIGNMENT, #assignmentId, 'LEASE_UPDATE')");
 
         Method approveDeductions = clazz.getMethod("approveDeductions", UUID.class, ApproveDeductionsRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthApprove = approveDeductions.getAnnotation(PreAuthorize.class);
         assertThat(preAuthApprove).isNotNull();
-        assertThat(preAuthApprove.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_UPDATE')");
+        assertThat(preAuthApprove.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_UPDATE')");
 
         Method getChecklist = clazz.getMethod("getVerificationChecklist", UUID.class, Pageable.class);
         PreAuthorize preAuthGetChecklist = getChecklist.getAnnotation(PreAuthorize.class);
         assertThat(preAuthGetChecklist).isNotNull();
-        assertThat(preAuthGetChecklist.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW_OWN')");
+        assertThat(preAuthGetChecklist.value()).isEqualTo("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_VIEW_OWN')");
     }
 }

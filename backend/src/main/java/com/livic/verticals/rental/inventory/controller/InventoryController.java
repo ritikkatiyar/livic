@@ -57,7 +57,7 @@ public class InventoryController {
     }
 
     @PutMapping("/items/{itemId}")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'INVENTORY_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.inventory.security.InventoryResources).ITEM, #itemId, 'INVENTORY_MANAGE')")
     public ResponseEntity<ApiResponse<InventoryItemResponse>> updateItem(
             @PathVariable UUID itemId,
             @Valid @RequestBody UpdateInventoryItemRequest request,
@@ -68,13 +68,13 @@ public class InventoryController {
     }
 
     @GetMapping("/items/{itemId}")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'INVENTORY_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.inventory.security.InventoryResources).ITEM, #itemId, 'INVENTORY_VIEW')")
     public ResponseEntity<ApiResponse<InventoryItemResponse>> getItem(@PathVariable UUID itemId) {
         return ResponseEntity.ok(ApiResponse.success(inventoryItemService.getItem(itemId)));
     }
 
     @PostMapping("/items/{itemId}/service-expenses")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'INVENTORY_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.inventory.security.InventoryResources).ITEM, #itemId, 'INVENTORY_MANAGE')")
     public ResponseEntity<ApiResponse<ServiceExpenseResponse>> recordServiceExpense(
             @PathVariable UUID itemId,
             @Valid @RequestBody ServiceExpenseRequest request,
@@ -85,7 +85,7 @@ public class InventoryController {
     }
 
     @GetMapping("/items/{itemId}/service-expenses")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'INVENTORY_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.inventory.security.InventoryResources).ITEM, #itemId, 'INVENTORY_VIEW')")
     public ResponseEntity<ApiResponse<List<ServiceExpenseResponse>>> listServiceExpenses(@PathVariable UUID itemId) {
         return ResponseEntity.ok(ApiResponse.success(serviceExpenseService.listExpensesByItem(itemId)));
     }

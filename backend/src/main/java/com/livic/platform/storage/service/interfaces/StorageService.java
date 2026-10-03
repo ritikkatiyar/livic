@@ -1,6 +1,5 @@
 package com.livic.platform.storage.service.interfaces;
 
-import com.livic.platform.common.enums.OwnerModule;
 import com.livic.platform.storage.dto.MediaDTOs;
 
 import java.util.Collection;
@@ -14,11 +13,11 @@ public interface StorageService {
 
     MediaDTOs.MediaAssetDTO confirmUpload(MediaDTOs.ConfirmUploadRequest request, UUID userId);
 
-    List<MediaDTOs.MediaAssetDTO> listAssets(OwnerModule ownerModule, UUID referenceId);
+    List<MediaDTOs.MediaAssetDTO> listAssets(String ownerModule, UUID referenceId);
 
     Optional<MediaDTOs.MediaAssetDTO> getAssetById(UUID mediaAssetId);
 
-    List<MediaDTOs.MediaAssetDTO> listAssetsForReferences(OwnerModule ownerModule, Collection<UUID> referenceIds);
+    List<MediaDTOs.MediaAssetDTO> listAssetsForReferences(String ownerModule, Collection<UUID> referenceIds);
 
     void deleteAsset(UUID mediaAssetId, UUID userId);
 }

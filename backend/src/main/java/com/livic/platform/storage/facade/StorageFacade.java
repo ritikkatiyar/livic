@@ -1,6 +1,6 @@
 package com.livic.platform.storage.facade;
 
-import com.livic.platform.common.enums.OwnerModule;
+import com.livic.platform.auth.spi.ResourceType;
 import com.livic.platform.storage.dto.MediaDTOs;
 
 import java.util.Collection;
@@ -11,10 +11,10 @@ import java.util.UUID;
 
 public interface StorageFacade {
 
-    List<MediaDTOs.MediaAssetDTO> getAssets(OwnerModule ownerModule, UUID referenceId);
+    List<MediaDTOs.MediaAssetDTO> getAssets(ResourceType owner, UUID referenceId);
 
     Optional<MediaDTOs.MediaAssetDTO> getAssetById(UUID mediaAssetId);
 
-    Map<UUID, List<MediaDTOs.MediaAssetDTO>> getAssetsForReferences(OwnerModule ownerModule, Collection<UUID> referenceIds);
+    Map<UUID, List<MediaDTOs.MediaAssetDTO>> getAssetsForReferences(ResourceType owner, Collection<UUID> referenceIds);
 }
 

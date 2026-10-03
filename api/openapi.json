@@ -1808,7 +1808,7 @@
             "type" : "string"
           },
           "ownerModule" : {
-            "enum" : [ "PROPERTY", "LEASE", "INVENTORY" ],
+            "minLength" : 1,
             "type" : "string"
           },
           "referenceId" : {
@@ -2996,7 +2996,6 @@
             "type" : "string"
           },
           "ownerModule" : {
-            "enum" : [ "PROPERTY", "LEASE", "INVENTORY" ],
             "type" : "string"
           },
           "referenceId" : {
@@ -5608,7 +5607,7 @@
             "type" : "string"
           },
           "ownerModule" : {
-            "enum" : [ "PROPERTY", "LEASE", "INVENTORY" ],
+            "minLength" : 1,
             "type" : "string"
           },
           "referenceId" : {
@@ -9176,7 +9175,6 @@
           "name" : "ownerModule",
           "required" : true,
           "schema" : {
-            "enum" : [ "PROPERTY", "LEASE", "INVENTORY" ],
             "type" : "string"
           }
         }, {

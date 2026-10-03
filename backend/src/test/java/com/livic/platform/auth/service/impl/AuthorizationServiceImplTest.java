@@ -1,5 +1,9 @@
 package com.livic.platform.auth.service.impl;
 
+import com.livic.core.finance.security.FinanceResources;
+import com.livic.verticals.rental.lease.security.LeaseResources;
+import com.livic.core.property.security.PropertyResources;
+import com.livic.verticals.rental.inventory.security.InventoryResources;
 import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.AuthorizationTestSupport;
 import com.livic.platform.security.UserDetailsImpl;
@@ -7,15 +11,12 @@ import com.livic.core.property.domain.FacingDirection;
 import com.livic.core.property.domain.UnitType;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.common.enums.AccessType;
-import com.livic.platform.common.enums.ResourceType;
 import com.livic.core.finance.dto.ChargeConfigResponse;
 import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
 import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import com.livic.verticals.rental.inventory.facade.InventoryFacade;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
-import com.livic.platform.storage.dto.MediaDTOs;
-import com.livic.platform.storage.facade.StorageFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +27,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -52,8 +52,6 @@ class AuthorizationServiceImplTest {
     @Mock
     private InventoryFacade inventoryFacade;
 
-    @Mock
-    private StorageFacade storageFacade;
 
     private AuthorizationServiceImpl authorizationService;
 
@@ -62,7 +60,7 @@ class AuthorizationServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, unitFacade, financeFacade, leaseFacade, inventoryFacade, storageFacade);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, unitFacade, financeFacade, leaseFacade, inventoryFacade);
         propertyId = UUID.randomUUID();
         userId = UUID.randomUUID();
     }
@@ -132,7 +130,7 @@ class AuthorizationServiceImplTest {
         when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(true);
 
-        assertThat(authorizationService.hasPermission(ResourceType.UNIT, unitId, "LEASE_CREATE")).isTrue();
+        assertThat(authorizationService.hasPermission(PropertyResources.UNIT, unitId, "LEASE_CREATE")).isTrue();
 
         // 2. Charge Config -> Property
         ChargeConfigResponse charge = ChargeConfigResponse.builder()
@@ -142,7 +140,7 @@ class AuthorizationServiceImplTest {
                 .build();
         when(financeFacade.getChargeConfigById(chargeConfigId)).thenReturn(charge);
 
-        assertThat(authorizationService.hasPermission(ResourceType.CHARGE_CONFIG, chargeConfigId, "PROPERTY_EDIT")).isTrue();
+        assertThat(authorizationService.hasPermission(FinanceResources.CHARGE_CONFIG, chargeConfigId, "PROPERTY_EDIT")).isTrue();
     }
 
     @Test
@@ -199,7 +197,7 @@ class AuthorizationServiceImplTest {
         when(leaseFacade.getLeaseById(leaseBId)).thenReturn(Optional.of(leaseB));
 
         // Tenant A accessing own lease -> Granted
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseAId, "LEASE_VIEW_OWN")).isTrue();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseAId, "LEASE_VIEW_OWN")).isTrue();
 
         // Tenant A accessing Tenant B lease -> Denied
         when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
@@ -207,8 +205,8 @@ class AuthorizationServiceImplTest {
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
                 .thenReturn(Set.of());
 
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseBId, "LEASE_VIEW_OWN")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseBId, "LEASE_VIEW")).isFalse();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseBId, "LEASE_VIEW_OWN")).isFalse();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseBId, "LEASE_VIEW")).isFalse();
     }
 
     @Test
@@ -225,9 +223,9 @@ class AuthorizationServiceImplTest {
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, foreignPropertyId))
                 .thenReturn(Set.of());
 
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_MANAGE")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW_OWN")).isFalse();
+        assertThat(authorizationService.hasPermission(FinanceResources.BILL, billId, "BILL_VIEW")).isFalse();
+        assertThat(authorizationService.hasPermission(FinanceResources.BILL, billId, "BILL_MANAGE")).isFalse();
+        assertThat(authorizationService.hasPermission(FinanceResources.BILL, billId, "BILL_VIEW_OWN")).isFalse();
     }
 
     @Test
@@ -243,10 +241,10 @@ class AuthorizationServiceImplTest {
                 .thenReturn(Set.of());
 
         // The payer (a tenant, or an owner with no lease) can see their own bill …
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW_OWN")).isTrue();
+        assertThat(authorizationService.hasPermission(FinanceResources.BILL, billId, "BILL_VIEW_OWN")).isTrue();
         // … but paying it does not grant staff permissions on it
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW")).isFalse();
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_MANAGE")).isFalse();
+        assertThat(authorizationService.hasPermission(FinanceResources.BILL, billId, "BILL_VIEW")).isFalse();
+        assertThat(authorizationService.hasPermission(FinanceResources.BILL, billId, "BILL_MANAGE")).isFalse();
     }
 
     @Test
@@ -261,8 +259,8 @@ class AuthorizationServiceImplTest {
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
                 .thenReturn(Set.of("BILL_VIEW"));
 
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW")).isTrue();
-        assertThat(authorizationService.hasPermission(ResourceType.BILL, billId, "BILL_VIEW_OWN")).isFalse();
+        assertThat(authorizationService.hasPermission(FinanceResources.BILL, billId, "BILL_VIEW")).isTrue();
+        assertThat(authorizationService.hasPermission(FinanceResources.BILL, billId, "BILL_VIEW_OWN")).isFalse();
     }
 
     @Test
@@ -279,8 +277,8 @@ class AuthorizationServiceImplTest {
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
                 .thenReturn(Set.of());
 
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_VIEW_OWN")).isTrue();
-        assertThat(authorizationService.hasPermission(ResourceType.LEASE, leaseId, "LEASE_UPDATE")).isFalse();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseId, "LEASE_VIEW_OWN")).isTrue();
+        assertThat(authorizationService.hasPermission(LeaseResources.LEASE, leaseId, "LEASE_UPDATE")).isFalse();
     }
 
     @Test
@@ -297,22 +295,6 @@ class AuthorizationServiceImplTest {
         when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(true);
 
-        assertThat(authorizationService.hasFullAccess(ResourceType.INVENTORY_ASSIGNMENT, assignmentId)).isTrue();
-    }
-
-    @Test
-    @DisplayName("Media asset without an owner module is accessible only to its uploader")
-    void orphanMediaAssetOnlyAccessibleToUploader() {
-        UUID mediaAssetId = UUID.randomUUID();
-        MediaDTOs.MediaAssetDTO asset = new MediaDTOs.MediaAssetDTO(mediaAssetId, null, null, null, "ext", "url",
-                null, null, userId, Instant.now());
-        when(storageFacade.getAssetById(mediaAssetId)).thenReturn(Optional.of(asset));
-
-        authenticateUser(userId, UserRole.USER);
-        assertThat(authorizationService.hasMediaAssetAccess(mediaAssetId, "DELETE")).isTrue();
-
-        authenticateUser(UUID.randomUUID(), UserRole.USER);
-        assertThat(authorizationService.hasMediaAssetAccess(mediaAssetId, "READ")).isFalse();
-        assertThat(authorizationService.hasFullAccess(ResourceType.MEDIA_ASSET, mediaAssetId)).isFalse();
+        assertThat(authorizationService.hasFullAccess(InventoryResources.ASSIGNMENT, assignmentId)).isTrue();
     }
 }

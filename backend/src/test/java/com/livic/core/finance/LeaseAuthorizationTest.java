@@ -40,7 +40,7 @@ class LeaseAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, null, null, null);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, null, null);
         propertyId = UUID.randomUUID();
     }
 

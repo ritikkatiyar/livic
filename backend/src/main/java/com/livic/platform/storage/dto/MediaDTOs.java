@@ -1,7 +1,6 @@
 package com.livic.platform.storage.dto;
 
 
-import com.livic.platform.common.enums.OwnerModule;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -15,8 +14,8 @@ public final class MediaDTOs {
     private MediaDTOs() {}
 
     public record UploadAuthorizationRequest(
-            @NotNull(message = "Owner module is required")
-            OwnerModule ownerModule,
+            @NotBlank(message = "Owner module is required")
+            String ownerModule,
 
             @NotNull(message = "Reference ID is required")
             UUID referenceId,
@@ -39,8 +38,8 @@ public final class MediaDTOs {
     ) {}
 
     public record ConfirmUploadRequest(
-            @NotNull(message = "Owner module is required")
-            OwnerModule ownerModule,
+            @NotBlank(message = "Owner module is required")
+            String ownerModule,
 
             @NotNull(message = "Reference ID is required")
             UUID referenceId,
@@ -59,7 +58,7 @@ public final class MediaDTOs {
 
     public record MediaAssetDTO(
             UUID id,
-            OwnerModule ownerModule,
+            String ownerModule,
             UUID referenceId,
             StorageProvider storageProvider,
             String externalId,

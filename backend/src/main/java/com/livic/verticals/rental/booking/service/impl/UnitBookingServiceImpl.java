@@ -4,7 +4,7 @@ import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import com.livic.verticals.rental.booking.repository.UnitBookingRepository;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
 import com.livic.verticals.rental.booking.domain.UnitBookingStatus;
-import com.livic.platform.common.enums.ResourceType;
+import com.livic.core.property.security.PropertyResources;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.verticals.rental.booking.domain.UnitBookingTbl;
 import com.livic.verticals.rental.booking.dto.UnitBookingDTOs;
@@ -70,7 +70,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         log.info("Processing booking forfeit for ID: {} by user: {}", bookingId, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermission(ResourceType.UNIT, booking.getUnitId(), "LEASE_UPDATE")) {
+        if (!authorizationService.hasPermission(PropertyResources.UNIT, booking.getUnitId(), "LEASE_UPDATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
@@ -85,7 +85,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         log.info("Processing booking refund for ID: {} by user: {}", bookingId, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermission(ResourceType.UNIT, booking.getUnitId(), "LEASE_UPDATE")) {
+        if (!authorizationService.hasPermission(PropertyResources.UNIT, booking.getUnitId(), "LEASE_UPDATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
@@ -100,7 +100,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         log.info("Initiating online token payment for booking: {} by user: {}", bookingId, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermission(ResourceType.UNIT, booking.getUnitId(), "LEASE_CREATE")) {
+        if (!authorizationService.hasPermission(PropertyResources.UNIT, booking.getUnitId(), "LEASE_CREATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
@@ -123,7 +123,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         log.info("Recording token cash payment for booking: {} amount: {} by user: {}", bookingId, amount, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermission(ResourceType.UNIT, booking.getUnitId(), "LEASE_UPDATE")) {
+        if (!authorizationService.hasPermission(PropertyResources.UNIT, booking.getUnitId(), "LEASE_UPDATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 

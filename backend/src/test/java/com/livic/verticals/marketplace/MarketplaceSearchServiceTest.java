@@ -3,7 +3,7 @@ package com.livic.verticals.marketplace;
 import com.livic.core.property.domain.FacingDirection;
 import com.livic.core.property.domain.PropertyType;
 import com.livic.core.property.domain.UnitType;
-import com.livic.platform.common.enums.OwnerModule;
+import com.livic.core.property.security.PropertyResources;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.verticals.marketplace.dto.MarketplacePropertyDTOs;
 import com.livic.verticals.marketplace.dto.MarketplaceUnitDTOs;
@@ -77,7 +77,7 @@ public class MarketplaceSearchServiceTest {
     }
 
     private static MediaDTOs.MediaAssetDTO asset(UUID referenceId, String url) {
-        return new MediaDTOs.MediaAssetDTO(UUID.randomUUID(), OwnerModule.PROPERTY, referenceId, null, null, url, null, null, null, null);
+        return new MediaDTOs.MediaAssetDTO(UUID.randomUUID(), "PROPERTY", referenceId, null, null, url, null, null, null, null);
     }
 
     @Test
@@ -87,7 +87,7 @@ public class MarketplaceSearchServiceTest {
         Page<PublicPropertyListingDTO> propertyPage = new PageImpl<>(List.of(publicProperty), pageable, 1);
 
         when(propertyFacade.searchPublicListings("Bengaluru", PropertyType.RENTAL, pageable)).thenReturn(propertyPage);
-        when(storageFacade.getAssetsForReferences(OwnerModule.PROPERTY, List.of(propId)))
+        when(storageFacade.getAssetsForReferences(PropertyResources.PROPERTY, List.of(propId)))
                 .thenReturn(Map.of(propId, List.of(asset(propId, "https://cdn.livic.com/img1.jpg"))));
         when(unitFacade.getUnitListingsByPropertyIds(List.of(propId))).thenReturn(Map.of(propId, List.of(unit1)));
 
@@ -107,7 +107,7 @@ public class MarketplaceSearchServiceTest {
     @DisplayName("Get Property Detail - Success")
     public void testGetPropertyDetailSuccess() {
         when(propertyFacade.getPublicListing(propId)).thenReturn(Optional.of(publicProperty));
-        when(storageFacade.getAssets(OwnerModule.PROPERTY, propId)).thenReturn(Collections.emptyList());
+        when(storageFacade.getAssets(PropertyResources.PROPERTY, propId)).thenReturn(Collections.emptyList());
         UnitListingDTO occupiedUnit = new UnitListingDTO(
                 UUID.randomUUID(), propId, "102-A", 1, 1, UnitType.STUDIO, FacingDirection.WEST,
                 new BigDecimal("12000.00"), false, null, List.of());
@@ -133,7 +133,7 @@ public class MarketplaceSearchServiceTest {
         when(propertyFacade.getPublicListing(propId)).thenReturn(Optional.of(publicProperty));
         when(unitFacade.getUnitListingsByPropertyId(propId, true, pageable))
                 .thenReturn(new PageImpl<>(List.of(unit1), pageable, 11));
-        when(storageFacade.getAssetsForReferences(OwnerModule.PROPERTY, List.of(unitId)))
+        when(storageFacade.getAssetsForReferences(PropertyResources.PROPERTY, List.of(unitId)))
                 .thenReturn(Map.of(unitId, List.of(asset(unitId, "https://cdn.livic.com/unit.jpg"))));
 
         Page<MarketplaceUnitDTOs.UnitSummaryResponse> page = searchService.getPropertyUnits(propId, true, pageable);
@@ -180,7 +180,7 @@ public class MarketplaceSearchServiceTest {
         when(propertyFacade.getPublicListing(propId)).thenReturn(Optional.of(publicProperty));
         when(unitFacade.getUnitListingById(unitId)).thenReturn(Optional.of(unit1));
         when(unitFacade.getUnitListingsByPropertyId(propId)).thenReturn(List.of(unit1));
-        when(storageFacade.getAssets(eq(OwnerModule.PROPERTY), any(UUID.class))).thenReturn(Collections.emptyList());
+        when(storageFacade.getAssets(eq(PropertyResources.PROPERTY), any(UUID.class))).thenReturn(Collections.emptyList());
 
         MarketplaceUnitDTOs.UnitDetailCompositeResponse composite = searchService.getUnitDetailComposite(propId, unitId);
 

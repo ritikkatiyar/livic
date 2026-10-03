@@ -4,7 +4,7 @@ import com.livic.platform.auth.repository.EmailVerificationRepository;
 import com.livic.platform.auth.domain.EmailVerificationTbl;
 import com.livic.platform.auth.dto.AuthResponses.TokenBundle;
 import com.livic.platform.auth.service.interfaces.EmailVerificationService;
-import com.livic.platform.common.event.EmailVerificationRequestedEvent;
+import com.livic.platform.auth.event.EmailVerificationRequestedEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;

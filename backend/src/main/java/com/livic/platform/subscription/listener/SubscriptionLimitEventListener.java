@@ -6,7 +6,7 @@ import com.livic.platform.subscription.dto.UserSubscriptionContext;
 import com.livic.platform.subscription.service.interfaces.SubscriptionCacheService;
 import com.livic.platform.subscription.validator.TeamMemberLimitValidator;
 import com.livic.platform.subscription.validator.UnitLimitValidator;
-import com.livic.platform.common.event.MemberSeatRequestedEvent;
+import com.livic.platform.auth.event.MemberSeatRequestedEvent;
 import com.livic.platform.common.event.UnitsCreationRequestedEvent;
 import com.livic.platform.common.subscription.FeatureKey;
 import com.livic.platform.common.exception.BusinessException;

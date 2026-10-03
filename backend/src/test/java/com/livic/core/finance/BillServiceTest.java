@@ -16,7 +16,8 @@ import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.platform.auth.facade.AuthFacade;
-import com.livic.platform.common.event.RentPublishedEvent;
+import com.livic.core.finance.event.BillPublishedEvent;
+import com.livic.platform.outbox.facade.OutboxFacade;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.platform.user.facade.UserFacade;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +27,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -61,7 +61,7 @@ class BillServiceTest {
     @Mock private MeterReadingRepository meterReadingRepository;
     @Mock private ChargeConfigRepository chargeConfigRepository;
     @Mock private PaymentFacade paymentFacade;
-    @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private OutboxFacade outboxFacade;
     @Mock private UserFacade userFacade;
     @Mock private UnitFacade unitFacade;
     @Mock private UnitMemberFacade unitMemberFacade;
@@ -99,7 +99,8 @@ class BillServiceTest {
         when(billRepository.save(any(BillTbl.class))).thenAnswer(i -> i.getArgument(0));
 
         assertEquals(BillStatus.PUBLISHED, billService.publish(billId).status());
-        verify(eventPublisher, times(1)).publishEvent(any(RentPublishedEvent.class));
+        // The payer is told through the outbox, after the publish commits.
+        verify(outboxFacade, times(1)).publish(any(BillPublishedEvent.class));
 
         assertEquals(BillStatus.PENDING, billService.unpublish(billId).status());
     }

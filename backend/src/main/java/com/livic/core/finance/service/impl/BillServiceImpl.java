@@ -9,7 +9,8 @@ import com.livic.core.finance.repository.BillLineRepository;
 import com.livic.core.finance.repository.BillingWorksheetRepository;
 import com.livic.core.finance.repository.BillRepository;
 import com.livic.platform.security.UserDetailsImpl;
-import com.livic.platform.common.event.RentPublishedEvent;
+import com.livic.core.finance.event.BillPublishedEvent;
+import com.livic.platform.outbox.facade.OutboxFacade;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.core.finance.domain.MeterReadingTbl;
@@ -35,7 +36,6 @@ import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -73,7 +73,7 @@ public class BillServiceImpl implements BillService {
     private final MeterReadingRepository meterReadingRepository;
     private final ChargeConfigRepository chargeConfigRepository;
     private final PaymentFacade paymentFacade;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxFacade outboxFacade;
     private final UserFacade userFacade;
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
@@ -352,14 +352,7 @@ public class BillServiceImpl implements BillService {
                 }
             }
 
-            eventPublisher.publishEvent(new RentPublishedEvent(
-                    this,
-                    cycle.getId(),
-                    payerUserIdOf(cycle),
-                    cycle.getBillingMonth(),
-                    cycle.getTotalAmount(),
-                    cycle.getDueDate()
-            ));
+            announcePublished(cycle, payerUserIdOf(cycle));
 
             log.info("bill_published billId={} memberId={} billingMonth={}",
                     cycle.getId(), cycle.getMemberId(), cycle.getBillingMonth());
@@ -478,14 +471,7 @@ public class BillServiceImpl implements BillService {
         }
         for (BillTbl cycle : transitioned) {
             UnitResidentDTO payer = payers.get(cycle.getMemberId());
-            eventPublisher.publishEvent(new RentPublishedEvent(
-                    this,
-                    cycle.getId(),
-                    payer != null ? payer.userId() : null,
-                    cycle.getBillingMonth(),
-                    cycle.getTotalAmount(),
-                    cycle.getDueDate()
-            ));
+            announcePublished(cycle, payer != null ? payer.userId() : null);
         }
 
         List<BillDTOs.BillResponse> succeeded = new ArrayList<>(toResponses(propertyCycles));
@@ -662,6 +648,15 @@ public class BillServiceImpl implements BillService {
         }
         return unitMemberFacade.getResidentsByMemberIds(memberIds).stream()
                 .collect(Collectors.toMap(UnitResidentDTO::memberId, Function.identity(), (a, b) -> a));
+    }
+
+    /** The payer is told after this commits, through the outbox; a payer with no account is told nothing. */
+    private void announcePublished(BillTbl bill, UUID payerUserId) {
+        if (payerUserId == null) {
+            log.info("bill_published_without_account billId={} memberId={}", bill.getId(), bill.getMemberId());
+        }
+        outboxFacade.publish(new BillPublishedEvent(bill.getId(), bill.getBillType(), payerUserId,
+                bill.getBillingMonth(), bill.getTotalAmount(), bill.getDueDate()));
     }
 
     private UUID payerUserIdOf(BillTbl bill) {

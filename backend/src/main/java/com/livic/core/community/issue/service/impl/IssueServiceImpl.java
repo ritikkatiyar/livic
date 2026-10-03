@@ -6,8 +6,8 @@ import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.core.community.issue.security.IssuePermissions;
 import com.livic.platform.common.enums.AccessType;
-import com.livic.platform.common.event.IssueCreatedEvent;
-import com.livic.platform.common.event.IssueEscalatedEvent;
+import com.livic.core.community.issue.event.IssueCreatedEvent;
+import com.livic.core.community.issue.event.IssueEscalatedEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.facade.UnitMemberFacade;
@@ -30,7 +30,7 @@ import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
+import com.livic.platform.outbox.facade.OutboxFacade;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -61,7 +61,7 @@ public class IssueServiceImpl implements IssueService {
     private final UnitFacade unitFacade;
     private final UserFacade userFacade;
     private final List<EscalationStrategy> escalationStrategies;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxFacade outboxFacade;
 
     @Override
     @Transactional
@@ -354,7 +354,6 @@ public class IssueServiceImpl implements IssueService {
 
         for (String recipientId : staffUserIds) {
             IssueCreatedEvent event = new IssueCreatedEvent(
-                    this,
                     issue.getId().toString(),
                     propName,
                     unitNumber,
@@ -363,7 +362,7 @@ public class IssueServiceImpl implements IssueService {
                     issue.getDescription(),
                     recipientId
             );
-            eventPublisher.publishEvent(event);
+            outboxFacade.publish(event);
         }
     }
 
@@ -377,7 +376,6 @@ public class IssueServiceImpl implements IssueService {
 
         for (String recipientId : escalationUserIds) {
             IssueEscalatedEvent event = new IssueEscalatedEvent(
-                    this,
                     issue.getId().toString(),
                     propName,
                     unitNumber,
@@ -385,7 +383,7 @@ public class IssueServiceImpl implements IssueService {
                     reason,
                     recipientId
             );
-            eventPublisher.publishEvent(event);
+            outboxFacade.publish(event);
         }
     }
 

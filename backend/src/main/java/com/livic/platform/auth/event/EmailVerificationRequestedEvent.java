@@ -1,4 +1,4 @@
-package com.livic.platform.common.event;
+package com.livic.platform.auth.event;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;

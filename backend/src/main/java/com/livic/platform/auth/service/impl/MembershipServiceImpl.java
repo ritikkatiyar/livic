@@ -9,7 +9,7 @@ import com.livic.platform.auth.dto.MembershipDTOs;
 import com.livic.platform.auth.mapper.MembershipMapper;
 import com.livic.platform.auth.service.interfaces.MembershipService;
 import com.livic.platform.common.enums.AccessType;
-import com.livic.platform.common.event.MemberSeatRequestedEvent;
+import com.livic.platform.auth.event.MemberSeatRequestedEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;

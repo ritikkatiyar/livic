@@ -1,4 +1,4 @@
-package com.livic.platform.common.event;
+package com.livic.platform.auth.event;
 
 import org.springframework.context.ApplicationEvent;
 import java.util.UUID;

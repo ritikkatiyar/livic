@@ -17,6 +17,10 @@ import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import com.livic.verticals.rental.inventory.facade.InventoryFacade;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
+import com.livic.core.property.facade.UnitMemberFacade;
+import com.livic.core.property.dto.UnitMemberSummaryDTO;
+import com.livic.core.property.domain.UnitMemberRole;
+import com.livic.core.property.security.PropertyResources;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +31,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -42,6 +48,9 @@ class AuthorizationServiceImplTest {
 
     @Mock
     private UnitFacade unitFacade;
+
+    @Mock
+    private UnitMemberFacade unitMemberFacade;
 
     @Mock
     private LeaseFacade leaseFacade;
@@ -60,7 +69,7 @@ class AuthorizationServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, unitFacade, financeFacade, leaseFacade, inventoryFacade);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, unitFacade, unitMemberFacade, financeFacade, leaseFacade, inventoryFacade);
         propertyId = UUID.randomUUID();
         userId = UUID.randomUUID();
     }
@@ -217,7 +226,7 @@ class AuthorizationServiceImplTest {
         UUID foreignPropertyId = UUID.randomUUID();
 
         when(financeFacade.getBillScope(billId)).thenReturn(Optional.of(
-                new com.livic.core.finance.facade.FinanceFacade.BillScope(foreignPropertyId, UUID.randomUUID())));
+                new com.livic.core.finance.facade.FinanceFacade.BillScope(foreignPropertyId, UUID.randomUUID(), null)));
         when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, foreignPropertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, foreignPropertyId))
@@ -234,7 +243,7 @@ class AuthorizationServiceImplTest {
         authenticateUser(userId, UserRole.USER);
         UUID billId = UUID.randomUUID();
 
-        when(financeFacade.getBillScope(billId)).thenReturn(Optional.of(new com.livic.core.finance.facade.FinanceFacade.BillScope(propertyId, userId)));
+        when(financeFacade.getBillScope(billId)).thenReturn(Optional.of(new com.livic.core.finance.facade.FinanceFacade.BillScope(propertyId, userId, null)));
         when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
@@ -253,7 +262,7 @@ class AuthorizationServiceImplTest {
         authenticateUser(userId, UserRole.USER);
         UUID billId = UUID.randomUUID();
 
-        when(financeFacade.getBillScope(billId)).thenReturn(Optional.of(new com.livic.core.finance.facade.FinanceFacade.BillScope(propertyId, UUID.randomUUID())));
+        when(financeFacade.getBillScope(billId)).thenReturn(Optional.of(new com.livic.core.finance.facade.FinanceFacade.BillScope(propertyId, UUID.randomUUID(), null)));
         when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
                 .thenReturn(false);
         when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId))
@@ -296,5 +305,42 @@ class AuthorizationServiceImplTest {
                 .thenReturn(true);
 
         assertThat(authorizationService.hasFullAccess(InventoryResources.ASSIGNMENT, assignmentId)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A property's residents can view it without a staff permission, but cannot change it")
+    void residentsHoldTheirProperty() {
+        authenticateUser(userId, UserRole.USER);
+        when(unitMemberFacade.getActiveMembersByPropertyId(propertyId)).thenReturn(List.of(new UnitMemberSummaryDTO(
+                UUID.randomUUID(), UUID.randomUUID(), userId, UnitMemberRole.OWNER, true, LocalDate.now(), null, true)));
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+                .thenReturn(false);
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId)).thenReturn(Set.of());
+
+        assertThat(authorizationService.hasPermission(PropertyResources.PROPERTY, propertyId, "PROPERTY_VIEW_OWN")).isTrue();
+        assertThat(authorizationService.hasPermission(PropertyResources.PROPERTY, propertyId, "PROPERTY_EDIT")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Someone who does not live in a property cannot view it as a resident")
+    void nonResidentsDoNotHoldTheProperty() {
+        authenticateUser(userId, UserRole.USER);
+        when(unitMemberFacade.getActiveMembersByPropertyId(propertyId)).thenReturn(List.of());
+        when(membershipRepository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, AccessType.FULL_ACCESS))
+                .thenReturn(false);
+        when(membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId)).thenReturn(Set.of());
+
+        assertThat(authorizationService.hasPermission(PropertyResources.PROPERTY, propertyId, "PROPERTY_VIEW_OWN")).isFalse();
+    }
+
+    @Test
+    @DisplayName("An owner who lets their flat out can see the rent bill they issued")
+    void issuerHoldsTheirBill() {
+        authenticateUser(userId, UserRole.USER);
+        UUID billId = UUID.randomUUID();
+        when(financeFacade.getBillScope(billId)).thenReturn(Optional.of(
+                new com.livic.core.finance.facade.FinanceFacade.BillScope(propertyId, UUID.randomUUID(), userId)));
+
+        assertThat(authorizationService.hasPermission(FinanceResources.BILL, billId, "BILL_VIEW_OWN")).isTrue();
     }
 }

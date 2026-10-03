@@ -63,7 +63,7 @@ class MediaAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, leaseFacade, inventoryFacade);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, null, leaseFacade, inventoryFacade);
         mediaAuthorization = new MediaAuthorization(authorizationService, storageService);
         propertyId = UUID.randomUUID();
         leaseId = UUID.randomUUID();

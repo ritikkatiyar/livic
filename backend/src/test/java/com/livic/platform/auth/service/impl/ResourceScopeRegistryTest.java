@@ -89,7 +89,7 @@ class ResourceScopeRegistryTest {
         UUID contractId = UUID.randomUUID();
         UUID attachmentId = UUID.randomUUID();
         Map<UUID, ResourceScope> scopes = Map.of(
-                attachmentId, new ResourceScope.Delegated(CONTRACT, contractId, null),
+                attachmentId, new ResourceScope.Delegated(CONTRACT, contractId),
                 contractId, new ResourceScope.Property(propertyId, null));
         ResourceScopeRegistry registry = new ResourceScopeRegistry(List.of(
                 resolver(Set.of(CONTRACT, ATTACHMENT), (t, id) -> Optional.ofNullable(scopes.get(id)))));
@@ -103,7 +103,7 @@ class ResourceScopeRegistryTest {
         // Every contract delegates to another contract forever
         ResourceScopeRegistry registry = new ResourceScopeRegistry(List.of(
                 resolver(Set.of(CONTRACT), (t, id) ->
-                        Optional.of(new ResourceScope.Delegated(CONTRACT, UUID.randomUUID(), null)))));
+                        Optional.of(new ResourceScope.Delegated(CONTRACT, UUID.randomUUID())))));
 
         assertThat(registry.resolvePropertyId(CONTRACT, UUID.randomUUID())).isEmpty();
     }
@@ -113,7 +113,7 @@ class ResourceScopeRegistryTest {
     void delegatedWithoutParentResolvesToNothing() {
         ResourceScopeRegistry registry = new ResourceScopeRegistry(List.of(
                 resolver(Set.of(ATTACHMENT), (t, id) ->
-                        Optional.of(new ResourceScope.Delegated(null, null, UUID.randomUUID())))));
+                        Optional.of(new ResourceScope.Delegated(null, null)))));
 
         assertThat(registry.resolvePropertyId(ATTACHMENT, UUID.randomUUID())).isEmpty();
     }

@@ -60,7 +60,7 @@ class LeaseInventoryAssignmentAuthorizationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, leaseFacade, inventoryFacade);
+        authorizationService = AuthorizationTestSupport.authorizationService(membershipRepository, null, null, null, leaseFacade, inventoryFacade);
         propertyId = UUID.randomUUID();
         leaseId = UUID.randomUUID();
         assignmentId = UUID.randomUUID();

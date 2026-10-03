@@ -104,10 +104,13 @@ public class FinanceFacadeImpl implements FinanceFacade {
     @Override
     public Optional<BillScope> getBillScope(UUID billId) {
         return billRepository.findById(billId).map(bill -> new BillScope(
-                bill.getPropertyId(),
-                bill.getMemberId() == null ? null : unitMemberFacade.getResidentByMemberId(bill.getMemberId())
-                        .map(UnitResidentDTO::userId)
-                        .orElse(null)));
+                bill.getPropertyId(), userOfMember(bill.getMemberId()), userOfMember(bill.getIssuedByMemberId())));
+    }
+
+    private UUID userOfMember(UUID memberId) {
+        return memberId == null ? null : unitMemberFacade.getResidentByMemberId(memberId)
+                .map(UnitResidentDTO::userId)
+                .orElse(null);
     }
 
     @Override

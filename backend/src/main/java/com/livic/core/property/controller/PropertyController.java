@@ -58,7 +58,8 @@ public class PropertyController {
     }
 
     @GetMapping("/{propertyId}")
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW_OWN_LEASE')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')"
+            + " or @authorizationService.hasPermission(T(com.livic.core.property.security.PropertyResources).PROPERTY, #propertyId, 'PROPERTY_VIEW_OWN')")
     public ResponseEntity<ApiResponse<PropertyResponse>> getProperty(
             @PathVariable UUID propertyId) {
         return ResponseEntity.ok(ApiResponse.success(propertyQueryService.getProperty(propertyId)));

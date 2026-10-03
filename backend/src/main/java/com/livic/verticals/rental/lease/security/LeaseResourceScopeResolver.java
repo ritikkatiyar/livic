@@ -34,6 +34,6 @@ public class LeaseResourceScopeResolver implements ResourceScopeResolver {
             return Optional.empty();
         }
         return leaseFacade.getLeaseById(resourceId)
-                .map(lease -> new ResourceScope.Property(lease.propertyId(), lease.userId()));
+                .map(lease -> ResourceScope.Property.heldBy(lease.propertyId(), lease.userId()));
     }
 }

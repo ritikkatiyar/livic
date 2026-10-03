@@ -79,6 +79,9 @@ public class PropertyServiceIntegrationTest {
     @Autowired
     private UnitLayoutOrchestrationService unitLayoutOrchestrationService;
 
+    @Autowired
+    private com.livic.core.property.controller.PropertyController propertyController;
+
     private UserTbl landlord;
     private UserTbl tenant;
     private PropertyTbl property;
@@ -226,6 +229,37 @@ public class PropertyServiceIntegrationTest {
         // The member's agreement is their lease, supplied by rental; core never reads leases itself.
         assertEquals(lease.getId(), occupant.agreement().id());
         assertEquals(0, BigDecimal.valueOf(1000).compareTo(occupant.agreement().monthlyAmount()));
+    }
+
+    @Test
+    public void testResidentCanViewTheirPropertyButStrangerCannot() {
+        // Through the controller's own @PreAuthorize: a tenant has no staff permission, yet lives here.
+        leaseRepository.save(activeLease());
+        UserTbl stranger = userRepository.save(UserTbl.builder()
+                .authUid("stranger-" + UUID.randomUUID() + "@test.com")
+                .fullName("Stranger")
+                .phoneNumber("+91" + (8000000000L + (long) (Math.random() * 999999999)))
+                .failedLoginAttempts(0)
+                .globalRole(UserRole.USER)
+                .build());
+        try {
+            authenticate(tenant);
+            assertEquals(property.getId(), propertyController.getProperty(property.getId()).getBody().getData().id());
+
+            authenticate(stranger);
+            assertThrows(org.springframework.security.authorization.AuthorizationDeniedException.class,
+                    () -> propertyController.getProperty(property.getId()));
+        } finally {
+            org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        }
+    }
+
+    private static void authenticate(UserTbl user) {
+        var userDetails = com.livic.platform.security.UserDetailsImpl.fromClaims(
+                user.getId().toString(), user.getAuthUid(), user.getGlobalRole().name());
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities()));
     }
 
     /** A lease as the lease service makes one: the tenant becomes a unit member, and the lease points at it. */

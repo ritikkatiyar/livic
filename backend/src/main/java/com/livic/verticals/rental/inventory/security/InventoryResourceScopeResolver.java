@@ -27,10 +27,10 @@ public class InventoryResourceScopeResolver implements ResourceScopeResolver {
     public Optional<ResourceScope> resolve(ResourceType type, UUID resourceId) {
         return switch (type.name()) {
             case "INVENTORY_ITEM" -> inventoryFacade.getPropertyIdForInventoryItem(resourceId)
-                    .map(propertyId -> new ResourceScope.Property(propertyId, null));
+                    .map(ResourceScope.Property::of);
             // Assignments inherit access from their lease
             case "INVENTORY_ASSIGNMENT" -> inventoryFacade.getLeaseIdForAssignment(resourceId)
-                    .map(leaseId -> new ResourceScope.Delegated(LeaseResources.LEASE, leaseId, null));
+                    .map(leaseId -> new ResourceScope.Delegated(LeaseResources.LEASE, leaseId));
             default -> Optional.empty();
         };
     }

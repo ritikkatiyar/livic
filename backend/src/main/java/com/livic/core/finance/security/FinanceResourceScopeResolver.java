@@ -25,13 +25,13 @@ public class FinanceResourceScopeResolver implements ResourceScopeResolver {
     @Override
     public Optional<ResourceScope> resolve(ResourceType type, UUID resourceId) {
         return switch (type.name()) {
-            // A bill sits under its property, and belongs to the user who pays it: staff need a
-            // property permission, the payer only the self-service one (BILL_VIEW_OWN). Owners
-            // with no lease are payers too, so this must not go through a lease.
+            // A bill sits under its property and belongs to the user who pays it, and to the owner
+            // who issued it when they let their flat out: staff need a property permission, they
+            // only the self-service one (BILL_VIEW_OWN). No lease is involved.
             case "BILL" -> financeFacade.getBillScope(resourceId)
-                    .map(bill -> new ResourceScope.Property(bill.propertyId(), bill.payerUserId()));
+                    .map(bill -> ResourceScope.Property.heldBy(bill.propertyId(), bill.payerUserId(), bill.issuerUserId()));
             case "CHARGE_CONFIG" -> Optional.ofNullable(financeFacade.getChargeConfigById(resourceId))
-                    .map(chargeConfig -> new ResourceScope.Property(chargeConfig.getPropertyId(), null));
+                    .map(chargeConfig -> ResourceScope.Property.of(chargeConfig.getPropertyId()));
             default -> Optional.empty();
         };
     }

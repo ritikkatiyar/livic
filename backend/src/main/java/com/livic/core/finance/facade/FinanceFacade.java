@@ -20,10 +20,11 @@ import java.util.UUID;
 public interface FinanceFacade {
 
 
-    /** Where a bill sits and who pays it, for authorizing access to it. */
+    /** Where a bill sits, who pays it and who issued it, for authorizing access to it. */
     Optional<BillScope> getBillScope(UUID billId);
 
-    record BillScope(UUID propertyId, UUID payerUserId) {}
+    /** {@code issuerUserId} is set when a member issued the bill, such as an owner letting out a flat. */
+    record BillScope(UUID propertyId, UUID payerUserId, UUID issuerUserId) {}
 
     ChargeConfigResponse getChargeConfigById(UUID chargeConfigId);
 

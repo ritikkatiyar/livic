@@ -3145,8 +3145,7 @@ export interface components {
         };
         ModuleEntry: {
             features?: components["schemas"]["FeatureEntry"][];
-            /** @enum {string} */
-            module?: "PROPERTY" | "LEASES" | "FINANCE" | "INVENTORY" | "ISSUES" | "ANNOUNCEMENTS" | "INSIGHTS" | "STAFF";
+            module?: string;
         };
         MoveOutChecklistRequest: {
             defaultNotes?: string;

@@ -42,7 +42,10 @@ public interface AuthFacade {
 
     /**
      * Effective staff permission codes per property for the user's active memberships. FULL_ACCESS memberships
-     * resolve to every {@link com.livic.platform.common.constant.StaffPermission} code.
+     * resolve to every grantable code.
      */
     Map<UUID, Set<String>> getEffectivePermissionCodes(UUID userId);
+
+    /** Every permission a staff member can be granted, as the modules declare them. */
+    Set<String> getGrantablePermissionCodes();
 }

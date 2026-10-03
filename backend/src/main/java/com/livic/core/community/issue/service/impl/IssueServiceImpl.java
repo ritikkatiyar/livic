@@ -4,7 +4,7 @@ import com.livic.core.community.issue.repository.IssueTimelineRepository;
 import com.livic.core.community.issue.repository.IssueRepository;
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
-import com.livic.platform.common.constant.StaffPermission;
+import com.livic.core.community.issue.security.IssuePermissions;
 import com.livic.platform.common.enums.AccessType;
 import com.livic.platform.common.event.IssueCreatedEvent;
 import com.livic.platform.common.event.IssueEscalatedEvent;
@@ -70,7 +70,7 @@ public class IssueServiceImpl implements IssueService {
         UUID tenantId = null;
         UUID unitId = request.unitId();
 
-        boolean isStaff = hasStaffPermission(callerUserId, propertyId, StaffPermission.ISSUE_MANAGE);
+        boolean isStaff = hasStaffPermission(callerUserId, propertyId, IssuePermissions.ISSUE_MANAGE);
         
         if (!isStaff) {
             // A resident of the property: owner, tenant or family member.
@@ -145,7 +145,7 @@ public class IssueServiceImpl implements IssueService {
     @Transactional(readOnly = true)
     public Page<IssueResponse> listIssues(UUID callerUserId, UUID blockId, Pageable pageable) {
         List<UUID> staffPropertyIds = authFacade.getEffectivePermissionCodes(callerUserId).entrySet().stream()
-                .filter(e -> e.getValue().contains(StaffPermission.ISSUE_VIEW.name()))
+                .filter(e -> e.getValue().contains(IssuePermissions.ISSUE_VIEW))
                 .map(Map.Entry::getKey)
                 .toList();
 
@@ -205,7 +205,7 @@ public class IssueServiceImpl implements IssueService {
         IssueTbl issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
-        checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_VIEW);
+        checkIssueAccess(issue, callerUserId, IssuePermissions.ISSUE_VIEW);
         return getIssueResponse(issue);
     }
 
@@ -215,7 +215,7 @@ public class IssueServiceImpl implements IssueService {
         IssueTbl issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
-        checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_VIEW);
+        checkIssueAccess(issue, callerUserId, IssuePermissions.ISSUE_VIEW);
 
         IssueTimelineTbl commentTimeline = IssueTimelineTbl.builder()
                 .issue(issue)
@@ -234,7 +234,7 @@ public class IssueServiceImpl implements IssueService {
         IssueTbl issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
-        checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_MANAGE);
+        checkIssueAccess(issue, callerUserId, IssuePermissions.ISSUE_MANAGE);
 
         IssueStatus oldStatus = issue.getStatus();
         issue.setStatus(request.status());
@@ -262,7 +262,7 @@ public class IssueServiceImpl implements IssueService {
         IssueTbl issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Issue not found"));
 
-        checkIssueAccess(issue, callerUserId, StaffPermission.ISSUE_MANAGE);
+        checkIssueAccess(issue, callerUserId, IssuePermissions.ISSUE_MANAGE);
 
         issue.setEscalationStatus(IssueEscalationStatus.ESCALATED);
         issue.setEscalationLevel(issue.getEscalationLevel() + 1);
@@ -347,7 +347,7 @@ public class IssueServiceImpl implements IssueService {
                 .toList());
         List<String> staffUserIds = memberships.stream()
                 .filter(m -> AccessType.FULL_ACCESS.equals(m.accessType())
-                        || customCodes.getOrDefault(m.id(), Set.of()).contains(StaffPermission.ISSUE_VIEW.name()))
+                        || customCodes.getOrDefault(m.id(), Set.of()).contains(IssuePermissions.ISSUE_VIEW))
                 .map(m -> m.userId().toString())
                 .distinct()
                 .toList();
@@ -407,7 +407,7 @@ public class IssueServiceImpl implements IssueService {
         return IssueMapper.toResponse(issue, unit, timeline, authorNamesMap);
     }
 
-    private void checkIssueAccess(IssueTbl issue, UUID userId, StaffPermission staffPermission) {
+    private void checkIssueAccess(IssueTbl issue, UUID userId, String staffPermission) {
         if (hasStaffPermission(userId, issue.getPropertyId(), staffPermission)) {
             return;
         }
@@ -420,9 +420,9 @@ public class IssueServiceImpl implements IssueService {
         throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
     }
 
-    private boolean hasStaffPermission(UUID userId, UUID propertyId, StaffPermission permission) {
+    private boolean hasStaffPermission(UUID userId, UUID propertyId, String permission) {
         return authFacade.getEffectivePermissionCodes(userId)
                 .getOrDefault(propertyId, Set.of())
-                .contains(permission.name());
+                .contains(permission);
     }
 }

@@ -7,7 +7,7 @@ import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.auth.mapper.MembershipMapper;
 import com.livic.platform.auth.service.interfaces.MembershipQueryService;
 import com.livic.platform.auth.service.interfaces.MembershipService;
-import com.livic.platform.common.constant.StaffPermission;
+import com.livic.platform.auth.service.impl.PermissionCatalog;
 import com.livic.platform.common.enums.AccessType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,6 +32,7 @@ public class AuthFacadeImpl implements AuthFacade {
     private final MembershipRepository membershipRepository;
     private final MembershipQueryService membershipQueryService;
     private final MembershipService membershipService;
+    private final PermissionCatalog permissionCatalog;
 
     @Override
     public List<MembershipSummaryDTO> getMembershipsByUserId(UUID userId) {
@@ -114,7 +115,7 @@ public class AuthFacadeImpl implements AuthFacade {
         Map<UUID, Set<String>> result = new HashMap<>();
         for (MembershipTbl m : active) {
             Set<String> codes = m.isFullAccess()
-                    ? StaffPermission.allCodes()
+                    ? permissionCatalog.codes()
                     : customCodes.getOrDefault(m.getId(), Set.of());
             result.merge(m.getPropertyId(), codes, (a, b) -> {
                 Set<String> merged = new HashSet<>(a);
@@ -123,5 +124,10 @@ public class AuthFacadeImpl implements AuthFacade {
             });
         }
         return result;
+    }
+
+    @Override
+    public Set<String> getGrantablePermissionCodes() {
+        return permissionCatalog.codes();
     }
 }

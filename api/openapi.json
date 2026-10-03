@@ -3181,7 +3181,6 @@
             "type" : "array"
           },
           "module" : {
-            "enum" : [ "PROPERTY", "LEASES", "FINANCE", "INVENTORY", "ISSUES", "ANNOUNCEMENTS", "INSIGHTS", "STAFF" ],
             "type" : "string"
           }
         },

@@ -9,7 +9,7 @@ import com.livic.core.community.announcement.dto.AnnouncementDTOs.AnnouncementRe
 import com.livic.core.community.announcement.mapper.AnnouncementMapper;
 import com.livic.core.community.announcement.service.interfaces.AnnouncementService;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
-import com.livic.platform.common.constant.StaffPermission;
+import com.livic.core.community.announcement.security.AnnouncementPermissions;
 import com.livic.platform.common.event.AnnouncementBroadcastEvent;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
@@ -214,7 +214,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         boolean resident = unitMemberFacade.getActiveResidencesByUserId(userId).stream()
                 .anyMatch(r -> announcement.getPropertyId().equals(r.propertyId()));
         return resident || authorizationService.hasAnyPermission(announcement.getPropertyId(),
-                StaffPermission.ANNOUNCEMENT_VIEW.name(), StaffPermission.ANNOUNCEMENT_CREATE.name());
+                AnnouncementPermissions.ANNOUNCEMENT_VIEW, AnnouncementPermissions.ANNOUNCEMENT_CREATE);
     }
 
 }

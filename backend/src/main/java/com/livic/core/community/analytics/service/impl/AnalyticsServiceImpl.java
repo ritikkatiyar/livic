@@ -7,7 +7,7 @@ import com.livic.core.community.analytics.dto.SummaryResponse;
 import com.livic.core.community.analytics.mapper.AnalyticsMapper;
 import com.livic.core.community.analytics.service.interfaces.AnalyticsService;
 import com.livic.platform.auth.facade.AuthFacade;
-import com.livic.platform.common.constant.StaffPermission;
+import com.livic.core.community.analytics.security.AnalyticsPermissions;
 import com.livic.core.finance.facade.FinanceFacade;
 import com.livic.core.property.facade.PropertyFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
@@ -44,7 +44,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     private List<UUID> getLandlordPropertyIds(UUID landlordId) {
         return authFacade.getEffectivePermissionCodes(landlordId).entrySet().stream()
-                .filter(e -> e.getValue().contains(StaffPermission.ANALYTICS_VIEW.name()))
+                .filter(e -> e.getValue().contains(AnalyticsPermissions.ANALYTICS_VIEW))
                 .map(Map.Entry::getKey)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());

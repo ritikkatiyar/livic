@@ -18,7 +18,11 @@ public interface BillService {
     /** Converts a collection of bill entities into enriched DTO responses using batch queries. */
     List<BillDTOs.BillResponse> toResponses(List<BillTbl> bills);
 
+    /** Staff view: bills of the properties where the user holds BILL_VIEW, or of one of them. */
     BillDTOs.BillListResponse list(UUID currentUserId, UUID propertyId, String billingMonth, BillStatus status, String search, Pageable pageable);
+
+    /** The bills a user pays, for every unit they pay for; drafts are left out. */
+    BillDTOs.BillListResponse listForPayer(UUID userId, String billingMonth, BillStatus status, Pageable pageable);
 
     BillDTOs.BillResponse markPaid(UUID id);
 

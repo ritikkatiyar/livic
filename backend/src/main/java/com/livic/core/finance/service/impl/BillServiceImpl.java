@@ -1,5 +1,7 @@
 package com.livic.core.finance.service.impl;
 
+import com.livic.core.finance.security.FinancePermissions;
+import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.core.finance.listener.FinancePaymentEventListener;
 import com.livic.core.finance.repository.MeterReadingRepository;
 import com.livic.core.finance.repository.ChargeConfigRepository;
@@ -23,12 +25,10 @@ import com.livic.core.finance.specification.BillSpecifications;
 import com.livic.platform.payment.dto.PaymentInitiationRequest;
 import com.livic.platform.payment.dto.PaymentInitiationResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
-import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.domain.UnitMemberRole;
 import com.livic.core.property.domain.UnitOccupancy;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
-import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
@@ -77,7 +77,7 @@ public class BillServiceImpl implements BillService {
     private final UserFacade userFacade;
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
-    private final PropertyFacade propertyFacade;
+    private final AuthFacade authFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -142,48 +142,18 @@ public class BillServiceImpl implements BillService {
     @Override
     @Transactional(readOnly = true)
     public BillDTOs.BillListResponse list(UUID currentUserId, UUID propertyId, String billingMonth, BillStatus status, String search, Pageable pageable) {
-        List<UUID> targetPropertyIds = new ArrayList<>();
-
-        boolean isTenantView = false;
-        // Set when the caller pays for a unit themselves (a tenant, or an owner in a residential
-        // building): they see their own bills, under each of their memberships.
-        Set<UUID> scopedMemberIds = Set.of();
-        if (currentUserId != null) {
-            Set<UUID> payerMemberIds = unitMemberFacade.getActiveResidencesByUserId(currentUserId).stream()
-                    .filter(r -> r.role() == UnitMemberRole.TENANT || r.role() == UnitMemberRole.OWNER)
-                    .map(UnitResidentDTO::memberId)
-                    .collect(Collectors.toSet());
-            if (!payerMemberIds.isEmpty()) {
-                scopedMemberIds = payerMemberIds;
-                propertyId = null;
-                isTenantView = true;
-            } else {
-                List<PropertySummaryDTO> userProperties = propertyFacade.getPropertiesByUserId(currentUserId);
-                List<UUID> ownedPropertyIds = userProperties.stream().map(PropertySummaryDTO::id).toList();
-
-                if (propertyId != null) {
-                    if (!ownedPropertyIds.contains(propertyId)) {
-                        return new BillDTOs.BillListResponse(
-                                List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                                new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
-                        );
-                    }
-                    targetPropertyIds.add(propertyId);
-                } else {
-                    if (ownedPropertyIds.isEmpty()) {
-                        return new BillDTOs.BillListResponse(
-                                List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                                new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
-                        );
-                    }
-                    targetPropertyIds.addAll(ownedPropertyIds);
-                }
-            }
-        } else if (propertyId != null) {
-            targetPropertyIds.add(propertyId);
-        }
-
-        if (isTenantView && status == BillStatus.PENDING) {
+        // Staff see the bills of the properties where they hold BILL_VIEW (FULL_ACCESS holds every
+        // code). Being a member of a property is not enough, and paying a bill yourself is the
+        // separate /me/bills view.
+        Set<UUID> viewable = currentUserId == null ? Set.of()
+                : authFacade.getEffectivePermissionCodes(currentUserId).entrySet().stream()
+                        .filter(e -> e.getValue().contains(FinancePermissions.BILL_VIEW))
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.toSet());
+        List<UUID> targetPropertyIds = propertyId == null
+                ? List.copyOf(viewable)
+                : viewable.contains(propertyId) ? List.of(propertyId) : List.of();
+        if (targetPropertyIds.isEmpty()) {
             return new BillDTOs.BillListResponse(
                     List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
                     new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
@@ -192,19 +162,9 @@ public class BillServiceImpl implements BillService {
 
         // A bill carries its property and payer, so a property filters directly; no walk
         // through units.
-        Specification<BillTbl> spec;
-        if (!scopedMemberIds.isEmpty()) {
-            spec = Specification.where(BillSpecifications.hasMemberIdIn(scopedMemberIds));
-        } else {
-            spec = Specification.where(BillSpecifications.hasPropertyIdIn(targetPropertyIds));
-        }
-
-        spec = spec.and(BillSpecifications.hasBillingMonth(billingMonth))
+        Specification<BillTbl> spec = Specification.where(BillSpecifications.hasPropertyIdIn(targetPropertyIds))
+                .and(BillSpecifications.hasBillingMonth(billingMonth))
                 .and(BillSpecifications.hasStatus(status));
-
-        if (isTenantView && status == null) {
-            spec = spec.and(BillSpecifications.hasStatusNot(BillStatus.PENDING));
-        }
 
         if (search != null && !search.trim().isEmpty()) {
             List<UUID> matchingUnitIds = unitFacade.getUnitIdsByUnitNumberSearch(search);
@@ -218,8 +178,7 @@ public class BillServiceImpl implements BillService {
         Page<BillTbl> page = billRepository.findAll(spec, pageable);
         List<BillDTOs.BillResponse> content = toResponses(page.getContent());
 
-        BillMetricsDTO billMetrics = !targetPropertyIds.isEmpty() ?
-                billRepository.getBillMetrics(
+        BillMetricsDTO billMetrics = billRepository.getBillMetrics(
                         targetPropertyIds,
                         billingMonth,
                         BillStatus.PENDING,
@@ -227,7 +186,7 @@ public class BillServiceImpl implements BillService {
                         BillStatus.PAID,
                         BillStatus.OVERDUE,
                         BillStatus.PARTIALLY_PAID
-                ) : null;
+                );
         if (billMetrics == null) {
             billMetrics = new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L);
         }
@@ -246,7 +205,30 @@ public class BillServiceImpl implements BillService {
     @Transactional(readOnly = true)
     public BillDTOs.BillListResponse listForMember(UUID memberId, String billingMonth, BillStatus status,
                                                   boolean includeUnpublished, Pageable pageable) {
-        Specification<BillTbl> spec = Specification.where(BillSpecifications.hasMemberId(memberId))
+        return listForMembers(Set.of(memberId), billingMonth, status, includeUnpublished, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BillDTOs.BillListResponse listForPayer(UUID userId, String billingMonth, BillStatus status, Pageable pageable) {
+        // Every unit the user pays for: as a tenant, or as an owner in a residential building.
+        // Bills still being drafted are not theirs to see yet.
+        Set<UUID> memberIds = unitMemberFacade.getActiveResidencesByUserId(userId).stream()
+                .filter(r -> r.role() == UnitMemberRole.TENANT || r.role() == UnitMemberRole.OWNER)
+                .map(UnitResidentDTO::memberId)
+                .collect(Collectors.toSet());
+        if (memberIds.isEmpty() || status == BillStatus.PENDING) {
+            return new BillDTOs.BillListResponse(
+                    List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
+                    new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+            );
+        }
+        return listForMembers(memberIds, billingMonth, status, false, pageable);
+    }
+
+    private BillDTOs.BillListResponse listForMembers(Set<UUID> memberIds, String billingMonth, BillStatus status,
+                                                     boolean includeUnpublished, Pageable pageable) {
+        Specification<BillTbl> spec = Specification.where(BillSpecifications.hasMemberIdIn(memberIds))
                 .and(BillSpecifications.hasBillingMonth(billingMonth))
                 .and(BillSpecifications.hasStatus(status));
         if (!includeUnpublished) {

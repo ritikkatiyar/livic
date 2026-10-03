@@ -12,11 +12,10 @@ import com.livic.core.finance.repository.ChargeConfigRepository;
 import com.livic.core.finance.repository.MeterReadingRepository;
 import com.livic.core.finance.service.impl.BillServiceImpl;
 import com.livic.core.property.domain.UnitMemberRole;
-import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.dto.UnitResidentDTO;
-import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.core.property.facade.UnitMemberFacade;
+import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.common.event.RentPublishedEvent;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.platform.user.facade.UserFacade;
@@ -37,7 +36,9 @@ import org.springframework.data.jpa.domain.Specification;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,7 +65,7 @@ class BillServiceTest {
     @Mock private UserFacade userFacade;
     @Mock private UnitFacade unitFacade;
     @Mock private UnitMemberFacade unitMemberFacade;
-    @Mock private PropertyFacade propertyFacade;
+    @Mock private AuthFacade authFacade;
 
     @InjectMocks private BillServiceImpl billService;
 
@@ -104,57 +105,83 @@ class BillServiceTest {
     }
 
     @Test
-    @DisplayName("A landlord listing all properties sees only the properties they belong to")
-    void listAllPropertiesScopesToTheLandlordsProperties() {
-        UUID landlordId = UUID.randomUUID();
-        when(unitMemberFacade.getActiveResidencesByUserId(landlordId)).thenReturn(List.of());
-        when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of(
-                new PropertySummaryDTO(UUID.randomUUID(), "My PG 1", "Address 1", "City", "Landmark", true),
-                new PropertySummaryDTO(UUID.randomUUID(), "My PG 2", "Address 2", "City", "Landmark", true)));
+    @DisplayName("Staff listing every property see only those where they hold BILL_VIEW")
+    void listScopesToPropertiesWithBillView() {
+        UUID staffId = UUID.randomUUID();
+        UUID billsProperty = UUID.randomUUID();
+        UUID issuesOnlyProperty = UUID.randomUUID();
+        when(authFacade.getEffectivePermissionCodes(staffId)).thenReturn(Map.of(
+                billsProperty, Set.of("BILL_VIEW"),
+                issuesOnlyProperty, Set.of("ISSUE_VIEW")));
         Pageable pageable = PageRequest.of(0, 20);
         when(billRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(emptyPage(pageable));
 
-        BillDTOs.BillListResponse result = billService.list(landlordId, null, "2026-08", null, null, pageable);
+        billService.list(staffId, null, "2026-08", null, null, pageable);
 
-        assertNotNull(result);
-        assertEquals(0, result.totalElements());
-        verify(propertyFacade, times(1)).getPropertiesByUserId(landlordId);
+        // Being a member of a property is not enough: the caretaker who only handles issues sees no bills.
+        verify(billRepository).getBillMetrics(eq(List.of(billsProperty)), eq("2026-08"), any(), any(), any(), any(), any());
     }
 
     @Test
-    @DisplayName("A landlord asking for a property they do not belong to gets an empty page")
-    void listForeignPropertyIsEmpty() {
-        UUID landlordId = UUID.randomUUID();
-        when(unitMemberFacade.getActiveResidencesByUserId(landlordId)).thenReturn(List.of());
-        when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of());
+    @DisplayName("A property the caller cannot view bills on gives an empty page")
+    void listPropertyWithoutBillViewIsEmpty() {
+        UUID staffId = UUID.randomUUID();
+        UUID propertyId = UUID.randomUUID();
+        when(authFacade.getEffectivePermissionCodes(staffId)).thenReturn(Map.of(propertyId, Set.of("ISSUE_VIEW")));
         Pageable pageable = PageRequest.of(0, 20);
 
-        BillDTOs.BillListResponse result = billService.list(landlordId, UUID.randomUUID(), "2026-08", null, null, pageable);
+        BillDTOs.BillListResponse result = billService.list(staffId, propertyId, "2026-08", null, null, pageable);
 
         assertTrue(result.content().isEmpty());
         verify(billRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
-    @DisplayName("A tenant listing bills sees only their own")
-    void listForATenantScopesToTheirOwnBills() {
+    @DisplayName("Staff who also live in a unit still get the staff view; their own bills are under /me/bills")
+    void staffWhoAreAlsoPayersKeepTheStaffView() {
+        UUID ownerManagerId = UUID.randomUUID();
+        when(authFacade.getEffectivePermissionCodes(ownerManagerId)).thenReturn(Map.of(propertyId, Set.of("BILL_VIEW")));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(billRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(emptyPage(pageable));
+
+        billService.list(ownerManagerId, propertyId, "2026-08", null, null, pageable);
+
+        verify(billRepository).findAll(any(Specification.class), eq(pageable));
+        verify(unitMemberFacade, never()).getActiveResidencesByUserId(any());
+    }
+
+    @Test
+    @DisplayName("A payer sees the bills they pay, and never a draft")
+    void payersSeeTheirOwnPublishedBills() {
         UUID tenantId = UUID.randomUUID();
         when(unitMemberFacade.getActiveResidencesByUserId(tenantId)).thenReturn(List.of(payer));
         Pageable pageable = PageRequest.of(0, 20);
         when(billRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(emptyPage(pageable));
 
-        assertNotNull(billService.list(tenantId, null, "2026-08", null, null, pageable));
-        verify(propertyFacade, never()).getPropertiesByUserId(any());
+        assertNotNull(billService.listForPayer(tenantId, "2026-08", null, pageable));
+        verify(billRepository, times(1)).findAll(any(Specification.class), eq(pageable));
+
+        assertTrue(billService.listForPayer(tenantId, "2026-08", BillStatus.PENDING, pageable).content().isEmpty());
+        verify(billRepository, times(1)).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    @DisplayName("Someone who pays for no unit has no bills of their own")
+    void nonPayersHaveNoBills() {
+        UUID staffId = UUID.randomUUID();
+        when(unitMemberFacade.getActiveResidencesByUserId(staffId)).thenReturn(List.of());
+
+        assertTrue(billService.listForPayer(staffId, null, null, PageRequest.of(0, 20)).content().isEmpty());
+        verify(billRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
     @DisplayName("Listing aggregates the month's metrics in one query and resolves no units")
     void listUsesOneMetricsQuery() {
         UUID landlordId = UUID.randomUUID();
-        when(unitMemberFacade.getActiveResidencesByUserId(landlordId)).thenReturn(List.of());
-        when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of(
-                new PropertySummaryDTO(UUID.randomUUID(), "Property 1", "Addr 1", "City", "Landmark", true),
-                new PropertySummaryDTO(UUID.randomUUID(), "Property 2", "Addr 2", "City", "Landmark", true)));
+        when(authFacade.getEffectivePermissionCodes(landlordId)).thenReturn(Map.of(
+                UUID.randomUUID(), Set.of("BILL_VIEW"),
+                UUID.randomUUID(), Set.of("BILL_VIEW", "BILL_MANAGE")));
         Pageable pageable = PageRequest.of(0, 20);
         when(billRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(emptyPage(pageable));
         when(billRepository.getBillMetrics(any(), eq("2026-08"), any(), any(), any(), any(), any()))

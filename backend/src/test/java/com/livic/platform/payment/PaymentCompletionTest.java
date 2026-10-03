@@ -133,7 +133,7 @@ class PaymentCompletionTest {
     private static PaymentTransactionTbl transaction(String status, UUID payerId) {
         PaymentTransactionTbl transaction = PaymentTransactionTbl.builder()
                 .payerUserId(payerId)
-                .referenceType(PaymentConstants.ReferenceType.BILL)
+                .referenceType("BILL")
                 .referenceId(UUID.randomUUID())
                 .gatewayTransactionId(ORDER_ID)
                 .amount(new BigDecimal("1000.00"))

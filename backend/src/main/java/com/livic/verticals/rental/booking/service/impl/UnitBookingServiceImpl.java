@@ -1,5 +1,6 @@
 package com.livic.verticals.rental.booking.service.impl;
 
+import com.livic.verticals.rental.booking.listener.BookingPaymentEventListener;
 import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import com.livic.verticals.rental.booking.repository.UnitBookingRepository;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
@@ -112,7 +113,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
 
         return paymentFacade.initiateOnlinePaymentTransaction(
                 payerUserId,
-                "UNIT_BOOKING",
+                BookingPaymentEventListener.REFERENCE_TYPE,
                 bookingId,
                 booking.getTokenAmount()
         );
@@ -135,7 +136,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
 
         return paymentFacade.recordCashPaymentTransaction(
                 payerUserId,
-                "UNIT_BOOKING",
+                BookingPaymentEventListener.REFERENCE_TYPE,
                 bookingId,
                 amount,
                 userDetailsId,

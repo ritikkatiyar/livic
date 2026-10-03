@@ -19,7 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class BookingPaymentEventListener {
 
-    static final String REFERENCE_TYPE = "UNIT_BOOKING";
+    /** What rental calls a booking-token payment; payment hands it back untouched. */
+    public static final String REFERENCE_TYPE = "UNIT_BOOKING";
 
     private final UnitBookingRepository unitBookingRepository;
 

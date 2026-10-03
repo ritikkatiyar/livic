@@ -1,5 +1,6 @@
 package com.livic.verticals.marketplace.service.impl;
 
+import com.livic.verticals.marketplace.listener.MarketplacePaymentEventListener;
 import com.livic.verticals.marketplace.domain.MarketplaceLeadTbl;
 import com.livic.verticals.marketplace.dto.MarketplaceLeadDTOs.CreateLeadRequest;
 import com.livic.verticals.marketplace.dto.MarketplaceLeadDTOs.LeadResponse;
@@ -178,7 +179,7 @@ public class MarketplaceLeadServiceImpl implements MarketplaceLeadService {
         // transaction has no payer and is identified by the lead it belongs to.
         PaymentTransactionResponse transaction = paymentFacade.initiateOnlinePaymentTransaction(
                 null,
-                "MARKETPLACE_LEAD",
+                MarketplacePaymentEventListener.REFERENCE_TYPE,
                 lead.getId(),
                 amount
         );

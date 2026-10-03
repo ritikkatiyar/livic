@@ -6,7 +6,6 @@ import com.livic.platform.user.repository.UserRepository;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.user.domain.DevicePlatform;
 import com.livic.platform.user.domain.UserDeviceTokenTbl;
-import com.livic.platform.user.domain.UserMode;
 import com.livic.platform.user.domain.UserPreferenceTbl;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.user.dto.UserSummaryDTO;
@@ -163,32 +162,26 @@ public class UserFacadeImpl implements UserFacade {
     }
 
     @Override
-    public UserMode getActiveModeForUser(UUID userId) {
-        return userPreferenceRepository.findByUserId(userId)
-                .map(UserPreferenceTbl::getActiveMode)
-                .orElse(UserMode.RENTAL);
-    }
-
-    @Override
     @Transactional
-    public void markOnboardingDone(UUID userId, UserMode defaultMode) {
+    public void markOnboardingDone(UUID userId, String mode) {
+        java.util.Objects.requireNonNull(mode, "mode");
         Optional<UserPreferenceTbl> existingOpt = userPreferenceRepository.findByUserId(userId);
         if (existingOpt.isPresent()) {
             UserPreferenceTbl preference = existingOpt.get();
             preference.setOnboardingDone(true);
-            if (preference.getActiveMode() == null && defaultMode != null) {
-                preference.setActiveMode(defaultMode);
+            if (preference.getActiveMode() == null) {
+                preference.setActiveMode(mode);
             }
             userPreferenceRepository.save(preference);
         } else {
             UserPreferenceTbl preference = UserPreferenceTbl.builder()
                     .userId(userId)
-                    .activeMode(defaultMode != null ? defaultMode : UserMode.RENTAL)
+                    .activeMode(mode)
                     .onboardingDone(true)
                     .build();
             userPreferenceRepository.save(preference);
         }
-        log.info("onboarding_marked_done userId={} mode={}", userId, defaultMode);
+        log.info("onboarding_marked_done userId={} mode={}", userId, mode);
     }
 
     @Override

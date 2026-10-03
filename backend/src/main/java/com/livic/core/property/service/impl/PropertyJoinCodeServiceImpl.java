@@ -1,5 +1,6 @@
 package com.livic.core.property.service.impl;
 
+import com.livic.core.property.domain.PropertyType;
 import com.livic.core.property.repository.PropertyJoinCodeRepository;
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
 import com.livic.platform.auth.facade.AuthFacade;
@@ -11,7 +12,6 @@ import com.livic.core.property.dto.PropertyJoinCodeDTOs;
 import com.livic.core.property.mapper.PropertyJoinCodeMapper;
 import com.livic.core.property.service.interfaces.PropertyJoinCodeService;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
-import com.livic.platform.user.domain.UserMode;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.extern.slf4j.Slf4j;
@@ -137,8 +137,9 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
                 joinCode.getCreatedBy()
         );
 
-        // Mark onboarding done so user is not blocked by the onboarding gate
-        userFacade.markOnboardingDone(userId, UserMode.RENTAL);
+        // Mark onboarding done so user is not blocked by the onboarding gate, in the app the property is run from
+        userFacade.markOnboardingDone(userId, property.getPropertyType() != null
+                ? property.getPropertyType().appMode() : PropertyType.RENTAL.appMode());
 
         joinCode.setUsesCount(joinCode.getUsesCount() + 1);
         if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {

@@ -6,7 +6,6 @@ import com.livic.platform.subscription.constant.BillingConstants;
 import com.livic.platform.subscription.domain.BillingWalletTbl;
 import com.livic.platform.subscription.domain.SaasSubscriptionTbl;
 import com.livic.platform.subscription.service.interfaces.BillingWalletService;
-import com.livic.platform.payment.constant.PaymentConstants;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,12 +24,16 @@ public class BillingPaymentEventListener {
     private final BillingWalletRepository billingWalletRepository;
     private final BillingWalletService walletService;
 
+    /** What subscription calls its payments; payment hands them back untouched. */
+    public static final String SUBSCRIPTION_REFERENCE_TYPE = "SAAS_SUBSCRIPTION";
+    public static final String WALLET_TOPUP_REFERENCE_TYPE = "WALLET_TOPUP";
+
     @EventListener
     @Transactional
     public void onPaymentCompleted(PaymentCompletedEvent event) {
-        if (PaymentConstants.ReferenceType.SAAS_SUBSCRIPTION.equalsIgnoreCase(event.getReferenceType())) {
+        if (SUBSCRIPTION_REFERENCE_TYPE.equalsIgnoreCase(event.getReferenceType())) {
             handleSubscriptionPayment(event);
-        } else if (PaymentConstants.ReferenceType.WALLET_TOPUP.equalsIgnoreCase(event.getReferenceType())) {
+        } else if (WALLET_TOPUP_REFERENCE_TYPE.equalsIgnoreCase(event.getReferenceType())) {
             handleWalletTopUpPayment(event);
         }
     }

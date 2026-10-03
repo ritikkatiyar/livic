@@ -11,7 +11,7 @@ import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.core.property.facade.UnitMemberFacade;
-import com.livic.platform.payment.constant.PaymentConstants;
+import com.livic.core.finance.listener.FinancePaymentEventListener;
 import com.livic.platform.payment.dto.PaymentInitiationResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
@@ -110,7 +110,7 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
         {
             PaymentInitiationResponse tx = paymentFacade
                     .getLatestSuccessfulTransaction(
-                            PaymentConstants.ReferenceType.BILL,
+                            FinancePaymentEventListener.REFERENCE_TYPE,
                             bill.getId())
                     .orElse(null);
             if (tx != null) {

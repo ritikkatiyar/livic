@@ -42,6 +42,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PropertyJoinCodeServiceIntegrationTest {
 
     @Autowired
+    private com.livic.platform.user.repository.UserPreferenceRepository userPreferenceRepository;
+
+    @Autowired
     private PropertyJoinCodeService propertyJoinCodeService;
 
     @Autowired
@@ -158,6 +161,8 @@ public class PropertyJoinCodeServiceIntegrationTest {
         // Assert - Membership created successfully
         assertNotNull(result);
         assertEquals(property.getId(), result.propertyId());
+        // … and the caretaker lands in the app the property is run from
+        assertEquals("RENTAL", userPreferenceRepository.findByUserId(newStaff.getId()).orElseThrow().getActiveMode());
         assertEquals("Caretaker", result.title());
         assertEquals(AccessType.CUSTOM_ACCESS, result.accessType());
         assertNotNull(result.membershipId());

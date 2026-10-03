@@ -1,5 +1,6 @@
 package com.livic.core.finance.service.impl;
 
+import com.livic.core.finance.listener.FinancePaymentEventListener;
 import com.livic.core.finance.repository.MeterReadingRepository;
 import com.livic.core.finance.repository.ChargeConfigRepository;
 import com.livic.core.finance.repository.BillLineRepository;
@@ -101,7 +102,7 @@ public class BillServiceImpl implements BillService {
 
         PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
                 .payerUserId(payerUserId)
-                .referenceType("BILL")
+                .referenceType(FinancePaymentEventListener.REFERENCE_TYPE)
                 .referenceId(billId)
                 .amount(remainingAmount)
                 .paymentMethod("ONLINE")
@@ -126,7 +127,7 @@ public class BillServiceImpl implements BillService {
 
         PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
                 .payerUserId(finalPayerId)
-                .referenceType("BILL")
+                .referenceType(FinancePaymentEventListener.REFERENCE_TYPE)
                 .referenceId(billId)
                 .amount(amount)
                 .paymentMethod("CASH")

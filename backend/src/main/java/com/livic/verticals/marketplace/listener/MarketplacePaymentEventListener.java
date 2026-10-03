@@ -24,10 +24,13 @@ public class MarketplacePaymentEventListener {
     // Booking a unit is rental's; the marketplace reaches it through core, never directly.
     private final PaidUnitBooking paidUnitBooking;
 
+    /** What marketplace calls a lead's token payment; payment hands it back untouched. */
+    public static final String REFERENCE_TYPE = "MARKETPLACE_LEAD";
+
     @EventListener
     @Transactional
     public void onPaymentCompleted(PaymentCompletedEvent event) {
-        if (!"MARKETPLACE_LEAD".equalsIgnoreCase(event.getReferenceType())) {
+        if (!REFERENCE_TYPE.equalsIgnoreCase(event.getReferenceType())) {
             return;
         }
 

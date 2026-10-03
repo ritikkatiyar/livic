@@ -4706,7 +4706,8 @@
       "SaveUserPreferenceRequest" : {
         "properties" : {
           "activeMode" : {
-            "enum" : [ "RENTAL", "RESIDENTIAL" ],
+            "minLength" : 1,
+            "pattern" : "^[A-Z_]{1,20}$",
             "type" : "string"
           }
         },
@@ -5667,7 +5668,6 @@
       "UserPreferenceResponse" : {
         "properties" : {
           "activeMode" : {
-            "enum" : [ "RENTAL", "RESIDENTIAL" ],
             "type" : "string"
           },
           "id" : {

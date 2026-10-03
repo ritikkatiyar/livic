@@ -7,7 +7,6 @@ import com.livic.core.finance.service.interfaces.LedgerService;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.core.finance.domain.BillTbl;
-import com.livic.platform.payment.constant.PaymentConstants;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,10 +26,13 @@ public class FinancePaymentEventListener {
     private final LedgerService ledgerService;
     private final UnitMemberFacade unitMemberFacade;
 
+    /** What finance calls a bill payment; payment hands it back untouched. */
+    public static final String REFERENCE_TYPE = "BILL";
+
     @EventListener
     @Transactional
     public void onPaymentCompleted(PaymentCompletedEvent event) {
-        if (PaymentConstants.ReferenceType.BILL.equalsIgnoreCase(event.getReferenceType())) {
+        if (REFERENCE_TYPE.equalsIgnoreCase(event.getReferenceType())) {
             handleBillPayment(event);
         }
     }

@@ -3729,8 +3729,7 @@ export interface components {
             returnNotes?: string;
         };
         SaveUserPreferenceRequest: {
-            /** @enum {string} */
-            activeMode: "RENTAL" | "RESIDENTIAL";
+            activeMode: string;
         };
         ServiceExpenseRequest: {
             amount: number;
@@ -4093,8 +4092,7 @@ export interface components {
             whatsappEnabled?: boolean;
         };
         UserPreferenceResponse: {
-            /** @enum {string} */
-            activeMode?: "RENTAL" | "RESIDENTIAL";
+            activeMode?: string;
             /** Format: uuid */
             id?: string;
             onboardingDone?: boolean;

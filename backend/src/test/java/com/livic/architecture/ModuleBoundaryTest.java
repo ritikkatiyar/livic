@@ -31,7 +31,7 @@ class ModuleBoundaryTest {
     /** Group-qualified module packages below com.livic (platform, services, features). */
     private static final String[] MODULES = {
             "platform.auth", "platform.user", "platform.payment", "platform.notification", "platform.storage",
-            "platform.subscription",
+            "platform.subscription", "platform.outbox",
             "core.property", "core.finance",
             "core.community.announcement", "core.community.analytics", "core.community.issue",
             "verticals.rental.inventory", "verticals.rental.lease", "verticals.rental.billing", "verticals.rental.booking",

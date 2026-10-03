@@ -30,6 +30,12 @@ public interface AuthFacade {
      */
     Optional<UUID> findPropertyOwnerId(UUID propertyId);
 
+    /** Properties whose owner (see {@link #findPropertyOwnerId}) is this user. */
+    List<UUID> getOwnedPropertyIds(UUID userId);
+
+    /** Removes every membership of a property that is being deleted. */
+    void removeMembershipsForProperty(UUID propertyId);
+
     void createOwnerMembership(UUID propertyId, UUID userId);
 
     boolean existsByUserIdAndPropertyId(UUID userId, UUID propertyId);

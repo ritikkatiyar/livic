@@ -1,6 +1,5 @@
 package com.livic.core.property;
 
-import com.livic.platform.common.event.PropertyDeletionEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
@@ -26,16 +25,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -73,8 +68,6 @@ public class PropertyServiceIntegrationTest {
     @Autowired
     private MembershipService membershipService;
 
-    @Autowired
-    private TestEventListener testEventListener;
 
     @Autowired
     private UnitLayoutOrchestrationService unitLayoutOrchestrationService;
@@ -87,34 +80,8 @@ public class PropertyServiceIntegrationTest {
     private PropertyTbl property;
     private UnitTbl unit;
 
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        public TestEventListener testEventListener() {
-            return new TestEventListener();
-        }
-    }
-
-    static class TestEventListener {
-        private final List<PropertyDeletionEvent> events = new ArrayList<>();
-
-        @EventListener
-        public void handlePropertyDeletion(PropertyDeletionEvent event) {
-            events.add(event);
-        }
-
-        public void clear() {
-            events.clear();
-        }
-
-        public List<PropertyDeletionEvent> getEvents() {
-            return events;
-        }
-    }
-
     @BeforeEach
     public void setUp() {
-        testEventListener.clear();
 
         landlord = UserTbl.builder()
                 .authUid("landlord-" + UUID.randomUUID() + "@test.com")
@@ -158,8 +125,9 @@ public class PropertyServiceIntegrationTest {
 
     @Test
     public void testDeletePropertyBlockedWhenLeaseExists() {
-        // Arrange - Create a lease on the property's unit
+        // Arrange - Create a lease on the property's unit, and the owner's membership
         leaseRepository.save(activeLease());
+        membershipService.createOwnerMembership(property.getId(), landlord.getId());
 
         // Act & Assert - Deletion is blocked with BAD_REQUEST
         BusinessException exception = assertThrows(BusinessException.class, () -> {
@@ -169,11 +137,10 @@ public class PropertyServiceIntegrationTest {
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
         assertEquals("Cannot delete property because its units have, or have had, residents.", exception.getMessage());
 
-        // Assert no event was published
-        assertTrue(testEventListener.getEvents().isEmpty(), "No PropertyDeletionEvent should be published when validation fails");
 
-        // Assert property still exists in repository
+        // Assert property still exists in repository, and nobody lost access to it
         assertTrue(propertyRepository.existsById(property.getId()), "Property should not be deleted from DB");
+        assertFalse(membershipRepository.findByPropertyId(property.getId()).isEmpty(), "Memberships stay when deletion is refused");
     }
 
     @Test
@@ -187,17 +154,13 @@ public class PropertyServiceIntegrationTest {
         // Act - Deletion of the property
         propertyService.deleteProperty(property.getId());
 
-        // Assert: Event was published
-        assertEquals(1, testEventListener.getEvents().size(), "One PropertyDeletionEvent should be published");
-        assertEquals(property.getId(), testEventListener.getEvents().get(0).getPropertyId());
-
         // Assert: Property is deleted
         assertFalse(propertyRepository.existsById(property.getId()), "Property should be deleted from DB");
 
         // Assert: Associated unit is deleted
         assertFalse(unitRepository.existsById(unit.getId()), "Property units should be deleted from DB");
 
-        // Assert: Memberships are cleaned up by the event listener (genuine side-effect)
+        // Assert: staff access goes with the property
         assertTrue(membershipRepository.findByPropertyId(property.getId()).isEmpty(), "Memberships should be deleted");
     }
 

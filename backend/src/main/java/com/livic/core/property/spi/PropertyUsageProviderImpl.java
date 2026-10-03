@@ -1,38 +1,30 @@
 package com.livic.core.property.spi;
 
-import com.livic.core.property.dto.PropertySummaryDTO;
-import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.facade.UnitFacade;
+import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.subscription.spi.PropertyUsageProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
-/** Plan usage counts, reported to subscription enforcement in platform. */
+/** Plan usage counts, reported to subscription enforcement in platform: what the user owns. */
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PropertyUsageProviderImpl implements PropertyUsageProvider {
 
-    private final PropertyFacade propertyFacade;
+    private final AuthFacade authFacade;
     private final UnitFacade unitFacade;
 
     @Override
     public long countPropertiesForUser(UUID userId) {
-        return propertyFacade.getPropertiesByUserId(userId, PageRequest.of(0, 1)).getTotalElements();
+        return authFacade.getOwnedPropertyIds(userId).size();
     }
 
     @Override
     public long countUnitsForUser(UUID userId) {
-        List<UUID> propertyIds = propertyFacade.getPropertiesByUserId(userId, Pageable.unpaged())
-                .getContent().stream()
-                .map(PropertySummaryDTO::id)
-                .toList();
-        return unitFacade.getTotalUnitsForPropertyIds(propertyIds);
+        return unitFacade.getTotalUnitsForPropertyIds(authFacade.getOwnedPropertyIds(userId));
     }
 }

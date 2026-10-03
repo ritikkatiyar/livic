@@ -1,7 +1,7 @@
 package com.livic.core.property.service.impl;
 
 import com.livic.core.property.repository.UnitRepository;
-import com.livic.platform.common.event.UnitsCreationRequestedEvent;
+import com.livic.platform.subscription.facade.SubscriptionLimitsFacade;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.property.domain.BlockTbl;
 import com.livic.core.property.domain.PropertyTbl;
@@ -16,7 +16,6 @@ import com.livic.core.property.service.interfaces.BlockService;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +38,7 @@ public class UnitServiceImpl implements UnitService {
     private final PropertyQueryService propertyQueryService;
     private final BlockService blockService;
     private final UnitMemberService unitMemberService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final SubscriptionLimitsFacade subscriptionLimitsFacade;
 
     @Override
     public List<UnitTbl> saveAll(List<UnitTbl> units) {
@@ -79,7 +78,7 @@ public class UnitServiceImpl implements UnitService {
         long newUnits = incomingNumbers.stream().filter(number -> !onFloorNumbers.contains(number)).count();
         int netAdditionalUnits = (int) newUnits - toRemove.size();
         if (netAdditionalUnits > 0) {
-            eventPublisher.publishEvent(new UnitsCreationRequestedEvent(this, propertyId, netAdditionalUnits));
+            subscriptionLimitsFacade.checkCanAddUnits(propertyId, netAdditionalUnits);
         }
 
         // Removing a unit would take its members with it, and their bills with them. A
@@ -204,7 +203,7 @@ public class UnitServiceImpl implements UnitService {
                 currentY += rowHeight;
             }
         }
-        eventPublisher.publishEvent(new UnitsCreationRequestedEvent(this, propertyId, generatedUnits.size()));
+        subscriptionLimitsFacade.checkCanAddUnits(propertyId, generatedUnits.size());
         return saveAll(generatedUnits);
     }
 }

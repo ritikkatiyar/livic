@@ -8,9 +8,9 @@ import java.util.UUID;
  */
 public interface PropertyUsageProvider {
 
-    /** Properties the user is an active member of. */
+    /** Properties the user owns; managing someone else's property does not use their plan. */
     long countPropertiesForUser(UUID userId);
 
-    /** Units across those properties. */
+    /** Units across the properties the user owns. */
     long countUnitsForUser(UUID userId);
 }

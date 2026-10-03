@@ -1,5 +1,6 @@
 package com.livic.platform.auth.facade.impl;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.domain.MembershipTbl;
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
@@ -74,6 +75,22 @@ public class AuthFacadeImpl implements AuthFacade {
                 .or(() -> fullAccess.stream()
                         .min(Comparator.comparing(MembershipTbl::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))))
                 .map(MembershipTbl::getUserId);
+    }
+
+    @Override
+    public List<UUID> getOwnedPropertyIds(UUID userId) {
+        return membershipRepository.findByUserId(userId).stream()
+                .filter(m -> m.isActive() && m.isFullAccess())
+                .map(MembershipTbl::getPropertyId)
+                .distinct()
+                .filter(propertyId -> findPropertyOwnerId(propertyId).filter(userId::equals).isPresent())
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void removeMembershipsForProperty(UUID propertyId) {
+        membershipRepository.deleteByPropertyId(propertyId);
     }
 
     @Override

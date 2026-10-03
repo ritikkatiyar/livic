@@ -34,8 +34,8 @@ public class UnitMemberTbl extends BaseEntity {
     @Column(name = "unit_id", nullable = false)
     private UUID unitId;
 
-    /** Null while an owner has been invited by phone but has not signed up yet. */
-    @Column(name = "user_id")
+    /** Everyone on a unit has an account: owners and tenants sign up first, then are added. */
+    @Column(name = "user_id", nullable = false)
     private UUID userId;
 
     @Enumerated(EnumType.STRING)
@@ -47,9 +47,6 @@ public class UnitMemberTbl extends BaseEntity {
     @Builder.Default
     private boolean isPrimary = false;
 
-    /** Phone used to invite someone who has no account yet. */
-    @Column(name = "invited_phone", length = 20)
-    private String invitedPhone;
 
     @Column(name = "from_date", nullable = false)
     private LocalDate fromDate;

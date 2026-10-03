@@ -1,5 +1,6 @@
 package com.livic.platform.user.facade.impl;
 
+import com.livic.platform.common.util.PhoneNumbers;
 import com.livic.platform.user.repository.UserPreferenceRepository;
 import com.livic.platform.user.repository.UserDeviceTokenRepository;
 import com.livic.platform.user.repository.UserRepository;
@@ -113,7 +114,7 @@ public class UserFacadeImpl implements UserFacade {
         UserTbl user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         user.setFullName(fullName != null ? fullName.trim() : "");
-        user.setPhoneNumber(normalizePhone(phoneNumber));
+        user.setPhoneNumber(PhoneNumbers.normalize(phoneNumber));
         user.setPasswordHash(passwordEncoder.encode(password));
         return UserSummaryDTO.from(userRepository.save(user));
     }
@@ -149,7 +150,7 @@ public class UserFacadeImpl implements UserFacade {
         UserTbl newUser = UserTbl.builder()
                 .authUid(email != null ? email.trim().toLowerCase() : "")
                 .fullName(fullName != null ? fullName.trim() : "")
-                .phoneNumber(normalizePhone(phoneNumber))
+                .phoneNumber(PhoneNumbers.normalize(phoneNumber))
                 .passwordHash(password != null ? passwordEncoder.encode(password) : null)
                 .emailVerified(emailVerified)
                 .globalRole(UserRole.USER)
@@ -157,9 +158,6 @@ public class UserFacadeImpl implements UserFacade {
         return UserSummaryDTO.from(userService.createUser(newUser));
     }
 
-    private static String normalizePhone(String phoneNumber) {
-        return phoneNumber == null || phoneNumber.isBlank() ? null : phoneNumber.trim();
-    }
 
     @Override
     @Transactional

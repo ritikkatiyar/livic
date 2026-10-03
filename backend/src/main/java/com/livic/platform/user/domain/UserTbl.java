@@ -21,8 +21,13 @@ public class UserTbl extends BaseEntity {
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
+    /** E.164, see {@link com.livic.platform.common.util.PhoneNumbers}. */
     @Column(name = "phone_number", unique = true)
     private String phoneNumber;
+
+    /** When a code sent to {@code phoneNumber} was last confirmed; cleared when the number changes. Not required yet. */
+    @Column(name = "phone_verified_at")
+    private java.time.LocalDateTime phoneVerifiedAt;
 
     @Column(name = "password_hash")
     private String passwordHash;

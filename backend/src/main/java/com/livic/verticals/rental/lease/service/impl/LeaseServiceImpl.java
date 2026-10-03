@@ -59,33 +59,21 @@ public class LeaseServiceImpl implements LeaseService {
         UnitBookingResponse booking = null;
         UUID targetUserId = request.userId();
 
-        // 2. Process booking conversion and auto-register prospective tenant if needed
+        // 2. A booking becomes a lease for the person who booked: they sign up themselves, and are
+        // found by their account, or the phone or email they booked with. No account is made for them.
         if (request.bookingId() != null) {
             booking = bookingFacade.getConvertibleBooking(request.bookingId());
 
             if (targetUserId == null) {
-                // Check if user already exists
-                UserSummaryDTO existingUser = null;
-                if (booking.prospectiveTenantEmail() != null) {
-                    existingUser = userFacade.getUserByEmail(booking.prospectiveTenantEmail()).orElse(null);
-                }
-
-                if (existingUser != null) {
-                    targetUserId = existingUser.id();
-                } else {
-                    // Create prospective tenant account dynamically
-                    String email = booking.prospectiveTenantEmail();
-                    if (email == null || email.isBlank()) {
-                        email = "tenant_" + booking.prospectiveTenantPhone() + "@tenantliving.com";
-                    }
-                    UserSummaryDTO createdUser = userFacade.createUser(
-                            email,
-                            booking.prospectiveTenantName(),
-                            booking.prospectiveTenantPhone(),
-                            booking.prospectiveTenantPhone()
-                    );
-                    targetUserId = createdUser.id();
-                }
+                UnitBookingResponse booked = booking;
+                targetUserId = java.util.Optional.ofNullable(booked.prospectiveTenantUserId()).flatMap(userFacade::getUserById)
+                        .or(() -> userFacade.findByPhoneNumber(booked.prospectiveTenantPhone()))
+                        .or(() -> booked.prospectiveTenantEmail() == null ? java.util.Optional.empty()
+                                : userFacade.getUserByEmail(booked.prospectiveTenantEmail()))
+                        .map(UserSummaryDTO::id)
+                        .orElseThrow(() -> new BusinessException(HttpStatus.CONFLICT,
+                                booked.prospectiveTenantName() + " has no Livic account yet. Ask them to sign up with "
+                                        + booked.prospectiveTenantPhone() + ", then convert the booking."));
             }
         }
 

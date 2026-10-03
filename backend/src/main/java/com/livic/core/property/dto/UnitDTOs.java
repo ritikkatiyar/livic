@@ -64,9 +64,8 @@ public class UnitDTOs {
     ) {}
 
     /**
-     * An active member of the unit. {@code agreement} is what a vertical holds them under, such as a
-     * lease in rental; owners and family usually have none. {@code userId} is missing for an owner
-     * invited by phone who has not signed up.
+     * An active member of the unit, always someone with an account. {@code agreement} is what a
+     * vertical holds them under, such as a lease in rental; owners and family usually have none.
      */
     public record Occupant(
             UUID memberId,

@@ -88,58 +88,57 @@ export function FloorEditorDetailCard({
         {...tenantAssignProps}
       />
 
-      {!tenantAssignProps.isCreatingNewTenant && (
-        <>
-          <View style={styles.statusContainer}>
-            <TouchableOpacity 
-              style={[
-                styles.statusToggle, 
-                selectedBlock.status === 'VACANT' && styles.statusActiveVacant,
-                Boolean(selectedBlock.activeLeaseId) && styles.statusDisabled,
-              ]}
-              onPress={() => updateUnitDetails(selectedBlock.id, { status: 'VACANT' })}
-              disabled={Boolean(selectedBlock.activeLeaseId)}
-            >
-              {selectedBlock.status === 'VACANT' && <View style={styles.statusDotVacant} />}
-              <Text style={[styles.statusToggleText, selectedBlock.status === 'VACANT' && styles.statusTextVacant]}>VACANT</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[
-                styles.statusToggle, 
-                selectedBlock.status === 'OCCUPIED' && styles.statusActiveOccupied,
-                Boolean(selectedBlock.activeLeaseId) && styles.statusDisabled,
-              ]}
-              onPress={() => updateUnitDetails(selectedBlock.id, { status: 'OCCUPIED' })}
-              disabled={Boolean(selectedBlock.activeLeaseId)}
-            >
-              {selectedBlock.status === 'OCCUPIED' && <View style={styles.statusDotOccupied} />}
-              <Text style={[styles.statusToggleText, selectedBlock.status === 'OCCUPIED' && styles.statusTextOccupied]}>OCCUPIED</Text>
-            </TouchableOpacity>
+      <>
+        <View style={styles.statusContainer}>
+          <TouchableOpacity 
+            style={[
+              styles.statusToggle, 
+              selectedBlock.status === 'VACANT' && styles.statusActiveVacant,
+              Boolean(selectedBlock.activeLeaseId) && styles.statusDisabled,
+            ]}
+            onPress={() => updateUnitDetails(selectedBlock.id, { status: 'VACANT' })}
+            disabled={Boolean(selectedBlock.activeLeaseId)}
+          >
+            {selectedBlock.status === 'VACANT' && <View style={styles.statusDotVacant} />}
+            <Text style={[styles.statusToggleText, selectedBlock.status === 'VACANT' && styles.statusTextVacant]}>VACANT</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[
+              styles.statusToggle, 
+              selectedBlock.status === 'OCCUPIED' && styles.statusActiveOccupied,
+              Boolean(selectedBlock.activeLeaseId) && styles.statusDisabled,
+            ]}
+            onPress={() => updateUnitDetails(selectedBlock.id, { status: 'OCCUPIED' })}
+            disabled={Boolean(selectedBlock.activeLeaseId)}
+          >
+            {selectedBlock.status === 'OCCUPIED' && <View style={styles.statusDotOccupied} />}
+            <Text style={[styles.statusToggleText, selectedBlock.status === 'OCCUPIED' && styles.statusTextOccupied]}>OCCUPIED</Text>
+          </TouchableOpacity>
+        </View>
+        {Boolean(selectedBlock.activeLeaseId) && (
+          <View style={styles.statusLockedHint}>
+            <MaterialIcons name="lock-outline" size={12} color={theme.Colors.onSurfaceVariant} />
+            <Text style={styles.statusLockedText}>Status synced with active lease</Text>
           </View>
-          {Boolean(selectedBlock.activeLeaseId) && (
-            <View style={styles.statusLockedHint}>
-              <MaterialIcons name="lock-outline" size={12} color={theme.Colors.onSurfaceVariant} />
-              <Text style={styles.statusLockedText}>Status synced with active lease</Text>
-            </View>
-          )}
+        )}
 
-          {/* Unit / Room Photo Upload Section */}
-          <View style={styles.photosSection}>
-            <MediaUploadGrid
-              ownerModule="PROPERTY"
-              referenceId={effectivePropertyId || undefined}
-              userToken={effectiveToken}
-              stagedFiles={selectedBlock.photos || []}
-              onStagedFilesChange={(files) => updateUnitDetails(selectedBlock.id, { photos: files })}
-              maxFiles={8}
-              label={`Unit ${selectedBlock.unitNumber} Photos`}
-              helperText="Upload or snap photos of this room condition, inventory, or layout."
-              caption={`unit:${selectedBlock.id}:${selectedBlock.unitNumber}`}
-              filterCaption={`unit:${selectedBlock.id}:${selectedBlock.unitNumber}`}
-            />
-          </View>
-        </>
-      )}
+        {/* Unit / Room Photo Upload Section */}
+        <View style={styles.photosSection}>
+          <MediaUploadGrid
+            ownerModule="PROPERTY"
+            referenceId={effectivePropertyId || undefined}
+            userToken={effectiveToken}
+            stagedFiles={selectedBlock.photos || []}
+            onStagedFilesChange={(files) => updateUnitDetails(selectedBlock.id, { photos: files })}
+            maxFiles={8}
+            label={`Unit ${selectedBlock.unitNumber} Photos`}
+            helperText="Upload or snap photos of this room condition, inventory, or layout."
+            caption={`unit:${selectedBlock.id}:${selectedBlock.unitNumber}`}
+            filterCaption={`unit:${selectedBlock.id}:${selectedBlock.unitNumber}`}
+          />
+        </View>
+      </>
+    
     </View>
   );
 }

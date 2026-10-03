@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { getFloorLayout, occupantFromLease, tenantsOf, Occupant } from '@/src/features/properties/api/unit.api';
 import { createLease, terminateLease } from '@/src/features/tenant/api/lease.api';
-import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '@/src/features/auth/api/user.api';
+import { searchUserByPhone, UserSearchResponse } from '@/src/features/auth/api/user.api';
 import { logger } from '@/src/utils/logger';
 import { formatErrorMessage } from '@/src/utils/errors';
 
@@ -60,10 +60,6 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
   const [tenantSearchError, setTenantSearchError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<UserSearchResponse[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [isCreatingNewTenant, setIsCreatingNewTenant] = useState(false);
-  const [newTenantName, setNewTenantName] = useState('');
-  const [newTenantEmail, setNewTenantEmail] = useState('');
-  const [tenantCreating, setTenantCreating] = useState(false);
   const [parentScrollEnabled, setParentScrollEnabled] = useState(true);
 
   const resetTenantAssignmentForm = useCallback(() => {
@@ -71,9 +67,6 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     setTenantSearchResult(null);
     setTenantSearchError(null);
     setSuggestions([]);
-    setIsCreatingNewTenant(false);
-    setNewTenantName('');
-    setNewTenantEmail('');
     setRentAmount('');
     setSecurityDeposit('');
     setParentScrollEnabled(true);
@@ -238,44 +231,6 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     }
   };
 
-  const handleCreateAndSelectTenant = async () => {
-    const name = newTenantName.trim();
-    const email = newTenantEmail.trim();
-    const phone = tenantPhoneSearch.trim();
-
-    if (!name) {
-      setTenantSearchError('Enter the tenant\'s full name.');
-      return;
-    }
-    if (!email) {
-      setTenantSearchError('Enter the tenant\'s email address.');
-      return;
-    }
-    if (!phone || phone.length < 10) {
-      setTenantSearchError('Valid 10-digit phone number is required.');
-      return;
-    }
-
-    setTenantCreating(true);
-    setTenantSearchError(null);
-    try {
-      const createdUser = await quickCreateTenant({ email, fullName: name, phoneNumber: phone }, propertyId, token);
-      setTenantSearchResult(createdUser);
-      setTenantPhoneSearch(createdUser.phoneNumber || '');
-      setIsCreatingNewTenant(false);
-      setNewTenantName('');
-      setNewTenantEmail('');
-      setSuggestions([]);
-
-      await handleAssignTenant(createdUser);
-    } catch (error: any) {
-      logger.error('[Create Tenant Error]', error);
-      setTenantSearchError(formatErrorMessage(error));
-    } finally {
-      setTenantCreating(false);
-    }
-  };
-
   const handleRemoveTenant = async (leaseId: string, tenantName?: string | null) => {
     const selectedBlock = blocks.find(b => b.id === selectedUnitId);
     if (!selectedBlock) return;
@@ -336,22 +291,15 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     securityDeposit,
     setSecurityDeposit,
     tenantSearchError,
+    tenantAssigning,
     setSuggestions,
     suggestions,
     suggestionsLoading,
-    isCreatingNewTenant,
-    setIsCreatingNewTenant,
-    newTenantName,
-    setNewTenantName,
-    newTenantEmail,
-    setNewTenantEmail,
-    tenantCreating,
     parentScrollEnabled,
     setParentScrollEnabled,
     resetTenantAssignmentForm,
     updateUnitDetails,
     handleSearchTenant,
-    handleCreateAndSelectTenant,
     handleAssignTenant,
     handleRemoveTenant,
     fetchLayout,

@@ -1210,20 +1210,6 @@
         },
         "type" : "object"
       },
-      "ApiResponseUserSearchResponse" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/UserSearchResponse"
-          },
-          "error" : {
-            "type" : "string"
-          },
-          "success" : {
-            "type" : "boolean"
-          }
-        },
-        "type" : "object"
-      },
       "ApiResponseVerificationItemResponse" : {
         "properties" : {
           "data" : {
@@ -2204,25 +2190,6 @@
           }
         },
         "required" : [ "address", "city", "name" ],
-        "type" : "object"
-      },
-      "CreateTenantRequest" : {
-        "properties" : {
-          "email" : {
-            "format" : "email",
-            "minLength" : 1,
-            "type" : "string"
-          },
-          "fullName" : {
-            "minLength" : 1,
-            "type" : "string"
-          },
-          "phoneNumber" : {
-            "minLength" : 1,
-            "type" : "string"
-          }
-        },
-        "required" : [ "email", "fullName", "phoneNumber" ],
         "type" : "object"
       },
       "DayHours" : {
@@ -5698,6 +5665,9 @@
           },
           "phoneNumber" : {
             "type" : "string"
+          },
+          "phoneVerified" : {
+            "type" : "boolean"
           }
         },
         "type" : "object"
@@ -10279,43 +10249,6 @@
           }
         },
         "tags" : [ "unit-controller" ]
-      }
-    },
-    "/api/v1/user/create-tenant" : {
-      "post" : {
-        "operationId" : "createTenant",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "propertyId",
-          "required" : true,
-          "schema" : {
-            "format" : "uuid",
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CreateTenantRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiResponseUserSearchResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          }
-        },
-        "tags" : [ "user-controller" ]
       }
     },
     "/api/v1/user/notification-preferences" : {

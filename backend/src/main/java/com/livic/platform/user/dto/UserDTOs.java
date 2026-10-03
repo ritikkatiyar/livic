@@ -12,6 +12,8 @@ public class UserDTOs {
             String email,
             String fullName,
             String phoneNumber,
+            /** Whether the person confirmed this number with a code; shown, not yet required. */
+            boolean phoneVerified,
             UserRole globalRole
     ) {
         public static UserSearchResponse from(UserTbl user) {
@@ -20,22 +22,11 @@ public class UserDTOs {
                     user.getAuthUid(),
                     user.getFullName(),
                     user.getPhoneNumber(),
+                    user.getPhoneVerifiedAt() != null,
                     user.getGlobalRole()
             );
         }
     }
-
-    public record CreateTenantRequest(
-            @jakarta.validation.constraints.Email
-            @jakarta.validation.constraints.NotBlank
-            String email,
-
-            @jakarta.validation.constraints.NotBlank
-            String fullName,
-
-            @jakarta.validation.constraints.NotBlank
-            String phoneNumber
-    ) {}
 
     public record ProfileResponse(
             UUID userId,

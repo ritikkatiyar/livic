@@ -1876,22 +1876,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/user/create-tenant": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["createTenant"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/user/notification-preferences": {
         parameters: {
             query?: never;
@@ -2384,11 +2368,6 @@ export interface components {
             error?: string;
             success?: boolean;
         };
-        ApiResponseUserSearchResponse: {
-            data?: components["schemas"]["UserSearchResponse"];
-            error?: string;
-            success?: boolean;
-        };
         ApiResponseVerificationItemResponse: {
             data?: components["schemas"]["VerificationItemResponse"];
             error?: string;
@@ -2763,12 +2742,6 @@ export interface components {
             name: string;
             /** Format: int32 */
             totalFloors?: number;
-        };
-        CreateTenantRequest: {
-            /** Format: email */
-            email: string;
-            fullName: string;
-            phoneNumber: string;
         };
         DayHours: {
             /** @enum {string} */
@@ -4121,6 +4094,7 @@ export interface components {
             /** Format: uuid */
             id?: string;
             phoneNumber?: string;
+            phoneVerified?: boolean;
         };
         ValidateJoinCodeRequest: {
             code: string;
@@ -7448,32 +7422,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseListUnitResponse"];
-                };
-            };
-        };
-    };
-    createTenant: {
-        parameters: {
-            query: {
-                propertyId: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateTenantRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseUserSearchResponse"];
                 };
             };
         };

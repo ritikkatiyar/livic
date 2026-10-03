@@ -16,15 +16,3 @@ export function searchUserByPhone(phone: string, propertyId: string, token: stri
     }
   );
 }
-
-export function quickCreateTenant(
-  payload: { email: string; fullName: string; phoneNumber: string },
-  propertyId: string,
-  token: string
-): Promise<UserSearchResponse> {
-  return apiRequest<UserSearchResponse>(`/api/v1/user/create-tenant?propertyId=${encodeURIComponent(propertyId)}`, {
-    method: 'POST',
-    token,
-    body: JSON.stringify(payload),
-  });
-}

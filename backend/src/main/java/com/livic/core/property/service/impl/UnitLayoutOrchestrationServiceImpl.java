@@ -138,7 +138,7 @@ public class UnitLayoutOrchestrationServiceImpl implements UnitLayoutOrchestrati
                 m.getId(),
                 m.getUserId(),
                 user != null ? user.fullName() : null,
-                user != null ? user.phoneNumber() : m.getInvitedPhone(),
+                user != null ? user.phoneNumber() : null,
                 m.getRole(),
                 m.getFromDate(),
                 agreement

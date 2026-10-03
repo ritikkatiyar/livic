@@ -1,31 +1,23 @@
 package com.livic.platform.payment.event;
 
 import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-@Getter
+/**
+ * A payment went through. Published through the outbox: each module that took a payment of its
+ * {@code referenceType} reacts in its own transaction, after the payment is committed, and is
+ * retried on its own if it fails.
+ */
 @Builder
-@ToString
-public class PaymentCompletedEvent {
-    private final UUID transactionId;
-    private final String referenceType;
-    private final UUID referenceId;
-    private final UUID payerUserId;
-    private final BigDecimal amount;
-    private final String gatewayName;
-    private final String gatewayTransactionId;
-
-    public PaymentCompletedEvent(UUID transactionId, String referenceType, UUID referenceId, UUID payerUserId, BigDecimal amount, String gatewayName, String gatewayTransactionId) {
-        this.transactionId = transactionId;
-        this.referenceType = referenceType;
-        this.referenceId = referenceId;
-        this.payerUserId = payerUserId;
-        this.amount = amount;
-        this.gatewayName = gatewayName;
-        this.gatewayTransactionId = gatewayTransactionId;
-    }
+public record PaymentCompletedEvent(
+        UUID transactionId,
+        String referenceType,
+        UUID referenceId,
+        UUID payerUserId,
+        BigDecimal amount,
+        String gatewayName,
+        String gatewayTransactionId
+) {
 }

@@ -7,6 +7,7 @@ import com.livic.platform.outbox.repository.OutboxEventRepository;
 import com.livic.platform.outbox.spi.OutboxConsumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -29,7 +30,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-public class OutboxDelivery {
+public class OutboxDelivery implements SmartInitializingSingleton {
 
     static final int MAX_ATTEMPTS = 10;
     private static final Duration FIRST_RETRY = Duration.ofSeconds(30);
@@ -38,25 +39,33 @@ public class OutboxDelivery {
     public static final Duration IMMEDIATE_GRACE = Duration.ofMinutes(1);
     private static final int BATCH = 100;
 
+    // Consumers depend on services that publish through the outbox, so they are looked up once every
+    // bean exists rather than injected.
+    private final ObjectProvider<OutboxConsumer<?>> consumerBeans;
     private final Map<String, OutboxConsumer<?>> consumersByName = new HashMap<>();
-    private final List<OutboxConsumer<?>> consumers;
+    private List<OutboxConsumer<?>> consumers = List.of();
     private final OutboxEventRepository repository;
     private final ObjectMapper objectMapper;
     private final TransactionTemplate newTransaction;
 
     public OutboxDelivery(ObjectProvider<OutboxConsumer<?>> consumerBeans, OutboxEventRepository repository,
                           ObjectMapper objectMapper, PlatformTransactionManager transactionManager) {
-        List<OutboxConsumer<?>> consumers = consumerBeans.orderedStream().toList();
-        for (OutboxConsumer<?> consumer : consumers) {
-            if (consumersByName.putIfAbsent(consumer.name(), consumer) != null) {
-                throw new IllegalStateException("Two outbox consumers are named " + consumer.name());
-            }
-        }
-        this.consumers = List.copyOf(consumers);
+        this.consumerBeans = consumerBeans;
         this.repository = repository;
         this.objectMapper = objectMapper;
         this.newTransaction = new TransactionTemplate(transactionManager);
         this.newTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
+    @Override
+    public void afterSingletonsInstantiated() {
+        List<OutboxConsumer<?>> found = consumerBeans.orderedStream().toList();
+        for (OutboxConsumer<?> consumer : found) {
+            if (consumersByName.putIfAbsent(consumer.name(), consumer) != null) {
+                throw new IllegalStateException("Two outbox consumers are named " + consumer.name());
+            }
+        }
+        this.consumers = found;
     }
 
     /** The consumers that want this event. */

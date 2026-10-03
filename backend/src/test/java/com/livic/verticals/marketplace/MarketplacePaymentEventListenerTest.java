@@ -78,7 +78,7 @@ public class MarketplacePaymentEventListenerTest {
         when(leadRepository.findById(leadId)).thenReturn(Optional.of(bookingLead));
         when(paidUnitBooking.bookPaidUnit(any(PaidUnitBooking.Request.class))).thenReturn(bookingId);
 
-        eventListener.onPaymentCompleted(event);
+        eventListener.handle(event);
 
         // Verify lead updated to CONVERTED
         assertEquals(LeadStatus.CONVERTED, bookingLead.getStatus());
@@ -110,7 +110,7 @@ public class MarketplacePaymentEventListenerTest {
 
         when(leadRepository.findById(leadId)).thenReturn(Optional.of(bookingLead));
 
-        eventListener.onPaymentCompleted(event);
+        eventListener.handle(event);
 
         verify(paidUnitBooking, never()).bookPaidUnit(any());
         verify(leadRepository).save(bookingLead);
@@ -124,7 +124,7 @@ public class MarketplacePaymentEventListenerTest {
                 .referenceId(leadId)
                 .build();
 
-        eventListener.onPaymentCompleted(event);
+        eventListener.handle(event);
 
         verify(leadRepository, never()).findById(any());
         verify(paidUnitBooking, never()).bookPaidUnit(any());

@@ -1,5 +1,6 @@
 package com.livic.verticals.marketplace.listener;
 
+import com.livic.platform.outbox.spi.OutboxConsumer;
 import com.livic.verticals.marketplace.domain.LeadStatus;
 import com.livic.verticals.marketplace.domain.LeadType;
 import com.livic.verticals.marketplace.domain.MarketplaceLeadTbl;
@@ -8,9 +9,7 @@ import com.livic.platform.payment.event.PaymentCompletedEvent;
 import com.livic.core.property.spi.PaidUnitBooking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -18,7 +17,8 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MarketplacePaymentEventListener {
+/** Confirms a lead, and books its unit, once its token payment is committed. */
+public class MarketplacePaymentEventListener implements OutboxConsumer<PaymentCompletedEvent> {
 
     private final MarketplaceLeadRepository leadRepository;
     // Booking a unit is rental's; the marketplace reaches it through core, never directly.
@@ -27,18 +27,32 @@ public class MarketplacePaymentEventListener {
     /** What marketplace calls a lead's token payment; payment hands it back untouched. */
     public static final String REFERENCE_TYPE = "MARKETPLACE_LEAD";
 
-    @EventListener
-    @Transactional
-    public void onPaymentCompleted(PaymentCompletedEvent event) {
-        if (!REFERENCE_TYPE.equalsIgnoreCase(event.getReferenceType())) {
+    @Override
+    public String name() {
+        return "marketplace.lead-payment";
+    }
+
+    @Override
+    public Class<PaymentCompletedEvent> eventType() {
+        return PaymentCompletedEvent.class;
+    }
+
+    @Override
+    public boolean accepts(PaymentCompletedEvent event) {
+        return REFERENCE_TYPE.equalsIgnoreCase(event.referenceType());
+    }
+
+    @Override
+    public void handle(PaymentCompletedEvent event) {
+        if (!REFERENCE_TYPE.equalsIgnoreCase(event.referenceType())) {
             return;
         }
 
         log.info("[OBSERVER: MARKETPLACE] Processing PaymentCompletedEvent for Marketplace Lead: {}", event);
 
-        MarketplaceLeadTbl lead = leadRepository.findById(event.getReferenceId()).orElse(null);
+        MarketplaceLeadTbl lead = leadRepository.findById(event.referenceId()).orElse(null);
         if (lead == null) {
-            log.warn("[OBSERVER: MARKETPLACE] Marketplace Lead not found for ID: {}", event.getReferenceId());
+            log.warn("[OBSERVER: MARKETPLACE] Marketplace Lead not found for ID: {}", event.referenceId());
             return;
         }
 
@@ -54,9 +68,9 @@ public class MarketplacePaymentEventListener {
                     lead.getProspectName(),
                     lead.getProspectPhone(),
                     lead.getProspectEmail(),
-                    event.getAmount(),
+                    event.amount(),
                     moveInDate,
-                    event.getTransactionId()
+                    event.transactionId()
             ));
 
             lead.setConvertedUnitBookingId(bookingId);

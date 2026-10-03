@@ -36,7 +36,7 @@ class BookingPaymentEventListenerTest {
         when(unitBookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
         UUID transactionId = UUID.randomUUID();
 
-        listener.onPaymentCompleted(payment(booking.getId(), transactionId, BigDecimal.valueOf(2000)));
+        listener.handle(payment(booking.getId(), transactionId, BigDecimal.valueOf(2000)));
 
         assertThat(booking.getPaymentTransactionId()).isEqualTo(transactionId);
         verify(unitBookingRepository).save(booking);
@@ -48,7 +48,7 @@ class BookingPaymentEventListenerTest {
         UnitBookingTbl booking = booking(BigDecimal.valueOf(2000));
         when(unitBookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
 
-        listener.onPaymentCompleted(payment(booking.getId(), UUID.randomUUID(), BigDecimal.valueOf(500)));
+        listener.handle(payment(booking.getId(), UUID.randomUUID(), BigDecimal.valueOf(500)));
 
         assertThat(booking.getPaymentTransactionId()).isNull();
         verify(unitBookingRepository, never()).save(any());
@@ -57,7 +57,7 @@ class BookingPaymentEventListenerTest {
     @Test
     @DisplayName("Payments for anything else are ignored")
     void ignoresOtherPayments() {
-        listener.onPaymentCompleted(PaymentCompletedEvent.builder().referenceType("BILL").referenceId(UUID.randomUUID()).build());
+        listener.handle(PaymentCompletedEvent.builder().referenceType("BILL").referenceId(UUID.randomUUID()).build());
 
         verify(unitBookingRepository, never()).findById(any());
     }

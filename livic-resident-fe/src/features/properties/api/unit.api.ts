@@ -13,9 +13,16 @@ export function getFloorSummaries(propertyId: string, token: string, throughFloo
   });
 }
 
-export type UnitResponse = ApiModel<'UnitResponse', 'activeLeases'>;
+/** What a member holds the unit under, such as a lease; owners and family usually have none. */
+export type MemberAgreement = ApiModel<'MemberAgreement', 'monthlyAmount' | 'startDate' | 'endDate' | 'status', 'monthlyAmount' | 'startDate' | 'endDate' | 'status'>;
 
-export type ActiveLeaseSummary = ApiModel<'ActiveLeaseSummary', 'tenantName' | 'tenantPhone', 'tenantName' | 'tenantPhone'>;
+export type Occupant = Omit<ApiModel<'Occupant', 'userId' | 'name' | 'phone' | 'fromDate', 'userId' | 'name' | 'phone' | 'fromDate'>, 'agreement'> & {
+  agreement?: MemberAgreement | null;
+};
+
+export type UnitResponse = Omit<ApiModel<'UnitResponse', 'blockId', 'blockId'>, 'members'> & {
+  members?: Occupant[];
+};
 
 export function getFloorLayout(propertyId: string, floorNumber: number, token: string): Promise<UnitResponse[]> {
   const path = `/api/v1/properties/${propertyId}/floors/${floorNumber}/layout`;

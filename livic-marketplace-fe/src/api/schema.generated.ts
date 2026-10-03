@@ -1944,16 +1944,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        ActiveLeaseSummary: {
-            /** Format: uuid */
-            leaseId?: string;
-            rentAmount?: number;
-            status?: string;
-            tenantName?: string;
-            tenantPhone?: string;
-            /** Format: uuid */
-            tenantUserId?: string;
-        };
         AnnouncementResponse: {
             /** @enum {string} */
             category?: "GENERAL" | "MAINTENANCE" | "EMERGENCY" | "BILLING" | "EVENT";
@@ -3029,6 +3019,8 @@ export interface components {
             createdAt?: string;
             /** Format: uuid */
             id?: string;
+            /** Format: uuid */
+            memberId?: string;
             monthlyRentAmount?: number;
             /** Format: date */
             moveInDate?: string;
@@ -3091,6 +3083,16 @@ export interface components {
             /** Format: uuid */
             uploadedByUserId?: string;
             url?: string;
+        };
+        MemberAgreement: {
+            /** Format: date */
+            endDate?: string;
+            /** Format: uuid */
+            id?: string;
+            monthlyAmount?: number;
+            /** Format: date */
+            startDate?: string;
+            status?: string;
         };
         MembershipResponse: {
             /** @enum {string} */
@@ -3182,6 +3184,19 @@ export interface components {
         };
         OAuthLoginRequest: {
             idToken: string;
+        };
+        Occupant: {
+            agreement?: components["schemas"]["MemberAgreement"];
+            /** Format: date */
+            fromDate?: string;
+            /** Format: uuid */
+            memberId?: string;
+            name?: string;
+            phone?: string;
+            /** @enum {string} */
+            role?: "OWNER" | "TENANT" | "FAMILY";
+            /** Format: uuid */
+            userId?: string;
         };
         OtpRequestRequest: {
             phone: string;
@@ -3593,7 +3608,7 @@ export interface components {
         };
         PortfolioOccupancyResponse: {
             /** Format: int32 */
-            activeLeases?: number;
+            activeTenants?: number;
             bedOccupancyRate?: number;
             /** Format: int32 */
             fullUnits?: number;
@@ -3934,7 +3949,6 @@ export interface components {
             unitId?: string;
         };
         UnitResponse: {
-            activeLeases?: components["schemas"]["ActiveLeaseSummary"][];
             /** Format: uuid */
             blockId?: string;
             /** Format: int32 */
@@ -3953,6 +3967,7 @@ export interface components {
             gridY?: number;
             /** Format: uuid */
             id?: string;
+            members?: components["schemas"]["Occupant"][];
             /** @enum {string} */
             type?: "Single Unit" | "Shared Unit" | "1 BHK" | "2 BHK" | "Studio Apartment";
             unitNumber?: string;

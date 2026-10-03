@@ -4,8 +4,9 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
- * Occupancy of one property. Unit fields count rooms (a shared room with any tenant is one occupied unit);
- * bed fields count capacity. Both rates are percentages in [0, 100]. {@code activeLeases} is the tenant count.
+ * Occupancy of one property. Unit fields count rooms (a shared room with any tenant is one occupied unit,
+ * and so is an owner-occupied flat); bed fields count tenants against capacity. Both rates are percentages
+ * in [0, 100].
  */
 public record PortfolioOccupancyResponse(
         UUID propertyId,
@@ -20,5 +21,5 @@ public record PortfolioOccupancyResponse(
         int totalBeds,
         int occupiedBeds,
         BigDecimal bedOccupancyRate,
-        int activeLeases
+        int activeTenants
 ) {}

@@ -71,6 +71,7 @@ public final class LeaseMapper {
         return new LeaseDTOs.LeaseResponse(
                 lease.getId(),
                 lease.getUserId(),
+                lease.getMemberId(),
                 lease.getUnitId(),
                 blockId,
                 blockName,

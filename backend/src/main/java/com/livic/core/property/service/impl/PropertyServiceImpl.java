@@ -14,7 +14,6 @@ import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.common.event.PropertyDeletionEvent;
-import com.livic.core.property.spi.UnitOccupancyProvider;
 import com.livic.platform.common.exception.BusinessException;
 import org.springframework.http.HttpStatus;
 
@@ -38,7 +37,6 @@ public class PropertyServiceImpl implements PropertyService {
     private final BlockService blockService;
     private final BlockRepository blockRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final UnitOccupancyProvider unitOccupancyProvider;
     private final UnitMemberService unitMemberService;
 
     @Override
@@ -78,14 +76,11 @@ public class PropertyServiceImpl implements PropertyService {
 
     @Override
     public void deleteProperty(UUID propertyId) {
-        if (unitOccupancyProvider.hasLeasesForProperty(propertyId)) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot delete property because it has assigned tenants or leases.");
-        }
-        // Leases only cover tenants. Owners and family have none, and their bills hang off the
-        // member row, so the property has to be empty of members too.
-        if (!unitMemberService.findActiveByPropertyId(propertyId).isEmpty()) {
+        // Every tenant, owner and family member is a unit member, and bills and agreements hang
+        // off the member row, so a property that has ever had members keeps its history.
+        if (unitMemberService.propertyHasEverHadMembers(propertyId)) {
             throw new BusinessException(HttpStatus.BAD_REQUEST,
-                    "Cannot delete property because units still have owners or residents assigned.");
+                    "Cannot delete property because its units have, or have had, residents.");
         }
 
         PropertyTbl property = propertyRepository.findById(propertyId)

@@ -1,31 +1,6 @@
 {
   "components" : {
     "schemas" : {
-      "ActiveLeaseSummary" : {
-        "properties" : {
-          "leaseId" : {
-            "format" : "uuid",
-            "type" : "string"
-          },
-          "rentAmount" : {
-            "type" : "number"
-          },
-          "status" : {
-            "type" : "string"
-          },
-          "tenantName" : {
-            "type" : "string"
-          },
-          "tenantPhone" : {
-            "type" : "string"
-          },
-          "tenantUserId" : {
-            "format" : "uuid",
-            "type" : "string"
-          }
-        },
-        "type" : "object"
-      },
       "AnnouncementResponse" : {
         "properties" : {
           "category" : {
@@ -2888,6 +2863,10 @@
             "format" : "uuid",
             "type" : "string"
           },
+          "memberId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
           "monthlyRentAmount" : {
             "type" : "number"
           },
@@ -3037,6 +3016,29 @@
             "type" : "string"
           },
           "url" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "MemberAgreement" : {
+        "properties" : {
+          "endDate" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "monthlyAmount" : {
+            "type" : "number"
+          },
+          "startDate" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "status" : {
             "type" : "string"
           }
         },
@@ -3286,6 +3288,36 @@
           }
         },
         "required" : [ "idToken" ],
+        "type" : "object"
+      },
+      "Occupant" : {
+        "properties" : {
+          "agreement" : {
+            "$ref" : "#/components/schemas/MemberAgreement"
+          },
+          "fromDate" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "memberId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "role" : {
+            "enum" : [ "OWNER", "TENANT", "FAMILY" ],
+            "type" : "string"
+          },
+          "userId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
         "type" : "object"
       },
       "OtpRequestRequest" : {
@@ -4344,7 +4376,7 @@
       },
       "PortfolioOccupancyResponse" : {
         "properties" : {
-          "activeLeases" : {
+          "activeTenants" : {
             "format" : "int32",
             "type" : "integer"
           },
@@ -5246,12 +5278,6 @@
       },
       "UnitResponse" : {
         "properties" : {
-          "activeLeases" : {
-            "items" : {
-              "$ref" : "#/components/schemas/ActiveLeaseSummary"
-            },
-            "type" : "array"
-          },
           "blockId" : {
             "format" : "uuid",
             "type" : "string"
@@ -5287,6 +5313,12 @@
           "id" : {
             "format" : "uuid",
             "type" : "string"
+          },
+          "members" : {
+            "items" : {
+              "$ref" : "#/components/schemas/Occupant"
+            },
+            "type" : "array"
           },
           "type" : {
             "enum" : [ "Single Unit", "Shared Unit", "1 BHK", "2 BHK", "Studio Apartment" ],

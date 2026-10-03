@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
-import { getFloorLayout, ActiveLeaseSummary } from '@/src/features/properties/api/unit.api';
+import { getFloorLayout, occupantFromLease, tenantsOf, Occupant } from '@/src/features/properties/api/unit.api';
 import { createLease, terminateLease } from '@/src/features/tenant/api/lease.api';
 import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '@/src/features/auth/api/user.api';
 import { logger } from '@/src/utils/logger';
@@ -17,7 +17,7 @@ export interface UnitBlock {
   tenants?: string[];
   status?: 'VACANT' | 'OCCUPIED';
   capacity?: number;
-  activeLeases?: ActiveLeaseSummary[];
+  members?: Occupant[];
   tenantUserId?: string;
   tenantPhone?: string | null;
   activeLeaseId?: string;
@@ -84,8 +84,9 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     try {
       const units = await getFloorLayout(propertyId, floorNumber, token);
       const mappedBlocks: UnitBlock[] = units.map(u => {
-        const leases = u.activeLeases || [];
-        const primaryLease = leases[0] || null;
+        const members = u.members || [];
+        const primaryTenant = tenantsOf(members)[0] || null;
+        const primaryRent = primaryTenant?.agreement?.monthlyAmount;
         return {
           id: u.id,
           gridX: u.gridX,
@@ -93,14 +94,14 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
           gridWidth: u.gridWidth,
           gridHeight: u.gridHeight,
           unitNumber: u.unitNumber,
-          rent: primaryLease ? Math.round(primaryLease.rentAmount * u.capacity).toString() : undefined,
-          tenants: leases.map(l => l.tenantName).filter(Boolean) as string[],
-          status: leases.length > 0 ? 'OCCUPIED' : 'VACANT',
+          rent: primaryRent != null ? Math.round(primaryRent * u.capacity).toString() : undefined,
+          tenants: members.map(m => m.name).filter(Boolean) as string[],
+          status: members.length > 0 ? 'OCCUPIED' : 'VACANT',
           capacity: u.capacity,
-          activeLeases: leases,
-          tenantUserId: primaryLease ? primaryLease.tenantUserId : undefined,
-          tenantPhone: primaryLease ? primaryLease.tenantPhone : undefined,
-          activeLeaseId: primaryLease ? primaryLease.leaseId : undefined,
+          members,
+          tenantUserId: primaryTenant?.userId ?? undefined,
+          tenantPhone: primaryTenant?.phone ?? undefined,
+          activeLeaseId: primaryTenant?.agreement?.id ?? undefined,
           type: normalizeUnitType(u.type),
         };
       });
@@ -220,16 +221,9 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
         activeLeaseId: lease.id,
         status: 'OCCUPIED',
         rent: totalRent.toString(),
-        activeLeases: [
-          ...(selectedBlock.activeLeases || []),
-          {
-            leaseId: lease.id,
-            tenantUserId: targetUser.id,
-            tenantName: targetUser.fullName,
-            tenantPhone: targetUser.phoneNumber,
-            rentAmount: lease.monthlyRentAmount,
-            status: 'ACTIVE',
-          }
+        members: [
+          ...(selectedBlock.members || []),
+          occupantFromLease(lease, targetUser.fullName, targetUser.phoneNumber),
         ]
       });
 
@@ -272,7 +266,7 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
       setNewTenantName('');
       setNewTenantEmail('');
       setSuggestions([]);
-      
+
       await handleAssignTenant(createdUser);
     } catch (error: any) {
       logger.error('[Create Tenant Error]', error);
@@ -286,7 +280,7 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     const selectedBlock = blocks.find(b => b.id === selectedUnitId);
     if (!selectedBlock) return;
     const displayName = tenantName || 'this tenant';
-    
+
     Alert.alert(
       'Remove Tenant',
       `Are you sure you want to remove ${displayName}?`,
@@ -300,17 +294,18 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
               setLoading(true);
               await terminateLease(leaseId, token);
 
-              const remainingLeases = (selectedBlock.activeLeases || []).filter(l => l.leaseId !== leaseId);
-              const remainingTenants = (selectedBlock.tenants || []).filter(name => name !== tenantName);
-              
+              const remaining = (selectedBlock.members || []).filter(m => m.agreement?.id !== leaseId);
+              const nextTenant = tenantsOf(remaining)[0];
+              const nextRent = nextTenant?.agreement?.monthlyAmount;
+
               updateUnitDetails(selectedBlock.id, {
-                tenants: remainingTenants,
-                activeLeases: remainingLeases,
-                activeLeaseId: remainingLeases[0]?.leaseId || undefined,
-                tenantUserId: remainingLeases[0]?.tenantUserId || undefined,
-                tenantPhone: remainingLeases[0]?.tenantPhone || undefined,
-                rent: remainingLeases[0] ? Math.round(remainingLeases[0].rentAmount * (selectedBlock.capacity || 1)).toString() : undefined,
-                status: remainingLeases.length > 0 ? 'OCCUPIED' : 'VACANT',
+                tenants: remaining.map(m => m.name).filter(Boolean) as string[],
+                members: remaining,
+                activeLeaseId: nextTenant?.agreement?.id ?? undefined,
+                tenantUserId: nextTenant?.userId ?? undefined,
+                tenantPhone: nextTenant?.phone ?? undefined,
+                rent: nextRent != null ? Math.round(nextRent * (selectedBlock.capacity || 1)).toString() : undefined,
+                status: remaining.length > 0 ? 'OCCUPIED' : 'VACANT',
               });
 
               Alert.alert('Removed', `${displayName} has been removed from Unit ${selectedBlock.unitNumber}.`);

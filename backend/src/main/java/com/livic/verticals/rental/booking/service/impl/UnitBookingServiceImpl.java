@@ -1,5 +1,6 @@
 package com.livic.verticals.rental.booking.service.impl;
 
+import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import com.livic.verticals.rental.booking.repository.UnitBookingRepository;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
 import com.livic.verticals.rental.booking.domain.UnitBookingStatus;
@@ -9,7 +10,6 @@ import com.livic.verticals.rental.booking.domain.UnitBookingTbl;
 import com.livic.verticals.rental.booking.dto.UnitBookingDTOs;
 import com.livic.verticals.rental.booking.dto.UnitBookingDTOs.UnitBookingResponse;
 import com.livic.verticals.rental.booking.mapper.UnitBookingMapper;
-import com.livic.core.property.spi.UnitOccupancyProvider;
 import com.livic.verticals.rental.booking.service.interfaces.UnitBookingService;
 import com.livic.platform.payment.dto.PaymentTransactionResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 public class UnitBookingServiceImpl implements UnitBookingService {
 
     private final UnitBookingRepository unitBookingRepository;
-    private final UnitOccupancyProvider unitOccupancyProvider;
+    private final LeaseFacade leaseFacade;
     private final UnitFacade unitFacade;
     private final PropertyFacade propertyFacade;
     private final PaymentFacade paymentFacade;
@@ -52,7 +52,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
     public UnitBookingDTOs.UnitBookingResponse createBooking(UnitBookingDTOs.CreateBookingRequest request) {
         log.info("Processing booking creation for unit: {}, tenant name: {}", request.unitId(), request.prospectiveTenantName());
 
-        boolean available = unitOccupancyProvider.isUnitAvailableOnDate(request.unitId(), request.expectedMoveInDate());
+        boolean available = leaseFacade.hasVacancyOnDate(request.unitId(), request.expectedMoveInDate());
         if (!available) {
             throw new BusinessException(HttpStatus.CONFLICT, "No vacancy available in this unit on the requested date");
         }

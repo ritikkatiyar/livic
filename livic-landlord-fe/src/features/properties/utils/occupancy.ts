@@ -14,11 +14,17 @@ export const OCCUPANCY_LABELS: Record<OccupancyState, string> = {
   vacant: 'Vacant',
 };
 
-/** Mirrors the backend's UnitOccupancy.of: a missing or zero capacity counts as one bed. */
-export function getOccupancyState(activeLeases: number, capacity?: number | null): OccupancyState {
+/**
+ * Mirrors the backend's UnitOccupancy.of: tenants fill beds (a missing or zero capacity counts as one
+ * bed), and a unit with only an owner or family living in it is occupied.
+ */
+export function getOccupancyState(members: { role: string }[] | null | undefined, capacity?: number | null): OccupancyState {
+  const all = members || [];
+  if (all.length === 0) return 'vacant';
+  const tenants = all.filter(m => m.role === 'TENANT').length;
+  if (tenants === 0) return 'occupied';
   const beds = capacity && capacity > 0 ? capacity : 1;
-  if (activeLeases <= 0) return 'vacant';
-  return activeLeases < beds ? 'partial' : 'occupied';
+  return tenants < beds ? 'partial' : 'occupied';
 }
 
 export interface OccupancyColors {

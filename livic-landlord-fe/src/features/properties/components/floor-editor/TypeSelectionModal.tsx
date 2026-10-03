@@ -3,6 +3,7 @@ import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { withAlpha } from '@/src/theme/colorUtils';
+import type { Occupant } from '@/src/features/properties/api/unit.api';
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK' },
@@ -26,7 +27,7 @@ interface UnitBlock {
   tenantPhone?: string | null;
   status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
   capacity?: number;
-  activeLeases?: any[];
+  members?: Occupant[];
   type?: string;
 }
 

@@ -162,7 +162,7 @@ export default function AnalyticsDashboardScreen() {
 
   // Tenants fill beds, not units: a shared room holds several, so compare them with bed capacity.
   const activeTenants = useMemo(() => {
-    return filteredOccupancy.reduce((acc, p) => acc + (p.activeLeases ?? p.occupiedUnits ?? 0), 0);
+    return filteredOccupancy.reduce((acc, p) => acc + (p.activeTenants ?? p.occupiedUnits ?? 0), 0);
   }, [filteredOccupancy]);
 
   const bedOccupancy = useMemo(() => {

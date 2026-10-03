@@ -97,9 +97,9 @@ export function FloorLayoutGridCanvas({
 
       // Unit room block
       const colorStyles = getBlockColorStyles(block);
-      const activeCount = block.activeLeases ? block.activeLeases.length : 0;
+      const activeCount = (block.members || []).filter(m => m.role === 'TENANT').length;
       const cap = block.capacity || 1;
-      const isVacant = activeCount === 0;
+      const isVacant = !block.members || block.members.length === 0;
       const primaryTenant = block.tenants && block.tenants.length > 0 ? block.tenants[0] : null;
       const typeLabel = UNIT_TYPE_OPTIONS.find((opt) => opt.value === block.type)?.label || 'Unit';
 

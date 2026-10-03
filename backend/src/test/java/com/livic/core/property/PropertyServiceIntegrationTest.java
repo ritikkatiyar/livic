@@ -4,6 +4,7 @@ import com.livic.platform.common.event.PropertyDeletionEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.core.property.domain.UnitMemberRole;
 import com.livic.core.property.domain.UnitType;
 import com.livic.core.property.domain.FacingDirection;
 import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
@@ -163,7 +164,7 @@ public class PropertyServiceIntegrationTest {
         });
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
-        assertEquals("Cannot delete property because it has assigned tenants or leases.", exception.getMessage());
+        assertEquals("Cannot delete property because its units have, or have had, residents.", exception.getMessage());
 
         // Assert no event was published
         assertTrue(testEventListener.getEvents().isEmpty(), "No PropertyDeletionEvent should be published when validation fails");
@@ -218,9 +219,13 @@ public class PropertyServiceIntegrationTest {
                 .filter(u -> u.id().equals(unit.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertEquals(1, leasedUnit.activeLeases().size());
-        assertEquals(lease.getId(), leasedUnit.activeLeases().get(0).leaseId());
-        assertEquals("Tenant User", leasedUnit.activeLeases().get(0).tenantName());
+        assertEquals(1, leasedUnit.members().size());
+        UnitDTOs.Occupant occupant = leasedUnit.members().get(0);
+        assertEquals("Tenant User", occupant.name());
+        assertEquals(UnitMemberRole.TENANT, occupant.role());
+        // The member's agreement is their lease, supplied by rental; core never reads leases itself.
+        assertEquals(lease.getId(), occupant.agreement().id());
+        assertEquals(0, BigDecimal.valueOf(1000).compareTo(occupant.agreement().monthlyAmount()));
     }
 
     /** A lease as the lease service makes one: the tenant becomes a unit member, and the lease points at it. */

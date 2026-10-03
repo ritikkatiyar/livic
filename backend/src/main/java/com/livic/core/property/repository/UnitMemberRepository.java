@@ -27,6 +27,14 @@ public interface UnitMemberRepository extends JpaRepository<UnitMemberTbl, UUID>
 
     boolean existsByUnitIdAndUserIdAndRoleAndIsActiveTrue(UUID unitId, UUID userId, UnitMemberRole role);
 
+    boolean existsByUnitId(UUID unitId);
+
+    @Query("""
+            SELECT COUNT(m) > 0 FROM UnitMemberTbl m
+            WHERE m.unitId IN (SELECT u.id FROM UnitTbl u WHERE u.property.id = :propertyId)
+            """)
+    boolean existsByPropertyId(@Param("propertyId") UUID propertyId);
+
     /** Active members of a property's units, with the unit's place in the building. */
     @Query("""
             SELECT new com.livic.core.property.dto.UnitResidentDTO(

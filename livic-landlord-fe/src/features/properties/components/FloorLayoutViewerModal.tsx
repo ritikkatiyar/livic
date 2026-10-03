@@ -81,7 +81,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
     }
     return [1, 2, 3, 4, 5];
   }, [floorSummaries]);
-  
+
   const {
     blocks,
     loading,
@@ -228,7 +228,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
   }, [visible, scale, savedScale]);
 
   const getBlockColorStyles = (b: UnitBlock) => {
-    const colors = getOccupancyColors(theme, getOccupancyState(b.activeLeases ? b.activeLeases.length : 0, b.capacity));
+    const colors = getOccupancyColors(theme, getOccupancyState(b.members, b.capacity));
     return {
       backgroundColor: colors.fill,
       borderColor: colors.border,

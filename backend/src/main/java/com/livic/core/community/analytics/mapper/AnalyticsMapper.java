@@ -53,7 +53,7 @@ public final class AnalyticsMapper {
                 row.totalUnits(), row.occupiedUnits(), occRate, netYield,
                 row.vacantUnits(), row.partialUnits(), row.fullUnits(),
                 row.totalBeds(), row.occupiedBeds(), percent(row.occupiedBeds(), row.totalBeds()),
-                row.activeLeases()
+                row.activeTenants()
         );
     }
 

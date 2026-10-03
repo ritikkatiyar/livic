@@ -22,9 +22,39 @@ export function getFloorSummaries(
   });
 }
 
-export type UnitResponse = ApiModel<'UnitResponse', 'blockId' | 'activeLeases', 'blockId'>;
+/** What a member holds the unit under; in this app, always a lease (`id` is the lease ID). */
+export type MemberAgreement = ApiModel<'MemberAgreement', 'monthlyAmount' | 'startDate' | 'endDate' | 'status', 'monthlyAmount' | 'startDate' | 'endDate' | 'status'>;
 
-export type ActiveLeaseSummary = ApiModel<'ActiveLeaseSummary', 'tenantName' | 'tenantPhone', 'tenantName' | 'tenantPhone'>;
+/** A person in the unit: a tenant with their lease, or an owner or family member with no agreement. */
+export type Occupant = Omit<ApiModel<'Occupant', 'userId' | 'name' | 'phone' | 'fromDate', 'userId' | 'name' | 'phone' | 'fromDate'>, 'agreement'> & {
+  agreement?: MemberAgreement | null;
+};
+
+export type UnitResponse = Omit<ApiModel<'UnitResponse', 'blockId', 'blockId'>, 'members'> & {
+  members?: Occupant[];
+};
+
+/** The unit's tenants, in the order the backend lists its members. */
+export function tenantsOf(members: Occupant[] | null | undefined): Occupant[] {
+  return (members || []).filter(m => m.role === 'TENANT');
+}
+
+/** The tenant a new lease adds, to show before the layout is next loaded. */
+export function occupantFromLease(
+  lease: { id: string; memberId: string; userId: string; monthlyRentAmount: number; moveInDate: string },
+  name: string | null | undefined,
+  phone: string | null | undefined,
+): Occupant {
+  return {
+    memberId: lease.memberId,
+    userId: lease.userId,
+    name: name ?? null,
+    phone: phone ?? null,
+    role: 'TENANT',
+    fromDate: lease.moveInDate,
+    agreement: { id: lease.id, monthlyAmount: lease.monthlyRentAmount, startDate: lease.moveInDate, endDate: null, status: 'ACTIVE' },
+  };
+}
 
 export function getFloorLayout(
   propertyId: string,

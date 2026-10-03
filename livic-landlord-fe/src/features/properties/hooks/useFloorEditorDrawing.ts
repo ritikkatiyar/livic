@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Alert, Keyboard, Platform } from 'react-native';
+import type { Occupant } from '@/src/features/properties/api/unit.api';
 
 export type ToolType = 'PAN' | 'ADD' | 'ERASE';
 
@@ -17,7 +18,7 @@ export interface UnitBlock {
   tenantPhone?: string | null;
   status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
   capacity?: number;
-  activeLeases?: any[];
+  members?: Occupant[];
   type?: string;
 }
 

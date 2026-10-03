@@ -49,4 +49,10 @@ public interface UnitMemberService {
     List<UnitResidentDTO> findActiveResidencesByUserId(UUID userId);
 
     boolean isActiveMember(UUID userId, UUID unitId, UnitMemberRole role);
+
+    /** Whether anyone has ever been a member of the unit; their history (bills, ledger) keeps it in place. */
+    boolean hasEverHadMembers(UUID unitId);
+
+    /** Whether anyone has ever been a member of a unit in the property. */
+    boolean propertyHasEverHadMembers(UUID propertyId);
 }

@@ -138,4 +138,16 @@ public class UnitMemberServiceImpl implements UnitMemberService {
         return userId != null
                 && unitMemberRepository.existsByUnitIdAndUserIdAndRoleAndIsActiveTrue(unitId, userId, role);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasEverHadMembers(UUID unitId) {
+        return unitMemberRepository.existsByUnitId(unitId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean propertyHasEverHadMembers(UUID propertyId) {
+        return unitMemberRepository.existsByPropertyId(propertyId);
+    }
 }

@@ -4,7 +4,7 @@ import { logger } from '@/src/utils/logger';
 import { formatErrorMessage } from '@/src/utils/errors';
 import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '@/src/features/auth/api/user.api';
 import { createLease } from '@/src/features/tenant/api/lease.api';
-import { UnitResponse, saveFloorLayout } from '@/src/features/properties/api/unit.api';
+import { UnitResponse, saveFloorLayout, occupantFromLease, type Occupant } from '@/src/features/properties/api/unit.api';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -22,7 +22,7 @@ interface UnitBlock {
   tenantPhone?: string | null;
   status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
   capacity?: number;
-  activeLeases?: any[];
+  members?: Occupant[];
   type?: string;
 }
 
@@ -58,14 +58,14 @@ export function useFloorEditorTenantAssignment({
   const [tenantSearchLoading, setTenantSearchLoading] = useState(false);
   const [tenantAssigning, setTenantAssigning] = useState(false);
   const [tenantSearchError, setTenantSearchError] = useState<string | null>(null);
-  
+
   const [suggestions, setSuggestions] = useState<UserSearchResponse[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [isCreatingNewTenant, setIsCreatingNewTenant] = useState(false);
   const [newTenantName, setNewTenantName] = useState('');
   const [newTenantEmail, setNewTenantEmail] = useState('');
   const [tenantCreating, setTenantCreating] = useState(false);
-  
+
   const [rentAmount, setRentAmount] = useState('');
   const [securityDeposit, setSecurityDeposit] = useState('');
 
@@ -218,16 +218,9 @@ export function useFloorEditorTenantAssignment({
         tenantPhone: targetUser.phoneNumber,
         activeLeaseId: lease.id,
         status: 'OCCUPIED',
-        activeLeases: [
-          ...(selectedBlock.activeLeases || []),
-          {
-            leaseId: lease.id,
-            tenantUserId: targetUser.id,
-            tenantName: targetUser.fullName,
-            tenantPhone: targetUser.phoneNumber,
-            rentAmount: lease.monthlyRentAmount,
-            status: 'ACTIVE',
-          }
+        members: [
+          ...(selectedBlock.members || []),
+          occupantFromLease(lease, targetUser.fullName, targetUser.phoneNumber),
         ]
       });
 
@@ -270,7 +263,7 @@ export function useFloorEditorTenantAssignment({
       setNewTenantName('');
       setNewTenantEmail('');
       setSuggestions([]);
-      
+
       // Auto assign after creation
       await handleAssignTenant(createdUser);
     } catch (error: any) {

@@ -7,6 +7,7 @@ import { MediaUploadGrid } from '@/src/components/common/display/MediaUploadGrid
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { withAlpha } from '@/src/theme/colorUtils';
+import type { Occupant } from '@/src/features/properties/api/unit.api';
 
 interface UnitBlock {
   id: string; 
@@ -22,7 +23,7 @@ interface UnitBlock {
   tenantPhone?: string | null;
   status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
   capacity?: number;
-  activeLeases?: any[];
+  members?: Occupant[];
   type?: string;
   photos?: any[];
 }

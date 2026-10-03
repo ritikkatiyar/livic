@@ -168,7 +168,7 @@ export function TenantDetailsSidebar({
                     placeholder="e.g. 2"
                     keyboardType="numeric"
                     placeholderTextColor={theme.Colors.outlineVariant}
-                    editable={!selectedBlock.activeLeases || selectedBlock.activeLeases.length === 0}
+                    editable={!selectedBlock.members || selectedBlock.members.length === 0}
                   />
                 </View>
               </View>
@@ -176,27 +176,30 @@ export function TenantDetailsSidebar({
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>ASSIGNED TENANTS</Text>
-              {selectedBlock.activeLeases && selectedBlock.activeLeases.length > 0 ? (
+              {selectedBlock.members && selectedBlock.members.length > 0 ? (
                 <View style={{ gap: 10, marginBottom: 12 }}>
-                  {selectedBlock.activeLeases.map((l, index) => (
-                    <View key={l.leaseId || index} style={[styles.tenantListContainer]}>
+                  {selectedBlock.members.map((l, index) => (
+                    <View key={l.memberId || index} style={[styles.tenantListContainer]}>
                       <View style={{ flex: 1, gap: theme.Spacing.xs }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.sm, flexWrap: 'wrap' }}>
                           <View style={styles.tenantTag}>
-                            <Text style={styles.tenantTagText}>{l.tenantName || 'Assigned tenant'}</Text>
+                            <Text style={styles.tenantTagText}>{l.name || 'Assigned tenant'}{l.role !== 'TENANT' ? ` · ${l.role === 'OWNER' ? 'Owner' : 'Family'}` : ''}</Text>
                           </View>
-                          {l.tenantPhone ? (
-                            <Text style={[styles.sheetSubtitle, { marginVertical: 0 }]}>{l.tenantPhone}</Text>
+                          {l.phone ? (
+                            <Text style={[styles.sheetSubtitle, { marginVertical: 0 }]}>{l.phone}</Text>
                           ) : null}
                         </View>
                       </View>
 
-                      <TouchableOpacity 
-                        onPress={() => handleRemoveTenant(l.leaseId, l.tenantName)}
-                        style={styles.removeBtn}
-                      >
-                        <MaterialIcons name="close" size={16} color={theme.Colors.error} />
-                      </TouchableOpacity>
+                      {/* Only a tenancy can be ended here; owners and family have no lease. */}
+                      {l.agreement ? (
+                        <TouchableOpacity
+                          onPress={() => handleRemoveTenant(l.agreement!.id, l.name)}
+                          style={styles.removeBtn}
+                        >
+                          <MaterialIcons name="close" size={16} color={theme.Colors.error} />
+                        </TouchableOpacity>
+                      ) : null}
                     </View>
                   ))}
                 </View>
@@ -211,7 +214,7 @@ export function TenantDetailsSidebar({
                     Please define a unit capacity of at least 1 before you can search for and assign tenants.
                   </Text>
                 </View>
-              ) : selectedBlock.activeLeases && selectedBlock.activeLeases.length >= selectedBlock.capacity ? (
+              ) : selectedBlock.members && selectedBlock.members.filter(m => m.role === 'TENANT').length >= selectedBlock.capacity ? (
                 <View style={[styles.warningContainer, { backgroundColor: withAlpha(theme.Colors.success, 0.08), borderColor: withAlpha(theme.Colors.success, 0.15), marginTop: theme.Spacing.sm }]}>
                   <MaterialIcons name="check-circle" size={18} color={theme.Colors.primary} />
                   <Text style={[styles.warningText, { color: theme.Colors.primary }]}>

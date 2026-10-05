@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useReducedMotion } from 'react-native-reanimated';
+import { Motion, useReducedMotion } from '@/src/theme/motion';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { AppTheme } from '@/src/theme/ThemeContext';
 import { PILL_BORDER, PILL_HEIGHT, PILL_ITEM_HEIGHT, PILL_MAX_WIDTH, PILL_PADDING } from './bottomDock';
@@ -16,7 +16,6 @@ export interface TabPillItem {
 }
 
 const ITEM_GAP = 2;
-const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 
 /**
  * The bottom bar's pill. One capsule marks the selected tab and slides to the next when it changes;
@@ -37,14 +36,7 @@ export function TabPill({ items }: { items: TabPillItem[] }) {
       position.setValue(activeIndex);
       return;
     }
-    // Near-critically damped: arrives in about a quarter of a second without bouncing past the tab
-    Animated.spring(position, {
-      toValue: activeIndex,
-      damping: 34,
-      stiffness: 340,
-      mass: 0.9,
-      useNativeDriver: USE_NATIVE_DRIVER,
-    }).start();
+    Animated.spring(position, { toValue: activeIndex, ...Motion.spring, useNativeDriver: Motion.nativeDriver }).start();
   }, [activeIndex, position, reduceMotion]);
 
   // Until the row is measured the capsule can't be placed, so the selected tab paints its own background

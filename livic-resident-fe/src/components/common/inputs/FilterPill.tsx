@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, StyleProp } from 'react-native';
+import { StyleSheet, Text, View, ViewStyle, StyleProp } from 'react-native';
+import { PressableScale } from '@/src/components/common/motion/PressableScale';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
@@ -51,16 +52,16 @@ export function FilterPill({
 
   if (active) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.pill, styles.activePill, styles.activeShadow, style]}>
+      <PressableScale onPress={onPress} activeOpacity={0.85} style={[styles.pill, styles.activePill, styles.activeShadow, style]}>
         {renderContent()}
-      </TouchableOpacity>
+      </PressableScale>
     );
   }
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.75} style={[styles.pill, styles.inactivePill, style]}>
+    <PressableScale onPress={onPress} activeOpacity={0.75} style={[styles.pill, styles.inactivePill, style]}>
       {renderContent()}
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 

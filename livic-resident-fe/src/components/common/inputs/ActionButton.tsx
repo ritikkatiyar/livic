@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, ActivityIndicator, View, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { StyleSheet, Text, ActivityIndicator, View, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { PressableScale } from '@/src/components/common/motion/PressableScale';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
@@ -103,7 +104,7 @@ export function ActionButton({
 
   if (variant === 'primary') {
     return (
-      <TouchableOpacity
+      <PressableScale
         onPress={onPress}
         disabled={isInteractionDisabled}
         activeOpacity={0.85}
@@ -117,7 +118,7 @@ export function ActionButton({
         ]}
       >
         {renderContent()}
-      </TouchableOpacity>
+      </PressableScale>
     );
   }
 
@@ -138,7 +139,7 @@ export function ActionButton({
   };
 
   return (
-    <TouchableOpacity
+    <PressableScale
       onPress={onPress}
       disabled={isInteractionDisabled}
       activeOpacity={0.75}
@@ -146,7 +147,7 @@ export function ActionButton({
       style={[styles.button, getVariantStyle(), sanitizedStyle]}
     >
       {renderContent()}
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 

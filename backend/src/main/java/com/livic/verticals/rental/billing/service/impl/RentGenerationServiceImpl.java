@@ -1,32 +1,35 @@
 package com.livic.verticals.rental.billing.service.impl;
 
-import com.livic.core.finance.repository.MeterReadingRepository;
-import com.livic.core.finance.repository.BillingWorksheetRepository;
-import com.livic.core.finance.repository.ChargeConfigRepository;
-import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
-import com.livic.core.finance.domain.ChargeConfigTbl;
-import com.livic.core.finance.domain.BillTbl;
-import com.livic.core.finance.domain.MeterReadingTbl;
+import com.livic.core.finance.domain.BillType;
 import com.livic.core.finance.dto.BillDTOs;
-import com.livic.core.finance.service.interfaces.BillService;
+import com.livic.core.finance.dto.BillDraft;
+import com.livic.core.finance.facade.FinanceFacade;
+import com.livic.verticals.rental.booking.facade.BookingFacade;
 import com.livic.core.property.dto.UnitSummaryDTO;
-import com.livic.core.property.domain.UnitOccupancy;
 import com.livic.core.property.facade.UnitFacade;
-import com.livic.core.finance.domain.CalculationStrategyType;
+import com.livic.platform.common.exception.BusinessException;
+import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.BatchGenerateBillRequest;
+import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.BatchGenerateFailure;
+import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.BatchGenerateResult;
+import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.GenerateBillRequest;
 import com.livic.verticals.rental.billing.service.interfaces.RentGenerationService;
+import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,105 +38,77 @@ import java.util.stream.Collectors;
 public class RentGenerationServiceImpl implements RentGenerationService {
 
     private final LeaseQueryService leaseQueryService;
-    private final ChargeConfigRepository chargeConfigRepository;
-    private final MeterReadingRepository meterReadingRepository;
     private final UnitFacade unitFacade;
-    private final BillingWorksheetRepository billingWorksheetRepository;
-    private final BillTransactionHelper transactionHelper;
-    private final BillService billService;
+    private final FinanceFacade financeFacade;
+    private final BookingFacade bookingFacade;
 
     @Override
-    @Transactional
-    public BillDTOs.BillResponse generate(BillDTOs.GenerateBillRequest request) {
+    public BillDTOs.BillResponse generate(GenerateBillRequest request) {
         LeaseTbl lease = leaseQueryService.getLeaseById(request.leaseId());
-        BillTbl cycle = transactionHelper.generateSingleInTransaction(lease, request.billingMonth(), request.dueDate(), null);
-        return billService.getById(cycle.getId());
+        int roommates = leaseQueryService.findByUnitIdAndStatus(lease.getUnitId(), LeaseStatus.ACTIVE).size();
+        return financeFacade.generateBill(draftFor(lease, request.billingMonth(), request.dueDate(), roommates));
     }
 
     @Override
-    public BillDTOs.BatchGenerateResult batchGenerate(BillDTOs.BatchGenerateBillRequest request) {
-        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(request.propertyId());
-        Map<UUID, String> unitNumbers = units.stream().collect(Collectors.toMap(UnitSummaryDTO::id, UnitSummaryDTO::unitNumber, (a, b) -> a));
-        List<LeaseTbl> activeLeases = leaseQueryService.findActiveLeasesByProperty(request.propertyId());
+    public BatchGenerateResult batchGenerate(BatchGenerateBillRequest request) {
+        Map<UUID, UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(request.propertyId()).stream()
+                .collect(Collectors.toMap(UnitSummaryDTO::id, Function.identity(), (a, b) -> a));
+        List<LeaseTbl> leases = leaseQueryService.findActiveLeasesByProperty(request.propertyId()).stream()
+                .filter(lease -> request.blockId() == null || isInBlock(units.get(lease.getUnitId()), request.blockId()))
+                .toList();
+        Map<UUID, Long> roommatesByUnitId = leases.stream()
+                .collect(Collectors.groupingBy(LeaseTbl::getUnitId, Collectors.counting()));
 
-        Map<UUID, Integer> roommateCounts = activeLeases.stream()
-                .collect(Collectors.groupingBy(LeaseTbl::getUnitId, Collectors.collectingAndThen(Collectors.toList(), List::size)));
-
-        List<BillingWorksheetEntryTbl> propertyWorksheets = billingWorksheetRepository.findAllByPropertyIdAndBillingMonth(request.propertyId(), request.billingMonth());
-        List<ChargeConfigTbl> propertyActiveConfigs = chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(request.propertyId());
-
-        List<BillTbl> successes = new ArrayList<>();
-        List<BillDTOs.BatchGenerateFailure> failures = new ArrayList<>();
-
-        for (LeaseTbl lease : activeLeases) {
-            String unitNum = unitNumbers.get(lease.getUnitId());
+        List<LeaseTbl> drafted = new ArrayList<>();
+        List<BillDraft> drafts = new ArrayList<>();
+        List<BatchGenerateFailure> failed = new ArrayList<>();
+        for (LeaseTbl lease : leases) {
             try {
-                BillTbl cycle = transactionHelper.generateSingleInTransaction(
-                        lease,
-                        request.billingMonth(),
-                        request.dueDate(),
-                        roommateCounts,
-                        propertyWorksheets,
-                        propertyActiveConfigs,
-                        unitNumbers
-                );
-                successes.add(cycle);
-            } catch (Exception e) {
-                log.error("[BillServiceImpl] Failed to generate bill for lease ID: {}, unit: {}", lease.getId(), unitNum, e);
-                failures.add(new BillDTOs.BatchGenerateFailure(lease.getId(), unitNum, e.getMessage()));
+                drafts.add(draftFor(lease, request.billingMonth(), request.dueDate(),
+                        roommatesByUnitId.get(lease.getUnitId()).intValue()));
+                drafted.add(lease);
+            } catch (BusinessException e) {
+                failed.add(new BatchGenerateFailure(lease.getId(), unitNumberOf(units, lease), e.getMessage()));
             }
         }
 
-        List<BillDTOs.BillResponse> succeededResponses = new ArrayList<>(billService.toResponses(successes));
-        succeededResponses.sort(Comparator.comparing(BillDTOs.BillResponse::unitNumber)
-                .thenComparing(BillDTOs.BillResponse::tenantName));
-        return new BillDTOs.BatchGenerateResult(succeededResponses, failures);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public BillDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth) {
-        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
-        List<LeaseTbl> activeLeases = leaseQueryService.findActiveLeasesByProperty(propertyId);
-        int totalUnits = units.size();
-        // A lease is one tenant, so leases are measured against beds: a shared room holds several.
-        int totalBeds = units.stream().mapToInt(u -> UnitOccupancy.beds(u.capacity())).sum();
-        int activeLeasesCount = activeLeases.size();
-        // Meters are read per unit, so roommates share one reading per metered charge.
-        Set<UUID> occupiedUnitIds = activeLeases.stream().map(LeaseTbl::getUnitId).collect(Collectors.toSet());
-
-        long meteredTypesCount = chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(propertyId).stream()
-                .filter(c -> c.getCalculationStrategy() == CalculationStrategyType.METERED)
-                .count();
-
-        int meterReadingsExpected = occupiedUnitIds.size() * (int) meteredTypesCount;
-        int meterReadingsEntered = 0;
-
-        try {
-            String[] parts = billingMonth.split("-");
-            int year = Integer.parseInt(parts[0]);
-            int month = Integer.parseInt(parts[1]);
-
-            // Meters are read per unit, so count one reading per occupied unit, matching
-            // meterReadingsExpected above; counting per lease would double a shared room.
-            List<MeterReadingTbl> propertyReadings = meterReadingRepository.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
-            meterReadingsEntered = (int) propertyReadings.stream()
-                    .filter(r -> occupiedUnitIds.contains(r.getUnitId()) && r.getCurrentReading() != null)
-                    .count();
-
-        } catch (Exception e) {
-            log.warn("Failed to calculate meter readings for checklist", e);
+        List<BillDraft.Outcome> outcomes = financeFacade.generateBills(drafts);
+        List<BillDTOs.BillResponse> succeeded = new ArrayList<>();
+        for (int i = 0; i < outcomes.size(); i++) {
+            BillDraft.Outcome outcome = outcomes.get(i);
+            if (outcome.bill() != null) {
+                succeeded.add(outcome.bill());
+            } else {
+                LeaseTbl lease = drafted.get(i);
+                failed.add(new BatchGenerateFailure(lease.getId(), unitNumberOf(units, lease), outcome.failure()));
+            }
         }
-
-        boolean isReady = (meterReadingsEntered >= meterReadingsExpected) || activeLeasesCount == 0;
-        return new BillDTOs.PreFlightChecklistResponse(
-            totalUnits,
-            totalBeds,
-            activeLeasesCount,
-            meterReadingsExpected,
-            meterReadingsEntered,
-            isReady
-        );
+        succeeded.sort(Comparator.comparing(BillDTOs.BillResponse::unitNumber, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(BillDTOs.BillResponse::tenantName, Comparator.nullsLast(Comparator.naturalOrder())));
+        return new BatchGenerateResult(succeeded, failed);
     }
 
+    /** What the lease contributes to a rent bill; core adds the property's charges. */
+    private BillDraft draftFor(LeaseTbl lease, String billingMonth, LocalDate dueDate, int roommates) {
+        List<BillDraft.Line> lines = new ArrayList<>();
+        BigDecimal rent = lease.getMonthlyRentAmount();
+        if (rent != null && rent.signum() > 0) {
+            lines.add(new BillDraft.Line("Rent", rent));
+        }
+        // The token paid when the unit was booked is credited once, on the tenant's first bill.
+        if (!financeFacade.hasOtherBills(lease.getMemberId(), billingMonth, BillType.RENT)) {
+            bookingFacade.findConvertedToken(lease.getId()).ifPresent(token -> lines.add(
+                    new BillDraft.Line("Token amount adjustment from unit booking", token.negate())));
+        }
+        return new BillDraft(lease.getMemberId(), null, BillType.RENT, billingMonth, dueDate, lines, Math.max(1, roommates));
+    }
+
+    private static boolean isInBlock(UnitSummaryDTO unit, UUID blockId) {
+        return unit != null && Objects.equals(unit.blockId(), blockId);
+    }
+
+    private static String unitNumberOf(Map<UUID, UnitSummaryDTO> units, LeaseTbl lease) {
+        UnitSummaryDTO unit = units.get(lease.getUnitId());
+        return unit != null ? unit.unitNumber() : null;
+    }
 }

@@ -17,7 +17,6 @@ public class IssueDTOs {
     public record CreateIssueRequest(
             @NotNull(message = "Property ID is required") UUID propertyId,
             UUID unitId,
-            UUID leaseId,
             UUID tenantId,
             @NotBlank(message = "Title is required") String title,
             @NotBlank(message = "Description is required") String description,
@@ -47,7 +46,6 @@ public class IssueDTOs {
             UUID blockId,
             String blockName,
             UUID unitId,
-            UUID leaseId,
             UUID tenantId,
             UUID reportedByUserId,
             String title,

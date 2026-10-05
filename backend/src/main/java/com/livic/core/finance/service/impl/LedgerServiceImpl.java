@@ -2,6 +2,7 @@ package com.livic.core.finance.service.impl;
 
 import com.livic.core.finance.repository.FinanceLedgerRepository;
 import com.livic.core.finance.domain.FinanceLedgerTbl;
+import com.livic.core.finance.domain.LedgerTransactionType;
 import com.livic.core.finance.dto.LedgerDTOs.LedgerEntryResponse;
 import com.livic.core.finance.specification.FinanceLedgerSpecifications;
 import com.livic.core.finance.service.interfaces.LedgerService;
@@ -39,6 +40,21 @@ public class LedgerServiceImpl implements LedgerService {
     private final UserFacade userFacade;
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
+
+    @Override
+    @Transactional
+    public void post(UUID memberId, UUID unitId, LedgerTransactionType type, BigDecimal amount, UUID referenceId, String description) {
+        BigDecimal balance = financeLedgerRepository.sumAmountByMemberId(memberId).add(amount);
+        financeLedgerRepository.save(FinanceLedgerTbl.builder()
+                .memberId(memberId)
+                .unitId(unitId)
+                .transactionType(type)
+                .amount(amount)
+                .balance(balance)
+                .referenceId(referenceId)
+                .description(description)
+                .build());
+    }
 
     @Override
     @Transactional(readOnly = true)

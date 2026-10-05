@@ -27,33 +27,23 @@ public class UnitMemberServiceImpl implements UnitMemberService {
     private final UnitMemberRepository unitMemberRepository;
 
     @Override
-    public UnitMemberTbl addTenant(UUID unitId, UUID userId, UUID leaseId, LocalDate from, UUID assignedBy) {
-        return unitMemberRepository.findFirstByLeaseIdAndIsActiveTrue(leaseId)
-                .orElseGet(() -> unitMemberRepository.save(UnitMemberTbl.builder()
-                        .unitId(unitId)
-                        .userId(userId)
-                        .role(UnitMemberRole.TENANT)
-                        .isPrimary(true)
-                        .leaseId(leaseId)
-                        .fromDate(from != null ? from : LocalDate.now())
-                        .isActive(true)
-                        .assignedBy(assignedBy)
-                        .build()));
-    }
-
-    @Override
-    public void endTenancy(UUID leaseId, LocalDate on) {
-        unitMemberRepository.findFirstByLeaseIdAndIsActiveTrue(leaseId).ifPresent(member -> {
-            member.end(on != null ? on : LocalDate.now());
-            unitMemberRepository.save(member);
-        });
+    public UnitMemberTbl addTenant(UUID unitId, UUID userId, LocalDate from, UUID assignedBy) {
+        return unitMemberRepository.save(UnitMemberTbl.builder()
+                .unitId(unitId)
+                .userId(userId)
+                .role(UnitMemberRole.TENANT)
+                .isPrimary(true)
+                .fromDate(from != null ? from : LocalDate.now())
+                .isActive(true)
+                .assignedBy(assignedBy)
+                .build());
     }
 
     @Override
     public UnitMemberTbl addMember(UUID unitId, UUID userId, UnitMemberRole role, boolean isPrimary,
                                    LocalDate from, UUID assignedBy) {
         if (role == UnitMemberRole.TENANT) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Tenants are added through their lease");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Tenants are added by the agreement that makes them tenants");
         }
         if (userId != null && unitMemberRepository.existsByUnitIdAndUserIdAndRoleAndIsActiveTrue(unitId, userId, role)) {
             throw new BusinessException(HttpStatus.CONFLICT, "This person already holds that role on the unit");
@@ -109,12 +99,6 @@ public class UnitMemberServiceImpl implements UnitMemberService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<UnitMemberTbl> findActiveByLeaseId(UUID leaseId) {
-        return unitMemberRepository.findFirstByLeaseIdAndIsActiveTrue(leaseId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<UnitResidentDTO> findActiveResidentsByPropertyId(UUID propertyId) {
         return unitMemberRepository.findActiveResidentsByPropertyId(propertyId);
     }
@@ -144,15 +128,6 @@ public class UnitMemberServiceImpl implements UnitMemberService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<UnitResidentDTO> findResidentByLeaseId(UUID leaseId) {
-        if (leaseId == null) {
-            return Optional.empty();
-        }
-        return unitMemberRepository.findResidentsByLeaseId(leaseId).stream().findFirst();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<UnitResidentDTO> findActiveResidencesByUserId(UUID userId) {
         return userId == null ? List.of() : unitMemberRepository.findActiveResidencesByUserId(userId);
     }
@@ -162,5 +137,17 @@ public class UnitMemberServiceImpl implements UnitMemberService {
     public boolean isActiveMember(UUID userId, UUID unitId, UnitMemberRole role) {
         return userId != null
                 && unitMemberRepository.existsByUnitIdAndUserIdAndRoleAndIsActiveTrue(unitId, userId, role);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasEverHadMembers(UUID unitId) {
+        return unitMemberRepository.existsByUnitId(unitId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean propertyHasEverHadMembers(UUID propertyId) {
+        return unitMemberRepository.existsByPropertyId(propertyId);
     }
 }

@@ -17,7 +17,6 @@ import com.livic.verticals.rental.inventory.domain.enums.InventoryStatus;
 import com.livic.verticals.rental.inventory.repository.InventoryItemRepository;
 import com.livic.verticals.rental.inventory.repository.LeaseInventoryAssignmentRepository;
 import com.livic.verticals.rental.inventory.service.impl.LeaseInventoryAssignmentServiceImpl;
-import com.livic.platform.common.enums.OwnerModule;
 import com.livic.platform.storage.facade.StorageFacade;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

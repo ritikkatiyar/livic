@@ -18,9 +18,9 @@ public class UserPreferenceTbl extends BaseEntity {
     @Column(name = "user_id", nullable = false, unique = true)
     private UUID userId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "active_mode", nullable = false)
-    private UserMode activeMode;
+    /** Which product the apps open for the user, such as RENTAL or RESIDENTIAL; only the apps interpret it. */
+    @Column(name = "active_mode", nullable = false, length = 20)
+    private String activeMode;
 
     @Column(name = "onboarding_done", nullable = false)
     private boolean onboardingDone;

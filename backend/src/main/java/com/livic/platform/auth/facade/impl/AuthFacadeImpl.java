@@ -1,5 +1,6 @@
 package com.livic.platform.auth.facade.impl;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.domain.MembershipTbl;
 import com.livic.platform.auth.dto.MembershipSummaryDTO;
@@ -7,7 +8,7 @@ import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.auth.mapper.MembershipMapper;
 import com.livic.platform.auth.service.interfaces.MembershipQueryService;
 import com.livic.platform.auth.service.interfaces.MembershipService;
-import com.livic.platform.common.constant.StaffPermission;
+import com.livic.platform.auth.service.impl.PermissionCatalog;
 import com.livic.platform.common.enums.AccessType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,7 @@ public class AuthFacadeImpl implements AuthFacade {
     private final MembershipRepository membershipRepository;
     private final MembershipQueryService membershipQueryService;
     private final MembershipService membershipService;
+    private final PermissionCatalog permissionCatalog;
 
     @Override
     public List<MembershipSummaryDTO> getMembershipsByUserId(UUID userId) {
@@ -76,6 +78,22 @@ public class AuthFacadeImpl implements AuthFacade {
     }
 
     @Override
+    public List<UUID> getOwnedPropertyIds(UUID userId) {
+        return membershipRepository.findByUserId(userId).stream()
+                .filter(m -> m.isActive() && m.isFullAccess())
+                .map(MembershipTbl::getPropertyId)
+                .distinct()
+                .filter(propertyId -> findPropertyOwnerId(propertyId).filter(userId::equals).isPresent())
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void removeMembershipsForProperty(UUID propertyId) {
+        membershipRepository.deleteByPropertyId(propertyId);
+    }
+
+    @Override
     public void createOwnerMembership(UUID propertyId, UUID userId) {
         membershipService.createOwnerMembership(propertyId, userId);
     }
@@ -114,7 +132,7 @@ public class AuthFacadeImpl implements AuthFacade {
         Map<UUID, Set<String>> result = new HashMap<>();
         for (MembershipTbl m : active) {
             Set<String> codes = m.isFullAccess()
-                    ? StaffPermission.allCodes()
+                    ? permissionCatalog.codes()
                     : customCodes.getOrDefault(m.getId(), Set.of());
             result.merge(m.getPropertyId(), codes, (a, b) -> {
                 Set<String> merged = new HashSet<>(a);
@@ -123,5 +141,10 @@ public class AuthFacadeImpl implements AuthFacade {
             });
         }
         return result;
+    }
+
+    @Override
+    public Set<String> getGrantablePermissionCodes() {
+        return permissionCatalog.codes();
     }
 }

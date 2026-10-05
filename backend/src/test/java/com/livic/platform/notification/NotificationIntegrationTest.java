@@ -1,7 +1,9 @@
 package com.livic.platform.notification;
 
-import com.livic.platform.common.event.IssueCreatedEvent;
-import com.livic.platform.common.event.IssueEscalatedEvent;
+import com.livic.core.community.issue.event.IssueCreatedEvent;
+import com.livic.core.community.issue.event.IssueEscalatedEvent;
+import com.livic.platform.outbox.facade.OutboxFacade;
+import com.livic.platform.outbox.service.impl.OutboxDelivery;
 import com.livic.platform.notification.domain.NotificationChannel;
 import com.livic.platform.notification.domain.NotificationLogTbl;
 import com.livic.platform.notification.domain.NotificationStatus;
@@ -12,7 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -22,19 +25,21 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration test for the Notification Infrastructure (Phase 1).
- *
- * Verifies:
- * 1. Spring ApplicationEvents are published and intercepted by the listener.
- * 2. ConsoleNotificationSender mock logs the dispatch (no real API calls).
- * 3. Notification audit log records are persisted to the database correctly.
+ * Issue notices go out end to end: the issue module publishes through the outbox, its notifier words
+ * the message, and NotificationService sends it (to the console in dev) and logs it.
  */
 @SpringBootTest
 @ActiveProfiles("dev")
 public class NotificationIntegrationTest {
 
     @Autowired
-    private ApplicationEventPublisher eventPublisher;
+    private OutboxFacade outboxFacade;
+
+    @Autowired
+    private OutboxDelivery outboxDelivery;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @Autowired
     private NotificationLogRepository notificationLogRepository;
@@ -59,7 +64,6 @@ public class NotificationIntegrationTest {
     public void testIssueCreatedEventTriggersNotificationLog() throws InterruptedException {
         // Arrange
         IssueCreatedEvent event = new IssueCreatedEvent(
-                this,
                 UUID.randomUUID().toString(),
                 "Sunrise Apartments",
                 "302",
@@ -69,10 +73,10 @@ public class NotificationIntegrationTest {
                 testUser.getId().toString()
         );
 
-        // Act - publish the Spring event (observer pattern trigger)
-        eventPublisher.publishEvent(event);
+        // Act - the issue module publishes through the outbox; the notice goes out in the background
+        publishAndDeliver(event);
 
-        // Wait for @Async processing to complete
+        // The poller may have delivered it first; either way the log appears
         List<NotificationLogTbl> logs = List.of();
         for (int i = 0; i < 30; i++) {
             logs = notificationLogRepository.findByRecipientId(testUser.getId());
@@ -100,7 +104,6 @@ public class NotificationIntegrationTest {
     public void testIssueEscalatedEventTriggersNotificationLog() throws InterruptedException {
         // Arrange
         IssueEscalatedEvent event = new IssueEscalatedEvent(
-                this,
                 UUID.randomUUID().toString(),
                 "Sunrise Apartments",
                 "302",
@@ -110,9 +113,9 @@ public class NotificationIntegrationTest {
         );
 
         // Act
-        eventPublisher.publishEvent(event);
+        publishAndDeliver(event);
         
-        // Wait for @Async processing to complete
+        // The poller may have delivered it first; either way the log appears
         List<NotificationLogTbl> logs = List.of();
         for (int i = 0; i < 30; i++) {
             logs = notificationLogRepository.findByRecipientId(testUser.getId());
@@ -128,5 +131,10 @@ public class NotificationIntegrationTest {
         boolean hasEscalationTitle = logs.stream()
                 .anyMatch(l -> l.getTitle().contains("ESCALATED"));
         assertTrue(hasEscalationTitle, "At least one log should have ESCALATED in the title");
+    }
+
+    private void publishAndDeliver(Object event) {
+        new TransactionTemplate(transactionManager).executeWithoutResult(tx -> outboxFacade.publish(event));
+        outboxDelivery.deliverDue();
     }
 }

@@ -14,10 +14,18 @@ const CARETAKER_CODES = ['METER_READING_VIEW', 'METER_READING_CREATE', 'ISSUE_VI
 
 function contextWith(membership: Partial<MyContextResponse['managedProperties'][number]>): MyContextResponse {
   return {
-    globalRole: 'USER',
-    managedProperties: [{ propertyId: 'prop-1', propertyName: 'Green Mansion', title: 'Caretaker', ...membership }],
+    // The backend sends roles by display name, and always sends accessType and permissionCodes.
+    globalRole: 'User',
+    managedProperties: [{
+      propertyId: 'prop-1',
+      propertyName: 'Green Mansion',
+      title: 'Caretaker',
+      accessType: 'CUSTOM_ACCESS',
+      permissionCodes: [],
+      ...membership,
+    }],
     tenantProperties: [],
-    activeLeases: [],
+    unitMemberships: [],
     isLandlord: true,
     isTenant: false,
   };

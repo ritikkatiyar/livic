@@ -1,7 +1,6 @@
 package com.livic.platform.user.facade;
 
 import com.livic.platform.user.domain.DevicePlatform;
-import com.livic.platform.user.domain.UserMode;
 import com.livic.platform.user.dto.UserSummaryDTO;
 
 import java.util.Collection;
@@ -42,9 +41,8 @@ public interface UserFacade {
     /** Removes the password so the account can only be used through a verified sign-in method. */
     void clearPassword(UUID userId);
 
-    UserMode getActiveModeForUser(UUID userId);
-
-    void markOnboardingDone(UUID userId, UserMode defaultMode);
+    /** Marks onboarding done; {@code mode} becomes the active mode when the user has none yet. */
+    void markOnboardingDone(UUID userId, String mode);
 
     void registerDeviceToken(UUID userId, String expoPushToken, DevicePlatform platform);
 

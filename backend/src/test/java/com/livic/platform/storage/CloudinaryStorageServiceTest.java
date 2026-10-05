@@ -3,7 +3,6 @@ package com.livic.platform.storage;
 import com.livic.platform.storage.config.StorageProperties;
 import com.livic.platform.storage.domain.MediaAssetTbl;
 import com.livic.platform.storage.dto.FileType;
-import com.livic.platform.common.enums.OwnerModule;
 import com.livic.platform.storage.dto.StorageProvider;
 import com.livic.platform.storage.dto.MediaDTOs;
 import com.livic.platform.storage.repository.MediaAssetRepository;
@@ -57,7 +56,7 @@ class CloudinaryStorageServiceTest {
         when(properties.getFolderPrefix()).thenReturn("livic");
 
         MediaDTOs.UploadAuthorizationRequest request = new MediaDTOs.UploadAuthorizationRequest(
-                OwnerModule.INVENTORY,
+                "INVENTORY_ITEM",
                 referenceId,
                 FileType.IMAGE,
                 "fridge.jpg"
@@ -69,7 +68,8 @@ class CloudinaryStorageServiceTest {
         assertThat(response.uploadUrl()).contains("demo-cloud/image/upload");
         assertThat(response.apiKey()).isEqualTo("demo-key");
         assertThat(response.signature()).isNotBlank();
-        assertThat(response.folder()).isEqualTo("livic/inventory/" + referenceId);
+        // Files are filed under the owning resource type.
+        assertThat(response.folder()).isEqualTo("livic/inventory_item/" + referenceId);
         assertThat(response.storageProvider()).isEqualTo(StorageProvider.CLOUDINARY);
     }
 
@@ -77,7 +77,7 @@ class CloudinaryStorageServiceTest {
     @DisplayName("confirmUpload saves media asset and returns DTO")
     void testConfirmUpload() {
         MediaDTOs.ConfirmUploadRequest request = new MediaDTOs.ConfirmUploadRequest(
-                OwnerModule.INVENTORY,
+                "INVENTORY_ITEM",
                 referenceId,
                 "inventory_item_123",
                 "https://res.cloudinary.com/demo/image/upload/v1/inventory_item_123.jpg",
@@ -90,7 +90,7 @@ class CloudinaryStorageServiceTest {
         MediaDTOs.MediaAssetDTO result = storageService.confirmUpload(request, userId);
 
         assertThat(result).isNotNull();
-        assertThat(result.ownerModule()).isEqualTo(OwnerModule.INVENTORY);
+        assertThat(result.ownerModule()).isEqualTo("INVENTORY_ITEM");
         assertThat(result.referenceId()).isEqualTo(referenceId);
         assertThat(result.externalId()).isEqualTo("inventory_item_123");
         assertThat(result.url()).isEqualTo("https://res.cloudinary.com/demo/image/upload/v1/inventory_item_123.jpg");
@@ -107,7 +107,7 @@ class CloudinaryStorageServiceTest {
     void testListAssets() {
         MediaAssetTbl asset = MediaAssetTbl.builder()
                 .id(UUID.randomUUID())
-                .ownerModule(OwnerModule.INVENTORY)
+                .ownerModule("INVENTORY_ITEM")
                 .referenceId(referenceId)
                 .storageProvider(StorageProvider.CLOUDINARY)
                 .externalId("ext1")
@@ -118,10 +118,10 @@ class CloudinaryStorageServiceTest {
                 .uploadedAt(java.time.Instant.now())
                 .build();
 
-        when(mediaAssetRepository.findAllByOwnerModuleAndReferenceId(OwnerModule.INVENTORY, referenceId))
+        when(mediaAssetRepository.findAllByOwnerModuleAndReferenceId("INVENTORY_ITEM", referenceId))
                 .thenReturn(List.of(asset));
 
-        List<MediaDTOs.MediaAssetDTO> list = storageService.listAssets(OwnerModule.INVENTORY, referenceId);
+        List<MediaDTOs.MediaAssetDTO> list = storageService.listAssets("INVENTORY_ITEM", referenceId);
 
         assertThat(list).hasSize(1);
         assertThat(list.get(0).externalId()).isEqualTo("ext1");
@@ -133,7 +133,7 @@ class CloudinaryStorageServiceTest {
         UUID assetId = UUID.randomUUID();
         MediaAssetTbl asset = MediaAssetTbl.builder()
                 .id(assetId)
-                .ownerModule(OwnerModule.PROPERTY)
+                .ownerModule("PROPERTY")
                 .referenceId(referenceId)
                 .storageProvider(StorageProvider.CLOUDINARY)
                 .externalId("ext2")

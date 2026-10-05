@@ -1,33 +1,9 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export interface ChargeConfigRequest {
-    propertyId: string;
-    chargeName: string;
-    chargeCategory: string;
-    billingFrequency: string;
-    calculationStrategy: string;
-    unitType?: string;
-    baseRate?: number | null;
-    applySalesTax: boolean;
-    lateFeePercentage: number | null;
-    autoCarryForward?: boolean;
-}
+export type ChargeConfigRequest = ApiInput<'ChargeConfigRequest'>;
 
-export interface ChargeConfigResponse {
-    id: string;
-    propertyId: string;
-    chargeName: string;
-    chargeCategory: string;
-    billingFrequency: string;
-    calculationStrategy: string;
-    unitType?: string;
-    baseRate?: number | null;
-    applySalesTax: boolean;
-    lateFeePercentage: number | null;
-    autoCarryForward?: boolean;
-    isSystemRequired: boolean;
-    isActive: boolean;
-}
+export type ChargeConfigResponse = ApiModel<'ChargeConfigResponse', 'unitType' | 'baseRate' | 'autoCarryForward', 'baseRate' | 'lateFeePercentage'>;
 
 export const createChargeConfig = async (request: ChargeConfigRequest, token: string): Promise<ChargeConfigResponse> => {
     return apiRequest<ChargeConfigResponse>('/api/v1/finance/charge-configs', {

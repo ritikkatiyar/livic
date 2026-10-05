@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface UserQueryService {
     UserTbl getUserById(UUID id);
-    UserDTOs.TenantProfileResponse getTenantProfile(UUID userId);
+    UserDTOs.ProfileResponse getProfile(UUID userId);
     UserTbl getUserByEmail(String email);
     Optional<UserTbl> findByEmail(String email);
     Optional<UserTbl> findByPhoneNumber(String phoneNumber);

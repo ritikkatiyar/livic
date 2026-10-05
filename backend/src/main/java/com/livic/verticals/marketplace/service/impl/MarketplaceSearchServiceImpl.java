@@ -9,7 +9,7 @@ import com.livic.verticals.marketplace.mapper.MarketplaceUnitMapper;
 import com.livic.verticals.marketplace.qr.QrCodeService;
 import com.livic.verticals.marketplace.service.interfaces.MarketplaceSearchService;
 import com.livic.core.property.domain.PropertyType;
-import com.livic.platform.common.enums.OwnerModule;
+import com.livic.core.property.security.PropertyResources;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.storage.dto.MediaDTOs;
 import com.livic.platform.storage.facade.StorageFacade;
@@ -154,7 +154,7 @@ public class MarketplaceSearchServiceImpl implements MarketplaceSearchService {
     }
 
     private List<String> imageUrls(UUID referenceId) {
-        return storageFacade.getAssets(OwnerModule.PROPERTY, referenceId).stream()
+        return storageFacade.getAssets(PropertyResources.PROPERTY, referenceId).stream()
                 .map(MediaDTOs.MediaAssetDTO::url)
                 .collect(Collectors.toList());
     }
@@ -163,7 +163,7 @@ public class MarketplaceSearchServiceImpl implements MarketplaceSearchService {
         if (referenceIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        return storageFacade.getAssetsForReferences(OwnerModule.PROPERTY, referenceIds).entrySet().stream()
+        return storageFacade.getAssetsForReferences(PropertyResources.PROPERTY, referenceIds).entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> e.getValue().stream().map(MediaDTOs.MediaAssetDTO::url).collect(Collectors.toList())

@@ -144,9 +144,12 @@ public class IssueServiceIntegrationTest {
                 .build();
         unitRepository.save(unit);
 
+        // The lease service makes the tenant a unit member and points the lease at it; do the same.
+        var member = unitMemberService.addTenant(unit.getId(), tenant.getId(), LocalDate.now().minusMonths(1), null);
         lease = LeaseTbl.builder()
                 .userId(tenant.getId())
                 .unitId(unit.getId())
+                .memberId(member.getId())
                 .moveInDate(LocalDate.now().minusMonths(1))
                 .moveOutDate(LocalDate.now().plusMonths(11))
                 .monthlyRentAmount(BigDecimal.valueOf(15000))
@@ -155,8 +158,6 @@ public class IssueServiceIntegrationTest {
                 .splitStrategy(com.livic.verticals.rental.lease.domain.LeaseSplitStrategy.FULL_UNIT)
                 .build();
         leaseRepository.save(lease);
-        // The lease is saved directly here, so add the unit member the lease service would create.
-        unitMemberService.addTenant(unit.getId(), tenant.getId(), lease.getId(), lease.getMoveInDate(), null);
 
         SubscriptionTestSupport.subscribe(subscriptionRepository, planRepository, landlord.getId(), SubscriptionTestSupport.ENTERPRISE_PLAN_ID);
         // Seed property memberships
@@ -178,7 +179,6 @@ public class IssueServiceIntegrationTest {
                 property.getId(),
                 null,
                 null,
-                null,
                 "Clogged Common Drainage",
                 "Main lobby drainage is blocked.",
                 IssueCategory.MAINTENANCE,
@@ -198,7 +198,6 @@ public class IssueServiceIntegrationTest {
                 property.getId(),
                 null,
                 null,
-                null,
                 "Tenant Common area complain",
                 "Parking light is broken.",
                 IssueCategory.MAINTENANCE,
@@ -210,7 +209,6 @@ public class IssueServiceIntegrationTest {
 
         IssueResponse tenantIssue = issueService.createIssue(tenantRequest, tenant.getId());
         assertEquals(IssueScope.UNIT, tenantIssue.scope());
-        assertEquals(lease.getId(), tenantIssue.leaseId());
         assertEquals(unit.getId(), tenantIssue.unitId());
     }
 
@@ -219,7 +217,6 @@ public class IssueServiceIntegrationTest {
         CreateIssueRequest request = new CreateIssueRequest(
                 property.getId(),
                 unit.getId(),
-                lease.getId(),
                 tenant.getId(),
                 "Gas Leak in Apartment",
                 "Strong smell of LPG gas in the kitchen.",
@@ -243,7 +240,6 @@ public class IssueServiceIntegrationTest {
         CreateIssueRequest request = new CreateIssueRequest(
                 property.getId(),
                 unit.getId(),
-                lease.getId(),
                 tenant.getId(),
                 "AC Compressor Not Working",
                 "High priority maintenance needed for AC.",
@@ -293,7 +289,7 @@ public class IssueServiceIntegrationTest {
     }
 
     private CreateIssueRequest unitIssue(String title) {
-        return new CreateIssueRequest(property.getId(), unit.getId(), lease.getId(), tenant.getId(),
+        return new CreateIssueRequest(property.getId(), unit.getId(), tenant.getId(),
                 title, title, IssueCategory.MAINTENANCE, IssuePriority.LOW, IssueScope.UNIT, "Tenant User", null);
     }
 
@@ -306,7 +302,6 @@ public class IssueServiceIntegrationTest {
         CreateIssueRequest request = new CreateIssueRequest(
                 property.getId(),
                 unit.getId(),
-                lease.getId(),
                 tenant.getId(),
                 "Kitchen Faucet Leaking",
                 "Water dripping slowly from faucet.",

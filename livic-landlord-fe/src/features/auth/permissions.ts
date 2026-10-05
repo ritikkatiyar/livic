@@ -9,7 +9,7 @@ const FINANCE_VIEW_CODES = [
   'METER_READING_VIEW',
   'CHARGE_CONFIG_VIEW',
   'BILLING_WORKSHEET_VIEW',
-  'RENT_ROLL_VIEW',
+  'BILL_VIEW',
   'LEDGER_VIEW',
 ] as const;
 
@@ -21,7 +21,7 @@ const FINANCE_VIEW_CODES = [
 const ROUTE_REQUIREMENTS: { pattern: RegExp; anyOf: Requirement }[] = [
   { pattern: /^\/expenses\/charge-config/, anyOf: ['CHARGE_CONFIG_VIEW'] },
   { pattern: /^\/expenses\/billing-worksheet/, anyOf: ['BILLING_WORKSHEET_VIEW'] },
-  { pattern: /^\/expenses\/rent-roll/, anyOf: ['RENT_ROLL_VIEW'] },
+  { pattern: /^\/expenses\/rent-roll/, anyOf: ['BILL_VIEW'] },
   { pattern: /^\/expenses\/ledger/, anyOf: ['LEDGER_VIEW'] },
   { pattern: /^\/expenses/, anyOf: FINANCE_VIEW_CODES },
   { pattern: /^\/create-expense/, anyOf: ['CHARGE_CONFIG_MANAGE'] },

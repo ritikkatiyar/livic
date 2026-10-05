@@ -2,7 +2,6 @@ package com.livic.platform.storage.controller;
 
 import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.common.response.ApiResponse;
-import com.livic.platform.common.enums.OwnerModule;
 import com.livic.platform.storage.dto.MediaDTOs;
 import com.livic.platform.storage.service.interfaces.StorageService;
 import jakarta.validation.Valid;
@@ -31,7 +30,7 @@ public class MediaController {
     private final StorageService storageService;
 
     @PostMapping("/upload-authorization")
-    @PreAuthorize("@authorizationService.hasMediaAccess(#request.ownerModule(), #request.referenceId(), 'WRITE')")
+    @PreAuthorize("@mediaAuthorization.canAccess(#request.ownerModule(), #request.referenceId(), 'WRITE')")
     public ResponseEntity<ApiResponse<MediaDTOs.UploadAuthorizationResponse>> requestUploadAuthorization(
             @Valid @RequestBody MediaDTOs.UploadAuthorizationRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
@@ -41,7 +40,7 @@ public class MediaController {
     }
 
     @PostMapping("/confirm")
-    @PreAuthorize("@authorizationService.hasMediaAccess(#request.ownerModule(), #request.referenceId(), 'WRITE')")
+    @PreAuthorize("@mediaAuthorization.canAccess(#request.ownerModule(), #request.referenceId(), 'WRITE')")
     public ResponseEntity<ApiResponse<MediaDTOs.MediaAssetDTO>> confirmUpload(
             @Valid @RequestBody MediaDTOs.ConfirmUploadRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
@@ -51,16 +50,16 @@ public class MediaController {
     }
 
     @GetMapping
-    @PreAuthorize("@authorizationService.hasMediaAccess(#ownerModule, #referenceId, 'READ')")
+    @PreAuthorize("@mediaAuthorization.canAccess(#ownerModule, #referenceId, 'READ')")
     public ResponseEntity<ApiResponse<List<MediaDTOs.MediaAssetDTO>>> listMediaAssets(
-            @RequestParam OwnerModule ownerModule,
+            @RequestParam String ownerModule,
             @RequestParam UUID referenceId) {
         List<MediaDTOs.MediaAssetDTO> assets = storageService.listAssets(ownerModule, referenceId);
         return ResponseEntity.ok(ApiResponse.success(assets));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@authorizationService.hasMediaAssetAccess(#id, 'DELETE')")
+    @PreAuthorize("@mediaAuthorization.canAccessAsset(#id, 'DELETE')")
     public ResponseEntity<ApiResponse<Void>> deleteMediaAsset(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {

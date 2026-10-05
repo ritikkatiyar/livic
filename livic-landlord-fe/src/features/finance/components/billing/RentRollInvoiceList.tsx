@@ -84,8 +84,8 @@ export function RentRollInvoiceList({
           <View style={styles.chargesList}>
             {invoice.charges?.map((charge, i) => (
               <View key={i} style={styles.chargeRow}>
-                <Text style={styles.chargeDesc}>{charge.description || charge.chargeType}</Text>
-                <Text style={styles.chargeAmt}>₹ {charge.amount?.toFixed(2)}</Text>
+                <Text style={styles.chargeDesc}>{charge.description}</Text>
+                <Text style={styles.chargeAmt}>{charge.amount < 0 ? '- ' : ''}₹ {Math.abs(charge.amount ?? 0).toFixed(2)}</Text>
               </View>
             ))}
           </View>

@@ -1,5 +1,6 @@
 package com.livic.platform.user.service.impl;
 
+import com.livic.platform.common.util.PhoneNumbers;
 import com.livic.platform.user.repository.UserRepository;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.user.domain.UserTbl;
@@ -33,8 +34,8 @@ public class UserQueryServiceImpl implements UserQueryService {
     }
 
     @Override
-    public UserDTOs.TenantProfileResponse getTenantProfile(UUID userId) {
-        return UserDTOs.TenantProfileResponse.from(getUserById(userId));
+    public UserDTOs.ProfileResponse getProfile(UUID userId) {
+        return UserDTOs.ProfileResponse.from(getUserById(userId));
     }
 
     @Override
@@ -50,7 +51,8 @@ public class UserQueryServiceImpl implements UserQueryService {
 
     @Override
     public Optional<UserTbl> findByPhoneNumber(String phoneNumber) {
-        return userRepository.findByPhoneNumber(normalizePhoneNumber(phoneNumber));
+        // A number that is not whole yet (still being typed) matches nobody.
+        return PhoneNumbers.tryNormalize(phoneNumber).flatMap(userRepository::findByPhoneNumber);
     }
 
     @Override
@@ -79,7 +81,4 @@ public class UserQueryServiceImpl implements UserQueryService {
         return email == null ? null : email.trim().toLowerCase();
     }
 
-    private static String normalizePhoneNumber(String phoneNumber) {
-        return phoneNumber == null ? null : phoneNumber.trim();
-    }
 }

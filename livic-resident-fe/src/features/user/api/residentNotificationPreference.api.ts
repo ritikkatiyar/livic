@@ -1,10 +1,7 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
-export interface ResidentNotificationPreferences {
-  emailEnabled: boolean;
-  pushEnabled: boolean;
-  whatsappEnabled: boolean;
-}
+export type ResidentNotificationPreferences = ApiModel<'UserNotificationPreferencesDTO'>;
 
 export async function getResidentNotificationPreferences(
   token: string

@@ -31,9 +31,6 @@ public class IssueTbl extends BaseEntity {
     @Column(name = "unit_id")
     private UUID unitId;
 
-    @Column(name = "lease_id")
-    private UUID leaseId;
-
     @Column(name = "tenant_id")
     private UUID tenantId;
 

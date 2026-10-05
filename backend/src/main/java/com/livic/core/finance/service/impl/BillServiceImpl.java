@@ -1,38 +1,41 @@
 package com.livic.core.finance.service.impl;
 
+import com.livic.core.finance.security.FinancePermissions;
+import com.livic.platform.auth.facade.AuthFacade;
+import com.livic.core.finance.listener.FinancePaymentEventListener;
 import com.livic.core.finance.repository.MeterReadingRepository;
 import com.livic.core.finance.repository.ChargeConfigRepository;
 import com.livic.core.finance.repository.BillLineRepository;
 import com.livic.core.finance.repository.BillingWorksheetRepository;
 import com.livic.core.finance.repository.BillRepository;
 import com.livic.platform.security.UserDetailsImpl;
-import com.livic.platform.common.event.RentPublishedEvent;
+import com.livic.core.finance.event.BillPublishedEvent;
+import com.livic.platform.outbox.facade.OutboxFacade;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.core.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.core.finance.domain.MeterReadingTbl;
 import com.livic.core.finance.domain.BillLineTbl;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.BillTbl;
+import com.livic.core.finance.domain.CalculationStrategyType;
 import com.livic.core.finance.dto.BillDTOs;
-import com.livic.core.finance.dto.RentRollMetricsDTO;
+import com.livic.core.finance.dto.BillMetricsDTO;
 import com.livic.core.finance.mapper.BillMapper;
 import com.livic.core.finance.service.interfaces.BillService;
 import com.livic.core.finance.specification.BillSpecifications;
 import com.livic.platform.payment.dto.PaymentInitiationRequest;
 import com.livic.platform.payment.dto.PaymentInitiationResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
-import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.domain.UnitMemberRole;
+import com.livic.core.property.domain.UnitOccupancy;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
-import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -43,6 +46,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -68,11 +73,11 @@ public class BillServiceImpl implements BillService {
     private final MeterReadingRepository meterReadingRepository;
     private final ChargeConfigRepository chargeConfigRepository;
     private final PaymentFacade paymentFacade;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxFacade outboxFacade;
     private final UserFacade userFacade;
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
-    private final PropertyFacade propertyFacade;
+    private final AuthFacade authFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -92,16 +97,16 @@ public class BillServiceImpl implements BillService {
         BigDecimal remainingAmount = bill.getTotalAmount().subtract(amountPaid);
 
         if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Rent cycle is already fully paid");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Bill is already fully paid");
         }
 
         PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
                 .payerUserId(payerUserId)
-                .referenceType("BILL")
+                .referenceType(FinancePaymentEventListener.REFERENCE_TYPE)
                 .referenceId(billId)
                 .amount(remainingAmount)
                 .paymentMethod("ONLINE")
-                .description("Rent Cycle Online Payment")
+                .description("Bill online payment")
                 .build();
 
         return paymentFacade.initiateOnlinePayment(initRequest);
@@ -122,13 +127,13 @@ public class BillServiceImpl implements BillService {
 
         PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
                 .payerUserId(finalPayerId)
-                .referenceType("BILL")
+                .referenceType(FinancePaymentEventListener.REFERENCE_TYPE)
                 .referenceId(billId)
                 .amount(amount)
                 .paymentMethod("CASH")
                 .confirmedBy(confirmedBy)
                 .note(note)
-                .description("Rent Cycle Cash Payment")
+                .description("Bill cash payment")
                 .build();
 
         return paymentFacade.recordCashPayment(initRequest);
@@ -136,80 +141,30 @@ public class BillServiceImpl implements BillService {
 
     @Override
     @Transactional(readOnly = true)
-    public BillDTOs.BillListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, BillStatus status, String search, Pageable pageable) {
-        List<UUID> targetPropertyIds = new ArrayList<>();
-
-        boolean isTenantView = false;
-        // Set when the caller is themselves a tenant: we already hold their member row, so
-        // there is no need to go back through the lease to find it again.
-        UUID scopedMemberId = null;
-        if (currentUserId != null) {
-            Optional<UnitResidentDTO> tenancyOpt = unitMemberFacade.getActiveResidencesByUserId(currentUserId).stream()
-                    .filter(r -> r.role() == UnitMemberRole.TENANT)
-                    .findFirst();
-            if (tenancyOpt.isPresent()) {
-                scopedMemberId = tenancyOpt.get().memberId();
-                propertyId = null;
-                isTenantView = true;
-            } else {
-                List<PropertySummaryDTO> userProperties = propertyFacade.getPropertiesByUserId(currentUserId);
-                List<UUID> ownedPropertyIds = userProperties.stream().map(PropertySummaryDTO::id).toList();
-
-                if (propertyId != null) {
-                    if (!ownedPropertyIds.contains(propertyId)) {
-                        return new BillDTOs.BillListResponse(
-                                List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                                new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
-                        );
-                    }
-                    targetPropertyIds.add(propertyId);
-                } else {
-                    if (ownedPropertyIds.isEmpty()) {
-                        return new BillDTOs.BillListResponse(
-                                List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                                new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
-                        );
-                    }
-                    targetPropertyIds.addAll(ownedPropertyIds);
-                }
-            }
-        } else if (propertyId != null) {
-            targetPropertyIds.add(propertyId);
-        }
-
-        if (isTenantView && status == BillStatus.PENDING) {
+    public BillDTOs.BillListResponse list(UUID currentUserId, UUID propertyId, String billingMonth, BillStatus status, String search, Pageable pageable) {
+        // Staff see the bills of the properties where they hold BILL_VIEW (FULL_ACCESS holds every
+        // code). Being a member of a property is not enough, and paying a bill yourself is the
+        // separate /me/bills view.
+        Set<UUID> viewable = currentUserId == null ? Set.of()
+                : authFacade.getEffectivePermissionCodes(currentUserId).entrySet().stream()
+                        .filter(e -> e.getValue().contains(FinancePermissions.BILL_VIEW))
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.toSet());
+        List<UUID> targetPropertyIds = propertyId == null
+                ? List.copyOf(viewable)
+                : viewable.contains(propertyId) ? List.of(propertyId) : List.of();
+        if (targetPropertyIds.isEmpty()) {
             return new BillDTOs.BillListResponse(
                     List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                    new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                    new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
             );
         }
 
-        // A bill carries its property and payer, so a lease is resolved to its member and a
-        // property filters directly — no walk through units any more.
-        Specification<BillTbl> spec;
-        if (scopedMemberId != null) {
-            spec = Specification.where(BillSpecifications.hasMemberId(scopedMemberId));
-        } else if (leaseId != null) {
-            UUID payerMemberId = unitMemberFacade.getResidentByLeaseId(leaseId)
-                    .map(UnitResidentDTO::memberId)
-                    .orElse(null);
-            spec = Specification.where(BillSpecifications.hasMemberId(payerMemberId));
-            if (payerMemberId == null) {
-                return new BillDTOs.BillListResponse(
-                        List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
-                        new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
-                );
-            }
-        } else {
-            spec = Specification.where(BillSpecifications.hasPropertyIdIn(targetPropertyIds));
-        }
-
-        spec = spec.and(BillSpecifications.hasBillingMonth(billingMonth))
+        // A bill carries its property and payer, so a property filters directly; no walk
+        // through units.
+        Specification<BillTbl> spec = Specification.where(BillSpecifications.hasPropertyIdIn(targetPropertyIds))
+                .and(BillSpecifications.hasBillingMonth(billingMonth))
                 .and(BillSpecifications.hasStatus(status));
-
-        if (isTenantView && status == null) {
-            spec = spec.and(BillSpecifications.hasStatusNot(BillStatus.PENDING));
-        }
 
         if (search != null && !search.trim().isEmpty()) {
             List<UUID> matchingUnitIds = unitFacade.getUnitIdsByUnitNumberSearch(search);
@@ -223,8 +178,7 @@ public class BillServiceImpl implements BillService {
         Page<BillTbl> page = billRepository.findAll(spec, pageable);
         List<BillDTOs.BillResponse> content = toResponses(page.getContent());
 
-        RentRollMetricsDTO rentRollMetrics = !targetPropertyIds.isEmpty() ?
-                billRepository.getRentRollMetrics(
+        BillMetricsDTO billMetrics = billRepository.getBillMetrics(
                         targetPropertyIds,
                         billingMonth,
                         BillStatus.PENDING,
@@ -232,9 +186,9 @@ public class BillServiceImpl implements BillService {
                         BillStatus.PAID,
                         BillStatus.OVERDUE,
                         BillStatus.PARTIALLY_PAID
-                ) : null;
-        if (rentRollMetrics == null) {
-            rentRollMetrics = new RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
+                );
+        if (billMetrics == null) {
+            billMetrics = new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L);
         }
 
         return new BillDTOs.BillListResponse(
@@ -243,8 +197,86 @@ public class BillServiceImpl implements BillService {
                 page.getTotalPages(),
                 page.getSize(),
                 page.getNumber(),
-                rentRollMetrics
+                billMetrics
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BillDTOs.BillListResponse listForMember(UUID memberId, String billingMonth, BillStatus status,
+                                                  boolean includeUnpublished, Pageable pageable) {
+        return listForMembers(Set.of(memberId), billingMonth, status, includeUnpublished, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BillDTOs.BillListResponse listForPayer(UUID userId, String billingMonth, BillStatus status, Pageable pageable) {
+        // Every unit the user pays for: as a tenant, or as an owner in a residential building.
+        // Bills still being drafted are not theirs to see yet.
+        Set<UUID> memberIds = unitMemberFacade.getActiveResidencesByUserId(userId).stream()
+                .filter(r -> r.role() == UnitMemberRole.TENANT || r.role() == UnitMemberRole.OWNER)
+                .map(UnitResidentDTO::memberId)
+                .collect(Collectors.toSet());
+        if (memberIds.isEmpty() || status == BillStatus.PENDING) {
+            return new BillDTOs.BillListResponse(
+                    List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
+                    new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+            );
+        }
+        return listForMembers(memberIds, billingMonth, status, false, pageable);
+    }
+
+    private BillDTOs.BillListResponse listForMembers(Set<UUID> memberIds, String billingMonth, BillStatus status,
+                                                     boolean includeUnpublished, Pageable pageable) {
+        Specification<BillTbl> spec = Specification.where(BillSpecifications.hasMemberIdIn(memberIds))
+                .and(BillSpecifications.hasBillingMonth(billingMonth))
+                .and(BillSpecifications.hasStatus(status));
+        if (!includeUnpublished) {
+            spec = spec.and(BillSpecifications.hasStatusNot(BillStatus.PENDING));
+        }
+        Page<BillTbl> page = billRepository.findAll(spec, pageable);
+        return new BillDTOs.BillListResponse(
+                toResponses(page.getContent()),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.getSize(),
+                page.getNumber(),
+                new BillMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BillDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth) {
+        YearMonth month;
+        try {
+            month = YearMonth.parse(billingMonth);
+        } catch (DateTimeParseException | NullPointerException e) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "billingMonth must use yyyy-MM");
+        }
+
+        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        // People who pay (tenants, or owners in a residential building), not units: a shared
+        // room has several, so they are measured against beds.
+        List<UnitResidentDTO> payers = unitMemberFacade.getActiveResidentsByPropertyId(propertyId).stream()
+                .filter(r -> r.role() == UnitMemberRole.TENANT || r.role() == UnitMemberRole.OWNER)
+                .toList();
+        int totalBeds = units.stream().mapToInt(u -> UnitOccupancy.beds(u.capacity())).sum();
+
+        // Meters are read per unit, so a shared room needs one reading, not one per payer.
+        Set<UUID> occupiedUnitIds = payers.stream().map(UnitResidentDTO::unitId).collect(Collectors.toSet());
+        long meteredCharges = chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(propertyId).stream()
+                .filter(c -> c.getCalculationStrategy() == CalculationStrategyType.METERED)
+                .count();
+        int readingsExpected = occupiedUnitIds.size() * (int) meteredCharges;
+        int readingsEntered = (int) meterReadingRepository
+                .findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month.getMonthValue(), month.getYear()).stream()
+                .filter(r -> occupiedUnitIds.contains(r.getUnitId()) && r.getCurrentReading() != null)
+                .count();
+
+        boolean isReady = readingsEntered >= readingsExpected || payers.isEmpty();
+        return new BillDTOs.PreFlightChecklistResponse(
+                units.size(), totalBeds, payers.size(), readingsExpected, readingsEntered, isReady);
     }
 
     @Override
@@ -272,8 +304,8 @@ public class BillServiceImpl implements BillService {
         recordCashPayment(id, remainingAmount, "Recorded via legacy markPaid", payerUserIdOf(cycle), confirmedBy);
 
         BillTbl updated = billRepository.findById(id).orElse(cycle);
-        log.info("bill_marked_paid billId={} leaseId={} paidAt={}",
-                updated.getId(), payerLeaseIdOf(updated), updated.getPaidAt());
+        log.info("bill_marked_paid billId={} memberId={} paidAt={}",
+                updated.getId(), updated.getMemberId(), updated.getPaidAt());
         return buildSingleResponse(updated);
     }
 
@@ -320,17 +352,10 @@ public class BillServiceImpl implements BillService {
                 }
             }
 
-            eventPublisher.publishEvent(new RentPublishedEvent(
-                    this,
-                    cycle.getId(),
-                    payerUserIdOf(cycle),
-                    cycle.getBillingMonth(),
-                    cycle.getTotalAmount(),
-                    cycle.getDueDate()
-            ));
+            announcePublished(cycle, payerUserIdOf(cycle));
 
-            log.info("bill_published billId={} leaseId={} billingMonth={}",
-                    cycle.getId(), payerLeaseIdOf(cycle), cycle.getBillingMonth());
+            log.info("bill_published billId={} memberId={} billingMonth={}",
+                    cycle.getId(), cycle.getMemberId(), cycle.getBillingMonth());
         }
 
         return buildSingleResponse(cycle);
@@ -380,8 +405,8 @@ public class BillServiceImpl implements BillService {
                 }
             }
 
-            log.info("bill_unpublished billId={} leaseId={} billingMonth={}",
-                    cycle.getId(), payerLeaseIdOf(cycle), cycle.getBillingMonth());
+            log.info("bill_unpublished billId={} memberId={} billingMonth={}",
+                    cycle.getId(), cycle.getMemberId(), cycle.getBillingMonth());
         }
 
         return buildSingleResponse(cycle);
@@ -446,14 +471,7 @@ public class BillServiceImpl implements BillService {
         }
         for (BillTbl cycle : transitioned) {
             UnitResidentDTO payer = payers.get(cycle.getMemberId());
-            eventPublisher.publishEvent(new RentPublishedEvent(
-                    this,
-                    cycle.getId(),
-                    payer != null ? payer.userId() : null,
-                    cycle.getBillingMonth(),
-                    cycle.getTotalAmount(),
-                    cycle.getDueDate()
-            ));
+            announcePublished(cycle, payer != null ? payer.userId() : null);
         }
 
         List<BillDTOs.BillResponse> succeeded = new ArrayList<>(toResponses(propertyCycles));
@@ -606,10 +624,9 @@ public class BillServiceImpl implements BillService {
                                              UnitSummaryDTO unit, List<BillLineTbl> charges) {
         String tenantName = (user != null && user.fullName() != null) ? user.fullName() : "Unknown Tenant";
         String unitNumber = (unit != null) ? unit.unitNumber() : "Vacant";
-        UUID leaseId = payer != null ? payer.leaseId() : null;
         UUID blockId = unit != null ? unit.blockId() : null;
         String blockName = unit != null ? unit.blockName() : null;
-        return BillMapper.toResponse(bill, leaseId, blockId, blockName, tenantName, unitNumber, charges);
+        return BillMapper.toResponse(bill, blockId, blockName, tenantName, unitNumber, charges);
     }
 
     /** The member who owes a bill, active or not — a bill outlives the tenancy behind it. */
@@ -633,6 +650,15 @@ public class BillServiceImpl implements BillService {
                 .collect(Collectors.toMap(UnitResidentDTO::memberId, Function.identity(), (a, b) -> a));
     }
 
+    /** The payer is told after this commits, through the outbox; a payer with no account is told nothing. */
+    private void announcePublished(BillTbl bill, UUID payerUserId) {
+        if (payerUserId == null) {
+            log.info("bill_published_without_account billId={} memberId={}", bill.getId(), bill.getMemberId());
+        }
+        outboxFacade.publish(new BillPublishedEvent(bill.getId(), bill.getBillType(), payerUserId,
+                bill.getBillingMonth(), bill.getTotalAmount(), bill.getDueDate()));
+    }
+
     private UUID payerUserIdOf(BillTbl bill) {
         UnitResidentDTO payer = payerOf(bill);
         return payer != null ? payer.userId() : null;
@@ -641,10 +667,5 @@ public class BillServiceImpl implements BillService {
     private UUID payerUnitIdOf(BillTbl bill) {
         UnitResidentDTO payer = payerOf(bill);
         return payer != null ? payer.unitId() : null;
-    }
-
-    private UUID payerLeaseIdOf(BillTbl bill) {
-        UnitResidentDTO payer = payerOf(bill);
-        return payer != null ? payer.leaseId() : null;
     }
 }

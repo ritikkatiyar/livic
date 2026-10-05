@@ -12,7 +12,7 @@ public enum FeatureKey {
     // ── Boolean Toggles (on = included, off = disabled) ──
     COMMAND_CENTER_3D,         // A5: 3D building model view
     CUSTOM_CHARGE_TYPES,       // B4: Custom charge type creation
-    BATCH_RENT_GENERATION,     // B6: Property-wide batch billing
+    BATCH_BILL_GENERATION,     // B6: Property-wide batch billing
     BILLING_WORKSHEET,         // B10: Advanced billing worksheet
     FINANCIAL_LEDGER,          // B11: Full financial ledger
     PREMIUM_EXPENSE_SPLIT,     // B13: Custom ratio splits

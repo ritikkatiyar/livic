@@ -96,6 +96,6 @@ class AnnouncementReadReceiptTest {
     }
 
     private UnitResidentDTO residenceIn(UUID propertyId) {
-        return new UnitResidentDTO(UUID.randomUUID(), userId, UnitMemberRole.TENANT, UUID.randomUUID(), UUID.randomUUID(), "101", 1, propertyId);
+        return new UnitResidentDTO(UUID.randomUUID(), userId, UnitMemberRole.TENANT, UUID.randomUUID(), "101", 1, propertyId);
     }
 }

@@ -14,15 +14,6 @@ public final class PaymentConstants {
         private Method() {}
     }
 
-    public static final class ReferenceType {
-        public static final String BILL = "BILL";
-        public static final String SAAS_SUBSCRIPTION = "SAAS_SUBSCRIPTION";
-        public static final String WALLET_TOPUP = "WALLET_TOPUP";
-        public static final String UNIT_BOOKING = "UNIT_BOOKING";
-
-        private ReferenceType() {}
-    }
-
     public static final class Status {
         public static final String INITIATED = "INITIATED";
         public static final String PENDING_CONFIRMATION = "PENDING_CONFIRMATION";

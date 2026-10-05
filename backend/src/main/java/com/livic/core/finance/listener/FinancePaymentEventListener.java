@@ -1,22 +1,17 @@
 package com.livic.core.finance.listener;
 
-import com.livic.core.finance.repository.UnitBookingRepository;
-import com.livic.core.finance.repository.FinanceLedgerRepository;
+import com.livic.platform.outbox.spi.OutboxConsumer;
 import com.livic.core.finance.repository.BillRepository;
 import com.livic.core.finance.domain.LedgerTransactionType;
 import com.livic.core.finance.domain.BillStatus;
-import com.livic.core.finance.domain.FinanceLedgerTbl;
+import com.livic.core.finance.service.interfaces.LedgerService;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.facade.UnitMemberFacade;
 import com.livic.core.finance.domain.BillTbl;
-import com.livic.core.finance.domain.UnitBookingTbl;
-import com.livic.platform.payment.constant.PaymentConstants;
 import com.livic.platform.payment.event.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,38 +19,53 @@ import java.time.LocalDateTime;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class FinancePaymentEventListener {
+/** Marks a bill paid, and posts it to the ledger, once its payment is committed. */
+public class FinancePaymentEventListener implements OutboxConsumer<PaymentCompletedEvent> {
 
     private final BillRepository billRepository;
-    private final UnitBookingRepository unitBookingRepository;
-    private final FinanceLedgerRepository financeLedgerRepository;
+    private final LedgerService ledgerService;
     private final UnitMemberFacade unitMemberFacade;
 
-    @EventListener
-    @Transactional
-    public void onPaymentCompleted(PaymentCompletedEvent event) {
-        if (PaymentConstants.ReferenceType.BILL.equalsIgnoreCase(event.getReferenceType())) {
+    /** What finance calls a bill payment; payment hands it back untouched. */
+    public static final String REFERENCE_TYPE = "BILL";
+
+    @Override
+    public String name() {
+        return "finance.bill-payment";
+    }
+
+    @Override
+    public Class<PaymentCompletedEvent> eventType() {
+        return PaymentCompletedEvent.class;
+    }
+
+    @Override
+    public boolean accepts(PaymentCompletedEvent event) {
+        return REFERENCE_TYPE.equalsIgnoreCase(event.referenceType());
+    }
+
+    @Override
+    public void handle(PaymentCompletedEvent event) {
+        if (REFERENCE_TYPE.equalsIgnoreCase(event.referenceType())) {
             handleBillPayment(event);
-        } else if (PaymentConstants.ReferenceType.UNIT_BOOKING.equalsIgnoreCase(event.getReferenceType())) {
-            handleUnitBookingPayment(event);
         }
     }
 
     private void handleBillPayment(PaymentCompletedEvent event) {
         log.info("[OBSERVER: FINANCE] Processing PaymentCompletedEvent for Rent Cycle: {}", event);
 
-        BillTbl bill = billRepository.findByIdForUpdate(event.getReferenceId())
+        BillTbl bill = billRepository.findByIdForUpdate(event.referenceId())
                 .orElse(null);
 
         if (bill == null) {
-            log.warn("[OBSERVER: FINANCE] Bill not found for ID: {}", event.getReferenceId());
+            log.warn("[OBSERVER: FINANCE] Bill not found for ID: {}", event.referenceId());
             return;
         }
 
         // Each payment transaction completes exactly once (its row is locked while it is marked
         // SUCCESS), and the bill is locked above, so adding this payment's amount is safe.
         BigDecimal currentPaid = bill.getAmountPaid() != null ? bill.getAmountPaid() : BigDecimal.ZERO;
-        BigDecimal newTotalPaid = currentPaid.add(event.getAmount());
+        BigDecimal newTotalPaid = currentPaid.add(event.amount());
 
         bill.setAmountPaid(newTotalPaid);
 
@@ -72,41 +82,12 @@ public class FinancePaymentEventListener {
         UnitResidentDTO payer = bill.getMemberId() == null ? null
                 : unitMemberFacade.getResidentByMemberId(bill.getMemberId()).orElse(null);
         if (payer != null) {
-            BigDecimal currentBalance = financeLedgerRepository.sumAmountByMemberId(bill.getMemberId());
-            BigDecimal ledgerAmount = event.getAmount().negate();
-            BigDecimal newBalance = currentBalance.add(ledgerAmount);
-
             boolean isFullPayment = bill.getStatus() == BillStatus.PAID;
-            String description = (isFullPayment ? "Rent Payment (Full)" : "Rent Payment (Partial)") + " via " + event.getGatewayName();
-
-            FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
-                    .unitId(payer.unitId())
-                    .memberId(bill.getMemberId())
-                    .leaseId(payer.leaseId())
-                    .transactionType(LedgerTransactionType.PAYMENT_RECEIVED)
-                    .amount(ledgerAmount)
-                    .balance(newBalance)
-                    .referenceId(event.getTransactionId())
-                    .description(description)
-                    .build();
-
-            financeLedgerRepository.save(ledgerEntry);
+            ledgerService.post(bill.getMemberId(), payer.unitId(), LedgerTransactionType.PAYMENT_RECEIVED,
+                    event.amount().negate(), event.transactionId(),
+                    (isFullPayment ? "Payment (full)" : "Payment (partial)") + " via " + event.gatewayName());
         }
 
         log.info("[OBSERVER: FINANCE] Successfully updated Bill: {} status to: {}, totalPaid: {}", bill.getId(), bill.getStatus(), newTotalPaid);
-    }
-
-    private void handleUnitBookingPayment(PaymentCompletedEvent event) {
-        log.info("[OBSERVER: FINANCE] Processing PaymentCompletedEvent for Unit Booking: {}", event);
-
-        UnitBookingTbl booking = unitBookingRepository.findById(event.getReferenceId())
-                .orElse(null);
-
-        if (booking == null) {
-            log.warn("[OBSERVER: FINANCE] UnitBooking not found for ID: {}", event.getReferenceId());
-            return;
-        }
-
-        log.info("[OBSERVER: FINANCE] Successfully processed token payment for UnitBooking: {}", booking.getId());
     }
 }

@@ -1,5 +1,6 @@
 package com.livic.platform.subscription.service.impl;
 
+import com.livic.platform.subscription.listener.BillingPaymentEventListener;
 import com.livic.platform.subscription.repository.WalletTransactionRepository;
 import com.livic.platform.subscription.repository.SubscriptionPlanRepository;
 import com.livic.platform.subscription.repository.SaasSubscriptionRepository;
@@ -182,7 +183,7 @@ public class BillingWalletServiceImpl implements BillingWalletService {
 
         PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
                 .payerUserId(userId)
-                .referenceType(PaymentConstants.ReferenceType.WALLET_TOPUP)
+                .referenceType(BillingPaymentEventListener.WALLET_TOPUP_REFERENCE_TYPE)
                 .referenceId(wallet.getId())
                 .amount(BigDecimal.valueOf(request.amount()))
                 .paymentMethod(PaymentConstants.Method.ONLINE)
@@ -242,7 +243,7 @@ public class BillingWalletServiceImpl implements BillingWalletService {
         // Build payment request with the subscription's ID as referenceId
         PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
                 .payerUserId(userId)
-                .referenceType(PaymentConstants.ReferenceType.SAAS_SUBSCRIPTION)
+                .referenceType(BillingPaymentEventListener.SUBSCRIPTION_REFERENCE_TYPE)
                 .referenceId(subscription.getId())
                 .amount(BigDecimal.valueOf(request.amount()))
                 .paymentMethod(PaymentConstants.Method.ONLINE)

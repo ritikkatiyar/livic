@@ -15,7 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.context.ApplicationEventPublisher;
+import com.livic.platform.outbox.facade.OutboxFacade;
 import org.springframework.http.HttpStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,7 +35,7 @@ class PaymentVerificationFailsClosedTest {
     @Mock
     private PaymentGatewayRouter paymentGatewayRouter;
     @Mock
-    private ApplicationEventPublisher eventPublisher;
+    private OutboxFacade outboxFacade;
 
     private RazorpayProperties razorpayProperties;
     private PaymentTransactionServiceImpl service;
@@ -50,7 +50,7 @@ class PaymentVerificationFailsClosedTest {
                 paymentWebhookEventRepository,
                 paymentGatewayRouter,
                 razorpayProperties,
-                eventPublisher);
+                outboxFacade);
     }
 
     @Test
@@ -63,7 +63,7 @@ class PaymentVerificationFailsClosedTest {
                 .hasMessageContaining("Invalid payment signature");
 
         verifyNoInteractions(paymentTransactionRepository);
-        verify(eventPublisher, never()).publishEvent(org.mockito.ArgumentMatchers.any());
+        verify(outboxFacade, never()).publish(org.mockito.ArgumentMatchers.any());
     }
 
     @Test
@@ -87,7 +87,7 @@ class PaymentVerificationFailsClosedTest {
                 .hasMessageContaining("Invalid payment signature");
 
         verifyNoInteractions(paymentTransactionRepository);
-        verify(eventPublisher, never()).publishEvent(org.mockito.ArgumentMatchers.any());
+        verify(outboxFacade, never()).publish(org.mockito.ArgumentMatchers.any());
     }
 
     @Test

@@ -1,24 +1,9 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
-export interface JoinCodeResponse {
-  id: string;
-  code: string;
-  title: string;
-  accessType: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
-  maxUses: number;
-  usesCount: number;
-  isActive: boolean;
-  expiresAt: string;
-  permissionCodes?: string[];
-}
+export type JoinCodeResponse = ApiModel<'JoinCodeResponse', 'permissionCodes'>;
 
-export interface JoinCodeResultResponse {
-  propertyId: string;
-  propertyName: string;
-  title: string;
-  accessType: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
-  membershipId: string;
-}
+export type JoinCodeResultResponse = ApiModel<'JoinCodeResultResponse'>;
 
 export interface PageResponse<T> {
   content: T[];

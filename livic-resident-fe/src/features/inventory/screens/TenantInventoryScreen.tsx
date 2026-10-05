@@ -74,7 +74,10 @@ export default function TenantInventoryScreen() {
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { isDesktop } = useResponsive();
   const router = useRouter();
-  const { accessToken } = useAuth();
+  const { accessToken, context } = useAuth();
+  // Where the resident lives comes from their unit membership; the lease does not carry the property.
+  const residencePropertyId = ((context?.unitMemberships || []).find((m) => m.role === 'TENANT')
+    ?? (context?.unitMemberships || [])[0])?.propertyId;
 
   const [unitItems, setUnitItems] = useState<BackendInventoryItem[]>([]);
   const [sharedItems, setSharedItems] = useState<BackendInventoryItem[]>([]);
@@ -91,9 +94,9 @@ export default function TenantInventoryScreen() {
         const leaseData = await getActiveLease(accessToken);
         if (mounted && leaseData) {
           setLease(leaseData);
-          if (leaseData.propertyId) {
+          if (residencePropertyId) {
             try {
-              const propDetails = await getPropertyDetails(leaseData.propertyId, accessToken);
+              const propDetails = await getPropertyDetails(residencePropertyId, accessToken);
               if (mounted && propDetails?.amenities) {
                 setPropertyAmenities(propDetails.amenities);
               }
@@ -115,7 +118,7 @@ export default function TenantInventoryScreen() {
     }
     loadData();
     return () => { mounted = false; };
-  }, [accessToken]);
+  }, [accessToken, residencePropertyId]);
 
   const allItems = [...unitItems, ...sharedItems];
   const totalCount = allItems.length;
@@ -271,7 +274,7 @@ function TenantItemCard({ item, theme, styles, isDark }: { item: BackendInventor
             </Text>
           </View>
         </View>
-        <Text style={styles.itemDescription}>{item.notes || `Model: ${item.modelNumber || 'N/A'} • Serial: ${item.serialNumber || 'N/A'}`}</Text>
+        <Text style={styles.itemDescription}>{item.notes || `Model: ${item.modelNumber || 'N/A'} • Serial: ${item.serial || 'N/A'}`}</Text>
         <View style={styles.itemFooter}>
           <View style={styles.photoLink}>
             <MaterialIcons name="inventory-2" size={18} color={theme.Colors.primary} />

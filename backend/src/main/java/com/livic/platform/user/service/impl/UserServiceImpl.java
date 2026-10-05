@@ -1,5 +1,6 @@
 package com.livic.platform.user.service.impl;
 
+import com.livic.platform.common.util.PhoneNumbers;
 import com.livic.platform.user.repository.UserDeviceTokenRepository;
 import com.livic.platform.user.repository.UserRepository;
 import com.livic.platform.common.domain.UserRole;
@@ -41,34 +42,21 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public UserDTOs.UserSearchResponse createTenant(UserDTOs.CreateTenantRequest request) {
-        String email = request.email().trim().toLowerCase();
-        if (userQueryService.existsByEmail(email)) {
-            throw new BusinessException(HttpStatus.CONFLICT, "Email already registered");
-        }
-        String phone = request.phoneNumber().trim();
-        if (userQueryService.findByPhoneNumber(phone).isPresent()) {
-            throw new BusinessException(HttpStatus.CONFLICT, "Phone number already registered");
-        }
-        UserTbl user = UserTbl.builder()
-                .authUid(email)
-                .fullName(request.fullName().trim())
-                .phoneNumber(phone)
-                .passwordHash(passwordEncoder.encode(phone))
-                .globalRole(UserRole.USER)
-                .build();
-        UserTbl saved = userRepository.save(user);
-        return UserDTOs.UserSearchResponse.from(saved);
-    }
-
-    @Override
-    public UserDTOs.TenantProfileResponse updateTenantProfile(UUID userId, UserDTOs.UpdateTenantProfileRequest request) {
+    public UserDTOs.ProfileResponse updateProfile(UUID userId, UserDTOs.UpdateProfileRequest request) {
         UserTbl user = userQueryService.getUserById(userId);
-        if (request.phone() != null && !request.phone().isBlank()) {
-            user.setPhoneNumber(request.phone().trim());
+        String phone = PhoneNumbers.normalize(request.phone());
+        if (phone != null && !phone.equals(user.getPhoneNumber())) {
+            userQueryService.findByPhoneNumber(phone)
+                    .filter(other -> !other.getId().equals(userId))
+                    .ifPresent(other -> {
+                        throw new BusinessException(HttpStatus.CONFLICT, "Another account already uses this phone number");
+                    });
+            user.setPhoneNumber(phone);
+            // A new number has not been confirmed yet.
+            user.setPhoneVerifiedAt(null);
             userRepository.save(user);
         }
-        return UserDTOs.TenantProfileResponse.from(user);
+        return UserDTOs.ProfileResponse.from(user);
     }
 
     @Override

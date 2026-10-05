@@ -23,6 +23,12 @@ jest.mock('expo-blur', () => {
   return { BlurView: View };
 });
 
+jest.mock('@/src/features/auth/context/AuthProvider', () => ({
+  useAuth: () => ({
+    context: { unitMemberships: [{ role: 'TENANT', propertyId: 'property-1', unitId: 'unit-1' }] },
+  }),
+}));
+
 jest.mock('@/src/features/tenant/api/maintenance.api', () => ({
   getMaintenanceTickets: jest.fn(() => Promise.resolve([
     {

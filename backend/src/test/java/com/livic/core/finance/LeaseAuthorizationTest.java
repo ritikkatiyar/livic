@@ -105,7 +105,7 @@ class LeaseAuthorizationTest {
     }
 
     @Test
-    @DisplayName("Listing rent cycles for a property requires RENT_ROLL_VIEW, rather than returning an empty page")
+    @DisplayName("Listing rent cycles for a property requires BILL_VIEW, rather than returning an empty page")
     void billListIsAuthorized() throws NoSuchMethodException {
         Method list = java.util.Arrays.stream(BillController.class.getMethods())
                 .filter(m -> m.getName().equals("list"))
@@ -115,18 +115,19 @@ class LeaseAuthorizationTest {
 
         assertThat(preAuthorize).isNotNull();
         assertThat(preAuthorize.value())
-                .isEqualTo("#propertyId == null or @authorizationService.hasPermission(#propertyId, 'RENT_ROLL_VIEW')");
+                .isEqualTo("#propertyId == null or @authorizationService.hasPermission(#propertyId, 'BILL_VIEW')");
     }
 
     @Test
-    @DisplayName("Invoice HTML requires lease access on the rent cycle, with no role escape hatch")
+    @DisplayName("Invoice HTML needs bill access: staff with BILL_VIEW or the payer, with no role escape hatch")
     void invoiceEndpointIsAuthorized() throws NoSuchMethodException {
         Method invoice = InvoiceController.class.getMethod("getPaymentStatementHtml", UUID.class);
         PreAuthorize preAuthorize = invoice.getAnnotation(PreAuthorize.class);
 
         assertThat(preAuthorize).isNotNull();
         assertThat(preAuthorize.value()).doesNotContain("hasAnyRole");
-        assertThat(preAuthorize.value()).contains("BILL, #billId, 'LEASE_VIEW'");
-        assertThat(preAuthorize.value()).contains("BILL, #billId, 'LEASE_VIEW_OWN'");
+        assertThat(preAuthorize.value()).contains("BILL, #billId, 'BILL_VIEW'");
+        assertThat(preAuthorize.value()).contains("BILL, #billId, 'BILL_VIEW_OWN'");
+        assertThat(preAuthorize.value()).doesNotContain("LEASE");
     }
 }

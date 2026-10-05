@@ -78,7 +78,7 @@ public class SubscriptionPlanQueryServiceImpl implements SubscriptionPlanQuerySe
             case "AI_CREDITS_MONTHLY" -> limitValue == -1 ? "Unlimited AI" : (limitValue + " AI Credits/mo");
             case "COMMAND_CENTER_3D" -> "3D Command Center";
             case "CUSTOM_CHARGE_TYPES" -> "Custom Charge Types";
-            case "BATCH_RENT_GENERATION" -> "Batch Billing";
+            case "BATCH_BILL_GENERATION" -> "Batch Billing";
             case "BILLING_WORKSHEET" -> "Billing Worksheet";
             case "FINANCIAL_LEDGER" -> "Financial Ledger";
             case "PREMIUM_EXPENSE_SPLIT" -> "Custom Expense Splits";

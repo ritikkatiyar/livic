@@ -1,12 +1,14 @@
 package com.livic.core.property.dto;
 
 import com.livic.core.property.domain.FacingDirection;
+import com.livic.core.property.domain.UnitMemberRole;
 import com.livic.core.property.domain.UnitType;
+import com.livic.core.property.spi.MemberAgreementProvider;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -58,15 +60,20 @@ public class UnitDTOs {
             UnitType type,
             int capacity,
             FacingDirection facing,
-            List<ActiveLeaseSummary> activeLeases
+            List<Occupant> members
     ) {}
 
-    public record ActiveLeaseSummary(
-            UUID leaseId,
-            UUID tenantUserId,
-            String tenantName,
-            String tenantPhone,
-            java.math.BigDecimal rentAmount,
-            String status
+    /**
+     * An active member of the unit, always someone with an account. {@code agreement} is what a
+     * vertical holds them under, such as a lease in rental; owners and family usually have none.
+     */
+    public record Occupant(
+            UUID memberId,
+            UUID userId,
+            String name,
+            String phone,
+            UnitMemberRole role,
+            LocalDate fromDate,
+            MemberAgreementProvider.MemberAgreement agreement
     ) {}
 }

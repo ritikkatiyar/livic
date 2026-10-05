@@ -3,10 +3,9 @@ package com.livic.core.property;
 import com.livic.platform.auth.facade.AuthFacade;
 import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
-import com.livic.platform.common.constant.StaffPermission;
 import com.livic.platform.security.UserDetailsImpl;
-import com.livic.core.finance.dto.MeDTOs;
-import com.livic.core.finance.service.interfaces.MeService;
+import com.livic.core.property.dto.MeDTOs;
+import com.livic.core.property.service.interfaces.MeService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.livic.platform.auth.service.interfaces.MembershipService;
@@ -41,6 +40,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("dev")
 @Transactional
 public class PropertyJoinCodeServiceIntegrationTest {
+
+    @Autowired
+    private com.livic.platform.user.repository.UserPreferenceRepository userPreferenceRepository;
 
     @Autowired
     private PropertyJoinCodeService propertyJoinCodeService;
@@ -159,6 +161,8 @@ public class PropertyJoinCodeServiceIntegrationTest {
         // Assert - Membership created successfully
         assertNotNull(result);
         assertEquals(property.getId(), result.propertyId());
+        // … and the caretaker lands in the app the property is run from
+        assertEquals("RENTAL", userPreferenceRepository.findByUserId(newStaff.getId()).orElseThrow().getActiveMode());
         assertEquals("Caretaker", result.title());
         assertEquals(AccessType.CUSTOM_ACCESS, result.accessType());
         assertNotNull(result.membershipId());
@@ -190,7 +194,8 @@ public class PropertyJoinCodeServiceIntegrationTest {
                 .filter(m -> m.propertyId().equals(property.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertEquals(StaffPermission.allCodes(), ownerContext.permissionCodes());
+        // A full-access owner holds every permission the modules declare.
+        assertEquals(authFacade.getGrantablePermissionCodes(), ownerContext.permissionCodes());
         assertEquals(property.getName(), ownerContext.propertyName());
 
         authenticate(newStaff);

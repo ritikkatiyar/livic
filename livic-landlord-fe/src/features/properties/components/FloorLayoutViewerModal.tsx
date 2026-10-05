@@ -81,7 +81,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
     }
     return [1, 2, 3, 4, 5];
   }, [floorSummaries]);
-  
+
   const {
     blocks,
     loading,
@@ -97,21 +97,14 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
     securityDeposit,
     setSecurityDeposit,
     tenantSearchError,
+    tenantAssigning,
     setSuggestions,
     suggestions,
-    isCreatingNewTenant,
-    setIsCreatingNewTenant,
-    newTenantName,
-    setNewTenantName,
-    newTenantEmail,
-    setNewTenantEmail,
-    tenantCreating,
     parentScrollEnabled,
     setParentScrollEnabled,
     resetTenantAssignmentForm,
     updateUnitDetails,
     handleSearchTenant,
-    handleCreateAndSelectTenant,
     handleAssignTenant,
     handleRemoveTenant,
   } = useFloorLayoutViewer({ visible, propertyId, floorNumber: activeFloor, token });
@@ -228,7 +221,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
   }, [visible, scale, savedScale]);
 
   const getBlockColorStyles = (b: UnitBlock) => {
-    const colors = getOccupancyColors(theme, getOccupancyState(b.activeLeases ? b.activeLeases.length : 0, b.capacity));
+    const colors = getOccupancyColors(theme, getOccupancyState(b.members, b.capacity));
     return {
       backgroundColor: colors.fill,
       borderColor: colors.border,
@@ -267,19 +260,11 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
           resetTenantAssignmentForm();
         }}
         sheetScrollRef={sheetScrollRef as any}
-        isCreatingNewTenant={isCreatingNewTenant}
-        setIsCreatingNewTenant={setIsCreatingNewTenant}
         tenantPhoneSearch={tenantPhoneSearch}
         setTenantPhoneSearch={setTenantPhoneSearch}
-        newTenantName={newTenantName}
-        setNewTenantName={setNewTenantName}
-        newTenantEmail={newTenantEmail}
-        setNewTenantEmail={setNewTenantEmail}
         tenantSearchError={tenantSearchError}
-        tenantCreating={tenantCreating}
         parentScrollEnabled={parentScrollEnabled}
         setParentScrollEnabled={setParentScrollEnabled}
-        handleCreateAndSelectTenant={handleCreateAndSelectTenant}
         handleSearchTenant={handleSearchTenant}
         tenantSearchLoading={tenantSearchLoading}
         suggestions={suggestions}
@@ -291,7 +276,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
         securityDeposit={securityDeposit}
         setSecurityDeposit={setSecurityDeposit}
         handleAssignTenant={handleAssignTenant}
-        tenantAssigning={tenantCreating}
+        tenantAssigning={tenantAssigning}
         handleRemoveTenant={handleRemoveTenant}
         updateUnitDetails={updateUnitDetails}
         isDesktop={isDesktop}

@@ -24,9 +24,11 @@ public class LeaseDTOs {
             UUID bookingId
     ) {}
 
+    /** {@code memberId} is the unit member the lease makes the tenant; core's unit views list members. */
     public record LeaseResponse(
             UUID id,
             UUID userId,
+            UUID memberId,
             UUID unitId,
             UUID blockId,
             String blockName,
@@ -46,6 +48,7 @@ public class LeaseDTOs {
         public LeaseResponse(
                 UUID id,
                 UUID userId,
+                UUID memberId,
                 UUID unitId,
                 String unitNumber,
                 String propertyName,
@@ -60,7 +63,7 @@ public class LeaseDTOs {
                 LocalDateTime createdAt,
                 LocalDateTime updatedAt
         ) {
-            this(id, userId, unitId, null, null, unitNumber, propertyName, tenantName, tenantPhone, monthlyRentAmount, securityDeposit, splitStrategy, moveInDate, moveOutDate, status, createdAt, updatedAt);
+            this(id, userId, memberId, unitId, null, null, unitNumber, propertyName, tenantName, tenantPhone, monthlyRentAmount, securityDeposit, splitStrategy, moveInDate, moveOutDate, status, createdAt, updatedAt);
         }
     }
 

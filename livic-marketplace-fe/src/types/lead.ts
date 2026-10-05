@@ -1,3 +1,5 @@
+import type { ApiInput, ApiModel } from '@/api/models';
+
 export type LeadType = 'TOUR_REQUEST' | 'BOOKING';
 
 /**
@@ -20,28 +22,19 @@ export const TOUR_SLOT_DECLINED_CODE = 'TOUR_SLOT_DECLINED';
 /** Prefix of every 409 code meaning the chosen visit time can't be booked (declined, full, or not offered). */
 export const TOUR_SLOT_ERROR_PREFIX = 'TOUR_SLOT_';
 
-export type CreateLeadRequest = {
-  leadType: LeadType;
-  prospectName: string;
-  prospectPhone: string;
-  prospectEmail?: string;
-  preferredSlot?: string; // ISO datetime, only for TOUR_REQUEST
-  expectedMoveInDate?: string; // ISO date, only for BOOKING
-  tokenAmount?: number; // token amount for booking
-  whatsappOptIn?: boolean; // the prospect agreed to updates on WhatsApp (required by Meta before messaging)
-};
+/**
+ * Generated from the backend's OpenAPI spec. preferredSlot (ISO datetime) is only for TOUR_REQUEST,
+ * expectedMoveInDate (ISO date) and tokenAmount only for BOOKING; whatsappOptIn records the
+ * prospect's consent, which Meta requires before messaging.
+ */
+export type CreateLeadRequest = ApiInput<'CreateLeadRequest'>;
 
-export type LeadResponse = {
-  id: string;
-  propertyId: string;
-  unitId: string;
-  leadType: LeadType;
-  status: LeadStatus;
-  preferredSlot?: string | null; // ISO datetime, only for TOUR_REQUEST
-  tokenAmount?: number;
-  paymentTransactionId?: string;
-  createdAt: string;
-};
+/** What both creating a lead and reading its status return. */
+export type LeadResponse = ApiModel<
+  'LeadStatusResponse',
+  'preferredSlot' | 'tokenAmount' | 'paymentTransactionId' | 'convertedUnitBookingId',
+  'preferredSlot'
+>;
 
 export type RazorpayOrderPayload = {
   orderId: string;

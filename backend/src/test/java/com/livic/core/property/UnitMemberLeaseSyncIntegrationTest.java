@@ -95,7 +95,8 @@ class UnitMemberLeaseSyncIntegrationTest {
         UnitMemberTbl member = members.get(0);
         assertThat(member.getUserId()).isEqualTo(tenant.getId());
         assertThat(member.getRole()).isEqualTo(UnitMemberRole.TENANT);
-        assertThat(member.getLeaseId()).isEqualTo(lease.getId());
+        // The lease points at its member; the member knows nothing of the lease.
+        assertThat(lease.getMemberId()).isEqualTo(member.getId());
         assertThat(member.getFromDate()).isEqualTo(lease.getMoveInDate());
         assertThat(member.isPrimary()).isTrue();
     }
@@ -109,14 +110,13 @@ class UnitMemberLeaseSyncIntegrationTest {
 
         assertThat(unitMemberRepository.findByUnitIdAndIsActiveTrue(unit.getId())).isEmpty();
 
-        List<UnitMemberTbl> history = unitMemberRepository.findByLeaseId(lease.getId());
-        assertThat(history).hasSize(1);
-        assertThat(history.get(0).isActive()).isFalse();
-        assertThat(history.get(0).getToDate()).isNotNull();
+        UnitMemberTbl ended = unitMemberRepository.findById(lease.getMemberId()).orElseThrow();
+        assertThat(ended.isActive()).isFalse();
+        assertThat(ended.getToDate()).isNotNull();
     }
 
     @Test
-    @DisplayName("Every active tenant member has an active lease behind it")
+    @DisplayName("Every active tenant member is the member of an active lease")
     void activeMembersAlwaysHaveALease() {
         LeaseTbl lease = createLease();
 
@@ -124,7 +124,7 @@ class UnitMemberLeaseSyncIntegrationTest {
 
         assertThat(active).allSatisfy(member -> {
             assertThat(member.getRole()).isEqualTo(UnitMemberRole.TENANT);
-            assertThat(member.getLeaseId()).isEqualTo(lease.getId());
+            assertThat(member.getId()).isEqualTo(lease.getMemberId());
         });
     }
 

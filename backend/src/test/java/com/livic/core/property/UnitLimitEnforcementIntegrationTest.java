@@ -1,6 +1,9 @@
 package com.livic.core.property;
 
+import com.livic.platform.auth.domain.MembershipTbl;
+import com.livic.platform.auth.repository.MembershipRepository;
 import com.livic.platform.auth.service.interfaces.MembershipService;
+import com.livic.platform.common.enums.AccessType;
 import com.livic.core.property.domain.UnitType;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.common.exception.BusinessException;
@@ -48,6 +51,7 @@ class UnitLimitEnforcementIntegrationTest {
     @Autowired private PropertyRepository propertyRepository;
     @Autowired private UnitRepository unitRepository;
     @Autowired private MembershipService membershipService;
+    @Autowired private MembershipRepository membershipRepository;
 
     private PropertyTbl property;
 
@@ -66,9 +70,30 @@ class UnitLimitEnforcementIntegrationTest {
                 .build());
         membershipService.createOwnerMembership(property.getId(), landlord.getId());
 
-        UserDetailsImpl principal = UserDetailsImpl.fromClaims(landlord.getId().toString(), landlord.getAuthUid(), "USER");
+        authenticate(landlord);
+    }
+
+    private static void authenticate(UserTbl user) {
+        UserDetailsImpl principal = UserDetailsImpl.fromClaims(user.getId().toString(), user.getAuthUid(), "USER");
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+    }
+
+    /** A user who owns nothing here, made a full-access manager of this property. */
+    private UserTbl manager() {
+        UserTbl manager = userRepository.save(UserTbl.builder()
+                .authUid("manager-" + UUID.randomUUID() + "@test.com")
+                .fullName("Manager")
+                .failedLoginAttempts(0)
+                .globalRole(UserRole.USER)
+                .build());
+        membershipRepository.save(MembershipTbl.builder()
+                .propertyId(property.getId())
+                .userId(manager.getId())
+                .title("Manager")
+                .accessType(AccessType.FULL_ACCESS)
+                .build());
+        return manager;
     }
 
     @AfterEach
@@ -111,6 +136,31 @@ class UnitLimitEnforcementIntegrationTest {
         assertEquals(STARTER_MAX_UNITS, unitCount());
     }
 
+    @Test
+    void aManagerAddingUnitsUsesTheOwnersPlan() {
+        unitController.saveFloorLayout(property.getId(), 1, null, layout(STARTER_MAX_UNITS));
+
+        // The manager's own plan has room, but the units belong to the owner's property.
+        authenticate(manager());
+        BusinessException denied = assertThrows(BusinessException.class,
+                () -> unitController.saveFloorLayout(property.getId(), 2, null, layout("M", 1)));
+
+        assertEquals(HttpStatus.FORBIDDEN, denied.getStatus());
+        assertEquals(STARTER_MAX_UNITS, unitCount());
+    }
+
+    @Test
+    void unitsOfAPropertySomeoneManagesDoNotUseTheirOwnPlan() {
+        unitController.saveFloorLayout(property.getId(), 1, null, layout(STARTER_MAX_UNITS));
+        UserTbl manager = manager();
+        PropertyTbl ownProperty = propertyRepository.save(PropertyTbl.builder()
+                .name("Manager's Own").address("2 Test St").city("Test City").build());
+        membershipService.createOwnerMembership(ownProperty.getId(), manager.getId());
+
+        authenticate(manager);
+        assertDoesNotThrow(() -> unitController.generateBatchUnits(ownProperty.getId(), batch(STARTER_MAX_UNITS)));
+    }
+
     private long unitCount() {
         return unitRepository.findAll().stream()
                 .filter(unit -> unit.getProperty().getId().equals(property.getId()))
@@ -122,8 +172,12 @@ class UnitLimitEnforcementIntegrationTest {
     }
 
     private static List<FloorLayoutUnitRequest> layout(int units) {
+        return layout("L", units);
+    }
+
+    private static List<FloorLayoutUnitRequest> layout(String prefix, int units) {
         return IntStream.rangeClosed(1, units)
-                .mapToObj(i -> new FloorLayoutUnitRequest("L" + i, i - 1, 0, 1, 1, UnitType.STUDIO, 1, null))
+                .mapToObj(i -> new FloorLayoutUnitRequest(prefix + i, i - 1, 0, 1, 1, UnitType.STUDIO, 1, null))
                 .toList();
     }
 }

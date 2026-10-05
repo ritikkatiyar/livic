@@ -9,8 +9,8 @@ import com.livic.core.community.announcement.dto.AnnouncementDTOs.AnnouncementRe
 import com.livic.core.community.announcement.mapper.AnnouncementMapper;
 import com.livic.core.community.announcement.service.interfaces.AnnouncementService;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
-import com.livic.platform.common.constant.StaffPermission;
-import com.livic.platform.common.event.AnnouncementBroadcastEvent;
+import com.livic.core.community.announcement.security.AnnouncementPermissions;
+import com.livic.core.community.announcement.event.AnnouncementBroadcastEvent;
 import com.livic.core.property.dto.PropertySummaryDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.dto.UnitResidentDTO;
@@ -21,7 +21,7 @@ import com.livic.platform.user.facade.UserFacade;
 import com.livic.platform.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
+import com.livic.platform.outbox.facade.OutboxFacade;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,7 +43,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     private final UnitFacade unitFacade;
     private final UserFacade userFacade;
     private final UnitMemberFacade unitMemberFacade;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxFacade outboxFacade;
     private final AuthorizationService authorizationService;
 
     @Override
@@ -65,7 +65,6 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
         // Publish Spring Event to trigger Notification module listeners
         AnnouncementBroadcastEvent event = new AnnouncementBroadcastEvent(
-                this,
                 announcement.getId().toString(),
                 announcement.getTitle(),
                 announcement.getContent(),
@@ -73,7 +72,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 announcement.getSeverity().name(),
                 recipientUserIds
         );
-        eventPublisher.publishEvent(event);
+        outboxFacade.publish(event);
 
         return AnnouncementMapper.toResponse(announcement, userSummary.fullName(), false, 0L, (long) recipientUserIds.size());
     }
@@ -214,7 +213,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         boolean resident = unitMemberFacade.getActiveResidencesByUserId(userId).stream()
                 .anyMatch(r -> announcement.getPropertyId().equals(r.propertyId()));
         return resident || authorizationService.hasAnyPermission(announcement.getPropertyId(),
-                StaffPermission.ANNOUNCEMENT_VIEW.name(), StaffPermission.ANNOUNCEMENT_CREATE.name());
+                AnnouncementPermissions.ANNOUNCEMENT_VIEW, AnnouncementPermissions.ANNOUNCEMENT_CREATE);
     }
 
 }

@@ -28,8 +28,6 @@ public class FinanceLedgerTbl extends BaseEntity {
      * Kept as a plain id, not a relation: leases move to the rental vertical, and a core
      * table must not hold a mapping to one. Owner entries have no lease at all.
      */
-    @Column(name = "lease_id")
-    private UUID leaseId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type", nullable = false)

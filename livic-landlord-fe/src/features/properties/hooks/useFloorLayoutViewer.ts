@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
-import { getFloorLayout, ActiveLeaseSummary } from '@/src/features/properties/api/unit.api';
+import { getFloorLayout, occupantFromLease, tenantsOf, Occupant } from '@/src/features/properties/api/unit.api';
 import { createLease, terminateLease } from '@/src/features/tenant/api/lease.api';
-import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '@/src/features/auth/api/user.api';
+import { searchUserByPhone, UserSearchResponse } from '@/src/features/auth/api/user.api';
 import { logger } from '@/src/utils/logger';
 import { formatErrorMessage } from '@/src/utils/errors';
 
@@ -17,7 +17,7 @@ export interface UnitBlock {
   tenants?: string[];
   status?: 'VACANT' | 'OCCUPIED';
   capacity?: number;
-  activeLeases?: ActiveLeaseSummary[];
+  members?: Occupant[];
   tenantUserId?: string;
   tenantPhone?: string | null;
   activeLeaseId?: string;
@@ -60,10 +60,6 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
   const [tenantSearchError, setTenantSearchError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<UserSearchResponse[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [isCreatingNewTenant, setIsCreatingNewTenant] = useState(false);
-  const [newTenantName, setNewTenantName] = useState('');
-  const [newTenantEmail, setNewTenantEmail] = useState('');
-  const [tenantCreating, setTenantCreating] = useState(false);
   const [parentScrollEnabled, setParentScrollEnabled] = useState(true);
 
   const resetTenantAssignmentForm = useCallback(() => {
@@ -71,9 +67,6 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     setTenantSearchResult(null);
     setTenantSearchError(null);
     setSuggestions([]);
-    setIsCreatingNewTenant(false);
-    setNewTenantName('');
-    setNewTenantEmail('');
     setRentAmount('');
     setSecurityDeposit('');
     setParentScrollEnabled(true);
@@ -84,8 +77,9 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     try {
       const units = await getFloorLayout(propertyId, floorNumber, token);
       const mappedBlocks: UnitBlock[] = units.map(u => {
-        const leases = u.activeLeases || [];
-        const primaryLease = leases[0] || null;
+        const members = u.members || [];
+        const primaryTenant = tenantsOf(members)[0] || null;
+        const primaryRent = primaryTenant?.agreement?.monthlyAmount;
         return {
           id: u.id,
           gridX: u.gridX,
@@ -93,14 +87,14 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
           gridWidth: u.gridWidth,
           gridHeight: u.gridHeight,
           unitNumber: u.unitNumber,
-          rent: primaryLease ? Math.round(primaryLease.rentAmount * u.capacity).toString() : undefined,
-          tenants: leases.map(l => l.tenantName).filter(Boolean) as string[],
-          status: leases.length > 0 ? 'OCCUPIED' : 'VACANT',
+          rent: primaryRent != null ? Math.round(primaryRent * u.capacity).toString() : undefined,
+          tenants: members.map(m => m.name).filter(Boolean) as string[],
+          status: members.length > 0 ? 'OCCUPIED' : 'VACANT',
           capacity: u.capacity,
-          activeLeases: leases,
-          tenantUserId: primaryLease ? primaryLease.tenantUserId : undefined,
-          tenantPhone: primaryLease ? primaryLease.tenantPhone : undefined,
-          activeLeaseId: primaryLease ? primaryLease.leaseId : undefined,
+          members,
+          tenantUserId: primaryTenant?.userId ?? undefined,
+          tenantPhone: primaryTenant?.phone ?? undefined,
+          activeLeaseId: primaryTenant?.agreement?.id ?? undefined,
           type: normalizeUnitType(u.type),
         };
       });
@@ -208,7 +202,7 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
         securityDeposit: depositAmount,
         splitStrategy: 'FULL_UNIT' as const,
         moveInDate: today,
-        status: 'ACTIVE' as const,
+        status: 'Active' as const,
       };
 
       const lease = await createLease(payload, token);
@@ -220,16 +214,9 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
         activeLeaseId: lease.id,
         status: 'OCCUPIED',
         rent: totalRent.toString(),
-        activeLeases: [
-          ...(selectedBlock.activeLeases || []),
-          {
-            leaseId: lease.id,
-            tenantUserId: targetUser.id,
-            tenantName: targetUser.fullName,
-            tenantPhone: targetUser.phoneNumber,
-            rentAmount: lease.monthlyRentAmount,
-            status: 'ACTIVE',
-          }
+        members: [
+          ...(selectedBlock.members || []),
+          occupantFromLease(lease, targetUser.fullName, targetUser.phoneNumber),
         ]
       });
 
@@ -244,49 +231,11 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     }
   };
 
-  const handleCreateAndSelectTenant = async () => {
-    const name = newTenantName.trim();
-    const email = newTenantEmail.trim();
-    const phone = tenantPhoneSearch.trim();
-
-    if (!name) {
-      setTenantSearchError('Enter the tenant\'s full name.');
-      return;
-    }
-    if (!email) {
-      setTenantSearchError('Enter the tenant\'s email address.');
-      return;
-    }
-    if (!phone || phone.length < 10) {
-      setTenantSearchError('Valid 10-digit phone number is required.');
-      return;
-    }
-
-    setTenantCreating(true);
-    setTenantSearchError(null);
-    try {
-      const createdUser = await quickCreateTenant({ email, fullName: name, phoneNumber: phone }, propertyId, token);
-      setTenantSearchResult(createdUser);
-      setTenantPhoneSearch(createdUser.phoneNumber || '');
-      setIsCreatingNewTenant(false);
-      setNewTenantName('');
-      setNewTenantEmail('');
-      setSuggestions([]);
-      
-      await handleAssignTenant(createdUser);
-    } catch (error: any) {
-      logger.error('[Create Tenant Error]', error);
-      setTenantSearchError(formatErrorMessage(error));
-    } finally {
-      setTenantCreating(false);
-    }
-  };
-
   const handleRemoveTenant = async (leaseId: string, tenantName?: string | null) => {
     const selectedBlock = blocks.find(b => b.id === selectedUnitId);
     if (!selectedBlock) return;
     const displayName = tenantName || 'this tenant';
-    
+
     Alert.alert(
       'Remove Tenant',
       `Are you sure you want to remove ${displayName}?`,
@@ -300,17 +249,18 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
               setLoading(true);
               await terminateLease(leaseId, token);
 
-              const remainingLeases = (selectedBlock.activeLeases || []).filter(l => l.leaseId !== leaseId);
-              const remainingTenants = (selectedBlock.tenants || []).filter(name => name !== tenantName);
-              
+              const remaining = (selectedBlock.members || []).filter(m => m.agreement?.id !== leaseId);
+              const nextTenant = tenantsOf(remaining)[0];
+              const nextRent = nextTenant?.agreement?.monthlyAmount;
+
               updateUnitDetails(selectedBlock.id, {
-                tenants: remainingTenants,
-                activeLeases: remainingLeases,
-                activeLeaseId: remainingLeases[0]?.leaseId || undefined,
-                tenantUserId: remainingLeases[0]?.tenantUserId || undefined,
-                tenantPhone: remainingLeases[0]?.tenantPhone || undefined,
-                rent: remainingLeases[0] ? Math.round(remainingLeases[0].rentAmount * (selectedBlock.capacity || 1)).toString() : undefined,
-                status: remainingLeases.length > 0 ? 'OCCUPIED' : 'VACANT',
+                tenants: remaining.map(m => m.name).filter(Boolean) as string[],
+                members: remaining,
+                activeLeaseId: nextTenant?.agreement?.id ?? undefined,
+                tenantUserId: nextTenant?.userId ?? undefined,
+                tenantPhone: nextTenant?.phone ?? undefined,
+                rent: nextRent != null ? Math.round(nextRent * (selectedBlock.capacity || 1)).toString() : undefined,
+                status: remaining.length > 0 ? 'OCCUPIED' : 'VACANT',
               });
 
               Alert.alert('Removed', `${displayName} has been removed from Unit ${selectedBlock.unitNumber}.`);
@@ -341,22 +291,15 @@ export function useFloorLayoutViewer({ visible, propertyId, floorNumber, token }
     securityDeposit,
     setSecurityDeposit,
     tenantSearchError,
+    tenantAssigning,
     setSuggestions,
     suggestions,
     suggestionsLoading,
-    isCreatingNewTenant,
-    setIsCreatingNewTenant,
-    newTenantName,
-    setNewTenantName,
-    newTenantEmail,
-    setNewTenantEmail,
-    tenantCreating,
     parentScrollEnabled,
     setParentScrollEnabled,
     resetTenantAssignmentForm,
     updateUnitDetails,
     handleSearchTenant,
-    handleCreateAndSelectTenant,
     handleAssignTenant,
     handleRemoveTenant,
     fetchLayout,

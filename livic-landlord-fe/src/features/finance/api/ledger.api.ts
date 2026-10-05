@@ -1,16 +1,7 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
-export interface LedgerEntryResponse {
-  id: string;
-  unitName: string;
-  tenantName: string;
-  transactionType: 'INVOICE_GENERATED' | 'PAYMENT_RECEIVED' | 'LATE_FEE_APPLIED' | 'REFUND' | 'ADJUSTMENT';
-  amount: number;
-  balance: number;
-  referenceId: string;
-  description: string;
-  createdAt: string;
-}
+export type LedgerEntryResponse = ApiModel<'LedgerEntryResponse'>;
 
 export interface PaginatedResponse<T> {
   content: T[];

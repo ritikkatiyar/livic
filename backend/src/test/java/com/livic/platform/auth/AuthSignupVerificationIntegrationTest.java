@@ -10,7 +10,7 @@ import com.livic.platform.auth.service.impl.JwtService;
 import com.livic.platform.auth.service.interfaces.AuthService;
 import com.livic.platform.auth.service.interfaces.EmailVerificationService;
 import com.livic.platform.common.domain.UserRole;
-import com.livic.platform.common.event.EmailVerificationRequestedEvent;
+import com.livic.platform.auth.event.EmailVerificationRequestedEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.user.facade.UserFacade;

@@ -11,7 +11,7 @@ import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.core.property.facade.UnitMemberFacade;
-import com.livic.platform.payment.constant.PaymentConstants;
+import com.livic.core.finance.listener.FinancePaymentEventListener;
 import com.livic.platform.payment.dto.PaymentInitiationResponse;
 import com.livic.platform.payment.facade.PaymentFacade;
 import com.livic.platform.user.dto.UserSummaryDTO;
@@ -92,17 +92,15 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
 
         StringBuilder chargesRows = new StringBuilder();
         for (BillLineTbl charge : charges) {
-            String amountFormatted = String.format("₹%,.2f", charge.getAmount());
-            if (com.livic.core.finance.domain.RentChargeType.DISCOUNT.name().equals(charge.getChargeType().name())) {
-                amountFormatted = "-" + amountFormatted;
-            }
+            // Amounts are signed: a discount or adjustment in the payer's favour is negative.
+            String amountFormatted = charge.getAmount().signum() < 0
+                    ? String.format("-₹%,.2f", charge.getAmount().negate())
+                    : String.format("₹%,.2f", charge.getAmount());
             chargesRows.append(String.format(
                     "<tr>" +
                     "  <td>%s</td>" +
-                    "  <td>%s</td>" +
                     "  <td style=\"text-align: right;\">%s</td>" +
                     "</tr>",
-                    charge.getChargeType(),
                     charge.getDescription(),
                     amountFormatted
             ));
@@ -112,7 +110,7 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
         {
             PaymentInitiationResponse tx = paymentFacade
                     .getLatestSuccessfulTransaction(
-                            PaymentConstants.ReferenceType.BILL,
+                            FinancePaymentEventListener.REFERENCE_TYPE,
                             bill.getId())
                     .orElse(null);
             if (tx != null) {
@@ -211,8 +209,7 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
                 "  <table class=\"invoice-table\">\n" +
                 "    <thead>\n" +
                 "      <tr>\n" +
-                "        <th style=\"width: 25%;\">Type</th>\n" +
-                "        <th style=\"width: 55%;\">Description</th>\n" +
+                "        <th style=\"width: 80%;\">Description</th>\n" +
                 "        <th style=\"width: 20%; text-align: right;\">Amount</th>\n" +
                 "      </tr>\n" +
                 "    </thead>\n" +

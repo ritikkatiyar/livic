@@ -1,9 +1,9 @@
 package com.livic.core.property;
 
-import com.livic.platform.common.event.PropertyDeletionEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
+import com.livic.core.property.domain.UnitMemberRole;
 import com.livic.core.property.domain.UnitType;
 import com.livic.core.property.domain.FacingDirection;
 import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
@@ -25,16 +25,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -64,50 +60,28 @@ public class PropertyServiceIntegrationTest {
     private LeaseRepository leaseRepository;
 
     @Autowired
+    private com.livic.core.property.service.interfaces.UnitMemberService unitMemberService;
+
+    @Autowired
     private MembershipRepository membershipRepository;
 
     @Autowired
     private MembershipService membershipService;
 
-    @Autowired
-    private TestEventListener testEventListener;
 
     @Autowired
     private UnitLayoutOrchestrationService unitLayoutOrchestrationService;
+
+    @Autowired
+    private com.livic.core.property.controller.PropertyController propertyController;
 
     private UserTbl landlord;
     private UserTbl tenant;
     private PropertyTbl property;
     private UnitTbl unit;
 
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        public TestEventListener testEventListener() {
-            return new TestEventListener();
-        }
-    }
-
-    static class TestEventListener {
-        private final List<PropertyDeletionEvent> events = new ArrayList<>();
-
-        @EventListener
-        public void handlePropertyDeletion(PropertyDeletionEvent event) {
-            events.add(event);
-        }
-
-        public void clear() {
-            events.clear();
-        }
-
-        public List<PropertyDeletionEvent> getEvents() {
-            return events;
-        }
-    }
-
     @BeforeEach
     public void setUp() {
-        testEventListener.clear();
 
         landlord = UserTbl.builder()
                 .authUid("landlord-" + UUID.randomUUID() + "@test.com")
@@ -151,17 +125,9 @@ public class PropertyServiceIntegrationTest {
 
     @Test
     public void testDeletePropertyBlockedWhenLeaseExists() {
-        // Arrange - Create a lease on the property's unit
-        LeaseTbl lease = LeaseTbl.builder()
-                .userId(tenant.getId())
-                .unitId(unit.getId())
-                .status(LeaseStatus.ACTIVE)
-                .monthlyRentAmount(BigDecimal.valueOf(1000.00))
-                .moveInDate(LocalDate.now().minusDays(10))
-                .securityDeposit(BigDecimal.valueOf(30000))
-                .splitStrategy(LeaseSplitStrategy.FULL_UNIT)
-                .build();
-        leaseRepository.save(lease);
+        // Arrange - Create a lease on the property's unit, and the owner's membership
+        leaseRepository.save(activeLease());
+        membershipService.createOwnerMembership(property.getId(), landlord.getId());
 
         // Act & Assert - Deletion is blocked with BAD_REQUEST
         BusinessException exception = assertThrows(BusinessException.class, () -> {
@@ -169,13 +135,12 @@ public class PropertyServiceIntegrationTest {
         });
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
-        assertEquals("Cannot delete property because it has assigned tenants or leases.", exception.getMessage());
+        assertEquals("Cannot delete property because its units have, or have had, residents.", exception.getMessage());
 
-        // Assert no event was published
-        assertTrue(testEventListener.getEvents().isEmpty(), "No PropertyDeletionEvent should be published when validation fails");
 
-        // Assert property still exists in repository
+        // Assert property still exists in repository, and nobody lost access to it
         assertTrue(propertyRepository.existsById(property.getId()), "Property should not be deleted from DB");
+        assertFalse(membershipRepository.findByPropertyId(property.getId()).isEmpty(), "Memberships stay when deletion is refused");
     }
 
     @Test
@@ -189,17 +154,13 @@ public class PropertyServiceIntegrationTest {
         // Act - Deletion of the property
         propertyService.deleteProperty(property.getId());
 
-        // Assert: Event was published
-        assertEquals(1, testEventListener.getEvents().size(), "One PropertyDeletionEvent should be published");
-        assertEquals(property.getId(), testEventListener.getEvents().get(0).getPropertyId());
-
         // Assert: Property is deleted
         assertFalse(propertyRepository.existsById(property.getId()), "Property should be deleted from DB");
 
         // Assert: Associated unit is deleted
         assertFalse(unitRepository.existsById(unit.getId()), "Property units should be deleted from DB");
 
-        // Assert: Memberships are cleaned up by the event listener (genuine side-effect)
+        // Assert: staff access goes with the property
         assertTrue(membershipRepository.findByPropertyId(property.getId()).isEmpty(), "Memberships should be deleted");
     }
 
@@ -224,15 +185,53 @@ public class PropertyServiceIntegrationTest {
                 .filter(u -> u.id().equals(unit.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertEquals(1, leasedUnit.activeLeases().size());
-        assertEquals(lease.getId(), leasedUnit.activeLeases().get(0).leaseId());
-        assertEquals("Tenant User", leasedUnit.activeLeases().get(0).tenantName());
+        assertEquals(1, leasedUnit.members().size());
+        UnitDTOs.Occupant occupant = leasedUnit.members().get(0);
+        assertEquals("Tenant User", occupant.name());
+        assertEquals(UnitMemberRole.TENANT, occupant.role());
+        // The member's agreement is their lease, supplied by rental; core never reads leases itself.
+        assertEquals(lease.getId(), occupant.agreement().id());
+        assertEquals(0, BigDecimal.valueOf(1000).compareTo(occupant.agreement().monthlyAmount()));
     }
 
+    @Test
+    public void testResidentCanViewTheirPropertyButStrangerCannot() {
+        // Through the controller's own @PreAuthorize: a tenant has no staff permission, yet lives here.
+        leaseRepository.save(activeLease());
+        UserTbl stranger = userRepository.save(UserTbl.builder()
+                .authUid("stranger-" + UUID.randomUUID() + "@test.com")
+                .fullName("Stranger")
+                .phoneNumber("+91" + (8000000000L + (long) (Math.random() * 999999999)))
+                .failedLoginAttempts(0)
+                .globalRole(UserRole.USER)
+                .build());
+        try {
+            authenticate(tenant);
+            assertEquals(property.getId(), propertyController.getProperty(property.getId()).getBody().getData().id());
+
+            authenticate(stranger);
+            assertThrows(org.springframework.security.authorization.AuthorizationDeniedException.class,
+                    () -> propertyController.getProperty(property.getId()));
+        } finally {
+            org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        }
+    }
+
+    private static void authenticate(UserTbl user) {
+        var userDetails = com.livic.platform.security.UserDetailsImpl.fromClaims(
+                user.getId().toString(), user.getAuthUid(), user.getGlobalRole().name());
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities()));
+    }
+
+    /** A lease as the lease service makes one: the tenant becomes a unit member, and the lease points at it. */
     private LeaseTbl activeLease() {
+        var member = unitMemberService.addTenant(unit.getId(), tenant.getId(), LocalDate.now().minusDays(10), null);
         return LeaseTbl.builder()
                 .userId(tenant.getId())
                 .unitId(unit.getId())
+                .memberId(member.getId())
                 .status(LeaseStatus.ACTIVE)
                 .monthlyRentAmount(BigDecimal.valueOf(1000.00))
                 .moveInDate(LocalDate.now().minusDays(10))

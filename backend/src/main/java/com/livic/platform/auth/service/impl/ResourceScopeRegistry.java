@@ -2,21 +2,19 @@ package com.livic.platform.auth.service.impl;
 
 import com.livic.platform.auth.spi.ResourceScope;
 import com.livic.platform.auth.spi.ResourceScopeResolver;
-import com.livic.platform.common.enums.ResourceType;
+import com.livic.platform.auth.spi.ResourceType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.EnumMap;
-import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
- * Maps every {@link ResourceType} to the module resolver that owns it.
- * PROPERTY is handled here directly since a property's id is its own scope.
+ * Maps every {@link ResourceType} the modules declare to the resolver that owns it. Auth names none
+ * of them itself.
  */
 @Slf4j
 @Component
@@ -24,39 +22,37 @@ public class ResourceScopeRegistry {
 
     static final int MAX_DELEGATION_DEPTH = 3;
 
-    private final Map<ResourceType, ResourceScopeResolver> resolvers = new EnumMap<>(ResourceType.class);
+    private final Map<String, ResourceScopeResolver> resolvers = new HashMap<>();
+    private final Map<String, ResourceType> types = new HashMap<>();
 
     public ResourceScopeRegistry(List<ResourceScopeResolver> resolverBeans) {
         for (ResourceScopeResolver resolver : resolverBeans) {
             for (ResourceType type : resolver.supportedTypes()) {
-                if (type == ResourceType.PROPERTY) {
-                    throw new IllegalStateException("PROPERTY is resolved by the auth module; "
-                            + resolver.getClass().getName() + " must not claim it");
-                }
-                ResourceScopeResolver existing = resolvers.putIfAbsent(type, resolver);
+                ResourceScopeResolver existing = resolvers.putIfAbsent(type.name(), resolver);
                 if (existing != null) {
                     throw new IllegalStateException("Duplicate ResourceScopeResolver for " + type + ": "
                             + existing.getClass().getName() + " and " + resolver.getClass().getName());
                 }
+                types.put(type.name(), type);
             }
         }
+    }
 
-        Set<ResourceType> missing = EnumSet.allOf(ResourceType.class);
-        missing.remove(ResourceType.PROPERTY);
-        missing.removeAll(resolvers.keySet());
-        if (!missing.isEmpty()) {
-            throw new IllegalStateException("No ResourceScopeResolver registered for " + missing);
-        }
+    /** The declared type with that name, for references stored as text (such as a file's owner). */
+    public Optional<ResourceType> findType(String name) {
+        return Optional.ofNullable(name).map(types::get);
     }
 
     public Optional<ResourceScope> resolve(ResourceType type, UUID resourceId) {
         if (type == null || resourceId == null) {
             return Optional.empty();
         }
-        if (type == ResourceType.PROPERTY) {
-            return Optional.of(new ResourceScope.Property(resourceId, null));
+        ResourceScopeResolver resolver = resolvers.get(type.name());
+        if (resolver == null) {
+            log.warn("No ResourceScopeResolver declares {}", type);
+            return Optional.empty();
         }
-        return resolvers.get(type).resolve(type, resourceId);
+        return resolver.resolve(type, resourceId);
     }
 
     /** Follows delegation links until the owning property is found. */

@@ -19,7 +19,7 @@ import com.livic.verticals.rental.inventory.repository.InventoryItemRepository;
 import com.livic.verticals.rental.inventory.repository.LeaseInventoryAssignmentRepository;
 import com.livic.verticals.rental.inventory.service.interfaces.LeaseInventoryAssignmentService;
 import com.livic.platform.storage.dto.MediaDTOs;
-import com.livic.platform.common.enums.OwnerModule;
+import com.livic.verticals.rental.inventory.security.InventoryResources;
 import com.livic.platform.storage.facade.StorageFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -133,7 +133,7 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
         Map<UUID, InventoryItemTbl> itemMap = items.stream().collect(Collectors.toMap(InventoryItemTbl::getId, Function.identity()));
 
         Set<UUID> assignmentIds = page.getContent().stream().map(LeaseInventoryAssignmentTbl::getId).collect(Collectors.toSet());
-        Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(OwnerModule.INVENTORY, assignmentIds);
+        Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(InventoryResources.ITEM, assignmentIds);
 
         List<AssignmentItemResponse> dtoList = page.getContent().stream()
                 .map(a -> {
@@ -191,7 +191,7 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
         log.info("[INVENTORY] Verified return for assignmentId={}, itemId={}, condition={}, deduction={}, user={}",
                 assignmentId, item.getId(), request.conditionAtReturn(), request.damageDeductionAmount(), userId);
 
-        List<MediaDTOs.MediaAssetDTO> photos = storageFacade.getAssets(OwnerModule.INVENTORY, assignmentId);
+        List<MediaDTOs.MediaAssetDTO> photos = storageFacade.getAssets(InventoryResources.ITEM, assignmentId);
         String moveInPhoto = photos.stream()
                 .filter(p -> "move-in".equalsIgnoreCase(p.caption()))
                 .map(MediaDTOs.MediaAssetDTO::url)
@@ -254,7 +254,7 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
         Map<UUID, InventoryItemTbl> itemMap = items.stream().collect(Collectors.toMap(InventoryItemTbl::getId, Function.identity()));
 
         Set<UUID> assignmentIds = page.getContent().stream().map(LeaseInventoryAssignmentTbl::getId).collect(Collectors.toSet());
-        Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(OwnerModule.INVENTORY, assignmentIds);
+        Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(InventoryResources.ITEM, assignmentIds);
 
         List<VerificationItemResponse> dtoList = page.getContent().stream()
                 .map(a -> {

@@ -1,12 +1,12 @@
 package com.livic.platform.user.facade.impl;
 
+import com.livic.platform.common.util.PhoneNumbers;
 import com.livic.platform.user.repository.UserPreferenceRepository;
 import com.livic.platform.user.repository.UserDeviceTokenRepository;
 import com.livic.platform.user.repository.UserRepository;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.user.domain.DevicePlatform;
 import com.livic.platform.user.domain.UserDeviceTokenTbl;
-import com.livic.platform.user.domain.UserMode;
 import com.livic.platform.user.domain.UserPreferenceTbl;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.user.dto.UserSummaryDTO;
@@ -114,7 +114,7 @@ public class UserFacadeImpl implements UserFacade {
         UserTbl user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         user.setFullName(fullName != null ? fullName.trim() : "");
-        user.setPhoneNumber(normalizePhone(phoneNumber));
+        user.setPhoneNumber(PhoneNumbers.normalize(phoneNumber));
         user.setPasswordHash(passwordEncoder.encode(password));
         return UserSummaryDTO.from(userRepository.save(user));
     }
@@ -150,7 +150,7 @@ public class UserFacadeImpl implements UserFacade {
         UserTbl newUser = UserTbl.builder()
                 .authUid(email != null ? email.trim().toLowerCase() : "")
                 .fullName(fullName != null ? fullName.trim() : "")
-                .phoneNumber(normalizePhone(phoneNumber))
+                .phoneNumber(PhoneNumbers.normalize(phoneNumber))
                 .passwordHash(password != null ? passwordEncoder.encode(password) : null)
                 .emailVerified(emailVerified)
                 .globalRole(UserRole.USER)
@@ -158,37 +158,28 @@ public class UserFacadeImpl implements UserFacade {
         return UserSummaryDTO.from(userService.createUser(newUser));
     }
 
-    private static String normalizePhone(String phoneNumber) {
-        return phoneNumber == null || phoneNumber.isBlank() ? null : phoneNumber.trim();
-    }
-
-    @Override
-    public UserMode getActiveModeForUser(UUID userId) {
-        return userPreferenceRepository.findByUserId(userId)
-                .map(UserPreferenceTbl::getActiveMode)
-                .orElse(UserMode.RENTAL);
-    }
 
     @Override
     @Transactional
-    public void markOnboardingDone(UUID userId, UserMode defaultMode) {
+    public void markOnboardingDone(UUID userId, String mode) {
+        java.util.Objects.requireNonNull(mode, "mode");
         Optional<UserPreferenceTbl> existingOpt = userPreferenceRepository.findByUserId(userId);
         if (existingOpt.isPresent()) {
             UserPreferenceTbl preference = existingOpt.get();
             preference.setOnboardingDone(true);
-            if (preference.getActiveMode() == null && defaultMode != null) {
-                preference.setActiveMode(defaultMode);
+            if (preference.getActiveMode() == null) {
+                preference.setActiveMode(mode);
             }
             userPreferenceRepository.save(preference);
         } else {
             UserPreferenceTbl preference = UserPreferenceTbl.builder()
                     .userId(userId)
-                    .activeMode(defaultMode != null ? defaultMode : UserMode.RENTAL)
+                    .activeMode(mode)
                     .onboardingDone(true)
                     .build();
             userPreferenceRepository.save(preference);
         }
-        log.info("onboarding_marked_done userId={} mode={}", userId, defaultMode);
+        log.info("onboarding_marked_done userId={} mode={}", userId, mode);
     }
 
     @Override

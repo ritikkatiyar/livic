@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { getOccupancyColors, getOccupancyState } from '@/src/features/properties/utils/occupancy';
 import { withAlpha } from '@/src/theme/colorUtils';
+import type { Occupant } from '@/src/features/properties/api/unit.api';
 
 const GRID_SIZE_X = 10;
 const GRID_SIZE_Y = 15;
@@ -30,7 +31,7 @@ interface UnitBlock {
   tenantPhone?: string | null;
   status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
   capacity?: number;
-  activeLeases?: any[];
+  members?: Occupant[];
   type?: string;
 }
 
@@ -52,7 +53,7 @@ export function EditorGrid({
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const getBlockColorStyles = (b: UnitBlock) => {
-    const colors = getOccupancyColors(theme, getOccupancyState(b.activeLeases ? b.activeLeases.length : 0, b.capacity));
+    const colors = getOccupancyColors(theme, getOccupancyState(b.members, b.capacity));
     return {
       backgroundColor: colors.fill,
       borderColor: colors.border,
@@ -86,9 +87,9 @@ export function EditorGrid({
           {block && (() => {
             const colorStyles = getBlockColorStyles(block);
             const isSelected = selectedUnitId === block.id;
-            const activeCount = block.activeLeases ? block.activeLeases.length : 0;
+            const activeCount = (block.members || []).filter(m => m.role === 'TENANT').length;
             const cap = block.capacity || 1;
-            const isVacant = activeCount === 0;
+            const isVacant = !block.members || block.members.length === 0;
 
             return (
               <View

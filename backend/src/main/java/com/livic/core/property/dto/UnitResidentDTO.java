@@ -12,7 +12,6 @@ public record UnitResidentDTO(
         UUID memberId,
         UUID userId,
         UnitMemberRole role,
-        UUID leaseId,
         UUID unitId,
         String unitNumber,
         Integer floor,

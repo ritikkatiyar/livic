@@ -1,17 +1,11 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
 export type UserActiveMode = 'RENTAL' | 'RESIDENTIAL';
 
-export interface SaveUserPreferenceRequest {
-  activeMode: UserActiveMode;
-  onboardingDone: boolean;
-}
+export type SaveUserPreferenceRequest = ApiInput<'SaveUserPreferenceRequest'>;
 
-export interface UserPreferenceResponse {
-  userId: string;
-  activeMode: UserActiveMode;
-  onboardingDone: boolean;
-}
+export type UserPreferenceResponse = ApiModel<'UserPreferenceResponse'>;
 
 export async function getUserPreference(token: string): Promise<UserPreferenceResponse> {
   return apiRequest<UserPreferenceResponse>('/api/v1/user/preference', {

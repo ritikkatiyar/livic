@@ -7,6 +7,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useActiveLease, usePropertyDetails } from '@/src/hooks/useResidentData';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 interface TenantPropertyScreenProps {
   token: string;
@@ -19,7 +20,11 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
   const { isDesktop } = useResponsive();
   // Consumes shared @tanstack/react-query server-state query cache per Rule 6.C & Phase 5
   const { data: lease } = useActiveLease(token);
-  const { data: property } = usePropertyDetails(lease?.propertyId, token);
+  // Where the resident lives comes from their unit membership; the lease does not carry the property.
+  const { context } = useAuth();
+  const residence = (context?.unitMemberships || []).find((m) => m.role === 'TENANT')
+    ?? (context?.unitMemberships || [])[0];
+  const { data: property } = usePropertyDetails(residence?.propertyId, token);
   const [showLeaseModal, setShowLeaseModal] = useState(false);
 
   const amenitiesList = (property?.amenities && property.amenities.length > 0)

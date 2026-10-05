@@ -1,115 +1,24 @@
 import { apiRequest } from '@/src/api/client';
 import type { InventoryCondition, InventoryStatus } from '../mockInventoryData';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export interface InventoryItemDTO {
-  id: string;
-  propertyId: string;
-  unitId?: string;
-  name: string;
-  category: string;
-  location: string;
-  serial: string;
-  modelNumber?: string;
-  condition: InventoryCondition;
-  status: InventoryStatus;
-  nextService?: string;
-  value: number | string;
-  shared: boolean;
-  icon: any;
-  image: string;
-  notes: string;
-  createdAt: string;
-}
+export type InventoryItemDTO = ApiModel<'InventoryItemResponse', 'unitId' | 'modelNumber' | 'nextService'>;
 
-export interface AssignmentItemDTO extends InventoryItemDTO {
-  assignmentId?: string;
-  leaseId?: string;
-  assignmentStatus: 'Selected' | 'Draft' | 'Unselected';
-  assignmentCondition: InventoryCondition;
-  photoCount: number;
-  assignedAt?: string;
-}
+export type AssignmentItemDTO = ApiModel<'AssignmentItemResponse', 'assignmentId' | 'leaseId' | 'assignedAt'>;
 
-export interface VerificationItemDTO {
-  id: string;
-  itemId: string;
-  leaseId: string;
-  name: string;
-  area: string;
-  icon: any;
-  moveInCondition: InventoryCondition;
-  returnCondition: InventoryCondition;
-  damageDescription: string;
-  deduction: number;
-  status: 'Damaged' | 'Good' | 'Review';
-  moveInPhoto: string;
-  returnPhoto: string;
-  returnedAt?: string;
-  settledAt?: string;
-}
+export type VerificationItemDTO = ApiModel<'VerificationItemResponse', 'returnedAt' | 'settledAt'>;
 
-export interface InventoryStatsDTO {
-  totalAssets: number;
-  maintenanceDue: number;
-  unassigned: number;
-  totalValuation: number;
-}
+export type InventoryStatsDTO = ApiModel<'InventoryStatsResponse'>;
 
-export interface CreateInventoryItemPayload {
-  propertyId: string;
-  unitId?: string;
-  name: string;
-  category: string;
-  serialNumber?: string;
-  modelNumber?: string;
-  scope: 'PROPERTY_SHARED' | 'UNIT_PRIVATE';
-  currentCondition: string;
-  status: string;
-  purchaseDate?: string;
-  warrantyExpiresAt?: string;
-  nextServiceDate?: string;
-  replacementValue: number;
-  notes?: string;
-}
+export type CreateInventoryItemPayload = ApiInput<'CreateInventoryItemRequest'>;
 
-export interface UpdateInventoryItemPayload {
-  unitId?: string;
-  name: string;
-  category: string;
-  serialNumber?: string;
-  modelNumber?: string;
-  scope: 'PROPERTY_SHARED' | 'UNIT_PRIVATE';
-  currentCondition: string;
-  status: string;
-  purchaseDate?: string;
-  warrantyExpiresAt?: string;
-  nextServiceDate?: string;
-  replacementValue: number;
-  notes?: string;
-}
+export type UpdateInventoryItemPayload = ApiInput<'UpdateInventoryItemRequest'>;
 
-export interface CreateAssignmentItemPayload {
-  itemId: string;
-  conditionAtAssignment: string;
-  assignmentNotes?: string;
-  mediaAssetIds?: string[];
-}
+export type CreateAssignmentItemPayload = ApiInput<'CreateAssignmentItemPayload'>;
 
-export interface ReturnVerificationPayload {
-  conditionAtReturn: string;
-  returnNotes?: string;
-  damageDeductionAmount?: number;
-  deductionApprovalStatus?: string;
-  mediaAssetIds?: string[];
-}
+export type ReturnVerificationPayload = ApiInput<'ReturnVerificationRequest'>;
 
-export interface ServiceExpensePayload {
-  vendorName: string;
-  serviceDate: string;
-  amount: number;
-  description: string;
-  nextServiceDate?: string;
-}
+export type ServiceExpensePayload = ApiInput<'ServiceExpenseRequest'>;
 
 export async function getPropertyInventory(
   propertyId: string,

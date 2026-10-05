@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { 
+  Animated,
   View, 
   Text, 
   StyleSheet, 
@@ -9,8 +10,8 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
+import { useShake } from '@/src/components/common/motion/useShake';
 import { MaterialIcons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { login } from '@/src/features/auth/api/auth.api';
 import { GoogleSignInButton } from '@/src/features/auth/components/GoogleSignInButton';
@@ -33,12 +34,12 @@ export default function SuperAdminLoginScreen({ onLogin, onUnverified, onNavigat
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const { shakeStyle, shake } = useShake({ haptic: true });
 
   const handleLogin = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
     if (!email || !password) {
       setErrorMsg('Please enter both email and password.');
+      shake();
       return;
     }
     
@@ -59,6 +60,7 @@ export default function SuperAdminLoginScreen({ onLogin, onUnverified, onNavigat
       }
       console.error('Login Request Error:', error);
       setErrorMsg(error.message || 'Cannot connect to server. Ensure backend is running.');
+      shake();
     } finally {
       setLoading(false);
     }
@@ -85,10 +87,10 @@ export default function SuperAdminLoginScreen({ onLogin, onUnverified, onNavigat
 
             {/* Error Message */}
             {errorMsg ? (
-              <View style={styles.errorContainer}>
+              <Animated.View style={[styles.errorContainer, shakeStyle]}>
                 <MaterialIcons name="error-outline" size={16} color={theme.Colors.error} />
                 <Text style={styles.errorText}>{errorMsg}</Text>
-              </View>
+              </Animated.View>
             ) : null}
 
             {/* Login Form */}

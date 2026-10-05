@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Animated, ScrollView } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { haptic } from '@/src/theme/haptics';
 import { createProperty } from '@/src/features/properties/api/property.api';
 import { generateBatchUnits, type UnitTypeCode } from '@/src/features/properties/api/unit.api';
 import { uploadAndConfirmMedia } from '@/src/features/storage/api/media.api';
@@ -59,7 +59,7 @@ export function useCreateProperty({ userToken, onSaveAndConfigure, onSaveAndAddB
   };
 
   const handleSave = async (scrollViewRef: React.RefObject<ScrollView | null>) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptic('tap');
 
     let hasError = false;
     let firstErrorField = null;

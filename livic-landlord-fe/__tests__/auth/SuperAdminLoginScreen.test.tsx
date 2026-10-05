@@ -2,10 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import SuperAdminLoginScreen from '../../src/features/auth/screens/SuperAdminLoginScreen';
 
-jest.mock('expo-haptics', () => ({
-  impactAsync: jest.fn(),
-  ImpactFeedbackStyle: { Light: 'light' },
-}));
+jest.mock('@/src/theme/haptics', () => ({ haptic: jest.fn() }));
 
 jest.mock('expo-blur', () => {
   const { View } = require('react-native');

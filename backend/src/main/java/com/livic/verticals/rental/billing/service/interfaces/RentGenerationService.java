@@ -1,21 +1,20 @@
 package com.livic.verticals.rental.billing.service.interfaces;
 
 import com.livic.core.finance.dto.BillDTOs;
-
-import java.util.UUID;
+import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.BatchGenerateBillRequest;
+import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.BatchGenerateResult;
+import com.livic.verticals.rental.billing.dto.RentGenerationDTOs.GenerateBillRequest;
 
 /**
  * Turning leases into rent bills.
  *
- * <p>This is the rental half of billing. It reads the lease, works out the lines and asks
- * core's bill service to write them; core itself must be able to bill an owner who has no
- * lease, so generation cannot live there.
+ * <p>This is the rental half of billing: it reads the lease and supplies what only the lease
+ * knows (the rent, the booking token, how many roommates share the unit). Core's bill
+ * generation adds the property's charges and writes the bill.
  */
 public interface RentGenerationService {
 
-    BillDTOs.BillResponse generate(BillDTOs.GenerateBillRequest request);
+    BillDTOs.BillResponse generate(GenerateBillRequest request);
 
-    BillDTOs.BatchGenerateResult batchGenerate(BillDTOs.BatchGenerateBillRequest request);
-
-    BillDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth);
+    BatchGenerateResult batchGenerate(BatchGenerateBillRequest request);
 }

@@ -8,7 +8,6 @@ import java.util.UUID;
 
 public interface UserService {
     UserTbl createUser(UserTbl user);
-    UserDTOs.UserSearchResponse createTenant(UserDTOs.CreateTenantRequest request);
-    UserDTOs.TenantProfileResponse updateTenantProfile(UUID userId, UserDTOs.UpdateTenantProfileRequest request);
+    UserDTOs.ProfileResponse updateProfile(UUID userId, UserDTOs.UpdateProfileRequest request);
     void registerDeviceToken(UUID userId, String expoPushToken, DevicePlatform platform);
 }

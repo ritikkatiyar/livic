@@ -22,8 +22,7 @@ export default function ResidentOnboardingScreen() {
     setLoading(true);
     try {
       await saveUserPreference({
-        activeMode: 'RENTAL',
-        onboardingDone: true,
+        activeMode: 'RENTAL'
       }, accessToken);
       router.replace('/tenant-home');
     } catch (error) {
@@ -44,8 +43,7 @@ export default function ResidentOnboardingScreen() {
       const res = await validateAndApplyJoinCode(accessToken!, inviteCode.trim());
       
       await saveUserPreference({
-        activeMode: 'RENTAL',
-        onboardingDone: true,
+        activeMode: 'RENTAL'
       }, accessToken);
 
       setContext(null);

@@ -2,7 +2,7 @@ package com.livic.verticals.rental.lease.security;
 
 import com.livic.platform.auth.spi.ResourceScope;
 import com.livic.platform.auth.spi.ResourceScopeResolver;
-import com.livic.platform.common.enums.ResourceType;
+import com.livic.platform.auth.spi.ResourceType;
 import com.livic.verticals.rental.lease.facade.LeaseFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,15 +25,15 @@ public class LeaseResourceScopeResolver implements ResourceScopeResolver {
 
     @Override
     public Set<ResourceType> supportedTypes() {
-        return Set.of(ResourceType.LEASE);
+        return Set.of(LeaseResources.LEASE);
     }
 
     @Override
     public Optional<ResourceScope> resolve(ResourceType type, UUID resourceId) {
-        if (type != ResourceType.LEASE) {
+        if (!LeaseResources.LEASE.equals(type)) {
             return Optional.empty();
         }
         return leaseFacade.getLeaseById(resourceId)
-                .map(lease -> new ResourceScope.Property(lease.propertyId(), lease.userId()));
+                .map(lease -> ResourceScope.Property.heldBy(lease.propertyId(), lease.userId()));
     }
 }

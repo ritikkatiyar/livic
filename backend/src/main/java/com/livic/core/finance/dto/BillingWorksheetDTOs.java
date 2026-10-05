@@ -44,10 +44,14 @@ public class BillingWorksheetDTOs {
     public static class WorksheetEntryResponse {
         private UUID id;
         private UUID unitId;
-        private String unitName; 
-        private String tenantName;
+        private String unitName;
+        private UUID blockId;
+        private String blockName;
+        /** Who pays for the unit: its tenants in a rental, its owner in a residential building. */
+        private String payerName;
         private Integer floor;
         private BigDecimal enteredValue;
-        private boolean isBilled;
+        /** Whether the unit's payers already have a bill this month. */
+        private boolean billed;
     }
 }

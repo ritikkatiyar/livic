@@ -1,6 +1,5 @@
 package com.livic.core.finance.controller;
 
-import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.core.finance.dto.ChargeConfigRequest;
 import com.livic.core.finance.dto.ChargeConfigResponse;
@@ -12,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -33,28 +31,28 @@ public class ChargeConfigController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
     public ResponseEntity<ApiResponse<ChargeConfigResponse>> updateChargeConfig(@PathVariable UUID id, @RequestBody ChargeConfigRequest request) {
         ChargeConfigResponse response = chargeConfigService.updateChargeConfig(id, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> deactivateChargeConfig(@PathVariable UUID id) {
         chargeConfigService.deactivateChargeConfig(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PostMapping("/{id}/reactivate")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> reactivateChargeConfig(@PathVariable UUID id) {
         chargeConfigService.reactivateChargeConfig(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @DeleteMapping("/{id}/permanent")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> deleteChargeConfigPermanently(@PathVariable UUID id) {
         chargeConfigService.deleteChargeConfigPermanently(id);
         return ResponseEntity.ok(ApiResponse.success(null));
@@ -66,16 +64,14 @@ public class ChargeConfigController {
     public ResponseEntity<ApiResponse<Page<ChargeConfigResponse>>> getChargesForProperty(
             @PathVariable UUID propertyId,
             @RequestParam(required = false, defaultValue = "false") boolean includeInactive,
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PageableDefault(size = 20) Pageable pageable
     ) {
-        UUID userId = userDetails != null ? UUID.fromString(userDetails.getId()) : null;
-        Page<ChargeConfigResponse> responses = chargeConfigQueryService.getChargesForProperty(propertyId, includeInactive, userId, pageable);
+        Page<ChargeConfigResponse> responses = chargeConfigQueryService.getChargesForProperty(propertyId, includeInactive, pageable);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.core.finance.security.FinanceResources).CHARGE_CONFIG, #id, 'CHARGE_CONFIG_VIEW')")
     public ResponseEntity<ApiResponse<ChargeConfigResponse>> getChargeConfigById(@PathVariable UUID id) {
         ChargeConfigResponse response = chargeConfigQueryService.getChargeConfigById(id);
         return ResponseEntity.ok(ApiResponse.success(response));

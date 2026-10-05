@@ -1,15 +1,13 @@
 package com.livic.verticals.rental.lease.service.impl;
 
-import com.livic.core.finance.repository.UnitBookingRepository;
-import com.livic.core.finance.repository.FinanceLedgerRepository;
+import com.livic.verticals.rental.booking.dto.UnitBookingDTOs.UnitBookingResponse;
+import com.livic.verticals.rental.booking.facade.BookingFacade;
+import com.livic.core.finance.facade.FinanceFacade;
 import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.core.finance.domain.LedgerTransactionType;
-import com.livic.core.finance.domain.UnitBookingStatus;
 import com.livic.platform.common.exception.BusinessException;
-import com.livic.core.finance.domain.FinanceLedgerTbl;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
-import com.livic.core.finance.domain.UnitBookingTbl;
 import com.livic.verticals.rental.lease.dto.LeaseDTOs;
 import com.livic.verticals.rental.lease.mapper.LeaseMapper;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseService;
@@ -40,8 +38,8 @@ public class LeaseServiceImpl implements LeaseService {
     private final UnitFacade unitFacade;
     private final UnitMemberFacade unitMemberFacade;
     private final UserFacade userFacade;
-    private final UnitBookingRepository unitBookingRepository;
-    private final FinanceLedgerRepository financeLedgerRepository;
+    private final BookingFacade bookingFacade;
+    private final FinanceFacade financeFacade;
 
     @Override
     public LeaseTbl createLease(LeaseDTOs.CreateLeaseRequest request, UUID assignedByUserId) {
@@ -58,44 +56,24 @@ public class LeaseServiceImpl implements LeaseService {
             throw new BusinessException("moveOutDate cannot be before moveInDate");
         }
 
-        UnitBookingTbl booking = null;
+        UnitBookingResponse booking = null;
         UUID targetUserId = request.userId();
 
-        // 2. Process booking conversion and auto-register prospective tenant if needed
+        // 2. A booking becomes a lease for the person who booked: they sign up themselves, and are
+        // found by their account, or the phone or email they booked with. No account is made for them.
         if (request.bookingId() != null) {
-            booking = unitBookingRepository.findById(request.bookingId())
-                    .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit booking not found"));
-
-            if (!UnitBookingStatus.BOOKED.name().equals(booking.getStatus())) {
-                throw new BusinessException(HttpStatus.BAD_REQUEST, "Booking is not in BOOKED status");
-            }
-            if (booking.getPaymentTransactionId() == null) {
-                throw new BusinessException(HttpStatus.BAD_REQUEST, "Token payment has not been collected for this booking");
-            }
+            booking = bookingFacade.getConvertibleBooking(request.bookingId());
 
             if (targetUserId == null) {
-                // Check if user already exists
-                UserSummaryDTO existingUser = null;
-                if (booking.getProspectiveTenantEmail() != null) {
-                    existingUser = userFacade.getUserByEmail(booking.getProspectiveTenantEmail()).orElse(null);
-                }
-
-                if (existingUser != null) {
-                    targetUserId = existingUser.id();
-                } else {
-                    // Create prospective tenant account dynamically
-                    String email = booking.getProspectiveTenantEmail();
-                    if (email == null || email.isBlank()) {
-                        email = "tenant_" + booking.getProspectiveTenantPhone() + "@tenantliving.com";
-                    }
-                    UserSummaryDTO createdUser = userFacade.createUser(
-                            email,
-                            booking.getProspectiveTenantName(),
-                            booking.getProspectiveTenantPhone(),
-                            booking.getProspectiveTenantPhone()
-                    );
-                    targetUserId = createdUser.id();
-                }
+                UnitBookingResponse booked = booking;
+                targetUserId = java.util.Optional.ofNullable(booked.prospectiveTenantUserId()).flatMap(userFacade::getUserById)
+                        .or(() -> userFacade.findByPhoneNumber(booked.prospectiveTenantPhone()))
+                        .or(() -> booked.prospectiveTenantEmail() == null ? java.util.Optional.empty()
+                                : userFacade.getUserByEmail(booked.prospectiveTenantEmail()))
+                        .map(UserSummaryDTO::id)
+                        .orElseThrow(() -> new BusinessException(HttpStatus.CONFLICT,
+                                booked.prospectiveTenantName() + " has no Livic account yet. Ask them to sign up with "
+                                        + booked.prospectiveTenantPhone() + ", then convert the booking."));
             }
         }
 
@@ -106,35 +84,22 @@ public class LeaseServiceImpl implements LeaseService {
         userFacade.getUserById(targetUserId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
 
-        LeaseTbl lease = LeaseMapper.toEntity(request, unitSummary.id(), targetUserId);
-        LeaseTbl saved = leaseRepository.save(lease);
-
         // The tenant becomes a member of the unit, in the same transaction as the lease, so
-        // everything that asks "who is in this flat" sees them without reading leases.
-        var tenantMember = unitMemberFacade.addTenant(unitSummary.id(), targetUserId, saved.getId(), saved.getMoveInDate(), assignedByUserId);
+        // everything that asks "who is in this flat" sees them without reading leases. The lease
+        // keeps the member's id; core never learns there is a lease.
+        LeaseTbl lease = LeaseMapper.toEntity(request, unitSummary.id(), targetUserId);
+        var tenantMember = unitMemberFacade.addTenant(unitSummary.id(), targetUserId, lease.getMoveInDate(), assignedByUserId);
+        lease.setMemberId(tenantMember.id());
+        LeaseTbl saved = leaseRepository.save(lease);
 
         // 3. Mark booking as converted
         if (booking != null) {
-            booking.setStatus(UnitBookingStatus.CONVERTED.name());
-            booking.setConvertedLeaseId(saved.getId());
-            unitBookingRepository.save(booking);
+            bookingFacade.markConverted(booking.id(), saved.getId());
         }
 
-        // 4. Log Security Deposit Billing DEBIT in ledger
-        BigDecimal currentBalance = financeLedgerRepository.sumAmountByMemberId(tenantMember.id());
-        BigDecimal newBalance = currentBalance.add(request.securityDeposit());
-
-        FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
-                .unitId(unitSummary.id())
-                .memberId(tenantMember.id())
-                .leaseId(saved.getId())
-                .transactionType(LedgerTransactionType.INVOICE_GENERATED)
-                .amount(request.securityDeposit())
-                .balance(newBalance)
-                .referenceId(saved.getId())
-                .description("Security Deposit Invoice")
-                .build();
-        financeLedgerRepository.save(ledgerEntry);
+        // 4. The security deposit is owed from move-in, so it opens the tenant's ledger.
+        financeFacade.postLedgerEntry(tenantMember.id(), unitSummary.id(), LedgerTransactionType.INVOICE_GENERATED,
+                request.securityDeposit(), saved.getId(), "Security Deposit Invoice");
 
         log.info("lease_created leaseId={} userId={} unitId={} status={}",
                 saved.getId(), saved.getUserId(), saved.getUnitId(), saved.getStatus());
@@ -151,7 +116,7 @@ public class LeaseServiceImpl implements LeaseService {
             lease.setMoveOutDate(LocalDate.now());
         }
         LeaseTbl ended = leaseRepository.save(lease);
-        unitMemberFacade.endTenancy(ended.getId(), ended.getMoveOutDate());
+        unitMemberFacade.endMembership(ended.getMemberId(), ended.getMoveOutDate());
         return ended;
     }
 

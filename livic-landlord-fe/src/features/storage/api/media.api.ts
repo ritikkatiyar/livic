@@ -1,49 +1,19 @@
 import { Platform } from 'react-native';
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export type OwnerModule = 'PROPERTY' | 'LEASE' | 'INVENTORY';
+/** The resource type a file is attached to; its view and edit permissions decide who may see or change it. */
+export type OwnerModule = 'PROPERTY' | 'UNIT' | 'LEASE' | 'INVENTORY_ITEM';
 export type FileType = 'IMAGE' | 'DOCUMENT';
 export type StorageProvider = 'CLOUDINARY' | 'R2' | 'S3' | 'LOCAL';
 
-export interface UploadAuthorizationRequest {
-  ownerModule: OwnerModule;
-  referenceId: string;
-  fileType: FileType;
-  filename?: string;
-}
+export type UploadAuthorizationRequest = ApiInput<'UploadAuthorizationRequest'>;
 
-export interface UploadAuthorizationResponse {
-  uploadUrl: string;
-  apiKey: string;
-  timestamp: number;
-  signature: string;
-  folder: string;
-  publicId: string;
-  storageProvider: StorageProvider;
-  additionalParams?: Record<string, any>;
-}
+export type UploadAuthorizationResponse = ApiModel<'UploadAuthorizationResponse', 'additionalParams'>;
 
-export interface ConfirmUploadRequest {
-  ownerModule: OwnerModule;
-  referenceId: string;
-  externalId: string;
-  url: string;
-  fileType: FileType;
-  caption?: string;
-}
+export type ConfirmUploadRequest = ApiInput<'ConfirmUploadRequest'>;
 
-export interface MediaAssetDTO {
-  id: string;
-  ownerModule: OwnerModule;
-  referenceId: string;
-  storageProvider: StorageProvider;
-  externalId: string;
-  url: string;
-  fileType: FileType;
-  caption?: string;
-  uploadedByUserId: string;
-  uploadedAt: string;
-}
+export type MediaAssetDTO = ApiModel<'MediaAssetDTO', 'caption'>;
 
 export async function requestUploadAuthorization(
   params: UploadAuthorizationRequest,

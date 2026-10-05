@@ -23,6 +23,7 @@ import { useProperties } from '@/src/hooks/useProperties';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useChargeConfig } from '@/src/features/finance/hooks/useChargeConfig';
 import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
+import type { ChargeConfigRequest } from '@/src/features/finance/api/charge.api';
 
 // Sub-components
 import { ChargeIdentityCard } from '../components/billing/ChargeIdentityCard';
@@ -48,7 +49,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   const isEditMode = !!chargeId;
 
   const [expenseName, setExpenseName] = useState('');
-  const [chargeCategory, setChargeCategory] = useState('CUSTOM');
   const [billingFrequency, setBillingFrequency] = useState('Monthly');
   const [calcMethod, setCalcMethod] = useState('Fixed Rate');
   const [baseRate, setBaseRate] = useState('');
@@ -71,7 +71,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   useEffect(() => {
     if (isEditMode && chargeConfig) {
       setExpenseName(chargeConfig.chargeName);
-      setChargeCategory(chargeConfig.chargeCategory || 'CUSTOM');
       
       let uiFreq = 'Monthly';
       if (chargeConfig.billingFrequency === 'ANNUAL') uiFreq = 'Annual';
@@ -108,17 +107,16 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
     setNameError('');
 
     try {
-        let calcStrategyEnum = 'FIXED_RATE';
+        let calcStrategyEnum: ChargeConfigRequest['calculationStrategy'] = 'FIXED_RATE';
         if (calcMethod === 'Metered/Consumption') calcStrategyEnum = 'METERED';
-        
-        let freqEnum = 'MONTHLY';
+
+        let freqEnum: ChargeConfigRequest['billingFrequency'] = 'MONTHLY';
         if (billingFrequency === 'Annual') freqEnum = 'ANNUAL';
         if (billingFrequency === 'Weekly') freqEnum = 'WEEKLY';
 
         const payload = {
             propertyId: propertyId as string,
             chargeName: expenseName,
-            chargeCategory: chargeCategory, 
             billingFrequency: freqEnum,
             calculationStrategy: calcStrategyEnum,
             unitType: unitType,
@@ -187,8 +185,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
           <ChargeIdentityCard
             expenseName={expenseName}
             setExpenseName={setExpenseName}
-            chargeCategory={chargeCategory}
-            setChargeCategory={setChargeCategory}
             billingFrequency={billingFrequency}
             setBillingFrequency={setBillingFrequency}
             nameError={nameError}
@@ -223,7 +219,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         {isDesktop && (
           <View style={styles.desktopPreviewCol}>
             <DynamicPreviewCard
-              chargeCategory={chargeCategory}
               expenseName={expenseName}
               billingFrequency={billingFrequency}
               calcMethod={calcMethod}
@@ -239,7 +234,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
 
       {!isDesktop && (
         <DynamicPreviewCard
-          chargeCategory={chargeCategory}
           expenseName={expenseName}
           billingFrequency={billingFrequency}
           calcMethod={calcMethod}

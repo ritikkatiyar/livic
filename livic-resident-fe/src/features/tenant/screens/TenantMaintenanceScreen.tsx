@@ -5,7 +5,8 @@ import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { useResponsive } from '@/src/hooks/useResponsive';
-import { getMaintenanceTickets, getTicketHealthStats, createMaintenanceTicket, MaintenanceTicket, TicketHealthStats } from '@/src/features/tenant/api/maintenance.api';
+import { getMaintenanceTickets, getTicketHealthStats, createMaintenanceTicket, MaintenanceTicket, TicketHealthStats, type CreateTicketRequest } from '@/src/features/tenant/api/maintenance.api';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
@@ -15,14 +16,17 @@ interface TenantMaintenanceScreenProps {
   onLogout: () => void;
 }
 
-const CATEGORIES = ['PLUMBING', 'ELECTRICAL', 'HVAC', 'APPLIANCE', 'GENERAL'];
-const PRIORITIES = ['STANDARD', 'HIGH', 'URGENT'];
+const CATEGORIES: CreateTicketRequest['category'][] = ['MAINTENANCE', 'BILLING', 'SAFETY', 'OTHER'];
+const PRIORITIES: NonNullable<CreateTicketRequest['priority']>[] = ['STANDARD', 'HIGH', 'URGENT'];
 
 export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaintenanceScreenProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const { isDesktop } = useResponsive();
+  const { context } = useAuth();
+  const residence = (context?.unitMemberships || []).find((m) => m.role === 'TENANT')
+    ?? (context?.unitMemberships || [])[0];
   const insets = useSafeAreaInsets();
   const { handleScroll } = useScrollNav();
   const [tickets, setTickets] = useState<MaintenanceTicket[]>([]);
@@ -31,8 +35,8 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
   // Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('PLUMBING');
-  const [priority, setPriority] = useState('STANDARD');
+  const [category, setCategory] = useState<CreateTicketRequest['category']>('MAINTENANCE');
+  const [priority, setPriority] = useState<NonNullable<CreateTicketRequest['priority']>>('STANDARD');
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
@@ -52,17 +56,18 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
   }, [token]);
 
   const handleSubmit = () => {
-    if (!title.trim() || !description.trim()) return;
+    // The issue belongs to the unit the resident lives in. The all-zero ids sent before never
+    // matched a residence, so the backend refused every issue.
+    if (!title.trim() || !description.trim() || !residence) return;
     setSubmitting(true);
 
-    const payload = {
+    const payload: CreateTicketRequest = {
       title,
       description,
       category,
       priority,
-      propertyId: '00000000-0000-0000-0000-000000000000',
-      unitId: '00000000-0000-0000-0000-000000000000',
-      leaseId: '00000000-0000-0000-0000-000000000000'
+      propertyId: residence.propertyId,
+      unitId: residence.unitId,
     };
 
     createMaintenanceTicket(token, payload)

@@ -6,7 +6,6 @@ import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.storage.config.StorageProperties;
 import com.livic.platform.storage.domain.MediaAssetTbl;
 import com.livic.platform.storage.dto.FileType;
-import com.livic.platform.common.enums.OwnerModule;
 import com.livic.platform.storage.mapper.MediaAssetMapper;
 import com.livic.platform.storage.dto.StorageProvider;
 import com.livic.platform.storage.dto.MediaDTOs;
@@ -44,7 +43,7 @@ public class CloudinaryStorageServiceImpl implements StorageService {
         long timestamp = Instant.now().getEpochSecond();
         String folder = String.format("%s/%s/%s",
                 properties.getFolderPrefix(),
-                request.ownerModule().name().toLowerCase(),
+                request.ownerModule().toLowerCase(),
                 request.referenceId().toString());
 
         String publicId = String.format("%s_%s",
@@ -115,7 +114,7 @@ public class CloudinaryStorageServiceImpl implements StorageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MediaDTOs.MediaAssetDTO> listAssets(OwnerModule ownerModule, UUID referenceId) {
+    public List<MediaDTOs.MediaAssetDTO> listAssets(String ownerModule, UUID referenceId) {
         return mediaAssetRepository.findAllByOwnerModuleAndReferenceId(ownerModule, referenceId)
                 .stream()
                 .map(MediaAssetMapper::toResponse)
@@ -125,7 +124,7 @@ public class CloudinaryStorageServiceImpl implements StorageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MediaDTOs.MediaAssetDTO> listAssetsForReferences(OwnerModule ownerModule, Collection<UUID> referenceIds) {
+    public List<MediaDTOs.MediaAssetDTO> listAssetsForReferences(String ownerModule, Collection<UUID> referenceIds) {
         if (referenceIds == null || referenceIds.isEmpty()) {
             return List.of();
         }

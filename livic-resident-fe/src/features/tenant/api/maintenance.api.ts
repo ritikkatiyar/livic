@@ -1,38 +1,13 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export interface MaintenanceTicket {
-  id: string;
-  ticketNumber: string;
-  tenantId?: string | null;
-  leaseId?: string | null;
-  propertyId: string;
-  unitId?: string | null;
-  title: string;
-  description: string;
-  category: string;
-  priority: string;
-  status: string;
-  scope: string;
-  escalationStatus: string;
-  escalationLevel: number;
-  assignedContactName: string;
-  assignedContactPhone?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+export type MaintenanceTicket = ApiModel<'IssueResponse', 'tenantId' | 'unitId' | 'assignedContactPhone', 'tenantId' | 'unitId' | 'assignedContactPhone'>;
 
-export interface CreateTicketRequest {
-  title: string;
-  description: string;
-  category: string;
-  priority?: string;
-  propertyId: string;
-  unitId?: string | null;
-  leaseId?: string | null;
-  scope?: string;
-  assignedContactName?: string;
-  assignedContactPhone?: string;
-}
+type IssueInput = ApiInput<'CreateIssueRequest'>;
+
+/** A resident's issue: the wrapper below fills scope, contact and priority when they are left out. */
+export type CreateTicketRequest = Omit<IssueInput, 'scope' | 'assignedContactName' | 'priority'>
+  & Partial<Pick<IssueInput, 'scope' | 'assignedContactName' | 'priority'>>;
 
 export interface TicketHealthStats {
   totalTickets: number;
@@ -58,7 +33,7 @@ export function createMaintenanceTicket(token: string, data: CreateTicketRequest
     assignedContactName: data.assignedContactName || 'Tenant Support',
     assignedContactPhone: data.assignedContactPhone || '',
     priority: data.priority || 'STANDARD',
-  };
+  } satisfies IssueInput;
   return apiRequest<MaintenanceTicket>('/api/v1/issues', {
     method: 'POST',
     token,

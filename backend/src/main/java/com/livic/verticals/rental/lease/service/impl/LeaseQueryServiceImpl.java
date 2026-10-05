@@ -4,7 +4,6 @@ import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.verticals.rental.lease.domain.LeaseTbl;
-import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
 import com.livic.verticals.rental.lease.service.interfaces.LeaseQueryService;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
@@ -16,13 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,11 +31,6 @@ public class LeaseQueryServiceImpl implements LeaseQueryService {
     public LeaseTbl getLeaseById(UUID id) {
         return leaseRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
-    }
-
-    @Override
-    public boolean existsByUnitId(UUID unitId) {
-        return leaseRepository.existsByUnitId(unitId);
     }
 
     @Override
@@ -70,29 +60,11 @@ public class LeaseQueryServiceImpl implements LeaseQueryService {
     }
 
     @Override
-    public Map<UUID, List<LeaseSummaryDTO>> findActiveLeasesByUnitIds(Collection<UUID> unitIds) {
-        if (unitIds == null || unitIds.isEmpty()) return Collections.emptyMap();
-        return leaseRepository.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE)
-                .stream()
-                .collect(Collectors.groupingBy(
-                        LeaseTbl::getUnitId,
-                        Collectors.mapping(l -> LeaseSummaryDTO.from(l, null), Collectors.toList())
-                ));
-    }
-
-    @Override
-    public boolean existsByPropertyId(UUID propertyId) {
-        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
-        List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
-        if (unitIds.isEmpty()) return false;
-        return leaseRepository.existsByUnitIdIn(unitIds);
-    }
-
-    @Override
     public boolean isUnitAvailableOnDate(UUID unitId, LocalDate date) {
         UnitSummaryDTO unit = unitFacade.getUnitById(unitId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
-        boolean isOccupied = leaseRepository.existsActiveLeaseOnDate(unitId, LeaseStatus.ACTIVE, date);
-        return !isOccupied;
+        // A shared room takes as many tenants as it has beds; a missing capacity means one.
+        int beds = unit.capacity() == null || unit.capacity() < 1 ? 1 : unit.capacity();
+        return leaseRepository.countActiveLeasesOnDate(unitId, LeaseStatus.ACTIVE, date) < beds;
     }
 }

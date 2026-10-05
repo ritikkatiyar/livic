@@ -35,14 +35,14 @@ export function PreFlightChecklistCard({
       {checklist && (
         <View style={styles.checklistGrid}>
           <View style={styles.checklistItem}>
-            <Text style={styles.checklistLabel}>Active Leases</Text>
+            <Text style={styles.checklistLabel}>Active Payers</Text>
             {checklist.totalBeds != null ? (
               <>
-                <Text style={styles.checklistValue}>{checklist.activeLeases} / {checklist.totalBeds}</Text>
+                <Text style={styles.checklistValue}>{checklist.activePayers} / {checklist.totalBeds}</Text>
                 <Text style={styles.checklistHint}>beds across {checklist.totalUnits} units</Text>
               </>
             ) : (
-              <Text style={styles.checklistValue}>{checklist.activeLeases}</Text>
+              <Text style={styles.checklistValue}>{checklist.activePayers}</Text>
             )}
           </View>
           <View style={styles.checklistItem}>

@@ -11,14 +11,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Who belongs to a unit, for modules outside property. The rental module keeps tenant rows in
- * step with leases through {@link #addTenant} and {@link #endTenancy}.
+ * Who belongs to a unit, for modules outside property. A vertical adds the tenants it has an
+ * agreement with through {@link #addTenant} and keeps the returned member id; core never knows
+ * what the agreement is.
  */
 public interface UnitMemberFacade {
 
-    UnitMemberSummaryDTO addTenant(UUID unitId, UUID userId, UUID leaseId, LocalDate from, UUID assignedBy);
+    UnitMemberSummaryDTO addTenant(UUID unitId, UUID userId, LocalDate from, UUID assignedBy);
 
-    void endTenancy(UUID leaseId, LocalDate on);
+    /** Ends a membership, e.g. when the tenancy behind it ends. */
+    void endMembership(UUID memberId, LocalDate on);
 
     List<UnitMemberSummaryDTO> getActiveMembersByPropertyId(UUID propertyId);
 
@@ -39,8 +41,6 @@ public interface UnitMemberFacade {
 
     List<UUID> getMemberIdsByUserIds(Collection<UUID> userIds);
 
-    /** The active tenant behind a lease, with unit and property, in one query. */
-    Optional<UnitResidentDTO> getResidentByLeaseId(UUID leaseId);
 
     /** Every unit a person is currently attached to, primary first. */
     List<UnitResidentDTO> getActiveResidencesByUserId(UUID userId);

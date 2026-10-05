@@ -12,7 +12,9 @@ import com.livic.core.property.dto.PublicPropertyListingDTO;
 import com.livic.core.property.facade.PropertyFacade;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.domain.UnitOccupancy;
-import com.livic.core.property.spi.UnitOccupancyProvider;
+import com.livic.core.property.domain.UnitMemberRole;
+import com.livic.core.property.domain.UnitMemberTbl;
+import com.livic.core.property.service.interfaces.UnitMemberService;
 import java.util.Map;
 import com.livic.core.property.service.interfaces.BlockService;
 import com.livic.core.property.service.interfaces.PropertyQueryService;
@@ -39,7 +41,7 @@ public class PropertyFacadeImpl implements PropertyFacade {
 
     private final PropertyQueryService propertyQueryService;
     private final UnitRepository unitRepository;
-    private final UnitOccupancyProvider unitOccupancyProvider;
+    private final UnitMemberService unitMemberService;
     private final BlockService blockService;
     private final PropertyRepository propertyRepository;
     private final PropertyModuleRepository propertyModuleRepository;
@@ -95,12 +97,12 @@ public class PropertyFacadeImpl implements PropertyFacade {
             return Collections.emptyList();
         }
 
-        // This used to run JPQL over LeaseTbl from here, which is core reading a vertical's
-        // table. The entity name was a string, so no architecture test could see it. Occupancy
-        // now comes through the SPI that rental implements for exactly this.
+        // Occupancy is who lives in each unit, which core records as unit members for every
+        // product: tenants in a rental, owners and their tenants in a residential building.
         List<UnitTbl> units = unitRepository.findByPropertyIdIn(propertyIds);
-        Map<UUID, List<UnitOccupancyProvider.UnitOccupant>> occupantsByUnit =
-                unitOccupancyProvider.activeOccupantsByUnitIds(units.stream().map(UnitTbl::getId).toList());
+        Map<UUID, List<UnitMemberTbl>> membersByUnit = unitMemberService
+                .findActiveByUnitIds(units.stream().map(UnitTbl::getId).toList()).stream()
+                .collect(Collectors.groupingBy(UnitMemberTbl::getUnitId));
 
         Map<UUID, List<UnitTbl>> unitsByProperty = units.stream()
                 .filter(u -> u.getProperty() != null)
@@ -111,11 +113,13 @@ public class PropertyFacadeImpl implements PropertyFacade {
 
         List<PropertyOccupancySummaryDTO> result = new ArrayList<>();
         for (UUID propertyId : propertyIds) {
-            // Counting per unit rather than per occupant keeps a shared room with two tenants
-            // at one occupied unit, while beds still count both.
+            // Counting per unit rather than per member keeps a shared room with two tenants at
+            // one occupied unit, while beds still count both.
             OccupancyTally tally = new OccupancyTally();
             for (UnitTbl unit : unitsByProperty.getOrDefault(propertyId, List.of())) {
-                tally.add(occupantsByUnit.getOrDefault(unit.getId(), List.of()).size(), unit.getCapacity());
+                List<UnitMemberTbl> members = membersByUnit.getOrDefault(unit.getId(), List.of());
+                long tenants = members.stream().filter(m -> m.getRole() == UnitMemberRole.TENANT).count();
+                tally.add((int) tenants, members.size(), unit.getCapacity());
             }
             result.add(tally.toSummary(propertyId, namesById.get(propertyId)));
         }
@@ -174,19 +178,19 @@ public class PropertyFacadeImpl implements PropertyFacade {
         propertyModuleRepository.save(module);
     }
 
-/** Folds each unit's occupant count and bed capacity into one property's occupancy. */
+/** Folds each unit's members and bed capacity into one property's occupancy; beds count tenants only. */
     private static final class OccupancyTally {
         private final int[] unitStates = new int[UnitOccupancy.values().length];
         private int totalBeds;
         private int occupiedBeds;
-        private int activeLeases;
+        private int activeTenants;
 
-        void add(int unitActiveLeases, Integer capacity) {
+        void add(int tenants, int members, Integer capacity) {
             int beds = UnitOccupancy.beds(capacity);
-            unitStates[UnitOccupancy.of(unitActiveLeases, capacity).ordinal()]++;
+            unitStates[UnitOccupancy.of(tenants, members, capacity).ordinal()]++;
             totalBeds += beds;
-            occupiedBeds += Math.min(unitActiveLeases, beds);
-            activeLeases += unitActiveLeases;
+            occupiedBeds += Math.min(tenants, beds);
+            activeTenants += tenants;
         }
 
         PropertyOccupancySummaryDTO toSummary(UUID propertyId, String propertyName) {
@@ -194,7 +198,7 @@ public class PropertyFacadeImpl implements PropertyFacade {
                     unitStates[UnitOccupancy.VACANT.ordinal()],
                     unitStates[UnitOccupancy.PARTIAL.ordinal()],
                     unitStates[UnitOccupancy.FULL.ordinal()],
-                    totalBeds, occupiedBeds, activeLeases);
+                    totalBeds, occupiedBeds, activeTenants);
         }
     }
 }

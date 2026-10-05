@@ -84,7 +84,7 @@ class MessMenuServiceTest {
     }
 
     private UnitResidentDTO residence(UUID residencePropertyId) {
-        return new UnitResidentDTO(UUID.randomUUID(), userId, UnitMemberRole.TENANT, null,
+        return new UnitResidentDTO(UUID.randomUUID(), userId, UnitMemberRole.TENANT,
                 UUID.randomUUID(), "101", 1, residencePropertyId);
     }
 

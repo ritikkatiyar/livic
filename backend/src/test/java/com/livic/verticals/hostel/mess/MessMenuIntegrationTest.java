@@ -10,7 +10,6 @@ import com.livic.core.property.repository.UnitRepository;
 import com.livic.core.property.service.interfaces.BlockService;
 import com.livic.core.property.service.interfaces.UnitMemberService;
 import com.livic.platform.auth.repository.PermissionRepository;
-import com.livic.platform.common.constant.StaffPermission;
 import com.livic.platform.common.domain.UserRole;
 import com.livic.platform.user.domain.UserTbl;
 import com.livic.platform.user.repository.UserRepository;
@@ -25,11 +24,8 @@ import com.livic.verticals.hostel.mess.dto.UpdateMealSlotsRequest;
 import com.livic.verticals.hostel.mess.dto.UpdateMessSettingsRequest;
 import com.livic.verticals.hostel.mess.dto.UpdateWeekMenuRequest;
 import com.livic.verticals.hostel.mess.repository.MessMenuItemRepository;
+import com.livic.verticals.hostel.mess.security.MessPermissions;
 import com.livic.verticals.hostel.mess.service.interfaces.MessMenuService;
-import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
-import com.livic.verticals.rental.lease.domain.LeaseStatus;
-import com.livic.verticals.rental.lease.domain.LeaseTbl;
-import com.livic.verticals.rental.lease.repository.LeaseRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,7 +34,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -65,7 +60,6 @@ class MessMenuIntegrationTest {
     @Autowired private UserRepository userRepository;
     @Autowired private PropertyRepository propertyRepository;
     @Autowired private UnitRepository unitRepository;
-    @Autowired private LeaseRepository leaseRepository;
 
     private UUID ownerId;
     private UUID tenantId;
@@ -96,17 +90,8 @@ class MessMenuIntegrationTest {
                 .facing(FacingDirection.NORTH)
                 .build());
 
-        LeaseTbl lease = leaseRepository.save(LeaseTbl.builder()
-                .userId(tenantId)
-                .unitId(unit.getId())
-                .status(LeaseStatus.ACTIVE)
-                .monthlyRentAmount(BigDecimal.valueOf(9000))
-                .moveInDate(LocalDate.now().minusDays(10))
-                .securityDeposit(BigDecimal.valueOf(18000))
-                .splitStrategy(LeaseSplitStrategy.FULL_UNIT)
-                .build());
-        // The lease is saved directly here, so add the unit member the lease service would create
-        unitMemberService.addTenant(unit.getId(), tenantId, lease.getId(), lease.getMoveInDate(), null);
+        // The mess menu only needs residency, which is the unit membership a lease would create
+        unitMemberService.addTenant(unit.getId(), tenantId, LocalDate.now().minusDays(10), null);
     }
 
     private UserTbl saveUser(String prefix) {
@@ -210,12 +195,13 @@ class MessMenuIntegrationTest {
     }
 
     @Test
-    @DisplayName("Every staff permission code is seeded, so custom-access grants are never dropped")
-    void everyPermissionIsSeeded() {
-        Set<String> seeded = permissionRepository.findByCodeIn(StaffPermission.allCodes()).stream()
+    @DisplayName("The mess permission codes are registered, so custom-access grants are never dropped")
+    void messPermissionsAreRegistered() {
+        Set<String> codes = Set.of(MessPermissions.MESS_VIEW, MessPermissions.MESS_MANAGE);
+        Set<String> registered = permissionRepository.findByCodeIn(codes).stream()
                 .map(p -> p.getCode())
                 .collect(Collectors.toSet());
 
-        assertEquals(StaffPermission.allCodes(), seeded);
+        assertEquals(codes, registered);
     }
 }

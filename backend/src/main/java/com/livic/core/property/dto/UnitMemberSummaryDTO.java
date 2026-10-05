@@ -13,7 +13,6 @@ public record UnitMemberSummaryDTO(
         UUID userId,
         UnitMemberRole role,
         boolean isPrimary,
-        UUID leaseId,
         LocalDate fromDate,
         LocalDate toDate,
         boolean isActive
@@ -28,7 +27,6 @@ public record UnitMemberSummaryDTO(
                 member.getUserId(),
                 member.getRole(),
                 member.isPrimary(),
-                member.getLeaseId(),
                 member.getFromDate(),
                 member.getToDate(),
                 member.isActive()

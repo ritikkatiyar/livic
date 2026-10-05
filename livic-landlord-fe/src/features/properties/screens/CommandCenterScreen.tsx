@@ -89,7 +89,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
 
   const { autoDetectProgress } = useAdminTutorial();
 
-  const isAdminRole = context?.globalRole === 'ADMIN' || context?.globalRole === 'SUPER_ADMIN';
+  const isAdminRole = context?.globalRole === 'Admin' || context?.globalRole === 'SuperAdmin';
 
   useEffect(() => {
     if (!isLoading && isAdminRole) {

@@ -11,7 +11,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { type AssignmentItem, type InventoryItem } from '@/src/features/inventory/mockInventoryData';
 import { AssignmentCard, SummaryLine } from './InventoryCardComponents';
-import { createLeaseAssignments } from '../api/inventory.api';
+import { createLeaseAssignments, type CreateAssignmentItemPayload } from '../api/inventory.api';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { formatCurrency } from '@/src/utils/formatters';
@@ -79,7 +79,7 @@ export function InventoryMoveInView({
         const item = availableItems.find((i) => i.id === id);
         return {
           itemId: id,
-          conditionAtAssignment: item?.condition?.toUpperCase() || 'EXCELLENT',
+          conditionAtAssignment: (item?.condition?.toUpperCase() || 'EXCELLENT') as CreateAssignmentItemPayload['conditionAtAssignment'],
           assignmentNotes: item?.notes || undefined,
         };
       });

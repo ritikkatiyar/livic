@@ -1,7 +1,8 @@
 import { PagedResult } from '@/types/api';
 import { ExistingTourRequest, MyTourRequest, RazorpayOrderPayload } from '@/types/lead';
 import { PropertyDetail, PropertySummary, PropertyType } from '@/types/property';
-import { UnitSummary } from '@/types/unit';
+import { UnitSummary, UnitType } from '@/types/unit';
+import type { ApiModel } from '@/api/models';
 
 /**
  * Wire formats returned by the Livic backend (/api/v1/marketplace/**), mapped onto the UI types.
@@ -15,36 +16,24 @@ type BackendPage<T> = {
   totalPages: number;
 };
 
-type BackendPropertySummary = {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  landmark?: string | null;
-  propertyType: PropertyType;
-  description?: string | null;
-  amenities?: string[];
-  images?: string[];
-  startingPrice?: string | null; // formatted, e.g. "₹15,000/mo" or "Price on Request"
-  totalUnitsCount?: number;
-};
+// Generated from the backend's OpenAPI spec. startingPrice arrives formatted, e.g. "₹15,000/mo"
+// or "Price on Request"; the token payment amount is in rupees.
+type BackendPropertySummary = ApiModel<
+  'PropertySummaryResponse',
+  'landmark' | 'description' | 'amenities' | 'images' | 'startingPrice' | 'totalUnitsCount',
+  'landmark' | 'description' | 'startingPrice'
+>;
 
-type BackendPropertyDetail = BackendPropertySummary & {
-  totalFloors?: number | null;
-  qrSlug?: string | null;
-  availableUnitsCount?: number;
-};
+type BackendPropertyDetail = ApiModel<
+  'PropertyDetailResponse',
+  'landmark' | 'description' | 'amenities' | 'images' | 'startingPrice' | 'totalUnitsCount'
+    | 'totalFloors' | 'qrSlug' | 'availableUnitsCount',
+  'landmark' | 'description' | 'startingPrice' | 'totalFloors' | 'qrSlug'
+>;
 
-type BackendUnit = UnitSummary & { propertyId?: string };
+type BackendUnit = ApiModel<'UnitSummaryResponse', 'description' | 'amenities' | 'images' | 'propertyId', 'description'>;
 
-type BackendTokenPayment = {
-  leadId: string;
-  transactionId: string;
-  razorpayOrderId: string;
-  amount: number; // rupees
-  currency: string;
-  keyId: string;
-};
+type BackendTokenPayment = ApiModel<'TokenPaymentInitResponse'>;
 
 function parseFormattedPrice(value?: string | null): number | undefined {
   if (!value) return undefined;
@@ -60,7 +49,7 @@ export function toPropertySummaries(data: BackendPage<BackendPropertySummary> | 
     name: p.name,
     city: p.city,
     landmark: p.landmark ?? undefined,
-    propertyType: p.propertyType,
+    propertyType: p.propertyType as PropertyType,
     coverImageUrl: p.images?.[0],
     startingPrice: parseFormattedPrice(p.startingPrice),
   }));
@@ -68,7 +57,11 @@ export function toPropertySummaries(data: BackendPage<BackendPropertySummary> | 
 
 function toUnit(u: BackendUnit): UnitSummary {
   return {
-    ...u,
+    id: u.id,
+    unitNumber: u.unitNumber,
+    type: u.type as UnitType,
+    capacity: u.capacity,
+    isBookable: u.isBookable,
     basePrice: Number(u.basePrice ?? 0),
     description: u.description ?? undefined,
     amenities: u.amenities ?? [],
@@ -84,7 +77,7 @@ export function toPropertyDetail(p: BackendPropertyDetail | null): PropertyDetai
     name: p.name,
     city: p.city,
     landmark: p.landmark ?? undefined,
-    propertyType: p.propertyType,
+    propertyType: p.propertyType as PropertyType,
     coverImageUrl: images[0],
     startingPrice: parseFormattedPrice(p.startingPrice),
     address: p.address,
@@ -118,7 +111,11 @@ export function toUnitDetail(
   return property ? { property, unit: toUnit(data.unit) } : null;
 }
 
-type BackendMyTourRequest = MyTourRequest;
+type BackendMyTourRequest = ApiModel<
+  'MyTourRequestResponse',
+  never,
+  'propertyName' | 'propertyAddress' | 'propertyCity' | 'unitNumber' | 'decisionNote' | 'decidedAt'
+>;
 
 export function toMyTourRequestPage(data: BackendPage<BackendMyTourRequest> | null): PagedResult<MyTourRequest> {
   if (!data) {

@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Animated, ScrollView } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { createProperty } from '@/src/features/properties/api/property.api';
-import { generateBatchUnits } from '@/src/features/properties/api/unit.api';
+import { generateBatchUnits, type UnitTypeCode } from '@/src/features/properties/api/unit.api';
 import { uploadAndConfirmMedia } from '@/src/features/storage/api/media.api';
 import { StagedMediaItem } from '@/src/components/common/display/MediaUploadGrid';
 
@@ -108,7 +108,7 @@ export function useCreateProperty({ userToken, onSaveAndConfigure, onSaveAndAddB
           startingFloorNumber: 1,
           prefix: '',
           capacity: 1,
-          unitType: globalUnitType
+          unitType: globalUnitType as UnitTypeCode
         }, userToken);
       }
 

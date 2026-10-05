@@ -176,7 +176,7 @@ if st == 200 and ws:
 st, r = call("GET", "/api/v1/finance/bills/pre-flight?propertyId=%s&billingMonth=2026-09" % pid, T)
 pf = data(r)
 check("32 pre-flight checklist", st == 200 and pf.get("totalUnits", 0) > 0,
-      "units=%s leases=%s ready=%s" % (pf.get("totalUnits"), pf.get("activeLeases"), pf.get("isReady")))
+      "units=%s payers=%s ready=%s" % (pf.get("totalUnits"), pf.get("activePayers"), pf.get("isReady")))
 
 # --------------------------------------------------------------- 33. rent roll
 st, r = call("GET", "/api/v1/finance/bills?propertyId=%s&billingMonth=2026-09" % pid, T)

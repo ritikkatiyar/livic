@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { logger } from '@/src/utils/logger';
 import { formatErrorMessage } from '@/src/utils/errors';
-import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '@/src/features/auth/api/user.api';
+import { searchUserByPhone, UserSearchResponse } from '@/src/features/auth/api/user.api';
 import { createLease } from '@/src/features/tenant/api/lease.api';
-import { UnitResponse, saveFloorLayout } from '@/src/features/properties/api/unit.api';
+import { UnitResponse, saveFloorLayout, occupantFromLease, type Occupant } from '@/src/features/properties/api/unit.api';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -22,7 +22,7 @@ interface UnitBlock {
   tenantPhone?: string | null;
   status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
   capacity?: number;
-  activeLeases?: any[];
+  members?: Occupant[];
   type?: string;
 }
 
@@ -58,14 +58,10 @@ export function useFloorEditorTenantAssignment({
   const [tenantSearchLoading, setTenantSearchLoading] = useState(false);
   const [tenantAssigning, setTenantAssigning] = useState(false);
   const [tenantSearchError, setTenantSearchError] = useState<string | null>(null);
-  
+
   const [suggestions, setSuggestions] = useState<UserSearchResponse[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [isCreatingNewTenant, setIsCreatingNewTenant] = useState(false);
-  const [newTenantName, setNewTenantName] = useState('');
-  const [newTenantEmail, setNewTenantEmail] = useState('');
-  const [tenantCreating, setTenantCreating] = useState(false);
-  
+
   const [rentAmount, setRentAmount] = useState('');
   const [securityDeposit, setSecurityDeposit] = useState('');
 
@@ -106,9 +102,6 @@ export function useFloorEditorTenantAssignment({
     setTenantSearchResult(null);
     setTenantSearchError(null);
     setSuggestions([]);
-    setIsCreatingNewTenant(false);
-    setNewTenantName('');
-    setNewTenantEmail('');
     setRentAmount('');
     setSecurityDeposit('');
     setParentScrollEnabled(true);
@@ -207,7 +200,7 @@ export function useFloorEditorTenantAssignment({
         securityDeposit: depositAmount,
         splitStrategy: 'FULL_UNIT' as const,
         moveInDate: today,
-        status: 'ACTIVE' as const,
+        status: 'Active' as const,
       };
 
       const lease = await createLease(payload, userToken);
@@ -218,16 +211,9 @@ export function useFloorEditorTenantAssignment({
         tenantPhone: targetUser.phoneNumber,
         activeLeaseId: lease.id,
         status: 'OCCUPIED',
-        activeLeases: [
-          ...(selectedBlock.activeLeases || []),
-          {
-            leaseId: lease.id,
-            tenantUserId: targetUser.id,
-            tenantName: targetUser.fullName,
-            tenantPhone: targetUser.phoneNumber,
-            rentAmount: lease.monthlyRentAmount,
-            status: 'ACTIVE',
-          }
+        members: [
+          ...(selectedBlock.members || []),
+          occupantFromLease(lease, targetUser.fullName, targetUser.phoneNumber),
         ]
       });
 
@@ -239,45 +225,6 @@ export function useFloorEditorTenantAssignment({
       setTenantSearchError(formatErrorMessage(error));
     } finally {
       setTenantAssigning(false);
-    }
-  };
-
-  const handleCreateAndSelectTenant = async () => {
-    const name = newTenantName.trim();
-    const email = newTenantEmail.trim();
-    const phone = tenantPhoneSearch.trim();
-
-    if (!name) {
-      setTenantSearchError('Enter the tenant\'s full name.');
-      return;
-    }
-    if (!email) {
-      setTenantSearchError('Enter the tenant\'s email address.');
-      return;
-    }
-    if (!phone || phone.length < 10) {
-      setTenantSearchError('Valid 10-digit phone number is required.');
-      return;
-    }
-
-    setTenantCreating(true);
-    setTenantSearchError(null);
-    try {
-      const createdUser = await quickCreateTenant({ email, fullName: name, phoneNumber: phone }, propertyId, userToken);
-      setTenantSearchResult(createdUser);
-      setTenantPhoneSearch(createdUser.phoneNumber || '');
-      setIsCreatingNewTenant(false);
-      setNewTenantName('');
-      setNewTenantEmail('');
-      setSuggestions([]);
-      
-      // Auto assign after creation
-      await handleAssignTenant(createdUser);
-    } catch (error: any) {
-      logger.error('[Create Tenant Error]', error);
-      setTenantSearchError(formatErrorMessage(error));
-    } finally {
-      setTenantCreating(false);
     }
   };
 
@@ -293,20 +240,12 @@ export function useFloorEditorTenantAssignment({
     suggestions,
     setSuggestions,
     suggestionsLoading,
-    isCreatingNewTenant,
-    setIsCreatingNewTenant,
-    newTenantName,
-    setNewTenantName,
-    newTenantEmail,
-    setNewTenantEmail,
-    tenantCreating,
     rentAmount,
     setRentAmount,
     securityDeposit,
     setSecurityDeposit,
     resetTenantAssignmentForm,
     handleSearchTenant,
-    handleCreateAndSelectTenant,
     handleAssignTenant,
   };
 }

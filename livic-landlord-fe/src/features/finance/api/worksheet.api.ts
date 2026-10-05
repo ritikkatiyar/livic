@@ -1,28 +1,11 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export interface WorksheetEntryResponse {
-  id: string;
-  unitId: string;
-  blockId?: string | null;
-  blockName?: string | null;
-  unitName: string;
-  tenantName: string;
-  floor: number;
-  enteredValue: number;
-  isBilled: boolean;
-}
+export type WorksheetEntryResponse = ApiModel<'WorksheetEntryResponse'>;
 
-export interface UnitEntry {
-  unitId: string;
-  enteredValue: number;
-}
+export type UnitEntry = ApiModel<'UnitEntry'>;
 
-export interface WorksheetSaveRequest {
-  propertyId: string;
-  chargeConfigId: string;
-  billingMonth: string;
-  entries: UnitEntry[];
-}
+export type WorksheetSaveRequest = ApiInput<'WorksheetSaveRequest'>;
 
 export const getOrCreateWorksheet = async (
   propertyId: string, 

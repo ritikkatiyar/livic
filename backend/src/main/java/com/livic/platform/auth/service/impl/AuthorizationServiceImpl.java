@@ -5,8 +5,7 @@ import com.livic.platform.security.UserDetailsImpl;
 import com.livic.platform.auth.service.interfaces.AuthorizationService;
 import com.livic.platform.auth.spi.ResourceScope;
 import com.livic.platform.common.enums.AccessType;
-import com.livic.platform.common.enums.OwnerModule;
-import com.livic.platform.common.enums.ResourceType;
+import com.livic.platform.auth.spi.ResourceType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -14,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -86,14 +86,13 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         UUID userId = currentUser.getUuid();
 
         try {
-            if (resourceType == ResourceType.MEDIA_ASSET) {
-                return hasMediaAssetAccess(resourceId, permissionCode);
-            }
             return resourceScopeRegistry.resolve(resourceType, resourceId)
                     .map(scope -> switch (scope) {
                         case ResourceScope.Property property -> {
-                            if (resourceType == ResourceType.LEASE && "LEASE_VIEW_OWN".equals(permissionCode)
-                                    && property.ownerUserId() != null && property.ownerUserId().equals(userId)) {
+                            // A self-service code (…_OWN) is held by the users the resource belongs
+                            // to: the tenant of a lease, the payer of a bill, a property's residents.
+                            if (permissionCode != null && permissionCode.endsWith("_OWN")
+                                    && property.holderUserIds().contains(userId)) {
                                 yield true;
                             }
                             yield checkPermission(property.propertyId(), permissionCode);
@@ -130,57 +129,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public boolean hasMediaAccess(OwnerModule ownerModule, UUID referenceId, String action) {
-        if (ownerModule == null || referenceId == null) {
-            return false;
-        }
-        UserDetailsImpl currentUser = getCurrentUser();
-        if (currentUser == null) return false;
-        if (isUserGloballyAuthorized(currentUser)) return true;
-
-        return hasMediaAccessOn(ResourceType.forOwnerModule(ownerModule), referenceId, action);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasMediaAssetAccess(UUID mediaAssetId, String action) {
-        if (mediaAssetId == null) return false;
-        UserDetailsImpl currentUser = getCurrentUser();
-        if (currentUser == null) return false;
-        if (isUserGloballyAuthorized(currentUser)) return true;
-
-        UUID userId = currentUser.getUuid();
-        try {
-            return resourceScopeRegistry.resolve(ResourceType.MEDIA_ASSET, mediaAssetId).map(scope -> {
-                if (!(scope instanceof ResourceScope.Delegated asset)) {
-                    return false;
-                }
-                if (asset.ownerUserId() != null && asset.ownerUserId().equals(userId)) {
-                    return true;
-                }
-                return hasMediaAccessOn(asset.parentType(), asset.parentId(), action);
-            }).orElse(false);
-        } catch (Exception e) {
-            log.error("Error checking permission for mediaAssetId {}: {}", mediaAssetId, e.getMessage(), e);
-            return false;
-        }
-    }
-
-    private boolean hasMediaAccessOn(ResourceType parentType, UUID referenceId, String action) {
-        if (parentType == null || referenceId == null) {
-            return false;
-        }
-
-        boolean isWrite = "WRITE".equalsIgnoreCase(action) || "DELETE".equalsIgnoreCase(action) || "EDIT".equalsIgnoreCase(action);
-
-        return switch (parentType) {
-            case PROPERTY -> isWrite ? checkPermission(referenceId, "PROPERTY_EDIT") : checkPermission(referenceId, "PROPERTY_VIEW");
-            case LEASE -> isWrite ? hasPermission(ResourceType.LEASE, referenceId, "LEASE_UPDATE")
-                    : (hasPermission(ResourceType.LEASE, referenceId, "LEASE_VIEW") || hasPermission(ResourceType.LEASE, referenceId, "LEASE_VIEW_OWN"));
-            case INVENTORY_ITEM -> isWrite ? hasPermission(ResourceType.INVENTORY_ITEM, referenceId, "INVENTORY_MANAGE") : hasPermission(ResourceType.INVENTORY_ITEM, referenceId, "INVENTORY_VIEW");
-            default -> false;
-        };
+    public Optional<ResourceType> findResourceType(String name) {
+        return resourceScopeRegistry.findType(name);
     }
 
     private boolean isUserGloballyAuthorized(UserDetailsImpl currentUser) {

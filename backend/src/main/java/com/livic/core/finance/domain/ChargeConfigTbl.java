@@ -3,7 +3,6 @@ package com.livic.core.finance.domain;
 import com.livic.platform.common.domain.BaseEntity;
 import com.livic.core.finance.domain.BillingFrequency;
 import com.livic.core.finance.domain.CalculationStrategyType;
-import com.livic.core.finance.domain.ChargeCategory;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.UUID;
@@ -26,10 +25,6 @@ public class ChargeConfigTbl extends BaseEntity {
     private String chargeName;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "charge_category", nullable = false, length = 50)
-    private ChargeCategory chargeCategory;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "billing_frequency", nullable = false, length = 50)
     private BillingFrequency billingFrequency;
 
@@ -48,10 +43,6 @@ public class ChargeConfigTbl extends BaseEntity {
 
     @Column(name = "late_fee_percentage", precision = 5, scale = 2)
     private BigDecimal lateFeePercentage;
-
-    @Column(name = "is_system_required", nullable = false)
-    @Builder.Default
-    private Boolean isSystemRequired = false;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default

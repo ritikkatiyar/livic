@@ -1,31 +1,11 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export interface MeterReadingResponse {
-    id: string;
-    unitId: string;
-    blockId?: string | null;
-    blockName?: string | null;
-    unitName: string;
-    tenantName: string;
-    floor: number;
-    previousReading: number;
-    currentReading: number | null;
-    isBilled: boolean;
-}
+export type MeterReadingResponse = ApiModel<'MeterReadingResponse', 'blockId' | 'blockName', 'blockId' | 'blockName' | 'currentReading'>;
 
-export interface UnitReading {
-    unitId: string;
-    previousReading?: number | null;
-    currentReading: number | null;
-}
+export type UnitReading = ApiModel<'UnitReading', 'previousReading', 'previousReading' | 'currentReading'>;
 
-export interface MeterReadingRequest {
-    propertyId: string;
-    chargeConfigId: string;
-    billingMonth: number;
-    billingYear: number;
-    readings: UnitReading[];
-}
+export type MeterReadingRequest = ApiInput<'MeterReadingRequest'>;
 
 export const getWorksheet = async (
     propertyId: string,

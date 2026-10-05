@@ -96,11 +96,11 @@ export function WorksheetFloorList({
                             )}
                             <Text style={styles.unitName}>{entry.unitName}</Text>
                           </View>
-                          <Text style={styles.tenantName} numberOfLines={1}>{entry.tenantName}</Text>
+                          <Text style={styles.payerName} numberOfLines={1}>{entry.payerName}</Text>
                         </View>
                         
                         <View style={styles.rowRight}>
-                          {entry.isBilled ? (
+                          {entry.billed ? (
                             <View style={styles.billedBadge}>
                               <Text style={styles.billedBadgeText}>BILLED (₹{entry.enteredValue})</Text>
                             </View>
@@ -115,11 +115,9 @@ export function WorksheetFloorList({
                               </TouchableOpacity>
                             ) : (
                               <View style={styles.inputWrapper}>
-                                {selectedCharge?.calculationStrategy !== 'METERED' && (
-                                  <Text style={styles.currencySymbol}>₹</Text>
-                                )}
+                                <Text style={styles.currencySymbol}>₹</Text>
                                 <TextInput
-                                  style={[styles.input, selectedCharge?.calculationStrategy !== 'METERED' && { paddingLeft: theme.Spacing.lg }]}
+                                  style={[styles.input, { paddingLeft: theme.Spacing.lg }]}
                                   value={editValues[entry.unitId] || ''}
                                   onChangeText={(val) => setEditValues(prev => ({ ...prev, [entry.unitId]: val }))}
                                   keyboardType="numeric"
@@ -223,7 +221,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
   },
-  tenantName: {
+  payerName: {
     fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,

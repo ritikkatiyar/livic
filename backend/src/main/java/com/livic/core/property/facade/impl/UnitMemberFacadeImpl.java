@@ -24,14 +24,14 @@ public class UnitMemberFacadeImpl implements UnitMemberFacade {
 
     @Override
     @Transactional
-    public UnitMemberSummaryDTO addTenant(UUID unitId, UUID userId, UUID leaseId, LocalDate from, UUID assignedBy) {
-        return UnitMemberSummaryDTO.from(unitMemberService.addTenant(unitId, userId, leaseId, from, assignedBy));
+    public UnitMemberSummaryDTO addTenant(UUID unitId, UUID userId, LocalDate from, UUID assignedBy) {
+        return UnitMemberSummaryDTO.from(unitMemberService.addTenant(unitId, userId, from, assignedBy));
     }
 
     @Override
     @Transactional
-    public void endTenancy(UUID leaseId, LocalDate on) {
-        unitMemberService.endTenancy(leaseId, on);
+    public void endMembership(UUID memberId, LocalDate on) {
+        unitMemberService.endMember(memberId, on);
     }
 
 
@@ -72,11 +72,6 @@ public class UnitMemberFacadeImpl implements UnitMemberFacade {
     @Override
     public List<UUID> getMemberIdsByUserIds(Collection<UUID> userIds) {
         return unitMemberService.findMemberIdsByUserIds(userIds);
-    }
-
-    @Override
-    public Optional<UnitResidentDTO> getResidentByLeaseId(UUID leaseId) {
-        return unitMemberService.findResidentByLeaseId(leaseId);
     }
 
     @Override

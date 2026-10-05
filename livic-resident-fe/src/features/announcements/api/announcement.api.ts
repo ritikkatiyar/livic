@@ -1,24 +1,8 @@
 import { apiRequest } from '@/src/api/client';
 import { logger } from '@/src/utils/logger';
+import type { ApiModel } from '@/src/api/models';
 
-export interface Announcement {
-  id: string;
-  propertyId: string;
-  creatorId: string;
-  creatorName: string;
-  title: string;
-  content: string;
-  category: 'GENERAL' | 'MAINTENANCE' | 'EMERGENCY' | 'BILLING' | 'EVENT';
-  severity: 'INFO' | 'WARNING' | 'CRITICAL';
-  targetType: 'PROPERTY' | 'FLOOR' | 'UNIT';
-  targetFloorNumber?: number | null;
-  targetUnitId?: string | null;
-  metadata?: string;
-  createdAt: string;
-  read: boolean;
-  readCount?: number;
-  totalRecipientsCount?: number;
-}
+export type Announcement = ApiModel<'AnnouncementResponse', 'targetFloorNumber' | 'targetUnitId' | 'metadata' | 'readCount' | 'totalRecipientsCount', 'targetFloorNumber' | 'targetUnitId'>;
 
 export function getAnnouncements(token: string, propertyId?: string): Promise<Announcement[]> {
   const query = propertyId ? `?propertyId=${propertyId}` : '';

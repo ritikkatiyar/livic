@@ -8,9 +8,8 @@ import com.livic.platform.auth.domain.MembershipTbl;
 import com.livic.platform.auth.dto.MembershipDTOs;
 import com.livic.platform.auth.mapper.MembershipMapper;
 import com.livic.platform.auth.service.interfaces.MembershipService;
-import com.livic.platform.common.constant.StaffPermission;
 import com.livic.platform.common.enums.AccessType;
-import com.livic.platform.common.event.MemberSeatRequestedEvent;
+import com.livic.platform.auth.event.MemberSeatRequestedEvent;
 import com.livic.platform.common.exception.BusinessException;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +32,7 @@ public class MembershipServiceImpl implements MembershipService {
     private final MembershipRepository membershipRepository;
     private final MembershipPermissionRepository membershipPermissionRepository;
     private final PermissionRepository permissionRepository;
+    private final PermissionCatalog permissionCatalog;
     private final UserFacade userFacade;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -225,7 +225,7 @@ public class MembershipServiceImpl implements MembershipService {
 
     private void validatePermissionCodes(Set<String> permissionCodes) {
         if (permissionCodes == null) return;
-        List<String> unknown = permissionCodes.stream().filter(code -> !StaffPermission.isValid(code)).sorted().toList();
+        List<String> unknown = permissionCodes.stream().filter(code -> !permissionCatalog.isGrantable(code)).sorted().toList();
         if (!unknown.isEmpty()) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Unknown permission codes: " + String.join(", ", unknown));
         }

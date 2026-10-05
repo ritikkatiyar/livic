@@ -1,6 +1,6 @@
 package com.livic.platform.storage.facade.impl;
 
-import com.livic.platform.common.enums.OwnerModule;
+import com.livic.platform.auth.spi.ResourceType;
 import com.livic.platform.storage.dto.MediaDTOs;
 import com.livic.platform.storage.facade.StorageFacade;
 import com.livic.platform.storage.service.interfaces.StorageService;
@@ -20,8 +20,8 @@ public class StorageFacadeImpl implements StorageFacade {
     private final StorageService storageService;
 
     @Override
-    public List<MediaDTOs.MediaAssetDTO> getAssets(OwnerModule ownerModule, UUID referenceId) {
-        return storageService.listAssets(ownerModule, referenceId);
+    public List<MediaDTOs.MediaAssetDTO> getAssets(ResourceType owner, UUID referenceId) {
+        return storageService.listAssets(owner.name(), referenceId);
     }
 
     @Override
@@ -30,8 +30,8 @@ public class StorageFacadeImpl implements StorageFacade {
     }
 
     @Override
-    public Map<UUID, List<MediaDTOs.MediaAssetDTO>> getAssetsForReferences(OwnerModule ownerModule, Collection<UUID> referenceIds) {
-        List<MediaDTOs.MediaAssetDTO> assets = storageService.listAssetsForReferences(ownerModule, referenceIds);
+    public Map<UUID, List<MediaDTOs.MediaAssetDTO>> getAssetsForReferences(ResourceType owner, Collection<UUID> referenceIds) {
+        List<MediaDTOs.MediaAssetDTO> assets = storageService.listAssetsForReferences(owner.name(), referenceIds);
         return assets.stream().collect(Collectors.groupingBy(MediaDTOs.MediaAssetDTO::referenceId));
     }
 }

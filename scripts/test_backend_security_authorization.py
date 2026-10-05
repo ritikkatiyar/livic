@@ -144,7 +144,7 @@ class SecurityTestRunner:
                     return 403, {"success": False, "error": "Access Denied: Insufficient property permissions"}, 4.6, '{"error":"Forbidden"}'
                 if "00000000-0000-0000-0000-000000000102" in path: # Tenant B IDOR
                     return 403, {"success": False, "error": "Access Denied: Not your lease or rent cycle"}, 4.3, '{"error":"Forbidden"}'
-                if path in ["/api/v1/user/me/context", "/api/v1/finance/rent-cycles"]:
+                if path in ["/api/v1/me/context", "/api/v1/finance/rent-cycles"]:
                     return 200, {"success": True, "data": {}}, 6.0, '{"success":true}'
             # Default legitimate
             return 200, {"success": True, "data": {}}, 5.0, '{"success":true}'
@@ -259,7 +259,7 @@ class SecurityTestRunner:
         self.record_test("SEC-101", cat, "ANONYMOUS", "List properties without token", "GET", "/api/v1/properties", [401, 403], custom_token=None)
         self.record_test("SEC-102", cat, "ANONYMOUS", "Get Financial Ledger without token", "GET", "/api/v1/finance/ledger", [401, 403], custom_token=None)
         self.record_test("SEC-103", cat, "ANONYMOUS", "Batch rent generation without token", "POST", "/api/v1/finance/rent-cycles/batch-generate", [401, 403], payload={"propertyId": self.prop_a_id, "billingMonth": "2026-09"}, custom_token=None)
-        self.record_test("SEC-104", cat, "ANONYMOUS", "Access current user context without token", "GET", "/api/v1/user/me/context", [401, 403], custom_token=None)
+        self.record_test("SEC-104", cat, "ANONYMOUS", "Access current user context without token", "GET", "/api/v1/me/context", [401, 403], custom_token=None)
 
         # Forged / malformed token
         invalid_jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.fake_signature"
@@ -309,7 +309,7 @@ class SecurityTestRunner:
         cat = "5. Cross-Tenant IDOR"
 
         # Tenant A legitimate access
-        self.record_test("SEC-501", cat, "TENANT_A", "Tenant A fetch own context & active lease", "GET", "/api/v1/user/me/context", [200])
+        self.record_test("SEC-501", cat, "TENANT_A", "Tenant A fetch own context & active lease", "GET", "/api/v1/me/context", [200])
         self.record_test("SEC-502", cat, "TENANT_A", "Tenant A list own rent cycles", "GET", "/api/v1/finance/rent-cycles", [200])
 
         # Tenant A attempting to access Tenant B's lease or invoice by ID

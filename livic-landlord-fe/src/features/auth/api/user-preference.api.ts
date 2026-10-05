@@ -1,9 +1,7 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
-export interface UserPreference {
-  onboardingDone: boolean;
-  activeMode: string | null;
-}
+export type UserPreference = ApiModel<'UserPreferenceResponse', never, 'activeMode'>;
 
 export const getPreference = async (token: string): Promise<UserPreference> => {
   return apiRequest<UserPreference>('/api/v1/user/preference', {

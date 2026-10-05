@@ -1,7 +1,6 @@
 package com.livic.verticals.rental.lease.facade.impl;
 
 import com.livic.verticals.rental.lease.repository.LeaseRepository;
-import com.livic.core.property.dto.UnitSummaryDTO;
 import com.livic.core.property.facade.UnitFacade;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
 import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
@@ -12,13 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,42 +24,14 @@ public class LeaseFacadeImpl implements LeaseFacade {
     private final UnitFacade unitFacade;
 
     @Override
-    public boolean isUnitOccupiedOnDate(UUID unitId, LocalDate date) {
-        return leaseRepository.existsActiveLeaseOnDate(unitId, LeaseStatus.ACTIVE, date);
+    public boolean hasVacancyOnDate(UUID unitId, LocalDate date) {
+        return leaseQueryService.isUnitAvailableOnDate(unitId, date);
     }
 
     @Override
     public Optional<LeaseSummaryDTO> getActiveLeaseForUser(UUID userId) {
         return leaseQueryService.findByUserIdAndStatus(userId, LeaseStatus.ACTIVE)
                 .map(lease -> LeaseSummaryDTO.from(lease, unitFacade.getUnitById(lease.getUnitId()).orElse(null)));
-    }
-
-    @Override
-    public List<LeaseSummaryDTO> getActiveLeasesByPropertyId(UUID propertyId) {
-        Map<UUID, UnitSummaryDTO> unitMap = unitFacade.getUnitsByPropertyId(propertyId).stream()
-                .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
-        return leaseQueryService.findActiveLeasesByProperty(propertyId).stream()
-                .map(lease -> LeaseSummaryDTO.from(lease, unitMap.get(lease.getUnitId())))
-                .toList();
-    }
-
-
-    @Override
-    public Map<UUID, List<LeaseSummaryDTO>> getActiveLeasesByUnitIds(Collection<UUID> unitIds) {
-        if (unitIds == null || unitIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        return leaseQueryService.findActiveLeasesByUnitIds(unitIds);
-    }
-
-    @Override
-    public boolean hasLeasesForProperty(UUID propertyId) {
-        return leaseQueryService.existsByPropertyId(propertyId);
-    }
-
-    @Override
-    public boolean hasLeasesForUnit(UUID unitId) {
-        return leaseQueryService.existsByUnitId(unitId);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.livic.core.property;
 import com.livic.core.community.analytics.dto.PortfolioOccupancyResponse;
 import com.livic.core.community.analytics.mapper.AnalyticsMapper;
 import com.livic.core.property.domain.BlockTbl;
+import com.livic.core.property.domain.UnitMemberRole;
 import com.livic.core.property.domain.PropertyTbl;
 import com.livic.core.property.domain.UnitTbl;
 import com.livic.core.property.facade.PropertyFacade;
@@ -33,8 +34,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Occupancy is counted per unit: a shared room with two tenants is one occupied unit and two occupied beds,
- * so the occupancy rate can never pass 100%.
+ * Occupancy is counted per unit from its members: a shared room with two tenants is one occupied unit and
+ * two occupied beds, so the occupancy rate can never pass 100%; an owner living in their flat occupies it.
  */
 @SpringBootTest
 @ActiveProfiles("dev")
@@ -46,6 +47,7 @@ class PortfolioOccupancyIntegrationTest {
     @Autowired private UnitRepository unitRepository;
     @Autowired private BlockService blockService;
     @Autowired private LeaseRepository leaseRepository;
+    @Autowired private com.livic.core.property.service.interfaces.UnitMemberService unitMemberService;
     @Autowired private UserRepository userRepository;
 
     @Test
@@ -72,14 +74,14 @@ class PortfolioOccupancyIntegrationTest {
         assertThat(row.vacantUnits()).isEqualTo(1);
         assertThat(row.totalBeds()).isEqualTo(3);
         assertThat(row.occupiedBeds()).isEqualTo(2);
-        assertThat(row.activeLeases()).isEqualTo(2);
+        assertThat(row.activeTenants()).isEqualTo(2);
 
         PortfolioOccupancyResponse response = AnalyticsMapper.toPortfolioOccupancyResponse(row);
         assertThat(response.occupiedUnits()).isEqualTo(1);
         assertThat(response.occupancyRate()).isEqualByComparingTo("50");
         assertThat(response.netYield()).isEqualByComparingTo("4");
         assertThat(response.bedOccupancyRate()).isEqualByComparingTo("66.67");
-        assertThat(response.activeLeases()).isEqualTo(2);
+        assertThat(response.activeTenants()).isEqualTo(2);
     }
 
     @Test
@@ -98,7 +100,27 @@ class PortfolioOccupancyIntegrationTest {
         assertThat(response.occupiedUnits()).isEqualTo(1);
         assertThat(response.occupancyRate()).isEqualByComparingTo("100");
         assertThat(response.bedOccupancyRate()).isEqualByComparingTo("100");
-        assertThat(response.activeLeases()).isEqualTo(2);
+        assertThat(response.activeTenants()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An owner-occupied flat is occupied, and its beds stay free for tenants")
+    void ownerOccupiedUnitIsOccupiedWithoutTakingBeds() {
+        PropertyTbl property = propertyRepository.save(PropertyTbl.builder()
+                .name("Owner Flats").address("10 Test St").city("Test City").build());
+        BlockTbl block = blockService.getOrCreateDefaultBlock(property);
+        UnitTbl ownerFlat = unitRepository.save(unit(property, block, "301", 2));
+        unitRepository.save(unit(property, block, "302", 1));
+        unitMemberService.addMember(ownerFlat.getId(), user().getId(), UnitMemberRole.OWNER, true,
+                LocalDate.now().minusYears(1), null);
+
+        PropertyOccupancySummaryDTO row = propertyFacade.getOccupancyByProperty(List.of(property.getId())).get(0);
+
+        assertThat(row.occupiedUnits()).isEqualTo(1);
+        assertThat(row.fullUnits()).isEqualTo(1);
+        assertThat(row.vacantUnits()).isEqualTo(1);
+        assertThat(row.occupiedBeds()).isZero();
+        assertThat(row.activeTenants()).isZero();
     }
 
     @Test
@@ -122,17 +144,26 @@ class PortfolioOccupancyIntegrationTest {
                 .gridX(Integer.parseInt(number) % 100).gridY(0).type(UnitType.SINGLE_UNIT).build();
     }
 
-    private LeaseTbl lease(UnitTbl unit, LeaseStatus status) {
-        UserTbl tenant = userRepository.save(UserTbl.builder()
+    private UserTbl user() {
+        return userRepository.save(UserTbl.builder()
                 .authUid("tenant-" + UUID.randomUUID() + "@test.com")
                 .fullName("tenant user")
                 .phoneNumber("+91" + (9000000000L + (long) (Math.random() * 999999999)))
                 .failedLoginAttempts(0)
                 .globalRole(UserRole.USER)
                 .build());
+    }
+
+    private LeaseTbl lease(UnitTbl unit, LeaseStatus status) {
+        UserTbl tenant = user();
+        var member = unitMemberService.addTenant(unit.getId(), tenant.getId(), LocalDate.now().minusDays(30), null);
+        if (status == LeaseStatus.ENDED) {
+            unitMemberService.endMember(member.getId(), LocalDate.now());
+        }
         return LeaseTbl.builder()
                 .userId(tenant.getId())
                 .unitId(unit.getId())
+                .memberId(member.getId())
                 .status(status)
                 .monthlyRentAmount(BigDecimal.valueOf(8000))
                 .securityDeposit(BigDecimal.valueOf(16000))

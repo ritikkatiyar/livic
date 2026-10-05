@@ -115,6 +115,7 @@ describe('VisitingHoursScreen', () => {
     api.updateTourAvailability.mockImplementation(async (_propertyId, request) => ({
       ...defaults,
       ...request,
+      timezone: request.timezone ?? defaults.timezone,
       customized: true,
       blackouts: [],
     }));

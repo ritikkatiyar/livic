@@ -71,7 +71,7 @@ WHATSAPP_ACCESS_TOKEN=your_meta_system_user_token
 * **How it works**:
   1. The resident or landlord opens the mobile app (iOS or Android).
   2. The app requests push notification permissions and retrieves an `ExponentPushToken[...]`.
-  3. The app automatically registers the token with the backend at `POST /api/v1/user/me/device-token`.
+  3. The app automatically registers the token with the backend at `POST /api/v1/me/device-token`.
   4. When notifications trigger, `PushNotificationSender` posts directly to Expo's push endpoint.
 
 ### Configuration Steps

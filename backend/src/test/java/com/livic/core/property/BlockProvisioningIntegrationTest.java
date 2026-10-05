@@ -42,6 +42,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Transactional
 class BlockProvisioningIntegrationTest {
 
+    @Autowired
+    private com.livic.platform.auth.service.interfaces.MembershipService membershipService;
+
     @Autowired private PropertyService propertyService;
     @Autowired private UnitService unitService;
     @Autowired private com.livic.core.property.service.interfaces.UnitQueryService unitQueryService;
@@ -112,9 +115,11 @@ class BlockProvisioningIntegrationTest {
     @Test
     @DisplayName("A property created without going through the service still gets a block on first unit")
     void legacyPropertyGetsABlockLazily() {
-        authenticatedOwner();
+        UserTbl owner = authenticatedOwner();
         PropertyTbl property = propertyRepository.save(PropertyTbl.builder()
                 .name("Legacy Property").address("2 Test St").city("Test City").build());
+        // New units count against the owner's plan, so the property needs its owner.
+        membershipService.createOwnerMembership(property.getId(), owner.getId());
 
         unitService.saveFloorLayout(property.getId(), null, 1, List.of(layoutUnit("201", 0)));
 

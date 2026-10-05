@@ -1,11 +1,7 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export interface FloorSummaryResponse {
-  floorNumber: number;
-  displayLabel: string;
-  configured: boolean;
-  unitCount: number;
-}
+export type FloorSummaryResponse = ApiModel<'FloorSummaryResponse'>;
 
 export function getFloorSummaries(propertyId: string, token: string, throughFloor?: number): Promise<FloorSummaryResponse[]> {
   const query = throughFloor !== undefined ? `?throughFloor=${throughFloor}` : '';
@@ -17,28 +13,16 @@ export function getFloorSummaries(propertyId: string, token: string, throughFloo
   });
 }
 
-export interface UnitResponse {
-  id: string;
-  unitNumber: string;
-  floor: number;
-  gridX: number;
-  gridY: number;
-  gridWidth: number;
-  gridHeight: number;
-  type: string;
-  capacity: number;
-  facing: string;
-  activeLeases?: ActiveLeaseSummary[];
-}
+/** What a member holds the unit under, such as a lease; owners and family usually have none. */
+export type MemberAgreement = ApiModel<'MemberAgreement', 'monthlyAmount' | 'startDate' | 'endDate' | 'status', 'monthlyAmount' | 'startDate' | 'endDate' | 'status'>;
 
-export interface ActiveLeaseSummary {
-  leaseId: string;
-  tenantUserId: string;
-  tenantName?: string | null;
-  tenantPhone?: string | null;
-  rentAmount: number;
-  status: string;
-}
+export type Occupant = Omit<ApiModel<'Occupant', 'userId' | 'name' | 'phone' | 'fromDate', 'userId' | 'name' | 'phone' | 'fromDate'>, 'agreement'> & {
+  agreement?: MemberAgreement | null;
+};
+
+export type UnitResponse = Omit<ApiModel<'UnitResponse', 'blockId', 'blockId'>, 'members'> & {
+  members?: Occupant[];
+};
 
 export function getFloorLayout(propertyId: string, floorNumber: number, token: string): Promise<UnitResponse[]> {
   const path = `/api/v1/properties/${propertyId}/floors/${floorNumber}/layout`;
@@ -56,14 +40,7 @@ export function getAllFloorsLayout(propertyId: string, token: string): Promise<U
   });
 }
 
-export interface BatchUnitRequest {
-  totalFloors: number;
-  unitsPerFloor: number;
-  startingFloorNumber: number;
-  prefix: string;
-  capacity: number;
-  unitType: string;
-}
+export type BatchUnitRequest = ApiInput<'BatchUnitRequest'>;
 
 export function generateBatchUnits(propertyId: string, request: BatchUnitRequest, token: string): Promise<UnitResponse[]> {
   const path = `/api/v1/properties/${propertyId}/units/batch`;

@@ -15,7 +15,7 @@ import com.livic.verticals.rental.inventory.mapper.InventoryMapper;
 import com.livic.verticals.rental.inventory.repository.InventoryItemRepository;
 import com.livic.verticals.rental.inventory.service.interfaces.InventoryItemService;
 import com.livic.core.property.facade.PropertyFacade;
-import com.livic.platform.common.enums.OwnerModule;
+import com.livic.verticals.rental.inventory.security.InventoryResources;
 import com.livic.platform.storage.dto.MediaDTOs;
 import com.livic.platform.storage.facade.StorageFacade;
 import lombok.RequiredArgsConstructor;
@@ -147,7 +147,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
                 .collect(Collectors.toList());
 
         Set<UUID> itemIds = filtered.stream().map(InventoryItemTbl::getId).collect(Collectors.toSet());
-        Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(OwnerModule.INVENTORY, itemIds);
+        Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(InventoryResources.ITEM, itemIds);
 
         return filtered.stream()
                 .map(item -> {
@@ -163,7 +163,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     public Page<InventoryItemResponse> listItemsByPropertyPaginated(UUID propertyId, Pageable pageable) {
         Page<InventoryItemTbl> page = inventoryItemRepository.findAllByPropertyId(propertyId, pageable);
         Set<UUID> itemIds = page.getContent().stream().map(InventoryItemTbl::getId).collect(Collectors.toSet());
-        Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(OwnerModule.INVENTORY, itemIds);
+        Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(InventoryResources.ITEM, itemIds);
 
         List<InventoryItemResponse> dtoList = page.getContent().stream()
                 .map(item -> {
@@ -197,7 +197,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
         Set<UUID> allIds = sharedItems.stream().map(InventoryItemTbl::getId).collect(Collectors.toSet());
         allIds.addAll(unitItems.stream().map(InventoryItemTbl::getId).collect(Collectors.toSet()));
-        Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(OwnerModule.INVENTORY, allIds);
+        Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(InventoryResources.ITEM, allIds);
 
         List<InventoryItemResponse> sharedDTOs = sharedItems.stream()
                 .map(item -> {
@@ -235,7 +235,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     }
 
     private String resolvePrimaryImage(UUID itemId) {
-        List<MediaDTOs.MediaAssetDTO> assets = storageFacade.getAssets(OwnerModule.INVENTORY, itemId);
+        List<MediaDTOs.MediaAssetDTO> assets = storageFacade.getAssets(InventoryResources.ITEM, itemId);
         return (assets != null && !assets.isEmpty()) ? assets.get(0).url() : null;
     }
 }

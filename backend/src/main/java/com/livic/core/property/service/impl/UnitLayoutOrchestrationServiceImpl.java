@@ -7,14 +7,17 @@ import com.livic.core.property.dto.UnitDTOs;
 import com.livic.core.property.service.interfaces.UnitLayoutOrchestrationService;
 import com.livic.core.property.service.interfaces.UnitService;
 import com.livic.core.property.service.interfaces.UnitQueryService;
-import com.livic.core.property.spi.UnitOccupancyProvider;
-import com.livic.core.property.spi.UnitOccupancyProvider.UnitOccupant;
+import com.livic.core.property.domain.UnitMemberTbl;
+import com.livic.core.property.service.interfaces.UnitMemberService;
+import com.livic.core.property.spi.MemberAgreementProvider;
+import com.livic.core.property.spi.MemberAgreementProvider.MemberAgreement;
 import com.livic.platform.user.dto.UserSummaryDTO;
 import com.livic.platform.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,9 +25,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Application Service to orchestrate unit layouts with lease occupancy and user details.
- * Occupancy comes through {@link UnitOccupancyProvider}, so property does not depend on finance.
- * This keeps the Controllers thin and Domain Services pure.
+ * Unit layouts with the people in each unit: core's unit members, their user details, and the
+ * agreement each holds the unit under when a vertical has one ({@link MemberAgreementProvider}).
  */
 @Service
 @RequiredArgsConstructor
@@ -32,7 +34,8 @@ public class UnitLayoutOrchestrationServiceImpl implements UnitLayoutOrchestrati
 
     private final UnitService unitService;
     private final UnitQueryService unitQueryService;
-    private final UnitOccupancyProvider unitOccupancyProvider;
+    private final UnitMemberService unitMemberService;
+    private final List<MemberAgreementProvider> agreementProviders;
     private final UserFacade userFacade;
 
     @Override
@@ -60,7 +63,13 @@ public class UnitLayoutOrchestrationServiceImpl implements UnitLayoutOrchestrati
 
     @Override
     public List<UnitDTOs.UnitResponse> getVacatingUnits(UUID propertyId) {
-        Set<UUID> vacatingUnitIds = unitOccupancyProvider.vacatingUnitIds(propertyId);
+        // A unit is vacating when someone in it has agreed a move-out date.
+        List<UnitMemberTbl> members = unitMemberService.findActiveByPropertyId(propertyId);
+        Map<UUID, MemberAgreement> agreements = agreementsOf(members);
+        Set<UUID> vacatingUnitIds = members.stream()
+                .filter(m -> agreements.containsKey(m.getId()) && agreements.get(m.getId()).endDate() != null)
+                .map(UnitMemberTbl::getUnitId)
+                .collect(Collectors.toSet());
 
         List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId).stream()
                 .filter(unit -> vacatingUnitIds.contains(unit.getId()))
@@ -82,10 +91,10 @@ public class UnitLayoutOrchestrationServiceImpl implements UnitLayoutOrchestrati
 
         for (UnitTbl unit : existingUnits) {
             if (!incomingNumbers.contains(unit.getUnitNumber())) {
-                if (unitOccupancyProvider.hasLeasesForUnit(unit.getId())) {
+                if (unitMemberService.hasEverHadMembers(unit.getId())) {
                     throw new BusinessException(
                             HttpStatus.CONFLICT,
-                            "Cannot remove unit " + unit.getUnitNumber() + " from the layout while leases reference it"
+                            "Cannot remove unit " + unit.getUnitNumber() + " from the layout: it has, or has had, residents"
                     );
                 }
             }
@@ -96,22 +105,47 @@ public class UnitLayoutOrchestrationServiceImpl implements UnitLayoutOrchestrati
     }
 
     private List<UnitDTOs.UnitResponse> enrichUnits(List<UnitTbl> units) {
-        Map<UUID, List<UnitOccupant>> occupantsByUnitId = unitOccupancyProvider.activeOccupantsByUnitIds(
-                units.stream().map(UnitTbl::getId).collect(Collectors.toSet())
-        );
-        Map<UUID, UserSummaryDTO> usersById = userFacade.getUsersByIds(
-                occupantsByUnitId.values().stream()
-                        .flatMap(List::stream)
-                        .map(UnitOccupant::userId)
-                        .collect(Collectors.toSet())
-        );
+        List<UnitMemberTbl> members = unitMemberService.findActiveByUnitIds(
+                units.stream().map(UnitTbl::getId).collect(Collectors.toSet()));
+        Map<UUID, List<UnitMemberTbl>> membersByUnitId = members.stream()
+                .collect(Collectors.groupingBy(UnitMemberTbl::getUnitId));
+        Map<UUID, MemberAgreement> agreements = agreementsOf(members);
+        Map<UUID, UserSummaryDTO> usersById = userFacade.getUsersByIds(members.stream()
+                .map(UnitMemberTbl::getUserId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet()));
 
         return units.stream()
-                .map(unit -> toResponse(unit, occupantsByUnitId.getOrDefault(unit.getId(), List.of()), usersById))
+                .map(unit -> toResponse(unit, membersByUnitId.getOrDefault(unit.getId(), List.of()).stream()
+                        .map(m -> toOccupant(m, usersById.get(m.getUserId()), agreements.get(m.getId())))
+                        .toList()))
                 .collect(Collectors.toList());
     }
 
-    private UnitDTOs.UnitResponse toResponse(UnitTbl u, List<UnitOccupant> occupants, Map<UUID, UserSummaryDTO> usersById) {
+    /** The agreements every vertical holds these members under; most members have none. */
+    private Map<UUID, MemberAgreement> agreementsOf(List<UnitMemberTbl> members) {
+        if (members.isEmpty()) {
+            return Map.of();
+        }
+        List<UUID> memberIds = members.stream().map(UnitMemberTbl::getId).toList();
+        Map<UUID, MemberAgreement> agreements = new HashMap<>();
+        agreementProviders.forEach(provider -> agreements.putAll(provider.agreementsByMemberIds(memberIds)));
+        return agreements;
+    }
+
+    private static UnitDTOs.Occupant toOccupant(UnitMemberTbl m, UserSummaryDTO user, MemberAgreement agreement) {
+        return new UnitDTOs.Occupant(
+                m.getId(),
+                m.getUserId(),
+                user != null ? user.fullName() : null,
+                user != null ? user.phoneNumber() : null,
+                m.getRole(),
+                m.getFromDate(),
+                agreement
+        );
+    }
+
+    private UnitDTOs.UnitResponse toResponse(UnitTbl u, List<UnitDTOs.Occupant> members) {
         return new UnitDTOs.UnitResponse(
                 u.getId(),
                 u.getBlock() != null ? u.getBlock().getId() : null,
@@ -124,23 +158,7 @@ public class UnitLayoutOrchestrationServiceImpl implements UnitLayoutOrchestrati
                 u.getType(),
                 u.getCapacity(),
                 u.getFacing(),
-                toActiveLeaseSummaries(occupants, usersById)
+                members
         );
-    }
-
-    private List<UnitDTOs.ActiveLeaseSummary> toActiveLeaseSummaries(List<UnitOccupant> occupants, Map<UUID, UserSummaryDTO> usersById) {
-        return occupants.stream()
-                .map(o -> {
-                    UserSummaryDTO user = usersById.get(o.userId());
-                    return new UnitDTOs.ActiveLeaseSummary(
-                            o.leaseId(),
-                            o.userId(),
-                            user != null ? user.fullName() : "Unknown User",
-                            user != null ? user.phoneNumber() : "",
-                            o.rentAmount(),
-                            o.status() != null ? o.status() : "ACTIVE"
-                    );
-                })
-                .collect(Collectors.toList());
     }
 }

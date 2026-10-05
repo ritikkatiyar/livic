@@ -1,72 +1,25 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
-export interface ChargeResponse {
-  id: string;
-  chargeType: string;
-  amount: number;
-  description: string;
-  createdAt: string;
-}
+/** One line of a bill. The amount is signed: a discount or adjustment in the payer's favour is negative. */
+export type ChargeResponse = ApiModel<'ChargeResponse'>;
 
-export interface RentCycleResponse {
-  id: string;
-  leaseId: string;
-  blockId?: string | null;
-  blockName?: string | null;
-  tenantName: string;
-  unitNumber: string;
-  billingMonth: string;
-  totalAmount: number;
-  dueDate: string;
-  status: 'PENDING' | 'PUBLISHED' | 'PAID' | 'OVERDUE';
-  paidAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  charges: ChargeResponse[];
-}
+export type RentCycleResponse = ApiModel<'BillResponse', 'blockId' | 'blockName', 'blockId' | 'blockName' | 'paidAt'>;
 
-export interface BatchGenerateFailure {
-  leaseId: string;
-  unitNumber: string | null;
-  reason: string;
-}
+export type BatchGenerateFailure = ApiModel<'BatchGenerateFailure', never, 'unitNumber'>;
 
-export interface BatchGenerateResult {
-  succeeded: RentCycleResponse[];
-  failed: BatchGenerateFailure[];
-}
+export type BatchGenerateResult = ApiModel<'BatchGenerateResult'>;
 
-export interface BatchPublishFailure {
-  rentCycleId: string;
-  unitNumber: string | null;
-  reason: string;
-}
+export type BatchPublishFailure = ApiModel<'BatchPublishFailure', never, 'unitNumber'>;
 
-export interface BatchPublishResult {
-  succeeded: RentCycleResponse[];
-  failed: BatchPublishFailure[];
-}
+export type BatchPublishResult = ApiModel<'BatchPublishResult'>;
 
-export interface BatchUnpublishFailure {
-  rentCycleId: string;
-  unitNumber: string | null;
-  reason: string;
-}
+export type BatchUnpublishFailure = ApiModel<'BatchUnpublishFailure', never, 'unitNumber'>;
 
-export interface BatchUnpublishResult {
-  succeeded: RentCycleResponse[];
-  failed: BatchUnpublishFailure[];
-}
+export type BatchUnpublishResult = ApiModel<'BatchUnpublishResult'>;
 
-export interface PreFlightChecklistResponse {
-  totalUnits: number;
-  /** Sum of unit capacities. activeLeases counts tenants, so it is measured against beds, not units. */
-  totalBeds?: number;
-  activeLeases: number;
-  meterReadingsExpected: number;
-  meterReadingsEntered: number;
-  isReady: boolean;
-}
+/** totalBeds sums unit capacities: activePayers counts people who pay, so it is measured against beds, not units. */
+export type PreFlightChecklistResponse = ApiModel<'PreFlightChecklistResponse', 'totalBeds'>;
 
 export const batchGenerateRentCycle = async (
   propertyId: string,
@@ -101,18 +54,7 @@ export const getPreFlightChecklist = async (
   );
 };
 
-export interface BackendRentCycleListResponse {
-  content: RentCycleResponse[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-  metrics: {
-    totalExpectedRevenue: number;
-    pendingDraftsCount: number;
-    publishedCount: number;
-  };
-}
+export type BackendRentCycleListResponse = ApiModel<'BillListResponse'>;
 
 export interface RentCycleListResponse {
   content: RentCycleResponse[];

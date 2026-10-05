@@ -1,7 +1,6 @@
 package com.livic.platform.storage.domain;
 
 import com.livic.platform.storage.dto.FileType;
-import com.livic.platform.common.enums.OwnerModule;
 import com.livic.platform.storage.dto.StorageProvider;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,9 +32,9 @@ public class MediaAssetTbl {
     @Column(name = "id", nullable = false, length = 36)
     private UUID id;
 
-    @Enumerated(EnumType.STRING)
+    /** The name of the resource type the file is attached to, such as PROPERTY or INVENTORY_ITEM. */
     @Column(name = "owner_module", nullable = false, length = 32)
-    private OwnerModule ownerModule;
+    private String ownerModule;
 
     @Column(name = "reference_id", nullable = false, length = 36)
     private UUID referenceId;

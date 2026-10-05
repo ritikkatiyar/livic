@@ -1,7 +1,6 @@
 package com.livic.core.finance.domain;
 
 import com.livic.platform.common.domain.BaseEntity;
-import com.livic.core.finance.domain.RentChargeType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,6 +8,9 @@ import java.math.BigDecimal;
 
 /**
  * One charge on a bill.
+ *
+ * <p>The amount is signed: a discount or an adjustment in the payer's favour is negative, and
+ * the bill's total is the sum of its lines.
  *
  * <p>Lines are frozen at generation: {@code amount}, {@code taxRate}, {@code taxAmount} and
  * the description are copied from the charge config and never re-derived from it at render
@@ -29,10 +31,6 @@ public class BillLineTbl extends BaseEntity {
     @JoinColumn(name = "bill_id", nullable = false)
     @ToString.Exclude
     private BillTbl bill;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "charge_type", nullable = false, length = 50)
-    private RentChargeType chargeType;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;

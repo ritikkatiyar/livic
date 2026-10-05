@@ -4,7 +4,6 @@ import com.livic.core.finance.repository.MeterReadingRepository;
 import com.livic.core.finance.repository.ChargeConfigRepository;
 import com.livic.core.finance.domain.BillingFrequency;
 import com.livic.core.finance.domain.CalculationStrategyType;
-import com.livic.core.finance.domain.ChargeCategory;
 import com.livic.core.property.domain.FacingDirection;
 import com.livic.verticals.rental.lease.domain.LeaseSplitStrategy;
 import com.livic.verticals.rental.lease.domain.LeaseStatus;
@@ -87,7 +86,6 @@ class MeterReadingCalculationTest {
 
         electricityConfig = ChargeConfigTbl.builder()
                 .chargeName("Electricity")
-                .chargeCategory(ChargeCategory.ELECTRICITY)
                 .billingFrequency(BillingFrequency.MONTHLY)
                 .calculationStrategy(CalculationStrategyType.METERED)
                 .unitType("kWh")
@@ -124,7 +122,7 @@ class MeterReadingCalculationTest {
         when(unitMemberFacade.getActiveMembersByPropertyId(propertyId)).thenReturn(List.of(
                 new com.livic.core.property.dto.UnitMemberSummaryDTO(
                         UUID.randomUUID(), unitId, userId,
-                        com.livic.core.property.domain.UnitMemberRole.TENANT, true, leaseId,
+                        com.livic.core.property.domain.UnitMemberRole.TENANT, true,
                         LocalDate.of(2026, 1, 1), null, true)));
         when(userFacade.getUsersByIds(Set.of(userId))).thenReturn(Map.of(userId, userSummary));
 
@@ -200,7 +198,7 @@ class MeterReadingCalculationTest {
         when(unitMemberFacade.getActiveMembersByPropertyId(propertyId)).thenReturn(List.of(
                 new com.livic.core.property.dto.UnitMemberSummaryDTO(
                         UUID.randomUUID(), unitId, userId,
-                        com.livic.core.property.domain.UnitMemberRole.TENANT, true, leaseId,
+                        com.livic.core.property.domain.UnitMemberRole.TENANT, true,
                         LocalDate.of(2026, 1, 1), null, true)));
         when(userFacade.getUsersByIds(Set.of(userId))).thenReturn(Map.of(userId, userSummary));
 

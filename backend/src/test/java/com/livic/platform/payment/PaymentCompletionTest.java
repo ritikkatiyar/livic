@@ -18,7 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.context.ApplicationEventPublisher;
+import com.livic.platform.outbox.facade.OutboxFacade;
 import org.springframework.http.HttpStatus;
 
 import javax.crypto.Mac;
@@ -59,7 +59,7 @@ class PaymentCompletionTest {
     @Mock
     private PaymentGatewayRouter paymentGatewayRouter;
     @Mock
-    private ApplicationEventPublisher eventPublisher;
+    private OutboxFacade outboxFacade;
 
     private PaymentTransactionServiceImpl service;
 
@@ -74,7 +74,7 @@ class PaymentCompletionTest {
                 paymentWebhookEventRepository,
                 paymentGatewayRouter,
                 razorpayProperties,
-                eventPublisher);
+                outboxFacade);
     }
 
     @Test
@@ -86,7 +86,7 @@ class PaymentCompletionTest {
         service.verifyAndCompletePayment(verification());
 
         assertThat(transaction.getStatus()).isEqualTo(PaymentConstants.Status.SUCCESS);
-        verify(eventPublisher, times(1)).publishEvent(any(PaymentCompletedEvent.class));
+        verify(outboxFacade, times(1)).publish(any(PaymentCompletedEvent.class));
         verify(paymentTransactionRepository, never()).findByGatewayTransactionId(anyString());
     }
 
@@ -100,7 +100,7 @@ class PaymentCompletionTest {
         service.handleWebhook("razorpay", payload, hmac(payload, WEBHOOK_SECRET));
 
         assertThat(transaction.getStatus()).isEqualTo(PaymentConstants.Status.SUCCESS);
-        verify(eventPublisher, times(1)).publishEvent(any(PaymentCompletedEvent.class));
+        verify(outboxFacade, times(1)).publish(any(PaymentCompletedEvent.class));
         verify(paymentTransactionRepository, never()).findByGatewayTransactionId(anyString());
     }
 
@@ -114,7 +114,7 @@ class PaymentCompletionTest {
         String payload = webhookPayload("evt_2", "order.paid");
         service.handleWebhook("razorpay", payload, hmac(payload, WEBHOOK_SECRET));
 
-        verify(eventPublisher, never()).publishEvent(any(PaymentCompletedEvent.class));
+        verify(outboxFacade, never()).publish(any(PaymentCompletedEvent.class));
     }
 
     @Test
@@ -133,7 +133,7 @@ class PaymentCompletionTest {
     private static PaymentTransactionTbl transaction(String status, UUID payerId) {
         PaymentTransactionTbl transaction = PaymentTransactionTbl.builder()
                 .payerUserId(payerId)
-                .referenceType(PaymentConstants.ReferenceType.BILL)
+                .referenceType("BILL")
                 .referenceId(UUID.randomUUID())
                 .gatewayTransactionId(ORDER_ID)
                 .amount(new BigDecimal("1000.00"))

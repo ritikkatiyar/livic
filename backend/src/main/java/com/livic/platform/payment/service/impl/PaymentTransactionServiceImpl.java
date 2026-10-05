@@ -18,7 +18,7 @@ import com.livic.platform.payment.event.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
-import org.springframework.context.ApplicationEventPublisher;
+import com.livic.platform.outbox.facade.OutboxFacade;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +37,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     private final PaymentWebhookEventRepository paymentWebhookEventRepository;
     private final PaymentGatewayRouter paymentGatewayRouter;
     private final RazorpayProperties razorpayProperties;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxFacade outboxFacade;
 
     @Override
     public PaymentTransactionTbl initiateOnlinePayment(UUID payerUserId, String referenceType, UUID referenceId, BigDecimal amount) {
@@ -94,8 +94,8 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
 
         transaction = paymentTransactionRepository.saveAndFlush(transaction);
 
-        // Publish PaymentCompletedEvent to trigger downstream domain observers (finance/rent/billing)
-        eventPublisher.publishEvent(PaymentCompletedEvent.builder()
+        // Every module that took a payment of this type reacts after the commit, through the outbox
+        outboxFacade.publish(PaymentCompletedEvent.builder()
                 .transactionId(transaction.getId())
                 .referenceType(referenceType)
                 .referenceId(referenceId)
@@ -169,7 +169,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                             paymentTransactionRepository.save(transaction);
 
                             // Publish PaymentCompletedEvent for domain observers
-                            eventPublisher.publishEvent(PaymentCompletedEvent.builder()
+                            outboxFacade.publish(PaymentCompletedEvent.builder()
                                     .transactionId(transaction.getId())
                                     .referenceType(transaction.getReferenceType())
                                     .referenceId(transaction.getReferenceId())
@@ -251,8 +251,8 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         transaction.setConfirmedAt(LocalDateTime.now());
         paymentTransactionRepository.save(transaction);
 
-        // 3. Fire PaymentCompletedEvent → BillingPaymentEventListener activates subscription / credits wallet
-        eventPublisher.publishEvent(PaymentCompletedEvent.builder()
+        // 3. The module that took the payment reacts after the commit, through the outbox
+        outboxFacade.publish(PaymentCompletedEvent.builder()
                 .transactionId(transaction.getId())
                 .referenceType(transaction.getReferenceType())
                 .referenceId(transaction.getReferenceId())

@@ -31,10 +31,10 @@ class ModuleBoundaryTest {
     /** Group-qualified module packages below com.livic (platform, services, features). */
     private static final String[] MODULES = {
             "platform.auth", "platform.user", "platform.payment", "platform.notification", "platform.storage",
-            "platform.subscription",
+            "platform.subscription", "platform.outbox",
             "core.property", "core.finance",
             "core.community.announcement", "core.community.analytics", "core.community.issue",
-            "verticals.rental.inventory", "verticals.rental.lease", "verticals.rental.billing",
+            "verticals.rental.inventory", "verticals.rental.lease", "verticals.rental.billing", "verticals.rental.booking",
             "verticals.marketplace",
             "verticals.hostel.mess"
     };
@@ -81,7 +81,7 @@ class ModuleBoundaryTest {
     @Test
     @DisplayName("One vertical must not depend on another")
     void verticalsDoNotDependOnEachOther() {
-        ArchRule rule = slices().matching("com.livic.verticals.(*)..").namingSlices("verticals.$1")
+        ArchRule rule = slices().matching("com.livic.verticals.(*)..").namingSlices("$1")
                 .should().notDependOnEachOther()
                 .because("verticals are separate products; shared behaviour belongs in core");
 
@@ -108,9 +108,6 @@ class ModuleBoundaryTest {
     @DisplayName("No module repository should be accessed from outside its own module package")
     void noCrossModuleRepositoryAccess() {
         for (String module : MODULES) {
-            if (module.equals("core.finance")) {
-                continue; // open to verticals only, see financeContractsAreOpenToVerticalsOnly
-            }
             String modulePackage = "com.livic." + module + "..";
             String repositoryPackage = "com.livic." + module + ".repository..";
 
@@ -135,19 +132,23 @@ class ModuleBoundaryTest {
     }
 
     @Test
-    @DisplayName("Only verticals may build on finance's service contracts, entities and repositories")
-    void financeContractsAreOpenToVerticalsOnly() {
+    @DisplayName("Finance's tables, repositories and services stay inside finance")
+    void financeIsReachedOnlyThroughItsFacade() {
+        DescribedPredicate<JavaClass> financeInternals = DescribedPredicate.describe(
+                "finance's entities, repositories, services or charge calculation",
+                (JavaClass target) -> {
+                    String pkg = target.getPackageName();
+                    return pkg.startsWith("com.livic.core.finance.repository")
+                            || pkg.startsWith("com.livic.core.finance.service")
+                            || pkg.startsWith("com.livic.core.finance.strategy")
+                            || (pkg.startsWith("com.livic.core.finance.domain") && target.isAnnotatedWith(Entity.class));
+                });
+
         ArchRule rule = noClasses()
                 .that().resideOutsideOfPackage("com.livic.core.finance..")
-                .and().resideOutsideOfPackage("com.livic.verticals..")
-                .should().dependOnClassesThat().resideInAnyPackage(
-                        "com.livic.core.finance.service.interfaces..",
-                        "com.livic.core.finance.domain..",
-                        "com.livic.core.finance.repository.."
-                )
-                .because("core is the foundation verticals are built on, so rental may hold a BillTbl, store it "
-                        + "through BillRepository and call BillService directly; everyone else goes through "
-                        + "com.livic.core.finance.facade");
+                .should().dependOnClassesThat(financeInternals)
+                .because("a vertical supplies what only it knows (a lease's rent, a roommate split) and asks "
+                        + "com.livic.core.finance.facade for the rest; it never writes core's bills itself");
 
         rule.check(classes);
     }

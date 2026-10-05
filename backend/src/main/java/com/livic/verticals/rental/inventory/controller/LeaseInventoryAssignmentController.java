@@ -1,7 +1,6 @@
 package com.livic.verticals.rental.inventory.controller;
 
 import com.livic.platform.security.UserDetailsImpl;
-import com.livic.platform.common.enums.ResourceType;
 import com.livic.platform.common.response.ApiResponse;
 import com.livic.verticals.rental.inventory.dto.ApproveDeductionsRequest;
 import com.livic.verticals.rental.inventory.dto.AssignmentItemResponse;
@@ -32,7 +31,7 @@ public class LeaseInventoryAssignmentController {
     private final LeaseInventoryAssignmentService assignmentService;
 
     @PostMapping("/leases/{leaseId}/assignments")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<List<AssignmentItemResponse>>> createAssignments(
             @PathVariable UUID leaseId,
             @Valid @RequestBody CreateAssignmentRequest request,
@@ -43,7 +42,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @GetMapping("/leases/{leaseId}/assignments")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW_OWN')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_VIEW_OWN')")
     public ResponseEntity<ApiResponse<Page<AssignmentItemResponse>>> getAssignments(
             @PathVariable UUID leaseId,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -52,7 +51,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @PostMapping("/leases/{leaseId}/move-out-checklist")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<List<VerificationItemResponse>>> generateMoveOutChecklist(
             @PathVariable UUID leaseId,
             @RequestBody(required = false) MoveOutChecklistRequest request,
@@ -67,7 +66,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @PutMapping("/assignments/{assignmentId}/return-verification")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).INVENTORY_ASSIGNMENT, #assignmentId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.inventory.security.InventoryResources).ASSIGNMENT, #assignmentId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<VerificationItemResponse>> verifyReturn(
             @PathVariable UUID assignmentId,
             @Valid @RequestBody ReturnVerificationRequest request,
@@ -78,7 +77,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @PostMapping("/leases/{leaseId}/deductions/approve")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<List<VerificationItemResponse>>> approveDeductions(
             @PathVariable UUID leaseId,
             @RequestBody ApproveDeductionsRequest request,
@@ -89,7 +88,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @GetMapping("/leases/{leaseId}/verification-checklist")
-    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.platform.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW_OWN')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.verticals.rental.lease.security.LeaseResources).LEASE, #leaseId, 'LEASE_VIEW_OWN')")
     public ResponseEntity<ApiResponse<Page<VerificationItemResponse>>> getVerificationChecklist(
             @PathVariable UUID leaseId,
             @PageableDefault(size = 20) Pageable pageable) {

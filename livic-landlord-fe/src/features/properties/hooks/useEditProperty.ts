@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { getProperty, updateProperty } from '@/src/features/properties/api/property.api';
 import { getBlocks, BlockResponse } from '@/src/features/properties/api/block.api';
-import { generateBatchUnits, getFloorSummaries } from '@/src/features/properties/api/unit.api';
+import { generateBatchUnits, getFloorSummaries, type UnitTypeCode } from '@/src/features/properties/api/unit.api';
 
 interface UseEditPropertyProps {
   propertyId: string;
@@ -101,7 +101,7 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
           startingFloorNumber: 1,
           prefix: '',
           capacity: 1,
-          unitType: globalUnitType
+          unitType: globalUnitType as UnitTypeCode
         }, userToken);
       }
 

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
-import { getFloorLayout, saveFloorLayout } from '@/src/features/properties/api/unit.api';
+import { getFloorLayout, saveFloorLayout, tenantsOf } from '@/src/features/properties/api/unit.api';
 import { terminateLease } from '@/src/features/tenant/api/lease.api';
 import { logger } from '@/src/utils/logger';
 import { formatErrorMessage } from '@/src/utils/errors';
+import type { Occupant } from '@/src/features/properties/api/unit.api';
 
 interface UnitBlock {
   id: string; 
@@ -19,7 +20,7 @@ interface UnitBlock {
   tenantPhone?: string | null;
   status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
   capacity?: number;
-  activeLeases?: any[];
+  members?: Occupant[];
   type?: string;
 }
 
@@ -69,8 +70,9 @@ export function useFloorEditorLayoutApi({
     try {
       const units = await getFloorLayout(propertyId, floorNumber, userToken, buildingBlockId);
       const mappedBlocks: UnitBlock[] = units.map(u => {
-        const leases = u.activeLeases || [];
-        const primaryLease = leases[0] || null;
+        const members = u.members || [];
+        const primaryTenant = tenantsOf(members)[0] || null;
+        const primaryRent = primaryTenant?.agreement?.monthlyAmount;
         return {
           id: u.id,
           gridX: u.gridX,
@@ -78,19 +80,19 @@ export function useFloorEditorLayoutApi({
           gridWidth: u.gridWidth,
           gridHeight: u.gridHeight,
           unitNumber: u.unitNumber,
-          rent: primaryLease ? Math.round(primaryLease.rentAmount * u.capacity).toString() : undefined,
-          tenants: leases.map(l => l.tenantName).filter(Boolean) as string[],
-          activeLeaseId: primaryLease ? primaryLease.leaseId : undefined,
-          tenantUserId: primaryLease ? primaryLease.tenantUserId : undefined,
-          tenantPhone: primaryLease ? primaryLease.tenantPhone : undefined,
-          status: leases.length > 0 ? 'OCCUPIED' : 'VACANT',
+          rent: primaryRent != null ? Math.round(primaryRent * u.capacity).toString() : undefined,
+          tenants: members.map(m => m.name).filter(Boolean) as string[],
+          activeLeaseId: primaryTenant?.agreement?.id ?? undefined,
+          tenantUserId: primaryTenant?.userId ?? undefined,
+          tenantPhone: primaryTenant?.phone ?? undefined,
+          status: members.length > 0 ? 'OCCUPIED' : 'VACANT',
           capacity: u.capacity,
-          activeLeases: leases,
+          members,
           type: normalizeUnitType(u.type),
         };
       });
       setBlocks(mappedBlocks);
-      
+
       let maxIndex = 0;
       const prefix = floorNumber.toString();
       units.forEach(u => {
@@ -155,17 +157,17 @@ export function useFloorEditorLayoutApi({
               setLoading(true);
               await terminateLease(leaseId, userToken);
 
-              const remainingLeases = (selectedBlock.activeLeases || []).filter(l => l.leaseId !== leaseId);
-              const remainingTenants = (selectedBlock.tenants || []).filter(name => name !== tenantName);
-              
+              const remaining = (selectedBlock.members || []).filter(m => m.agreement?.id !== leaseId);
+              const nextTenant = tenantsOf(remaining)[0];
+
               updateUnitDetails(selectedBlock.id, {
-                tenants: remainingTenants,
-                activeLeases: remainingLeases,
-                activeLeaseId: remainingLeases[0]?.leaseId || undefined,
-                tenantUserId: remainingLeases[0]?.tenantUserId || undefined,
-                tenantPhone: remainingLeases[0]?.tenantPhone || undefined,
-                rent: remainingLeases[0]?.rentAmount?.toString() || undefined,
-                status: remainingLeases.length > 0 ? 'OCCUPIED' : 'VACANT',
+                tenants: remaining.map(m => m.name).filter(Boolean) as string[],
+                members: remaining,
+                activeLeaseId: nextTenant?.agreement?.id ?? undefined,
+                tenantUserId: nextTenant?.userId ?? undefined,
+                tenantPhone: nextTenant?.phone ?? undefined,
+                rent: nextTenant?.agreement?.monthlyAmount?.toString() ?? undefined,
+                status: remaining.length > 0 ? 'OCCUPIED' : 'VACANT',
               });
 
               Alert.alert('Removed', `${displayName} has been removed from Unit ${selectedBlock.unitNumber}.`);

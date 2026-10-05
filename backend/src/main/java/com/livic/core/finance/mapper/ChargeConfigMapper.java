@@ -15,7 +15,6 @@ public final class ChargeConfigMapper {
         return ChargeConfigTbl.builder()
                 .propertyId(propertyId)
                 .chargeName(request.getChargeName())
-                .chargeCategory(request.getChargeCategory())
                 .billingFrequency(request.getBillingFrequency())
                 .calculationStrategy(request.getCalculationStrategy())
                 .unitType(request.getUnitType())
@@ -24,28 +23,11 @@ public final class ChargeConfigMapper {
                 .lateFeePercentage(request.getLateFeePercentage())
                 .autoCarryForward(request.getAutoCarryForward() != null ? request.getAutoCarryForward() : false)
                 .isActive(true)
-                .isSystemRequired(false)
-                .build();
-    }
-
-    public static ChargeConfigTbl createSystemRentConfig(UUID propertyId) {
-        return ChargeConfigTbl.builder()
-                .propertyId(propertyId)
-                .chargeName("Base Rent")
-                .chargeCategory(com.livic.core.finance.domain.ChargeCategory.RENT)
-                .billingFrequency(com.livic.core.finance.domain.BillingFrequency.MONTHLY)
-                .calculationStrategy(com.livic.core.finance.domain.CalculationStrategyType.FIXED_RATE)
-                .baseRate(null)
-                .applySalesTax(false)
-                .autoCarryForward(false)
-                .isSystemRequired(true)
-                .isActive(true)
                 .build();
     }
 
     public static void updateEntity(ChargeConfigRequest request, ChargeConfigTbl config) {
         config.setChargeName(request.getChargeName());
-        config.setChargeCategory(request.getChargeCategory());
         config.setBillingFrequency(request.getBillingFrequency());
         config.setCalculationStrategy(request.getCalculationStrategy());
         config.setUnitType(request.getUnitType());
@@ -62,14 +44,12 @@ public final class ChargeConfigMapper {
                 .id(config.getId())
                 .propertyId(config.getPropertyId())
                 .chargeName(config.getChargeName())
-                .chargeCategory(config.getChargeCategory())
                 .billingFrequency(config.getBillingFrequency())
                 .calculationStrategy(config.getCalculationStrategy())
                 .unitType(config.getUnitType())
                 .baseRate(config.getBaseRate())
                 .applySalesTax(config.getApplySalesTax())
                 .lateFeePercentage(config.getLateFeePercentage())
-                .isSystemRequired(config.getIsSystemRequired())
                 .isActive(config.getIsActive())
                 .autoCarryForward(config.getAutoCarryForward())
                 .build();

@@ -1,35 +1,33 @@
 package com.livic.platform.auth.controller;
 
-import com.livic.platform.common.constant.StaffPermission;
+import com.livic.platform.auth.service.impl.PermissionCatalog;
 import com.livic.platform.common.response.ApiResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
+/** The permissions a staff member can be granted, grouped as the modules that own them declare. */
 @RestController
 @RequestMapping("/api/v1/permissions")
+@RequiredArgsConstructor
 public class PermissionCatalogController {
 
     public record FeatureEntry(String code, String label, String description) {}
 
-    public record ModuleEntry(StaffPermission.Module module, List<FeatureEntry> features) {}
+    public record ModuleEntry(String module, List<FeatureEntry> features) {}
 
-    private static final List<ModuleEntry> CATALOG = Arrays.stream(StaffPermission.values())
-            .collect(Collectors.groupingBy(StaffPermission::getModule, LinkedHashMap::new,
-                    Collectors.mapping(p -> new FeatureEntry(p.name(), p.getLabel(), p.getDescription()), Collectors.toList())))
-            .entrySet().stream()
-            .map((Map.Entry<StaffPermission.Module, List<FeatureEntry>> e) -> new ModuleEntry(e.getKey(), e.getValue()))
-            .toList();
+    private final PermissionCatalog permissionCatalog;
 
     @GetMapping("/catalog")
     public ResponseEntity<ApiResponse<List<ModuleEntry>>> getCatalog() {
-        return ResponseEntity.ok(ApiResponse.success(CATALOG));
+        return ResponseEntity.ok(ApiResponse.success(permissionCatalog.modules().stream()
+                .map(m -> new ModuleEntry(m.module(), m.permissions().stream()
+                        .map(p -> new FeatureEntry(p.code(), p.label(), p.description()))
+                        .toList()))
+                .toList()));
     }
 }

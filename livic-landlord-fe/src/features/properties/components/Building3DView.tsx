@@ -465,7 +465,7 @@ export default function Building3DView({
               const b = floorBounds[floorNum] || { minX: 0, minY: 0, spanX: gridW, spanY: gridH };
               const offsetX = Math.floor((gridW - b.spanX) / 2) * dynamicCellSize;
               const offsetY = Math.floor((gridH - b.spanY) / 2) * dynamicCellSize;
-              
+
               return (
                 <Animated.View
                   key={`floor-${floorNum}`}
@@ -519,7 +519,7 @@ export default function Building3DView({
 
                         const occupancyColors = getOccupancyColors(
                           theme,
-                          getOccupancyState(unit.activeLeases ? unit.activeLeases.length : 0, unit.capacity)
+                          getOccupancyState(unit.members, unit.capacity)
                         );
                         const unitBackgroundColor = isHovered ? occupancyColors.fill : occupancyColors.tint;
                         const unitBorderColor = isHovered ? theme.Colors.surfaceContainerLowest : occupancyColors.border;

@@ -13,7 +13,6 @@ public final class BillMapper {
 
     public static BillDTOs.BillResponse toResponse(
             BillTbl cycle,
-            UUID leaseId,
             UUID blockId,
             String blockName,
             String tenantName,
@@ -22,7 +21,6 @@ public final class BillMapper {
     ) {
         return new BillDTOs.BillResponse(
                 cycle.getId(),
-                leaseId,
                 blockId,
                 blockName,
                 tenantName,
@@ -41,7 +39,6 @@ public final class BillMapper {
     public static BillDTOs.ChargeResponse toResponse(BillLineTbl charge) {
         return new BillDTOs.ChargeResponse(
                 charge.getId(),
-                charge.getChargeType(),
                 charge.getAmount(),
                 charge.getDescription(),
                 charge.getCreatedAt()

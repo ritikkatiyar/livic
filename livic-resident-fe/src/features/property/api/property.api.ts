@@ -1,15 +1,7 @@
 import { apiRequest } from '@/src/api/client';
+import type { ApiModel } from '@/src/api/models';
 
-export interface PropertyDetailsResponse {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  landmark?: string;
-  totalFloors: number;
-  isActive: boolean;
-  amenities: string[];
-}
+export type PropertyDetailsResponse = ApiModel<'PropertyResponse', 'landmark'>;
 
 export async function getPropertyDetails(propertyId: string, token: string): Promise<PropertyDetailsResponse | null> {
   try {

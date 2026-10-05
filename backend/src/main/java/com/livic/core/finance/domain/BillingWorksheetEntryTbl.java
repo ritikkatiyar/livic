@@ -38,6 +38,7 @@ public class BillingWorksheetEntryTbl extends BaseEntity {
     @Builder.Default
     private Boolean isBilled = false;
 
-    @Column(name = "created_by", nullable = false)
+    /** Null when the system created the entry, e.g. the monthly billing job. */
+    @Column(name = "created_by")
     private UUID createdBy;
 }

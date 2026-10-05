@@ -17,12 +17,12 @@ const renderCard = (checklist: PreFlightChecklistResponse) =>
   );
 
 describe('PreFlightChecklistCard', () => {
-  it('measures active leases against beds, so shared rooms never read as over 100%', async () => {
+  it('measures payers against beds, so shared rooms never read as over 100%', async () => {
     // 100 double rooms, each with two tenants.
     const { getByText, queryByText } = await renderCard({
       totalUnits: 100,
       totalBeds: 200,
-      activeLeases: 200,
+      activePayers: 200,
       meterReadingsExpected: 100,
       meterReadingsEntered: 100,
       isReady: true,
@@ -33,10 +33,10 @@ describe('PreFlightChecklistCard', () => {
     expect(queryByText('200 / 100')).toBeNull();
   });
 
-  it('shows the lease count alone when the server does not report beds', async () => {
+  it('shows the payer count alone when the server does not report beds', async () => {
     const { getByText, queryByText } = await renderCard({
       totalUnits: 100,
-      activeLeases: 200,
+      activePayers: 200,
       meterReadingsExpected: 0,
       meterReadingsEntered: 0,
       isReady: true,

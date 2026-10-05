@@ -3,9 +3,6 @@ package com.livic.verticals.rental.lease.facade;
 import com.livic.verticals.rental.lease.dto.LeaseSummaryDTO;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,17 +15,10 @@ import java.util.UUID;
  */
 public interface LeaseFacade {
 
-    boolean isUnitOccupiedOnDate(UUID unitId, LocalDate date);
+    /** Whether the unit has a free bed for a tenancy starting on that date. */
+    boolean hasVacancyOnDate(UUID unitId, LocalDate date);
 
     Optional<LeaseSummaryDTO> getActiveLeaseForUser(UUID userId);
-
-    List<LeaseSummaryDTO> getActiveLeasesByPropertyId(UUID propertyId);
-
-    Map<UUID, List<LeaseSummaryDTO>> getActiveLeasesByUnitIds(Collection<UUID> unitIds);
-
-    boolean hasLeasesForProperty(UUID propertyId);
-
-    boolean hasLeasesForUnit(UUID unitId);
 
     Optional<LeaseSummaryDTO> getLeaseById(UUID leaseId);
 }

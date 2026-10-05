@@ -1,14 +1,18 @@
 package com.livic.core.finance.facade.impl;
 
-import com.livic.core.finance.repository.UnitBookingRepository;
 import com.livic.core.finance.repository.BillRepository;
 import com.livic.core.finance.dto.ChargeConfigResponse;
-import com.livic.core.finance.dto.UnitBookingDTOs;
 import com.livic.core.finance.facade.FinanceFacade;
-import com.livic.core.finance.mapper.UnitBookingMapper;
 import com.livic.core.finance.service.interfaces.ChargeConfigQueryService;
 import com.livic.core.finance.domain.BillStatus;
 import com.livic.core.finance.domain.BillTbl;
+import com.livic.core.finance.domain.BillType;
+import com.livic.core.finance.domain.LedgerTransactionType;
+import com.livic.core.finance.dto.BillDTOs;
+import com.livic.core.finance.dto.BillDraft;
+import com.livic.core.finance.service.interfaces.BillGenerationService;
+import com.livic.core.finance.service.interfaces.LedgerService;
+import com.livic.core.finance.service.interfaces.BillService;
 import com.livic.core.property.dto.UnitResidentDTO;
 import com.livic.core.property.dto.UnitSummaryDTO;
 import org.springframework.data.domain.Page;
@@ -34,29 +38,79 @@ public class FinanceFacadeImpl implements FinanceFacade {
 
     private final BillRepository billRepository;
     private final ChargeConfigQueryService chargeConfigQueryService;
-    private final UnitBookingRepository unitBookingRepository;
     private final com.livic.core.property.facade.UnitFacade unitFacade;
     private final com.livic.core.property.facade.UnitMemberFacade unitMemberFacade;
+    private final BillGenerationService billGenerationService;
+    private final LedgerService ledgerService;
+    private final BillService billService;
 
     public FinanceFacadeImpl(
             BillRepository billRepository,
             ChargeConfigQueryService chargeConfigQueryService,
-            UnitBookingRepository unitBookingRepository,
             com.livic.core.property.facade.UnitFacade unitFacade,
-            com.livic.core.property.facade.UnitMemberFacade unitMemberFacade) {
+            com.livic.core.property.facade.UnitMemberFacade unitMemberFacade,
+            BillGenerationService billGenerationService,
+            LedgerService ledgerService,
+            BillService billService) {
         this.billRepository = billRepository;
         this.chargeConfigQueryService = chargeConfigQueryService;
-        this.unitBookingRepository = unitBookingRepository;
         this.unitFacade = unitFacade;
         this.unitMemberFacade = unitMemberFacade;
+        this.billGenerationService = billGenerationService;
+        this.ledgerService = ledgerService;
+        this.billService = billService;
+    }
+
+    @Override
+    @Transactional
+    public BillDTOs.BillResponse generateBill(BillDraft draft) {
+        return billGenerationService.generate(draft);
+    }
+
+    /** Not transactional here: each draft gets its own transaction inside the service. */
+    @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    public List<BillDraft.Outcome> generateBills(List<BillDraft> drafts) {
+        return billGenerationService.generateAll(drafts);
+    }
+
+    @Override
+    public Set<UUID> getBilledMemberIds(UUID propertyId, String billingMonth, BillType billType) {
+        return billRepository.findByPropertyIdAndBillingMonth(propertyId, billingMonth).stream()
+                .filter(bill -> bill.getBillType() == billType)
+                .map(BillTbl::getMemberId)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public boolean hasOtherBills(UUID memberId, String billingMonth, BillType billType) {
+        return billRepository.findByMemberId(memberId).stream()
+                .anyMatch(bill -> !(billingMonth.equals(bill.getBillingMonth()) && bill.getBillType() == billType));
+    }
+
+    @Override
+    public BillDTOs.BillListResponse listBillsForMember(UUID memberId, String billingMonth, BillStatus status,
+                                                        boolean includeUnpublished, Pageable pageable) {
+        return billService.listForMember(memberId, billingMonth, status, includeUnpublished, pageable);
+    }
+
+    @Override
+    @Transactional
+    public void postLedgerEntry(UUID memberId, UUID unitId, LedgerTransactionType type, BigDecimal amount, UUID referenceId, String description) {
+        ledgerService.post(memberId, unitId, type, amount, referenceId, description);
     }
 
 
     @Override
-    public Optional<UUID> getLeaseIdByBillId(UUID billId) {
-        return billRepository.findById(billId)
-                .flatMap(bill -> unitMemberFacade.getResidentByMemberId(bill.getMemberId()))
-                .map(com.livic.core.property.dto.UnitResidentDTO::leaseId);
+    public Optional<BillScope> getBillScope(UUID billId) {
+        return billRepository.findById(billId).map(bill -> new BillScope(
+                bill.getPropertyId(), userOfMember(bill.getMemberId()), userOfMember(bill.getIssuedByMemberId())));
+    }
+
+    private UUID userOfMember(UUID memberId) {
+        return memberId == null ? null : unitMemberFacade.getResidentByMemberId(memberId)
+                .map(UnitResidentDTO::userId)
+                .orElse(null);
     }
 
     @Override
@@ -130,14 +184,5 @@ public class FinanceFacadeImpl implements FinanceFacade {
     @Override
     public Map<String, BigDecimal> getOperationalOverhead(List<UUID> propertyIds) {
         return Collections.emptyMap();
-    }
-
-    @Override
-    @Transactional
-    public UnitBookingDTOs.UnitBookingResponse createPaidBooking(UnitBookingDTOs.PaidBookingRequest request) {
-        String unitNumber = unitFacade.getUnitById(request.unitId())
-                .map(com.livic.core.property.dto.UnitSummaryDTO::unitNumber)
-                .orElse(null);
-        return UnitBookingMapper.toResponse(unitBookingRepository.save(UnitBookingMapper.toEntity(request)), unitNumber);
     }
 }

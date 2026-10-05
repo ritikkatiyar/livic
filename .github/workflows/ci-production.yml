@@ -10,7 +10,24 @@ jobs:
   backend-build:
     name: Build and Test Backend
     runs-on: ubuntu-latest
-    
+
+    # The integration tests run against MySQL with the dev profile, which expects it on 3307.
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: livic
+          MYSQL_USER: livic
+          MYSQL_PASSWORD: livic
+          MYSQL_ROOT_PASSWORD: root_password
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ulivic -plivic --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -21,14 +38,73 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build with Maven
-        run: mvn -B package --file backend/pom.xml -DskipTests # Skipping tests for initial CI setup, can be enabled later
+      # Runs every test, including ModuleBoundaryTest, which is what enforces the
+      # platform -> core -> verticals layering.
+      - name: Build and test with Maven
+        run: mvn -B verify --file backend/pom.xml
+
+      # ApiSpecExportTest rewrote api/openapi.json from the code; the apps generate their types from
+      # the committed copy, so an API change must commit the regenerated spec with it.
+      - name: Check the committed API spec is current
+        run: git diff --exit-code api/openapi.json
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: backend-jar
           path: backend/target/*.jar
+
+  ai-service-build:
+    name: Build and Test AI Service
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build and test with Maven
+        run: mvn -B verify --file ai-service/pom.xml
+
+  frontend-check:
+    name: Check ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [ livic-landlord-fe, livic-resident-fe, livic-marketplace-fe ]
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check the generated API types match the spec
+        run: npm run gen:api && git diff --exit-code src/api/schema.generated.ts
+
+      # Catches an API change the app was not updated for, such as a renamed field or enum value.
+      - name: Type check
+        run: npm run typecheck
+
+      # Two workers: some screen tests time out when every core runs a suite at once.
+      - name: Unit tests
+        run: npx jest --ci --maxWorkers=2
 
   docker-verify:
     name: Verify Docker Build

@@ -1476,6 +1476,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/mess-menu": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMyMessMenu"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/profile": {
         parameters: {
             query?: never;
@@ -1551,6 +1567,70 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["deleteMediaAsset"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mess/properties/{propertyId}/menu": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMenu"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mess/properties/{propertyId}/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mess/properties/{propertyId}/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateSlots"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/mess/properties/{propertyId}/week": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateWeek"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2145,6 +2225,11 @@ export interface components {
         };
         ApiResponseMembershipResponse: {
             data?: components["schemas"]["MembershipResponse"];
+            error?: string;
+            success?: boolean;
+        };
+        ApiResponseMessMenuResponse: {
+            data?: components["schemas"]["MessMenuResponse"];
             error?: string;
             success?: boolean;
         };
@@ -2748,6 +2833,18 @@ export interface components {
             dayOfWeek: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
             windows: components["schemas"]["TimeWindow"][];
         };
+        DayMenuRequest: {
+            /** @enum {string} */
+            dayOfWeek: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+            meals: components["schemas"]["MealRequest"][];
+            note?: string;
+        };
+        DayMenuResponse: {
+            /** @enum {string} */
+            dayOfWeek?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+            meals?: components["schemas"]["MealResponse"][];
+            note?: string;
+        };
         DefaulterResponse: {
             amountDue?: number;
             /** Format: uuid */
@@ -3053,6 +3150,30 @@ export interface components {
         LogoutRequest: {
             refreshToken: string;
         };
+        MealRequest: {
+            items: components["schemas"]["MenuItemRequest"][];
+            /** Format: uuid */
+            slotId: string;
+        };
+        MealResponse: {
+            items?: components["schemas"]["MenuItemResponse"][];
+            /** Format: uuid */
+            slotId?: string;
+        };
+        MealSlotRequest: {
+            endTime?: string;
+            /** Format: uuid */
+            id?: string;
+            name: string;
+            startTime?: string;
+        };
+        MealSlotResponse: {
+            endTime?: string;
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            startTime?: string;
+        };
         MediaAssetDTO: {
             caption?: string;
             externalId?: string;
@@ -3102,6 +3223,25 @@ export interface components {
             propertyId?: string;
             propertyName?: string;
             title?: string;
+        };
+        MenuItemRequest: {
+            /** @enum {string} */
+            dietType?: "VEG" | "NON_VEG" | "EGG";
+            name: string;
+        };
+        MenuItemResponse: {
+            /** @enum {string} */
+            dietType?: "VEG" | "NON_VEG" | "EGG";
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+        };
+        MessMenuResponse: {
+            days?: components["schemas"]["DayMenuResponse"][];
+            enabled?: boolean;
+            /** Format: uuid */
+            propertyId?: string;
+            slots?: components["schemas"]["MealSlotResponse"][];
         };
         MeterReadingRequest: {
             /** Format: int32 */
@@ -4011,12 +4151,18 @@ export interface components {
             monthlyRentAmount: number;
             securityDeposit: number;
         };
+        UpdateMealSlotsRequest: {
+            slots: components["schemas"]["MealSlotRequest"][];
+        };
         UpdateMembershipRequest: {
             /** @enum {string} */
             accessType?: "FULL_ACCESS" | "CUSTOM_ACCESS";
             isActive?: boolean;
             permissionCodes?: string[];
             title?: string;
+        };
+        UpdateMessSettingsRequest: {
+            enabled: boolean;
         };
         UpdateProfileRequest: {
             phone?: string;
@@ -4052,6 +4198,9 @@ export interface components {
         UpdateTourMessageSettingsRequest: {
             decision: components["schemas"]["ChannelChoice"];
             reminder: components["schemas"]["ChannelChoice"];
+        };
+        UpdateWeekMenuRequest: {
+            days: components["schemas"]["DayMenuRequest"][];
         };
         UploadAuthorizationRequest: {
             /** @enum {string} */
@@ -6608,6 +6757,26 @@ export interface operations {
             };
         };
     };
+    getMyMessMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMessMenuResponse"];
+                };
+            };
+        };
+    };
     getProfile: {
         parameters: {
             query?: never;
@@ -6741,6 +6910,106 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseVoid"];
+                };
+            };
+        };
+    };
+    getMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                propertyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMessMenuResponse"];
+                };
+            };
+        };
+    };
+    updateSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                propertyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMessSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMessMenuResponse"];
+                };
+            };
+        };
+    };
+    updateSlots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                propertyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMealSlotsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMessMenuResponse"];
+                };
+            };
+        };
+    };
+    updateWeek: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                propertyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWeekMenuRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMessMenuResponse"];
                 };
             };
         };

@@ -594,6 +594,20 @@
         },
         "type" : "object"
       },
+      "ApiResponseMessMenuResponse" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/MessMenuResponse"
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "success" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
       "ApiResponseMyContextResponse" : {
         "properties" : {
           "data" : {
@@ -2210,6 +2224,47 @@
         "required" : [ "dayOfWeek", "windows" ],
         "type" : "object"
       },
+      "DayMenuRequest" : {
+        "properties" : {
+          "dayOfWeek" : {
+            "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ],
+            "type" : "string"
+          },
+          "meals" : {
+            "items" : {
+              "$ref" : "#/components/schemas/MealRequest"
+            },
+            "maxItems" : 8,
+            "minItems" : 0,
+            "type" : "array"
+          },
+          "note" : {
+            "maxLength" : 200,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "dayOfWeek", "meals" ],
+        "type" : "object"
+      },
+      "DayMenuResponse" : {
+        "properties" : {
+          "dayOfWeek" : {
+            "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ],
+            "type" : "string"
+          },
+          "meals" : {
+            "items" : {
+              "$ref" : "#/components/schemas/MealResponse"
+            },
+            "type" : "array"
+          },
+          "note" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "DefaulterResponse" : {
         "properties" : {
           "amountDue" : {
@@ -2946,6 +3001,78 @@
         "required" : [ "refreshToken" ],
         "type" : "object"
       },
+      "MealRequest" : {
+        "properties" : {
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/MenuItemRequest"
+            },
+            "maxItems" : 15,
+            "minItems" : 0,
+            "type" : "array"
+          },
+          "slotId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "required" : [ "items", "slotId" ],
+        "type" : "object"
+      },
+      "MealResponse" : {
+        "properties" : {
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/MenuItemResponse"
+            },
+            "type" : "array"
+          },
+          "slotId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "MealSlotRequest" : {
+        "properties" : {
+          "endTime" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "maxLength" : 40,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "startTime" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "name" ],
+        "type" : "object"
+      },
+      "MealSlotResponse" : {
+        "properties" : {
+          "endTime" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "startTime" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "MediaAssetDTO" : {
         "properties" : {
           "caption" : {
@@ -3068,6 +3195,61 @@
           },
           "title" : {
             "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "MenuItemRequest" : {
+        "properties" : {
+          "dietType" : {
+            "enum" : [ "VEG", "NON_VEG", "EGG" ],
+            "type" : "string"
+          },
+          "name" : {
+            "maxLength" : 80,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "name" ],
+        "type" : "object"
+      },
+      "MenuItemResponse" : {
+        "properties" : {
+          "dietType" : {
+            "enum" : [ "VEG", "NON_VEG", "EGG" ],
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "MessMenuResponse" : {
+        "properties" : {
+          "days" : {
+            "items" : {
+              "$ref" : "#/components/schemas/DayMenuResponse"
+            },
+            "type" : "array"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "propertyId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "slots" : {
+            "items" : {
+              "$ref" : "#/components/schemas/MealSlotResponse"
+            },
+            "type" : "array"
           }
         },
         "type" : "object"
@@ -5435,6 +5617,20 @@
         "required" : [ "monthlyRentAmount", "securityDeposit" ],
         "type" : "object"
       },
+      "UpdateMealSlotsRequest" : {
+        "properties" : {
+          "slots" : {
+            "items" : {
+              "$ref" : "#/components/schemas/MealSlotRequest"
+            },
+            "maxItems" : 8,
+            "minItems" : 0,
+            "type" : "array"
+          }
+        },
+        "required" : [ "slots" ],
+        "type" : "object"
+      },
       "UpdateMembershipRequest" : {
         "properties" : {
           "accessType" : {
@@ -5455,6 +5651,15 @@
             "type" : "string"
           }
         },
+        "type" : "object"
+      },
+      "UpdateMessSettingsRequest" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled" ],
         "type" : "object"
       },
       "UpdateProfileRequest" : {
@@ -5563,6 +5768,20 @@
           }
         },
         "required" : [ "decision", "reminder" ],
+        "type" : "object"
+      },
+      "UpdateWeekMenuRequest" : {
+        "properties" : {
+          "days" : {
+            "items" : {
+              "$ref" : "#/components/schemas/DayMenuRequest"
+            },
+            "maxItems" : 7,
+            "minItems" : 0,
+            "type" : "array"
+          }
+        },
+        "required" : [ "days" ],
         "type" : "object"
       },
       "UploadAuthorizationRequest" : {
@@ -9134,6 +9353,24 @@
         "tags" : [ "me-controller" ]
       }
     },
+    "/api/v1/me/mess-menu" : {
+      "get" : {
+        "operationId" : "getMyMessMenu",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMessMenuResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "my-mess-menu-controller" ]
+      }
+    },
     "/api/v1/me/profile" : {
       "get" : {
         "operationId" : "getProfile",
@@ -9293,6 +9530,144 @@
           }
         },
         "tags" : [ "media-controller" ]
+      }
+    },
+    "/api/v1/mess/properties/{propertyId}/menu" : {
+      "get" : {
+        "operationId" : "getMenu",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "propertyId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMessMenuResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "mess-menu-controller" ]
+      }
+    },
+    "/api/v1/mess/properties/{propertyId}/settings" : {
+      "put" : {
+        "operationId" : "updateSettings",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "propertyId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateMessSettingsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMessMenuResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "mess-menu-controller" ]
+      }
+    },
+    "/api/v1/mess/properties/{propertyId}/slots" : {
+      "put" : {
+        "operationId" : "updateSlots",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "propertyId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateMealSlotsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMessMenuResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "mess-menu-controller" ]
+      }
+    },
+    "/api/v1/mess/properties/{propertyId}/week" : {
+      "put" : {
+        "operationId" : "updateWeek",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "propertyId",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateWeekMenuRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMessMenuResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "mess-menu-controller" ]
       }
     },
     "/api/v1/payments/verify" : {

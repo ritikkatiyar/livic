@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
-/** The weekly mess menu: property staff edit it, residents read the one where they live. */
+/** The weekly mess menu property staff edit. Residents read theirs through {@link MyMessMenuController}. */
 @RestController
 @RequestMapping("/api/v1/mess")
 @RequiredArgsConstructor
@@ -66,12 +66,5 @@ public class MessMenuController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(
                 messMenuService.updateWeek(propertyId, request, currentUser.getUuid())));
-    }
-
-    // Any signed-in user: the service answers only from the caller's own homes
-    @GetMapping("/my-menu")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<MessMenuResponse>> getMyMenu(@AuthenticationPrincipal UserDetailsImpl currentUser) {
-        return ResponseEntity.ok(ApiResponse.success(messMenuService.getMyMenu(currentUser.getUuid())));
     }
 }

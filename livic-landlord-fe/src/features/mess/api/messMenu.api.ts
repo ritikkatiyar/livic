@@ -1,59 +1,30 @@
 import { apiRequest } from '@/src/api/client';
-import { DayOfWeek, toHHmm } from '@/src/utils/weekdays';
-
-export type DietType = 'VEG' | 'NON_VEG' | 'EGG';
+import type { ApiInput, ApiModel } from '@/src/api/models';
+import { toHHmm } from '@/src/utils/weekdays';
 
 /** A meal the property serves, such as Breakfast or Bed tea. Times are `HH:mm`; both are set or both null. */
-export interface MealSlot {
-  id: string;
-  name: string;
-  startTime: string | null;
-  endTime: string | null;
-}
+export type MealSlot = ApiModel<'MealSlotResponse', never, 'startTime' | 'endTime'>;
 
-export interface MenuItem {
-  id: string;
-  name: string;
-  /** Null when the dish is not marked. */
-  dietType: DietType | null;
-}
+/** `dietType` is null when the dish is not marked. */
+export type MenuItem = ApiModel<'MenuItemResponse', never, 'dietType'>;
 
-export interface Meal {
-  slotId: string;
-  items: MenuItem[];
-}
+export type DietType = NonNullable<MenuItem['dietType']>;
 
-export interface DayMenu {
-  dayOfWeek: DayOfWeek;
-  note: string | null;
-  /** One per slot, in slot order. */
-  meals: Meal[];
-}
+export type Meal = Omit<ApiModel<'MealResponse'>, 'items'> & { items: MenuItem[] };
 
-export interface MessMenu {
-  propertyId: string;
-  /** Whether residents can see the menu. */
-  enabled: boolean;
+/** `meals` holds one entry per slot, in slot order. */
+export type DayMenu = Omit<ApiModel<'DayMenuResponse', never, 'note'>, 'meals'> & { meals: Meal[] };
+
+/** `enabled` is whether residents can see the menu; `days` holds all seven, Monday first. */
+export type MessMenu = Omit<ApiModel<'MessMenuResponse'>, 'slots' | 'days'> & {
   slots: MealSlot[];
-  /** All seven days, Monday first. */
   days: DayMenu[];
-}
+};
 
-export interface MealSlotRequest {
-  /** Null for a new slot; saved slots left out of the list are deleted with their dishes. */
-  id: string | null;
-  name: string;
-  startTime: string | null;
-  endTime: string | null;
-}
+/** `id` is null for a new slot; saved slots left out of the list are deleted with their dishes. */
+export type MealSlotRequest = ApiInput<'MealSlotRequest'>;
 
-export interface UpdateWeekMenuRequest {
-  days: {
-    dayOfWeek: DayOfWeek;
-    note: string | null;
-    meals: { slotId: string; items: { name: string; dietType: DietType | null }[] }[];
-  }[];
-}
+export type UpdateWeekMenuRequest = ApiInput<'UpdateWeekMenuRequest'>;
 
 const base = (propertyId: string) => `/api/v1/mess/properties/${propertyId}`;
 

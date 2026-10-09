@@ -20,6 +20,7 @@ const MODULE_LABELS: Record<string, string> = {
   INVENTORY: 'Inventory',
   ISSUES: 'Issues & Escalations',
   ANNOUNCEMENTS: 'Announcements',
+  MESS: 'Mess Menu',
   INSIGHTS: 'Analytics & Reports',
   STAFF: 'Staff',
 };

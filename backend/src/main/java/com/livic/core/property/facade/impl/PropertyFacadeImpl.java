@@ -1,6 +1,8 @@
 package com.livic.core.property.facade.impl;
 
+import com.livic.core.property.domain.PropertyModuleTbl;
 import com.livic.core.property.domain.PropertyTbl;
+import com.livic.core.property.repository.PropertyModuleRepository;
 import com.livic.core.property.repository.UnitRepository;
 import com.livic.core.property.repository.PropertyRepository;
 import com.livic.core.property.domain.PropertyType;
@@ -42,6 +44,7 @@ public class PropertyFacadeImpl implements PropertyFacade {
     private final UnitMemberService unitMemberService;
     private final BlockService blockService;
     private final PropertyRepository propertyRepository;
+    private final PropertyModuleRepository propertyModuleRepository;
 
     @Override
     public Optional<PropertySummaryDTO> getPropertyById(UUID propertyId) {
@@ -147,6 +150,34 @@ public class PropertyFacadeImpl implements PropertyFacade {
             return property.getQrSlug();
         });
     }
+
+    @Override
+    public boolean isModuleActive(UUID propertyId, String moduleName) {
+        return propertyModuleRepository.findByPropertyIdAndModuleName(propertyId, moduleName)
+                .map(PropertyModuleTbl::isActive)
+                .orElse(false);
+    }
+
+    @Override
+    public Set<UUID> getPropertyIdsWithActiveModule(Collection<UUID> propertyIds, String moduleName) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(propertyModuleRepository.findActivePropertyIds(propertyIds, moduleName));
+    }
+
+    @Override
+    @Transactional
+    public void setModuleActive(UUID propertyId, String moduleName, boolean active) {
+        PropertyModuleTbl module = propertyModuleRepository.findByPropertyIdAndModuleName(propertyId, moduleName)
+                .orElseGet(() -> PropertyModuleTbl.builder()
+                        .property(propertyRepository.getReferenceById(propertyId))
+                        .moduleName(moduleName)
+                        .build());
+        module.setActive(active);
+        propertyModuleRepository.save(module);
+    }
+
 /** Folds each unit's members and bed capacity into one property's occupancy; beds count tenants only. */
     private static final class OccupancyTally {
         private final int[] unitStates = new int[UnitOccupancy.values().length];

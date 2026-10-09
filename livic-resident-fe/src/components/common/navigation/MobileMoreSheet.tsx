@@ -14,6 +14,7 @@ import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { useMyMessMenu } from '@/src/features/mess/hooks/useMyMessMenu';
 
 interface MobileMoreSheetProps {
   visible: boolean;
@@ -31,18 +32,23 @@ interface MenuItem {
 export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  const { user, signOut, accessToken } = useAuth();
   const { theme, isDark, toggleTheme } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  // Shown only where the property shares a mess menu; a failed load simply leaves it out
+  const messEnabled = useMyMessMenu(accessToken).data?.enabled ?? false;
 
   const MENU_ITEMS: MenuItem[] = React.useMemo(() => [
     { title: 'My Home', subtitle: 'Dashboard & Feed', route: '/tenant-home', icon: 'home', color: theme.Colors.primary },
     { title: 'My Property', subtitle: 'Lease & Building', route: '/tenant-property', icon: 'apartment', color: theme.Colors.secondary },
     { title: 'Items & Assets', subtitle: 'Furnishings & Inventory', route: '/tenant-inventory', icon: 'inventory', color: theme.Colors.tertiary },
+    ...(messEnabled
+      ? [{ title: 'Mess Menu', subtitle: 'Weekly Meals', route: '/tenant-mess', icon: 'restaurant-menu' as const, color: theme.Colors.tertiary }]
+      : []),
     { title: 'Payments', subtitle: 'Invoices & Receipts', route: '/tenant-payments', icon: 'payments', color: theme.Colors.primary },
     { title: 'Support & Repair', subtitle: 'Maintenance Requests', route: '/tenant-maintenance', icon: 'build', color: theme.Colors.error },
     { title: 'Settings', subtitle: 'Profile & App Config', route: '/settings', icon: 'settings', color: theme.Colors.onSurfaceVariant },
-  ], [theme]);
+  ], [theme, messEnabled]);
 
   const translateY = useRef(new Animated.Value(300)).current;
 

@@ -7,7 +7,7 @@ import { PermissionPicker } from '../../src/features/settings/components/Permiss
 import { canAccessRoute, hasPermission } from '../../src/features/auth/permissions';
 import type { MyContextResponse } from '../../src/features/auth/api/me.api';
 
-const ALL_MODULE_LABELS = ['Analytics', 'Portfolio', 'Reports', 'AI Desk', 'Leases', 'Inventory', 'Escalations', 'Announcements', 'Finance & Billing', 'Settings'];
+const ALL_MODULE_LABELS = ['Analytics', 'Portfolio', 'Reports', 'AI Desk', 'Leases', 'Inventory', 'Escalations', 'Announcements', 'Mess Menu', 'Finance & Billing', 'Settings'];
 
 // Codes a caretaker receives from a custom-access join code in the end-to-end flow.
 const CARETAKER_CODES = ['METER_READING_VIEW', 'METER_READING_CREATE', 'ISSUE_VIEW'];

@@ -6,7 +6,8 @@ import ActionButton from '@/src/components/common/inputs/ActionButton';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { CreateBlackoutRequest, TourBlackout } from '../../api/tourAvailability.api';
-import { formatIsoDate, formatTime, TIME_OPTIONS, toHHmm, toMinutes, upcomingDates } from '../../utils/visitingHours';
+import { formatTime, toHHmm, toMinutes } from '@/src/utils/weekdays';
+import { formatIsoDate, TIME_OPTIONS, upcomingDates } from '../../utils/visitingHours';
 import { createVisitingHoursStyles } from './VisitingHours.styles';
 
 type BlockedDatesCardProps = {

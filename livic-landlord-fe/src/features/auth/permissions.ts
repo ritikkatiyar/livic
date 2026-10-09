@@ -33,6 +33,7 @@ const ROUTE_REQUIREMENTS: { pattern: RegExp; anyOf: Requirement }[] = [
   { pattern: /^\/inventory/, anyOf: ['INVENTORY_VIEW'] },
   { pattern: /^\/escalations/, anyOf: ['ISSUE_VIEW'] },
   { pattern: /^\/announcements/, anyOf: ['ANNOUNCEMENT_VIEW', 'ANNOUNCEMENT_CREATE'] },
+  { pattern: /^\/mess/, anyOf: ['MESS_VIEW', 'MESS_MANAGE'] },
   { pattern: /^\/billing/, anyOf: FULL_ACCESS_ONLY },
   { pattern: /^\/ai/, anyOf: FULL_ACCESS_ONLY },
 ];

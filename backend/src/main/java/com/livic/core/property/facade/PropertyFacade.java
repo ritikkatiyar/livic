@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface PropertyFacade {
@@ -38,4 +39,12 @@ public interface PropertyFacade {
 
     /** Returns the property's QR slug, generating and persisting one first if it has none. Empty if the property does not exist. */
     Optional<String> getOrCreateQrSlug(UUID propertyId);
+
+    // Feature modules a property has switched on. The module name belongs to the module that owns the
+    // feature; property only stores the switch, and a missing row means off.
+    boolean isModuleActive(UUID propertyId, String moduleName);
+
+    Set<UUID> getPropertyIdsWithActiveModule(Collection<UUID> propertyIds, String moduleName);
+
+    void setModuleActive(UUID propertyId, String moduleName, boolean active);
 }

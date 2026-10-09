@@ -8,6 +8,7 @@ import { SkeletonCardGrid } from '@/src/components/common/feedback/Skeleton';
 import { UnitMembershipSummary, getMyContext } from '@/src/features/auth/api/me.api';
 import { RentCycle, getTenantRentCycles } from '@/src/features/tenant/api/payments.api';
 import { getAnnouncements, markAnnouncementRead, Announcement } from '@/src/features/announcements/api/announcement.api';
+import { TodayMenuCard } from '@/src/features/mess/components/TodayMenuCard';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { Theme } from '@/src/theme/Theme';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -181,6 +182,8 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
               </View>
             </View>
 
+            <TodayMenuCard token={token} />
+
             {/* Maintenance Action Strip */}
             <TouchableOpacity onPress={() => router.push('/tenant-maintenance')} activeOpacity={0.88}>
               <View
@@ -291,7 +294,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { flexGrow: 1, paddingBottom: 100 },
+  scrollContent: { flexGrow: 1, paddingBottom: 100, gap: theme.Spacing.md },
   scrollContentDesktop: { paddingTop: theme.Spacing.xl, paddingHorizontal: theme.Spacing.xl },
   mobileScrollPadding: { paddingTop: theme.Spacing.xl * 2.2 },
   greetingHeader: { marginBottom: theme.Spacing.xs },

@@ -1,4 +1,5 @@
-import { DAYS_OF_WEEK, DayHours, DayOfWeek, TimeWindow, TourAvailability, UpdateTourAvailabilityRequest } from '../api/tourAvailability.api';
+import { DAY_LABELS, DAYS_OF_WEEK, DayOfWeek, formatTime, fromMinutes, timeOptions, toHHmm, toMinutes } from '@/src/utils/weekdays';
+import { DayHours, TimeWindow, TourAvailability, UpdateTourAvailabilityRequest } from '../api/tourAvailability.api';
 
 /** Times are picked on the half hour so both 30- and 60-minute slots line up. */
 const TIME_STEP_MINUTES = 30;
@@ -22,16 +23,6 @@ export const MAX_VISITORS_OPTIONS: { label: string; value: number | null }[] = [
   ...[1, 2, 3, 4, 5, 10].map((n) => ({ label: n === 1 ? '1 visitor' : `${n} visitors`, value: n })),
 ];
 
-export const DAY_LABELS: Record<DayOfWeek, { short: string; long: string }> = {
-  MONDAY: { short: 'Mon', long: 'Monday' },
-  TUESDAY: { short: 'Tue', long: 'Tuesday' },
-  WEDNESDAY: { short: 'Wed', long: 'Wednesday' },
-  THURSDAY: { short: 'Thu', long: 'Thursday' },
-  FRIDAY: { short: 'Fri', long: 'Friday' },
-  SATURDAY: { short: 'Sat', long: 'Saturday' },
-  SUNDAY: { short: 'Sun', long: 'Sunday' },
-};
-
 const WEEKDAYS: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
 
 /** Editable copy of the settings: every day present, times as `HH:mm`. */
@@ -44,33 +35,8 @@ export interface VisitingHoursDraft {
   weeklyHours: Record<DayOfWeek, TimeWindow[]>;
 }
 
-/** `10:00:00` → `10:00`. */
-export function toHHmm(time: string): string {
-  return time.length >= 5 ? time.slice(0, 5) : time;
-}
-
-export function toMinutes(time: string): number {
-  const [h, m] = toHHmm(time).split(':').map(Number);
-  return h * 60 + m;
-}
-
-function fromMinutes(minutes: number): string {
-  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-}
-
-/** `16:30` → `4:30 PM`. */
-export function formatTime(time: string): string {
-  const minutes = toMinutes(time);
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
-}
-
 /** Every half hour from 00:00 to 23:30. */
-export const TIME_OPTIONS: { label: string; value: string }[] = Array.from({ length: (24 * 60) / TIME_STEP_MINUTES }, (_, i) => {
-  const value = fromMinutes(i * TIME_STEP_MINUTES);
-  return { label: formatTime(value), value };
-});
+export const TIME_OPTIONS = timeOptions(TIME_STEP_MINUTES);
 
 export function toDraft(availability: TourAvailability): VisitingHoursDraft {
   const weeklyHours = Object.fromEntries(DAYS_OF_WEEK.map((day) => [day, [] as TimeWindow[]])) as Record<DayOfWeek, TimeWindow[]>;

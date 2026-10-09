@@ -39,6 +39,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/tenant-home': 'My Home',
   '/tenant-property': 'Property',
   '/tenant-inventory': 'Items',
+  '/tenant-mess': 'Mess Menu',
   '/tenant-payments': 'Payments',
   '/tenant-maintenance': 'Support',
   '/settings': 'Settings',
@@ -55,6 +56,7 @@ const PRIMARY_ROUTES = [
   '/tenant-home',
   '/tenant-property',
   '/tenant-inventory',
+  '/tenant-mess',
   '/tenant-payments',
   '/tenant-maintenance',
   '/settings'
@@ -144,6 +146,7 @@ function MainAppLayout() {
                       />
                       <Stack.Screen name="tenant-property" />
                       <Stack.Screen name="tenant-inventory" />
+                      <Stack.Screen name="tenant-mess" />
                       <Stack.Screen name="tenant-maintenance" />
                       <Stack.Screen name="tenant-payments" />
                       <Stack.Screen name="settings" />

@@ -1,10 +1,6 @@
 import { apiRequest } from '@/src/api/client';
 import type { ApiInput, ApiModel } from '@/src/api/models';
 
-export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
-
-export const DAYS_OF_WEEK: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-
 /** Times are `HH:mm` (the backend may also send `HH:mm:ss`). */
 export type TimeWindow = ApiModel<'TimeWindow'>;
 

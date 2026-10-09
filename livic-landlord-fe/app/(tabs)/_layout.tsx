@@ -11,7 +11,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 
 // Sections opened from the More sheet (or the desktop sidebar). They are tabs without a
 // button: switching to them keeps the four main tabs' state intact.
-const MORE_SECTIONS = ['analytics', 'reports', 'announcements', 'settings', 'admin'] as const;
+const MORE_SECTIONS = ['analytics', 'reports', 'announcements', 'mess', 'settings', 'admin'] as const;
 
 export const unstable_settings = { initialRouteName: '(home)' };
 

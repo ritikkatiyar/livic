@@ -1,8 +1,8 @@
-import { DAYS_OF_WEEK, DayOfWeek, TimeWindow, TourAvailability } from '../../src/features/leases/api/tourAvailability.api';
+import { DAYS_OF_WEEK, DayOfWeek, formatTime } from '../../src/utils/weekdays';
+import { TimeWindow, TourAvailability } from '../../src/features/leases/api/tourAvailability.api';
 import {
   copyMondayToWeekdays,
   countSlots,
-  formatTime,
   isDraftEqual,
   nextWindow,
   summarizeWeeklyHours,

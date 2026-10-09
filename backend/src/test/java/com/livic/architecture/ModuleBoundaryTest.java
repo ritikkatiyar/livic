@@ -35,7 +35,8 @@ class ModuleBoundaryTest {
             "core.property", "core.finance",
             "core.community.announcement", "core.community.analytics", "core.community.issue",
             "verticals.rental.inventory", "verticals.rental.lease", "verticals.rental.billing", "verticals.rental.booking",
-            "verticals.marketplace"
+            "verticals.marketplace",
+            "verticals.hostel.mess"
     };
 
     @BeforeAll

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TourRequestsPanel, matchesTourSearch } from '../../src/features/leases/components/TourRequestsPanel';
 import * as tourApi from '../../src/features/leases/api/tourRequest.api';
 import * as tourAvailabilityApi from '../../src/features/leases/api/tourAvailability.api';
+import { DAYS_OF_WEEK } from '../../src/utils/weekdays';
 import { ApiError } from '../../src/utils/errors';
 
 const mockShowToast = jest.fn();
@@ -46,7 +47,7 @@ const defaultAvailability: tourAvailabilityApi.TourAvailability = {
   minNoticeMinutes: 60,
   bookingWindowDays: 14,
   maxVisitorsPerSlot: null,
-  weeklyHours: tourAvailabilityApi.DAYS_OF_WEEK.map((dayOfWeek) => ({
+  weeklyHours: DAYS_OF_WEEK.map((dayOfWeek) => ({
     dayOfWeek,
     windows: [{ start: '09:00', end: '20:00' }],
   })),
@@ -110,7 +111,7 @@ describe('TourRequestsPanel', () => {
       ...defaultAvailability,
       customized: true,
       slotMinutes: 30,
-      weeklyHours: tourAvailabilityApi.DAYS_OF_WEEK.map((dayOfWeek) => ({
+      weeklyHours: DAYS_OF_WEEK.map((dayOfWeek) => ({
         dayOfWeek,
         windows: dayOfWeek === 'SUNDAY' ? [] : [{ start: '10:00', end: '13:00' }],
       })),

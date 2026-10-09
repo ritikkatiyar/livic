@@ -26,13 +26,6 @@ export const createStyles = (theme: any, isDark: boolean) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    bubbleGradient: {
-      width: 54,
-      height: 54,
-      borderRadius: 27,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     chatContent: {
       flex: 1,
     },
@@ -61,14 +54,6 @@ export const createStyles = (theme: any, isDark: boolean) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       marginTop: theme.Spacing.xs,
-    },
-    headerIconWrapper: {
-      width: 28,
-      height: 28,
-      borderRadius: 8,
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     headerTitle: {
       fontSize: theme.Typography.titleSmall.fontSize,

@@ -84,17 +84,17 @@ export default function InventoryScreen() {
       contentContainerStyle={[styles.scroll, isDesktop && styles.scrollDesktop]}
     >
 
-          {/* Desktop page header */}
-          {isDesktop && (
-            <View style={styles.pageHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.kicker}>INVENTORY LIFECYCLE</Text>
-                <Text style={styles.title}>Property Inventory</Text>
-                <Text style={styles.subtitle}>
-                  Track move-in assignment, condition evidence, verification and deposit settlement.
-                </Text>
-                {leaseId && <Text style={styles.contextLine}>Lease: {leaseId}</Text>}
-              </View>
+          {/* Page header; phones add items from the + beside search instead */}
+          <View style={styles.pageHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.kicker}>INVENTORY LIFECYCLE</Text>
+              <Text style={isDesktop ? styles.title : styles.titleMobile}>Property Inventory</Text>
+              <Text style={isDesktop ? styles.subtitle : styles.subtitleMobile}>
+                Track move-in assignment, condition evidence, verification and deposit settlement.
+              </Text>
+              {leaseId && <Text style={styles.contextLine}>Lease: {leaseId}</Text>}
+            </View>
+            {isDesktop && (
               <ActionButton
                 label="Add Item"
                 icon="add"
@@ -102,8 +102,8 @@ export default function InventoryScreen() {
                 size="md"
                 onPress={handleOpenAddModal}
               />
-            </View>
-          )}
+            )}
+          </View>
 
           {/* Mobile search + add row */}
           {!isDesktop && (
@@ -113,7 +113,7 @@ export default function InventoryScreen() {
                   <TextInput
                     value={query} onChangeText={setQuery}
                     placeholder="Search inventory..."
-                    placeholderTextColor={theme.Colors.onSurfaceVariant}
+                    placeholderTextColor={theme.Colors.placeholder}
                     style={styles.searchInput}
                   />
                   {query.length > 0 && (
@@ -166,7 +166,7 @@ export default function InventoryScreen() {
                     <TextInput
                       value={query} onChangeText={setQuery}
                       placeholder="Search inventory..."
-                      placeholderTextColor={theme.Colors.onSurfaceVariant}
+                      placeholderTextColor={theme.Colors.placeholder}
                       style={styles.searchInput}
                     />
                   </View>
@@ -229,7 +229,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   pageHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: theme.Spacing.md, marginBottom: theme.Spacing.sm },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 0.2, color: theme.Colors.primary },
+  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 0.2, color: theme.Colors.onSurfaceVariant },
   propertyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -242,6 +242,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   propertyBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: theme.Colors.primary },
   title: { ...theme.Typography.headlineLg, color: theme.Colors.onSurface, lineHeight: 38, marginTop: theme.Spacing.xs },
   subtitle: { fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm, lineHeight: 22, maxWidth: 600 },
+  titleMobile: { ...theme.Typography.headlineMd, color: theme.Colors.onSurface, marginTop: theme.Spacing.xs },
+  subtitleMobile: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
   contextLine: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', marginTop: 6 },
   addBtnWrapper: { borderRadius: 14, overflow: 'hidden' },
   addBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 13, gap: theme.Spacing.sm },
@@ -275,7 +277,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderRadius: 100,
     borderWidth: 1,
-    borderColor: theme.Colors.outline,
+    borderColor: theme.Colors.outlineStrong,
     paddingHorizontal: 14,
     gap: theme.Spacing.sm,
   },

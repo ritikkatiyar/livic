@@ -297,7 +297,7 @@ export default function IssueDetailModal({
                       <TextInput
                         style={styles.escalateInput}
                         placeholder="Reason for escalation..."
-                        placeholderTextColor={theme.Colors.onSurfaceVariant}
+                        placeholderTextColor={theme.Colors.placeholder}
                         value={escalateReason}
                         onChangeText={setEscalateReason}
                       />
@@ -357,7 +357,7 @@ export default function IssueDetailModal({
               <TextInput
                 style={styles.commentInput}
                 placeholder="Write a reply..."
-                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                placeholderTextColor={theme.Colors.placeholder}
                 value={commentText}
                 onChangeText={setCommentText}
                 multiline

@@ -243,7 +243,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
             <TextInput
               style={styles.searchInput}
               placeholder="e.g. Manager, Caretaker, Supervisor"
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               value={inviteTitle}
               onChangeText={setInviteTitle}
             />
@@ -281,7 +281,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
             <TextInput
               style={styles.searchInput}
               placeholder="1"
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               value={inviteMaxUses}
               onChangeText={setInviteMaxUses}
               keyboardType="number-pad"
@@ -359,7 +359,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   label: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', marginBottom: theme.Spacing.sm, color: theme.Colors.onSurfaceVariant },
   searchInput: {
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,

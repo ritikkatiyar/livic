@@ -177,7 +177,7 @@ export default function BlockListScreen({
                 onChangeText={setRenameValue}
                 autoFocus
                 placeholder="Block name"
-                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                placeholderTextColor={theme.Colors.placeholder}
               />
               <TouchableOpacity
                 style={styles.quickGenerateButton}
@@ -223,14 +223,14 @@ export default function BlockListScreen({
             value={newName}
             onChangeText={setNewName}
             placeholder="e.g. Tower B"
-            placeholderTextColor={theme.Colors.onSurfaceVariant}
+            placeholderTextColor={theme.Colors.placeholder}
           />
           <TextInput
             style={[styles.quickCreateInput, { width: 80 }]}
             value={newFloors}
             onChangeText={setNewFloors}
             placeholder="Floors"
-            placeholderTextColor={theme.Colors.onSurfaceVariant}
+            placeholderTextColor={theme.Colors.placeholder}
             keyboardType="number-pad"
           />
           <TouchableOpacity style={styles.quickGenerateButton} onPress={handleAdd} disabled={saving}>

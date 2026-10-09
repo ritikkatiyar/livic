@@ -165,7 +165,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, onSav
                 showErrors && !name ? { borderColor: theme.Colors.error } : null
               ]}
               placeholder="e.g. Apex Tower"
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               value={name}
               onChangeText={(val) => { setName(val); setShowErrors(false); setErrorMsg(''); }}
             />
@@ -185,7 +185,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, onSav
                 showErrors && !address ? { borderColor: theme.Colors.error } : null
               ]}
               placeholder="e.g. 100 Horizon Boulevard"
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               value={address}
               onChangeText={(val) => { setAddress(val); setShowErrors(false); setErrorMsg(''); }}
             />
@@ -205,7 +205,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, onSav
                 showErrors && !city ? { borderColor: theme.Colors.error } : null
               ]}
               placeholder="e.g. Bengaluru"
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               value={city}
               onChangeText={(val) => { setCity(val); setShowErrors(false); setErrorMsg(''); }}
             />
@@ -219,7 +219,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, onSav
             <TextInput
               style={styles.input}
               placeholder="e.g. Metro Station"
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               value={landmark}
               onChangeText={setLandmark}
             />
@@ -265,7 +265,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, onSav
                   showErrors && (!totalFloors || parseInt(totalFloors, 10) < 1) ? { borderColor: theme.Colors.error } : null
                 ]}
                 placeholder="0"
-                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                placeholderTextColor={theme.Colors.placeholder}
                 value={totalFloors}
                 onChangeText={(val) => { setTotalFloors(val.replace(/[^0-9]/g, '')); setShowErrors(false); setErrorMsg(''); }}
                 keyboardType="numeric"
@@ -281,7 +281,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, onSav
               <TextInput
                 style={styles.inputWithIconRight}
                 placeholder="Optional"
-                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                placeholderTextColor={theme.Colors.placeholder}
                 value={globalUnitsPerFloor}
                 onChangeText={(val) => setGlobalUnitsPerFloor(val.replace(/[^0-9]/g, ''))}
                 keyboardType="numeric"

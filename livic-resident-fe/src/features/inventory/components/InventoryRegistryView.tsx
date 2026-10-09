@@ -66,7 +66,7 @@ export function InventoryRegistryView({
               {serviceOnly && (
                 <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.Colors.error }]} />
               )}
-              <MaterialIcons name="handyman" size={14} color={serviceOnly ? '#fff' : theme.Colors.onSurfaceVariant} />
+              <MaterialIcons name="handyman" size={14} color={serviceOnly ? theme.Colors.onError : theme.Colors.onSurfaceVariant} />
               <Text style={[styles.filterPillText, serviceOnly && styles.filterPillTextActive]}>Service Due</Text>
             </TouchableOpacity>
             {onAddItem && (
@@ -137,10 +137,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   panelTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
   panelSub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   panelActions: { flexDirection: 'row', gap: theme.Spacing.sm, alignItems: 'center' },
-  filterPill: { flexDirection: 'row', alignItems: 'center', minHeight: 38, paddingHorizontal: 14, borderRadius: 19, backgroundColor: theme.Colors.surfaceContainerLow, borderWidth: 1, borderColor: theme.Colors.outlineVariant, gap: 6, overflow: 'hidden' },
+  filterPill: { flexDirection: 'row', alignItems: 'center', minHeight: 38, paddingHorizontal: 14, borderRadius: 19, backgroundColor: theme.Colors.surfaceContainerLow, borderWidth: 1, borderColor: theme.Colors.outlineStrong, gap: 6, overflow: 'hidden' },
   filterPillActive: { borderColor: 'transparent' },
   filterPillText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant },
-  filterPillTextActive: { color: theme.Colors.surfaceContainerLowest },
+  filterPillTextActive: { color: theme.Colors.onError },
   iconBtn: { minWidth: 44, minHeight: 44, borderRadius: 14, backgroundColor: theme.Colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: theme.Colors.outlineVariant },
   tableContainer: { paddingBottom: theme.Spacing.xs },
   tableHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 10, backgroundColor: theme.Colors.surfaceContainerLow, borderBottomWidth: 1, borderBottomColor: theme.Colors.outlineVariant },

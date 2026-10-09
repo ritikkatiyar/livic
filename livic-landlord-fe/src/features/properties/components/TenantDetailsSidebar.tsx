@@ -104,7 +104,7 @@ export function TenantDetailsSidebar({
                   }}
                   placeholder="e.g. 2"
                   keyboardType="numeric"
-                  placeholderTextColor={theme.Colors.outlineVariant}
+                  placeholderTextColor={theme.Colors.placeholder}
                   editable={!selectedBlock.members || selectedBlock.members.length === 0}
                 />
               </View>
@@ -166,7 +166,7 @@ export function TenantDetailsSidebar({
                     <TextInput
                       style={styles.textInput}
                       placeholder="Search by 10-digit phone"
-                      placeholderTextColor={theme.Colors.outlineVariant}
+                      placeholderTextColor={theme.Colors.placeholder}
                       value={tenantPhoneSearch}
                       onChangeText={(val) => {
                         const cleaned = val.replace(/[^0-9]/g, '').slice(0, 10);
@@ -250,7 +250,7 @@ export function TenantDetailsSidebar({
                           <TextInput 
                             style={styles.textInput}
                             placeholder="e.g. 15000"
-                            placeholderTextColor={theme.Colors.outlineVariant}
+                            placeholderTextColor={theme.Colors.placeholder}
                             value={rentAmount}
                             onChangeText={setRentAmount}
                             keyboardType="numeric"
@@ -263,7 +263,7 @@ export function TenantDetailsSidebar({
                           <TextInput 
                             style={styles.textInput}
                             placeholder="e.g. 30000"
-                            placeholderTextColor={theme.Colors.outlineVariant}
+                            placeholderTextColor={theme.Colors.placeholder}
                             value={securityDeposit}
                             onChangeText={setSecurityDeposit}
                             keyboardType="numeric"

@@ -140,7 +140,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: theme.Colors.surfaceContainerLowest,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     borderWidth: 1,
     borderRadius: 14,
     paddingHorizontal: 12,

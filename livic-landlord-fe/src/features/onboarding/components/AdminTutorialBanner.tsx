@@ -157,7 +157,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
       paddingVertical: theme.Spacing.xs || 8,
       borderRadius: theme.Rounded.full || 100,
       borderWidth: 1.5,
-      borderColor: theme.Colors.glassStroke,
+      borderColor: theme.Colors.outlineStrong,
       backgroundColor: theme.Colors.glassFill,
     },
     restoreText: {

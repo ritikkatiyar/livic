@@ -185,7 +185,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isSmallMo
       paddingVertical: theme.Spacing.xs || 8,
       borderRadius: theme.Rounded.full || 100,
       borderWidth: 1.5,
-      borderColor: theme.Colors.glassStroke,
+      borderColor: theme.Colors.outlineStrong,
       backgroundColor: theme.Colors.glassFill,
     },
     restoreText: {
@@ -232,7 +232,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isSmallMo
     kicker: {
       fontSize: theme.Typography.labelSmall?.fontSize || 9,
       fontWeight: '600',
-      color: theme.Colors.primary,
+      color: theme.Colors.onSurfaceVariant,
       letterSpacing: 0.6,
     },
     title: {

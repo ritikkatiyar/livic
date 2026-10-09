@@ -55,7 +55,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
     letterSpacing: 0.2,
-    color: theme.Colors.primary,
+    color: theme.Colors.onSurfaceVariant,
     marginBottom: 4,
   },
   mobileTitleText: {
@@ -566,10 +566,10 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: theme.Rounded.full,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineStrong,
   },
   floorTabPillActive: {
-    backgroundColor: theme.Colors.primary,
+    backgroundColor: theme.Colors.primaryContainer,
     borderColor: theme.Colors.primary,
     shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
@@ -583,7 +583,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurfaceVariant,
   },
   floorTabTextActive: {
-    color: theme.Colors.onPrimary,
+    color: theme.Colors.onPrimaryContainer,
     fontWeight: theme.Typography.buttonText.fontWeight,
   },
   titleWithBadgeRow: {

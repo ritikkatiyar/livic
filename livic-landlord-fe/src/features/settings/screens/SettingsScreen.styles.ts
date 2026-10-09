@@ -487,7 +487,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingVertical: 10,
       borderRadius: 22,
       borderWidth: 1,
-      borderColor: theme.Colors.outlineVariant,
+      borderColor: theme.Colors.outlineStrong,
       backgroundColor: theme.Colors.surfaceContainerLow,
     },
     roleSelectChipActive: {

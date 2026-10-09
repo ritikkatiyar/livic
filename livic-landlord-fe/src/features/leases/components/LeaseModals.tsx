@@ -67,7 +67,7 @@ export function BookRoomModal({
 }) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const placeholderColor = isDark ? withAlpha(theme.Colors.onSurface, 0.38) : withAlpha(theme.Colors.onSurface, 0.4);
+  const placeholderColor = theme.Colors.placeholder;
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={styles.card}>
@@ -127,7 +127,7 @@ export function ServeNoticeModal({ visible, onClose, noticeMoveOutDate, setNotic
 }) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const placeholderColor = isDark ? withAlpha(theme.Colors.onSurface, 0.38) : withAlpha(theme.Colors.onSurface, 0.4);
+  const placeholderColor = theme.Colors.placeholder;
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 440 }]}>
@@ -154,7 +154,7 @@ export function CashTokenModal({ visible, onClose, cashAmount, setCashAmount, ca
 }) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const placeholderColor = isDark ? withAlpha(theme.Colors.onSurface, 0.38) : withAlpha(theme.Colors.onSurface, 0.4);
+  const placeholderColor = theme.Colors.placeholder;
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 440 }]}>
@@ -186,7 +186,7 @@ export function ConvertToLeaseModal({ visible, onClose, convMonthlyRentAmount, s
 }) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const placeholderColor = isDark ? withAlpha(theme.Colors.onSurface, 0.38) : withAlpha(theme.Colors.onSurface, 0.4);
+  const placeholderColor = theme.Colors.placeholder;
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 480 }]}>
@@ -218,7 +218,7 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
 }) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const placeholderColor = isDark ? withAlpha(theme.Colors.onSurface, 0.38) : withAlpha(theme.Colors.onSurface, 0.4);
+  const placeholderColor = theme.Colors.placeholder;
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 440 }]}>
@@ -301,7 +301,7 @@ export function RejectTourModal({ visible, onClose, prospectName, visitLabel, on
             value={note}
             onChangeText={setNote}
             placeholder="e.g. That room is booked for the week — please pick another date."
-            placeholderTextColor={theme.Colors.onSurfaceVariant}
+            placeholderTextColor={theme.Colors.placeholder}
             maxLength={TOUR_REJECTION_NOTE_MAX}
             multiline
             numberOfLines={4}

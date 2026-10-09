@@ -241,7 +241,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean, isMobile:
     statsValue: {
       fontSize: theme.Typography.bodySmall?.fontSize || 12,
       fontWeight: '700',
-      color: theme.Colors.primary,
+      color: theme.Colors.onSurface,
     },
     progressBarTrack: {
       height: 6,

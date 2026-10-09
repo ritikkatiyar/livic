@@ -216,7 +216,7 @@ export default function FloorListOverviewScreen({
               <TextInput
                 style={styles.quickCreateInput}
                 placeholder="#"
-                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                placeholderTextColor={theme.Colors.placeholder}
                 keyboardType="numeric"
                 maxLength={2}
                 value={quickCounts[floor.floorNumber] || ''}

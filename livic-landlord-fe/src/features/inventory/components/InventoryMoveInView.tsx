@@ -112,7 +112,7 @@ export function InventoryMoveInView({
           <Text style={styles.progressSublabel}>{hasAssigned ? 'assigned' : 'selected'}</Text>
           <View style={styles.progressTrack}>
             <View
-              style={[styles.progressFill, { width: `${progress * 100}%` as any, backgroundColor: theme.Colors.surfaceContainerLowest }]}
+              style={[styles.progressFill, { width: `${progress * 100}%` as any, backgroundColor: theme.Colors.primary }]}
             />
           </View>
         </View>
@@ -248,16 +248,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   sectionStack: { gap: theme.Spacing.md },
   moveBanner: {
     borderRadius: 16, padding: 20, flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', backgroundColor: theme.Colors.primary, minHeight: 90, gap: theme.Spacing.md,
+    justifyContent: 'space-between', backgroundColor: theme.Colors.primaryContainer, borderWidth: 1, borderColor: theme.Colors.primaryTint, minHeight: 90, gap: theme.Spacing.md,
   },
   moveBannerContent: { flex: 1, gap: 2 },
-  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', letterSpacing: 0.2, color: withAlpha(theme.Colors.onPrimary, 0.85) },
-  moveBannerTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.surfaceContainerLowest },
-  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: withAlpha(theme.Colors.onPrimary, 0.75), marginTop: 2 },
+  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', letterSpacing: 0.2, color: theme.Colors.onSurfaceVariant },
+  moveBannerTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onPrimaryContainer },
+  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   progressBox: { alignItems: 'flex-end', gap: theme.Spacing.xs, minWidth: 100 },
-  progressFraction: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '600', color: theme.Colors.surfaceContainerLowest },
-  progressSublabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: withAlpha(theme.Colors.onPrimary, 0.75), letterSpacing: 0.2 },
-  progressTrack: { width: 100, height: 6, borderRadius: 3, backgroundColor: withAlpha(theme.Colors.onPrimary, 0.25), overflow: 'hidden' },
+  progressFraction: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '600', color: theme.Colors.onPrimaryContainer },
+  progressSublabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.2 },
+  progressTrack: { width: 100, height: 6, borderRadius: 3, backgroundColor: withAlpha(theme.Colors.primary, 0.2), overflow: 'hidden' },
   progressFill: { height: 6, borderRadius: 3 },
 
   workflowGrid: { flexDirection: 'column', gap: theme.Spacing.md },

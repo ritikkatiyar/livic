@@ -319,7 +319,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodySmall.fontSize, 
     fontWeight: '600', 
     letterSpacing: 0.5, 
-    color: theme.Colors.primary 
+    color: theme.Colors.onSurfaceVariant 
   },
   title: { 
     fontSize: theme.Typography.headlineLg.fontSize, 
@@ -378,7 +378,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodyMedium.fontSize 
   },
   metricValue: { 
-    color: theme.Colors.primary, 
+    color: theme.Colors.onSurface, 
     fontWeight: '700' 
   },
   dashedDivider: { 

@@ -266,7 +266,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                   value={input}
                   onChangeText={setInput}
                   placeholder="Ask AI to execute a task..."
-                  placeholderTextColor="#7d8b8e"
+                  placeholderTextColor={theme.Colors.placeholder}
                   multiline
                   maxLength={1000}
                   editable={!isSending}

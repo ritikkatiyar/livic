@@ -143,7 +143,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 6,
     backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     borderRadius: 19,
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -255,7 +255,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     maxWidth: 220,
   },
   attachmentThumb: {

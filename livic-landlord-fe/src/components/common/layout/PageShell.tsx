@@ -2,10 +2,14 @@ import React from 'react';
 import { StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform, ViewStyle, StyleProp } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { NavigationContext } from '@react-navigation/native';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppChromeInsets } from '@/src/components/common/layout/AppChrome';
 
+
+// Widest a page's content grows on a tablet, beside the navigation rail
+const TABLET_CONTENT_MAX_WIDTH = 720;
 interface PageShellProps {
   children: React.ReactNode;
   header?: React.ReactNode;
@@ -43,7 +47,19 @@ export function PageShell({
     [theme, isDark, isDesktop, mobileHeaderOffset, mobileBottomOffset]
   );
 
-  const { handleScroll } = useScrollNav();
+  const { handleScroll, subscribeScrollToTop } = useScrollNav();
+  const scrollRef = React.useRef<ScrollView>(null);
+  // Optional: screens outside a navigator (and tests) have none, and then always count as focused
+  const navigation = React.useContext(NavigationContext);
+
+  // Re-tapping the open tab scrolls the screen you're looking at back to the top
+  React.useEffect(() => {
+    if (!scrollable) return;
+    return subscribeScrollToTop(() => {
+      if (navigation && !navigation.isFocused()) return;
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    });
+  }, [scrollable, subscribeScrollToTop, navigation]);
 
   const handleCombinedScroll = (event: any) => {
     handleScroll(event);
@@ -76,6 +92,17 @@ export function PageShell({
     // chrome.bottom already covers the bottom bar and the assistant bubble above it
     : Math.max(mobileBottomOffset + theme.Spacing.md, typeof customPaddingBottom === 'number' ? customPaddingBottom : 0);
 
+  // On tablets the navigation rail sits down the left edge, beside the content: add it to whatever
+  // left padding the screen already asks for
+  const railInset = isDesktop ? 0 : chrome.left;
+  const baseLeftPadding =
+    flattenedCustomStyle?.paddingLeft ?? flattenedCustomStyle?.paddingHorizontal ?? flattenedCustomStyle?.padding ?? theme.Spacing.containerPadding;
+  // ...and stop growing at a readable width, so cards and buttons don't stretch across a tablet
+  const railPadding =
+    railInset > 0 && typeof baseLeftPadding === 'number'
+      ? { paddingLeft: baseLeftPadding + railInset, maxWidth: railInset + baseLeftPadding * 2 + TABLET_CONTENT_MAX_WIDTH }
+      : null;
+
   const resolvedScrollContentStyle = React.useMemo(() => {
     return [
       styles.scrollContent,
@@ -84,8 +111,9 @@ export function PageShell({
         paddingTop: effectivePaddingTop,
         paddingBottom: effectivePaddingBottom,
       },
+      railPadding,
     ];
-  }, [styles.scrollContent, contentContainerStyle, isDesktop, effectivePaddingTop, effectivePaddingBottom]);
+  }, [styles.scrollContent, contentContainerStyle, isDesktop, effectivePaddingTop, effectivePaddingBottom, railPadding?.paddingLeft]);
 
   const resolvedFlatContentStyle = React.useMemo(() => {
     return [
@@ -95,14 +123,16 @@ export function PageShell({
         paddingTop: effectivePaddingTop,
         paddingBottom: effectivePaddingBottom,
       },
+      railPadding,
     ];
-  }, [styles.flatContainer, contentContainerStyle, isDesktop, effectivePaddingTop, effectivePaddingBottom]);
+  }, [styles.flatContainer, contentContainerStyle, isDesktop, effectivePaddingTop, effectivePaddingBottom, railPadding?.paddingLeft]);
 
   const container = (
     <SafeAreaView edges={edges} style={[styles.safeArea, style]}>
       {header}
       {scrollable ? (
         <ScrollView
+          ref={scrollRef}
           style={styles.scrollView}
           contentContainerStyle={resolvedScrollContentStyle}
           showsVerticalScrollIndicator={false}

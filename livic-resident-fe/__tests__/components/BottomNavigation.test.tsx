@@ -11,10 +11,25 @@ jest.mock('expo-router', () => ({
   usePathname: () => mockPathname,
 }));
 
+let mockOpenRequests = 0;
+jest.mock('@/src/features/auth/context/AuthProvider', () => ({ useAuth: () => ({ accessToken: 'test-token' }) }));
+jest.mock('@/src/features/tenant/hooks/useOpenRequestCount', () => ({ useOpenRequestCount: () => mockOpenRequests }));
+jest.mock('@/src/theme/haptics', () => ({ haptic: jest.fn() }));
+
 describe('BottomNavigation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPathname = '/tenant-home';
+    mockOpenRequests = 0;
+  });
+
+  it('tells screen readers how many requests are open', async () => {
+    mockOpenRequests = 2;
+    await render(<BottomNavigation onMorePress={jest.fn()} />);
+
+    // A neutral dot, not a red count: the requests are waiting on the landlord, not the resident
+    expect(screen.getByRole('tab', { name: 'Requests, 2 open' })).toBeTruthy();
+    expect(screen.queryByText('2', { includeHiddenElements: true })).toBeNull();
   });
 
   it('marks the current tab as selected', async () => {

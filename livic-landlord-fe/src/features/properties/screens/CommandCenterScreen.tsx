@@ -36,6 +36,7 @@ import { useAdminTutorial } from '@/src/features/onboarding/context/AdminTutoria
 import { AdminTutorialBanner } from '@/src/features/onboarding/components/AdminTutorialBanner';
 import { AdminTutorialModal } from '@/src/features/onboarding/components/AdminTutorialModal';
 import { createStyles } from './CommandCenterScreen.styles';
+import { PortfolioQuickActions } from '../components/PortfolioQuickActions';
 
 
 
@@ -232,7 +233,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                 <TextInput
                   style={styles.desktopSearchInput}
                   placeholder="Filter properties by name or location..."
-                  placeholderTextColor={theme.Colors.onSurfaceVariant}
+                  placeholderTextColor={theme.Colors.placeholder}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
@@ -305,7 +306,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search properties or locations..."
-                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                placeholderTextColor={theme.Colors.placeholder}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
@@ -316,6 +317,8 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
               ) : null}
             </View>
           </View>
+
+          {properties.length > 0 && <PortfolioQuickActions />}
         </View>
       )}
     </Animated.View>

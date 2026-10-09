@@ -130,7 +130,7 @@ export default function DesktopNavBar({
               <TextInput
                 style={styles.searchInput}
                 placeholder={searchPlaceholder}
-                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                placeholderTextColor={theme.Colors.placeholder}
                 value={query}
                 onChangeText={handleTextChange}
                 onFocus={() => setIsSearchFocused(true)}
@@ -366,7 +366,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 20,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     gap: theme.Spacing.xs,
     overflow: 'hidden',
   },

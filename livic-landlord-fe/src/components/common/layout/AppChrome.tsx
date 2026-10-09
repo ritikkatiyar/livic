@@ -13,9 +13,11 @@ import React, { createContext, useCallback, useContext, useMemo, useState } from
 export interface AppChromeInsets {
   top: number;
   bottom: number;
+  /** The navigation rail on tablets; 0 on phones. */
+  left: number;
 }
 
-type ChromeSlot = 'header' | 'tabBar';
+type ChromeSlot = 'header' | 'tabBar' | 'rail';
 
 interface AppChromeValue {
   insets: AppChromeInsets;
@@ -23,7 +25,7 @@ interface AppChromeValue {
   setSlotHeight: (slot: ChromeSlot, height: number) => void;
 }
 
-const EMPTY_INSETS: AppChromeInsets = { top: 0, bottom: 0 };
+const EMPTY_INSETS: AppChromeInsets = { top: 0, bottom: 0, left: 0 };
 
 const AppChromeContext = createContext<AppChromeValue>({
   insets: EMPTY_INSETS,
@@ -31,7 +33,7 @@ const AppChromeContext = createContext<AppChromeValue>({
 });
 
 export function AppChromeProvider({ children }: { children: React.ReactNode }) {
-  const [heights, setHeights] = useState<Record<ChromeSlot, number>>({ header: 0, tabBar: 0 });
+  const [heights, setHeights] = useState<Record<ChromeSlot, number>>({ header: 0, tabBar: 0, rail: 0 });
 
   const setSlotHeight = useCallback((slot: ChromeSlot, height: number) => {
     const rounded = Math.round(height);
@@ -40,7 +42,7 @@ export function AppChromeProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AppChromeValue>(
     () => ({
-      insets: { top: heights.header, bottom: heights.tabBar },
+      insets: { top: heights.header, bottom: heights.tabBar, left: heights.rail },
       setSlotHeight,
     }),
     [heights, setSlotHeight]

@@ -36,7 +36,7 @@ const QRScannerModal = Platform.OS !== 'web'
   : () => null;
 
 const ROUTE_TITLES: Record<string, string> = {
-  '/tenant-home': 'My Home',
+  '/tenant-home': 'Home',
   '/tenant-property': 'Property',
   '/tenant-inventory': 'Items',
   '/tenant-mess': 'Mess Menu',

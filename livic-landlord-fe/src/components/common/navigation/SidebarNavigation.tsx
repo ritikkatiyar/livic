@@ -84,12 +84,12 @@ export default function SidebarNavigation() {
 
       <ScrollView style={styles.sidebarNavScroll} contentContainerStyle={styles.sidebarNav} showsVerticalScrollIndicator={false}>
         {renderSidebarLink('dashboard', 'Analytics', '/analytics')}
-        {renderSidebarLink('business', 'Portfolio', '/command-center')}
+        {renderSidebarLink('business', 'Home', '/command-center')}
         {renderSidebarLink('assessment', 'Reports', '/reports')}
         {renderSidebarLink('groups', 'AI Desk', '/ai')}
-        {renderSidebarLink('description', 'Leases', '/leases' as Href)}
+        {renderSidebarLink('vpn-key', 'Leases', '/leases' as Href)}
         {renderSidebarLink('inventory', 'Inventory', '/inventory' as Href)}
-        {renderSidebarLink('inbox', 'Issues', '/escalations')}
+        {renderSidebarLink('build', 'Issues', '/escalations')}
         {renderSidebarLink('campaign', 'Announcements', '/announcements')}
         {renderSidebarLink('restaurant-menu', 'Mess Menu', '/mess' as Href)}
         {renderSidebarLink('account-balance', 'Finance & Billing', '/expenses')}

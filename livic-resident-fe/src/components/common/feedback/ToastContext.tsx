@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { useResponsive } from '@/src/hooks/useResponsive';
+import { PILL_HEIGHT, dockBottom } from '@/src/components/common/navigation/bottomDock';
 import { View, Text, StyleSheet, Animated, Platform, Alert, TouchableOpacity, Modal } from 'react-native';
 import { haptic } from '@/src/theme/haptics';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -67,6 +69,7 @@ function ToastItem({
 }) {
   const insets = useSafeAreaInsets();
   const config = TOAST_CONFIG[toast.type];
+  const { isDesktop, isTablet } = useResponsive();
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   // The toast already buzzes for errors, so the icon's shake stays silent
@@ -81,7 +84,9 @@ function ToastItem({
       style={[
         styles.toastWrapper,
         {
-          bottom: Math.max(insets.bottom + 16, 32),
+          // On phones, sit 8dp above the floating tab bar rather than over it
+          // 16dp above the floating bar on phones; tablets and desktop have no bar at the bottom
+          bottom: isDesktop || isTablet ? Math.max(insets.bottom + 16, 32) : dockBottom(insets.bottom) + PILL_HEIGHT + 16,
           opacity: fadeAnim,
           transform: [{ translateY: slideAnim }],
         },

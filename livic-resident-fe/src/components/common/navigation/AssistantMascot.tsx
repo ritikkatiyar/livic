@@ -1,5 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
+import { useReducedMotion } from '@/src/theme/motion';
+
+// Livi greets once per app session, then stays still. It blinks again only after the screen has
+// been left alone for a while, and only once each time: recurring motion at the edge of the screen
+// pulls the eye away from the work (WCAG 2.2.2)
+const FIRST_BLINK_MS = 800;
+const IDLE_BLINK_MS = 120_000;
+let greetedThisSession = false;
 
 export type MascotMood = 'idle' | 'watching' | 'happy';
 
@@ -18,51 +26,30 @@ interface AssistantMascotProps {
 }
 
 /**
- * "Livi", the assistant's face: a little house (roof brow, eyes, smile) that blinks,
- * glances around while idle, looks down while the user scrolls and squints when happy.
+ * "Livi", the assistant's face: a little house (roof brow, eyes, smile) that blinks once to say
+ * hello, looks down while the user scrolls and squints when happy.
+ * With reduced motion on it stays still.
  */
 export function AssistantMascot({ size, color, featureColor = '#ffffff', mood = 'idle' }: AssistantMascotProps) {
   const blink = useRef(new Animated.Value(1)).current; // eye scaleY
-  const glanceX = useRef(new Animated.Value(0)).current;
   const lookY = useRef(new Animated.Value(0)).current;
   const squint = useRef(new Animated.Value(0)).current; // 0 open, 1 happy squint
+  const reduceMotion = useReducedMotion();
 
-  // Blink at slightly random intervals so it feels alive, not metronomic.
+  // A hello blink on the first face of the session; then one blink after a long idle stretch.
+  // Scrolling changes the mood, which restarts the idle wait, so it never blinks mid-scroll.
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    const scheduleBlink = () => {
-      timer = setTimeout(() => {
-        Animated.sequence([
-          Animated.timing(blink, { toValue: 0.1, duration: 70, useNativeDriver: true }),
-          Animated.timing(blink, { toValue: 1, duration: 110, useNativeDriver: true }),
-        ]).start(scheduleBlink);
-      }, 2500 + Math.random() * 3000);
-    };
-    scheduleBlink();
+    if (reduceMotion || mood !== 'idle') return;
+    const delay = greetedThisSession ? IDLE_BLINK_MS : FIRST_BLINK_MS;
+    greetedThisSession = true;
+    const timer = setTimeout(() => {
+      Animated.sequence([
+        Animated.timing(blink, { toValue: 0.1, duration: 70, useNativeDriver: true }),
+        Animated.timing(blink, { toValue: 1, duration: 110, useNativeDriver: true }),
+      ]).start();
+    }, delay);
     return () => clearTimeout(timer);
-  }, [blink]);
-
-  // Occasional sideways glance while idle.
-  useEffect(() => {
-    if (mood !== 'idle') {
-      glanceX.stopAnimation();
-      Animated.timing(glanceX, { toValue: 0, duration: 150, useNativeDriver: true }).start();
-      return;
-    }
-    let timer: ReturnType<typeof setTimeout>;
-    const scheduleGlance = () => {
-      timer = setTimeout(() => {
-        const dir = Math.random() > 0.5 ? 1 : -1;
-        Animated.sequence([
-          Animated.timing(glanceX, { toValue: dir * size * 0.05, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.delay(700),
-          Animated.timing(glanceX, { toValue: 0, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        ]).start(scheduleGlance);
-      }, 4000 + Math.random() * 4000);
-    };
-    scheduleGlance();
-    return () => clearTimeout(timer);
-  }, [mood, glanceX, size]);
+  }, [blink, mood, reduceMotion]);
 
   useEffect(() => {
     Animated.spring(lookY, { toValue: mood === 'watching' ? size * 0.05 : 0, friction: 6, useNativeDriver: true }).start();
@@ -76,7 +63,7 @@ export function AssistantMascot({ size, color, featureColor = '#ffffff', mood = 
   const smileW = size * 0.24;
 
   const eyeScaleY = Animated.multiply(blink, squint.interpolate({ inputRange: [0, 1], outputRange: [1, 0.35] }));
-  const eyesTransform = [{ translateX: glanceX }, { translateY: lookY }, { scaleY: eyeScaleY }];
+  const eyesTransform = [{ translateY: lookY }, { scaleY: eyeScaleY }];
 
   return (
     <View style={[styles.face, { width: size, height: size, borderRadius: size / 2, backgroundColor: color }]}>

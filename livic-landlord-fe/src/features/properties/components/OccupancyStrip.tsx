@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { PortfolioOccupancyResponse } from '@/src/features/analytics/api/analytics.api';
 import { OCCUPANCY_STATES, OccupancyState, getOccupancyColors } from '@/src/features/properties/utils/occupancy';
+import { FillReveal } from '@/src/components/common/motion/FillReveal';
 import { OccupancyLegend } from './OccupancyLegend';
 
 interface OccupancyStripProps {
@@ -57,11 +58,13 @@ export function OccupancyStrip({ occupancy, isLoading }: OccupancyStripProps) {
       </View>
 
       <View style={styles.track}>
-        {OCCUPANCY_STATES.map((state) =>
-          counts[state] > 0 ? (
-            <View key={state} style={{ flex: counts[state], backgroundColor: getOccupancyColors(theme, state).fill }} />
-          ) : null
-        )}
+        <FillReveal style={styles.fill}>
+          {OCCUPANCY_STATES.map((state) =>
+            counts[state] > 0 ? (
+              <View key={state} style={{ flex: counts[state], backgroundColor: getOccupancyColors(theme, state).fill }} />
+            ) : null
+          )}
+        </FillReveal>
       </View>
 
       {/* Also serves as the key for the 3D building above, which hides its own overlay legend */}
@@ -98,6 +101,10 @@ const createStyles = (theme: any) =>
       borderRadius: 4,
       overflow: 'hidden',
       backgroundColor: theme.Colors.surfaceContainerHighest,
+    },
+    fill: {
+      flex: 1,
+      flexDirection: 'row',
       gap: 2,
     },
     skeletonLine: {

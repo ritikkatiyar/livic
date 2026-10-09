@@ -25,6 +25,7 @@ import { useProperties } from '@/src/hooks/useProperties';
 import { TrajectoryChart } from '../components/TrajectoryChart';
 import { SystemEventsFeed } from '../components/SystemEventsFeed';
 import { createStyles } from './AnalyticsDashboardScreen.styles';
+import { FillReveal } from '@/src/components/common/motion/FillReveal';
 import { withAlpha } from '@/src/theme/colorUtils';
 
 export default function AnalyticsDashboardScreen() {
@@ -352,7 +353,7 @@ export default function AnalyticsDashboardScreen() {
                   </View>
 
                   <View style={styles.progressBarBg}>
-                    <View
+                    <FillReveal
                       style={[
                         styles.progressBarFill,
                         {

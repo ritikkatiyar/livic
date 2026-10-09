@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-nativ
 import { MaterialIcons } from '@expo/vector-icons';
 import { MeterReadingResponse } from '@/src/features/finance/api/meterReading.api';
 import { withAlpha } from '@/src/theme/colorUtils';
+import { Collapsible } from '@/src/components/common/motion/Collapsible';
 
 interface MeterReadingFloorCardProps {
   floor: number;
@@ -61,7 +62,7 @@ export function MeterReadingFloorCard({
         />
       </TouchableOpacity>
       
-      {isExpanded && (
+      <Collapsible expanded={isExpanded}>
         <>
           {paginatedUnits.map((row, index) => {
             const prevStr = prevInputs[row.unitId];
@@ -87,7 +88,7 @@ export function MeterReadingFloorCard({
                         style={styles.prevTextInput}
                         keyboardType="decimal-pad"
                         placeholder="0.00"
-                        placeholderTextColor={theme.Colors.onSurfaceVariant}
+                        placeholderTextColor={theme.Colors.placeholder}
                         value={prevInputs[row.unitId] ?? ''}
                         onChangeText={(val) => setPrevInputs(prev => ({ ...prev, [row.unitId]: val }))}
                       />
@@ -115,7 +116,7 @@ export function MeterReadingFloorCard({
                       style={[styles.input, isError && styles.inputError, { flex: 1 }]}
                       keyboardType="decimal-pad"
                       placeholder="0.00"
-                      placeholderTextColor={theme.Colors.onSurfaceVariant}
+                      placeholderTextColor={theme.Colors.placeholder}
                       value={inputs[row.unitId] ?? ''}
                       onChangeText={(val) => setInputs(prev => ({ ...prev, [row.unitId]: val }))}
                       returnKeyType="next"
@@ -157,7 +158,7 @@ export function MeterReadingFloorCard({
             </View>
           )}
         </>
-      )}
+      </Collapsible>
     </View>
   );
 }

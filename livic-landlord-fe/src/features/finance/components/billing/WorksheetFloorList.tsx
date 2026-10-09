@@ -6,6 +6,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { WorksheetEntryResponse } from '@/src/features/finance/api/worksheet.api';
 import type { ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
 import { withAlpha } from '@/src/theme/colorUtils';
+import { Collapsible } from '@/src/components/common/motion/Collapsible';
 
 interface WorksheetFloorListProps {
   entries: WorksheetEntryResponse[];
@@ -72,94 +73,95 @@ export function WorksheetFloorList({
               />
             </TouchableOpacity>
             
-            {(() => {
-              if (!isExpanded) return null;
-              const unitsPerFloorPage = 4;
-              const floorUnits = groupedWorksheet[floor] || [];
-              const totalFloorPagesUnits = Math.ceil(floorUnits.length / unitsPerFloorPage);
-              const currentPage = floorPages[floor] || 1;
-              const startIndex = (currentPage - 1) * unitsPerFloorPage;
-              const paginatedUnits = floorUnits.slice(startIndex, startIndex + unitsPerFloorPage);
-
-              return (
-                <>
-                  {paginatedUnits.map((entry, index) => {
-                    const isLast = index === paginatedUnits.length - 1;
-                    return (
-                      <View key={entry.id} style={[styles.rowCard, isLast && { borderBottomWidth: 0 }]}>
-                        <View style={styles.rowLeft}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            {Boolean(entry.blockName) && (
-                              <View style={styles.blockBadge}>
-                                <Text style={styles.blockBadgeText}>{entry.blockName}</Text>
-                              </View>
-                            )}
-                            <Text style={styles.unitName}>{entry.unitName}</Text>
-                          </View>
-                          <Text style={styles.payerName} numberOfLines={1}>{entry.payerName}</Text>
-                        </View>
-                        
-                        <View style={styles.rowRight}>
-                          {entry.billed ? (
-                            <View style={styles.billedBadge}>
-                              <Text style={styles.billedBadgeText}>BILLED (₹{entry.enteredValue})</Text>
+            <Collapsible expanded={isExpanded}>
+              {(() => {
+                const unitsPerFloorPage = 4;
+                const floorUnits = groupedWorksheet[floor] || [];
+                const totalFloorPagesUnits = Math.ceil(floorUnits.length / unitsPerFloorPage);
+                const currentPage = floorPages[floor] || 1;
+                const startIndex = (currentPage - 1) * unitsPerFloorPage;
+                const paginatedUnits = floorUnits.slice(startIndex, startIndex + unitsPerFloorPage);
+  
+                return (
+                  <>
+                    {paginatedUnits.map((entry, index) => {
+                      const isLast = index === paginatedUnits.length - 1;
+                      return (
+                        <View key={entry.id} style={[styles.rowCard, isLast && { borderBottomWidth: 0 }]}>
+                          <View style={styles.rowLeft}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              {Boolean(entry.blockName) && (
+                                <View style={styles.blockBadge}>
+                                  <Text style={styles.blockBadgeText}>{entry.blockName}</Text>
+                                </View>
+                              )}
+                              <Text style={styles.unitName}>{entry.unitName}</Text>
                             </View>
-                          ) : (
-                            selectedCharge?.calculationStrategy === 'METERED' ? (
-                              <TouchableOpacity 
-                                style={styles.meteredButton}
-                                onPress={() => router.push(`/properties/${propertyId}/meter-readings`)}
-                              >
-                                <MaterialIcons name="speed" size={16} color={theme.Colors.primary} />
-                                <Text style={styles.meteredButtonText}>Enter Readings</Text>
-                              </TouchableOpacity>
-                            ) : (
-                              <View style={styles.inputWrapper}>
-                                <Text style={styles.currencySymbol}>₹</Text>
-                                <TextInput
-                                  style={[styles.input, { paddingLeft: theme.Spacing.lg }]}
-                                  value={editValues[entry.unitId] || ''}
-                                  onChangeText={(val) => setEditValues(prev => ({ ...prev, [entry.unitId]: val }))}
-                                  keyboardType="numeric"
-                                  placeholder="0"
-                                  placeholderTextColor={theme.Colors.outlineVariant}
-                                />
+                            <Text style={styles.payerName} numberOfLines={1}>{entry.payerName}</Text>
+                          </View>
+                          
+                          <View style={styles.rowRight}>
+                            {entry.billed ? (
+                              <View style={styles.billedBadge}>
+                                <Text style={styles.billedBadgeText}>BILLED (₹{entry.enteredValue})</Text>
                               </View>
-                            )
-                          )}
+                            ) : (
+                              selectedCharge?.calculationStrategy === 'METERED' ? (
+                                <TouchableOpacity 
+                                  style={styles.meteredButton}
+                                  onPress={() => router.push(`/properties/${propertyId}/meter-readings`)}
+                                >
+                                  <MaterialIcons name="speed" size={16} color={theme.Colors.primary} />
+                                  <Text style={styles.meteredButtonText}>Enter Readings</Text>
+                                </TouchableOpacity>
+                              ) : (
+                                <View style={styles.inputWrapper}>
+                                  <Text style={styles.currencySymbol}>₹</Text>
+                                  <TextInput
+                                    style={[styles.input, { paddingLeft: theme.Spacing.lg }]}
+                                    value={editValues[entry.unitId] || ''}
+                                    onChangeText={(val) => setEditValues(prev => ({ ...prev, [entry.unitId]: val }))}
+                                    keyboardType="numeric"
+                                    placeholder="0"
+                                    placeholderTextColor={theme.Colors.placeholder}
+                                  />
+                                </View>
+                              )
+                            )}
+                          </View>
                         </View>
+                      );
+                    })}
+                    
+                    {totalFloorPagesUnits > 1 && (
+                      <View style={styles.paginationRow}>
+                        <TouchableOpacity 
+                          style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
+                          disabled={currentPage === 1}
+                          onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage - 1 }))}
+                        >
+                          <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
+                          <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Prev</Text>
+                        </TouchableOpacity>
+                        
+                        <Text style={styles.pageInfoText}>
+                          Page {currentPage} of {totalFloorPagesUnits}
+                        </Text>
+                        
+                        <TouchableOpacity 
+                          style={[styles.pageButton, currentPage === totalFloorPagesUnits && styles.pageButtonDisabled]}
+                          disabled={currentPage === totalFloorPagesUnits}
+                          onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage + 1 }))}
+                        >
+                          <Text style={[styles.pageButtonText, currentPage === totalFloorPagesUnits && styles.pageButtonTextDisabled]}>Next</Text>
+                          <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
+                        </TouchableOpacity>
                       </View>
-                    );
-                  })}
-                  
-                  {totalFloorPagesUnits > 1 && (
-                    <View style={styles.paginationRow}>
-                      <TouchableOpacity 
-                        style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
-                        disabled={currentPage === 1}
-                        onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage - 1 }))}
-                      >
-                        <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
-                        <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Prev</Text>
-                      </TouchableOpacity>
-                      
-                      <Text style={styles.pageInfoText}>
-                        Page {currentPage} of {totalFloorPagesUnits}
-                      </Text>
-                      
-                      <TouchableOpacity 
-                        style={[styles.pageButton, currentPage === totalFloorPagesUnits && styles.pageButtonDisabled]}
-                        disabled={currentPage === totalFloorPagesUnits}
-                        onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage + 1 }))}
-                      >
-                        <Text style={[styles.pageButtonText, currentPage === totalFloorPagesUnits && styles.pageButtonTextDisabled]}>Next</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? theme.Colors.onSurfaceVariant : theme.Colors.primary} />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </>
-              );
-            })()}
+                    )}
+                  </>
+                );
+              })()}
+            </Collapsible>
           </View>
         );
       })}
@@ -280,7 +282,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 12,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     color: theme.Colors.onSurface,
     paddingHorizontal: 12,
     fontSize: theme.Typography.bodyMedium.fontSize,

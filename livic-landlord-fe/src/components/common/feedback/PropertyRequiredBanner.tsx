@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -45,7 +45,13 @@ export function PropertyRequiredBanner({
 
   const [dismissed, setDismissed] = useState(false);
 
-  if (activePropertyId || dismissed) {
+  // With a single property there is nothing to choose: select it rather than stopping at a gate
+  const onlyPropertyId = !allowAll && propertyList.length === 1 ? propertyList[0].id : null;
+  useEffect(() => {
+    if (!activePropertyId && !dismissed && onlyPropertyId) handleSelect(onlyPropertyId);
+  }, [activePropertyId, dismissed, onlyPropertyId, handleSelect]);
+
+  if (activePropertyId || dismissed || onlyPropertyId) {
     return null;
   }
 
@@ -237,7 +243,7 @@ const createStyles = (theme: any, isDark: boolean) =>
       borderRadius: 100,
       backgroundColor: theme.Colors.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: theme.Colors.outlineVariant,
+      borderColor: theme.Colors.outlineStrong,
     },
     pillActive: {
       backgroundColor: `${theme.Colors.primary}18`,

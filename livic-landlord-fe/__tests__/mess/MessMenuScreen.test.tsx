@@ -21,12 +21,17 @@ jest.mock('@/src/features/auth/hooks/usePermissions', () => ({
   usePermissions: () => ({ isLoaded: true, can: mockCan, canRoute: () => true }),
 }));
 
+let mockProperties = [
+  { id: 'prop-1', name: "Mom's PG" },
+  { id: 'prop-2', name: 'Sunrise Hostel' },
+];
 jest.mock('@/src/hooks/useProperties', () => ({
-  useProperties: () => ({ properties: [{ id: 'prop-1', name: "Mom's PG" }], isLoading: false }),
+  useProperties: () => ({ properties: mockProperties, isLoading: false }),
 }));
 
+const mockSetSelectedPropertyId = jest.fn();
 jest.mock('@/src/context/PropertySelectionContext', () => ({
-  useGlobalPropertySelection: () => ({ selectedPropertyId: mockSelectedPropertyId, setSelectedPropertyId: jest.fn() }),
+  useGlobalPropertySelection: () => ({ selectedPropertyId: mockSelectedPropertyId, setSelectedPropertyId: mockSetSelectedPropertyId }),
 }));
 
 jest.mock('expo-router', () => ({
@@ -115,6 +120,19 @@ describe('MessMenuScreen', () => {
 
     expect(screen.getByText('Select a property for its mess menu')).toBeTruthy();
     expect(api.getMessMenu).not.toHaveBeenCalled();
+  });
+
+  it('selects the only property instead of asking', async () => {
+    mockSelectedPropertyId = null;
+    const allProperties = mockProperties;
+    mockProperties = [allProperties[0]];
+    try {
+      await renderScreen();
+      expect(mockSetSelectedPropertyId).toHaveBeenCalledWith('prop-1');
+      expect(screen.queryByText('Select a property for its mess menu')).toBeNull();
+    } finally {
+      mockProperties = allProperties;
+    }
   });
 
   it("opens on today's menu with saving disabled until something changes", async () => {

@@ -75,6 +75,23 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginTop: 4,
       lineHeight: 20,
     },
+    // PageShell already clears the app bar on phones
+    titleContainerMobile: {
+      marginTop: 0,
+      marginBottom: theme.Spacing.md,
+    },
+    kicker: {
+      fontSize: theme.Typography.labelSmall.fontSize,
+      fontWeight: '600',
+      letterSpacing: 0.2,
+      // Teal is kept for things you can act on; labels are neutral
+      color: theme.Colors.onSurfaceVariant,
+      marginBottom: 4,
+    },
+    titleLineMobile: {
+      ...theme.Typography.headlineMd,
+      color: theme.Colors.onSurface,
+    },
     metricsRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
@@ -105,7 +122,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       alignItems: 'center',
       backgroundColor: theme.Colors.surfaceContainerLowest,
       borderWidth: 1,
-      borderColor: theme.Colors.outlineVariant,
+      borderColor: theme.Colors.outlineStrong,
       borderRadius: 12,
       paddingHorizontal: 12,
       height: 44,
@@ -116,6 +133,51 @@ export const createStyles = (theme: any, isDark: boolean) =>
       flex: 1,
       color: theme.Colors.onSurface,
       fontSize: theme.Typography.bodyMedium.fontSize,
+    },
+    mobileFilterRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 12,
+    },
+    filtersButton: {
+      minHeight: 40,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 14,
+      borderRadius: theme.Rounded.full,
+      borderWidth: 1,
+      borderColor: theme.Colors.outlineStrong,
+      backgroundColor: theme.Colors.surfaceContainerLow,
+    },
+    filtersButtonActive: {
+      borderColor: theme.Colors.primary,
+      backgroundColor: theme.Colors.primaryContainer,
+    },
+    filtersButtonText: {
+      fontSize: theme.Typography.bodySmall.fontSize,
+      fontWeight: '600',
+      color: theme.Colors.onSurfaceVariant,
+    },
+    filtersButtonTextActive: {
+      color: theme.Colors.onPrimaryContainer,
+    },
+    appliedChip: {
+      minHeight: 36,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingLeft: 12,
+      paddingRight: 8,
+      borderRadius: theme.Rounded.full,
+      backgroundColor: theme.Colors.primaryContainer,
+    },
+    appliedChipText: {
+      fontSize: theme.Typography.bodySmall.fontSize,
+      fontWeight: '600',
+      color: theme.Colors.onPrimaryContainer,
     },
     filtersContainer: {
       flexDirection: 'row',
@@ -133,7 +195,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     filterLabelText: {
       fontSize: theme.Typography.bodySmall.fontSize,
       fontWeight: '700',
-      color: theme.Colors.primary,
+      color: theme.Colors.onSurfaceVariant,
       width: 60,
     },
     filterScroll: {
@@ -145,10 +207,10 @@ export const createStyles = (theme: any, isDark: boolean) =>
       borderRadius: 14,
       backgroundColor: theme.Colors.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: theme.Colors.outlineVariant,
+      borderColor: theme.Colors.outlineStrong,
     },
     filterPillActive: {
-      backgroundColor: theme.Colors.primary,
+      backgroundColor: theme.Colors.primaryContainer,
     },
     filterText: {
       fontSize: theme.Typography.bodySmall.fontSize,

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { toSentenceCase } from '@/src/utils/labels';
 import type { PropertyResponse } from '@/src/types/property';
 
 interface BroadcastComposerModalProps {
@@ -97,7 +98,7 @@ export function BroadcastComposerModal({
                   style={[styles.chip, broadcastCategory === cat && styles.chipActive]}
                   onPress={() => setBroadcastCategory(cat)}
                 >
-                  <Text style={[styles.chipText, broadcastCategory === cat && styles.chipTextActive]}>{cat}</Text>
+                  <Text style={[styles.chipText, broadcastCategory === cat && styles.chipTextActive]}>{toSentenceCase(cat)}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -112,10 +113,12 @@ export function BroadcastComposerModal({
               ].map(({ val, color }) => (
                 <TouchableOpacity
                   key={val}
-                  style={[styles.chip, broadcastSeverity === val && { ...styles.chipActive, backgroundColor: color, borderColor: color }]}
+                  style={[styles.chip, styles.chipWithDot, broadcastSeverity === val && styles.chipActive]}
                   onPress={() => setBroadcastSeverity(val)}
                 >
-                  <Text style={[styles.chipText, broadcastSeverity === val && styles.chipTextActive]}>{val}</Text>
+                  {/* Selected looks the same for every option; the dot carries the severity colour */}
+                  <View style={[styles.severityDot, { backgroundColor: color }]} />
+                  <Text style={[styles.chipText, broadcastSeverity === val && styles.chipTextActive]}>{toSentenceCase(val)}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -129,7 +132,7 @@ export function BroadcastComposerModal({
                   style={[styles.chip, broadcastTargetType === t && styles.chipActive]}
                   onPress={() => setBroadcastTargetType(t)}
                 >
-                  <Text style={[styles.chipText, broadcastTargetType === t && styles.chipTextActive]}>{t}</Text>
+                  <Text style={[styles.chipText, broadcastTargetType === t && styles.chipTextActive]}>{toSentenceCase(t)}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -228,7 +231,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 14,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outline,
+    borderColor: theme.Colors.outlineStrong,
     paddingHorizontal: theme.Spacing.md,
     fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
@@ -249,12 +252,22 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 20,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outline,
+    borderColor: theme.Colors.outlineStrong,
     marginRight: 6,
   },
   chipActive: {
-    backgroundColor: theme.Colors.primary,
+    backgroundColor: theme.Colors.primaryContainer,
     borderColor: theme.Colors.primary,
+  },
+  chipWithDot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  severityDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   chipText: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -262,7 +275,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurfaceVariant,
   },
   chipTextActive: {
-    color: theme.Colors.surfaceContainerLowest,
+    color: theme.Colors.onPrimaryContainer,
   },
   composerSendBtn: {
     borderRadius: 12,

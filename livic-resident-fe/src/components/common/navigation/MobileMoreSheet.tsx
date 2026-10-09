@@ -9,10 +9,15 @@ import {
   Animated,
   PanResponder,
   Platform,
+  Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ThemeModeControl } from '@/src/components/common/inputs/ThemeModeControl';
+import type { ThemeMode } from '@/src/theme/ThemeContext';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useMyMessMenu } from '@/src/features/mess/hooks/useMyMessMenu';
 
@@ -33,20 +38,20 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut, accessToken } = useAuth();
-  const { theme, isDark, toggleTheme } = useAppTheme();
+  const { theme, isDark, setMode } = useAppTheme();
+  // The sheet runs under the gesture bar (edge to edge); its last row must clear it
+  const insets = useSafeAreaInsets();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   // Shown only where the property shares a mess menu; a failed load simply leaves it out
   const messEnabled = useMyMessMenu(accessToken).data?.enabled ?? false;
 
+  // Only sections the tab bar doesn't already show (Home, Payments and Requests are tabs), most used first
   const MENU_ITEMS: MenuItem[] = React.useMemo(() => [
-    { title: 'My Home', subtitle: 'Dashboard & Feed', route: '/tenant-home', icon: 'home', color: theme.Colors.primary },
-    { title: 'My Property', subtitle: 'Lease & Building', route: '/tenant-property', icon: 'apartment', color: theme.Colors.secondary },
-    { title: 'Items & Assets', subtitle: 'Furnishings & Inventory', route: '/tenant-inventory', icon: 'inventory', color: theme.Colors.tertiary },
     ...(messEnabled
       ? [{ title: 'Mess Menu', subtitle: 'Weekly Meals', route: '/tenant-mess', icon: 'restaurant-menu' as const, color: theme.Colors.tertiary }]
       : []),
-    { title: 'Payments', subtitle: 'Invoices & Receipts', route: '/tenant-payments', icon: 'payments', color: theme.Colors.primary },
-    { title: 'Requests', subtitle: 'Maintenance & Repairs', route: '/tenant-maintenance', icon: 'build', color: theme.Colors.primary },
+    { title: 'My Property', subtitle: 'Lease & Building', route: '/tenant-property', icon: 'apartment', color: theme.Colors.secondary },
+    { title: 'Items & Assets', subtitle: 'Furnishings & Inventory', route: '/tenant-inventory', icon: 'inventory', color: theme.Colors.tertiary },
     { title: 'Settings', subtitle: 'Profile & App Config', route: '/settings', icon: 'settings', color: theme.Colors.onSurfaceVariant },
   ], [theme, messEnabled]);
 
@@ -107,23 +112,36 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
     }, 150);
   };
 
+  const confirmLogout = () => {
+    const message = 'You will need to sign in again to use Livic.';
+    if (Platform.OS === 'web') {
+      if (window.confirm(message)) handleLogout();
+      return;
+    }
+    Alert.alert('Log out?', message, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log out', style: 'destructive', onPress: handleLogout },
+    ]);
+  };
+
   const handleLogout = async () => {
     await signOut();
     closeSheet();
     router.replace('/login');
   };
 
-  const handleThemeToggle = () => {
+  // The theme change plays a full-screen transition, so the sheet gets out of its way first
+  const handleThemeSelect = (mode: ThemeMode) => {
     closeSheet();
     setTimeout(() => {
-      toggleTheme();
+      setMode(mode);
     }, 150);
   };
 
   if (!visible) return null;
 
   return (
-    <Modal animationType="none" transparent visible={visible} onRequestClose={closeSheet}>
+    <Modal animationType="none" transparent visible={visible} onRequestClose={closeSheet} statusBarTranslucent>
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={closeSheet} />
 
@@ -132,6 +150,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
             styles.sheetContainer,
             {
               transform: [{ translateY }],
+              paddingBottom: insets.bottom + 16,
             },
           ]}
         >
@@ -152,12 +171,9 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
                 <Text style={styles.profileName}>{user?.fullName || 'Resident'}</Text>
                 <Text style={styles.profileRole}>{user?.email || 'Tenant User'}</Text>
               </View>
-              <TouchableOpacity style={styles.themeToggle} onPress={handleThemeToggle} activeOpacity={0.7}>
-                <MaterialIcons name={isDark ? 'light-mode' : 'dark-mode'} size={24} color={theme.Colors.primary} />
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.themeToggle, { marginLeft: theme.Spacing.sm, borderColor: theme.Colors.errorContainer, backgroundColor: theme.Colors.error + '1A' }]} onPress={handleLogout} activeOpacity={0.7}>
-                <MaterialIcons name="logout" size={24} color={theme.Colors.error} />
-              </TouchableOpacity>
+            </View>
+            <View style={styles.themeRow}>
+              <ThemeModeControl onSelect={handleThemeSelect} />
             </View>
           </View>
 
@@ -181,6 +197,24 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
                 </TouchableOpacity>
               );
             })}
+
+            {/* Log out is a labelled row at the end, as in the admin app, not an icon by the theme control */}
+            <TouchableOpacity
+              style={styles.logoutRow}
+              onPress={confirmLogout}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel="Log out"
+            >
+              <View style={styles.logoutIconBox}>
+                <MaterialIcons name="logout" size={24} color={theme.Colors.error} />
+              </View>
+              <View style={[styles.cardContent, { flex: 1 }]}>
+                <Text style={styles.logoutTitle}>Log Out</Text>
+                <Text style={styles.cardSubtitle}>Sign out of Livic on this phone</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={22} color={theme.Colors.error} />
+            </TouchableOpacity>
           </ScrollView>
         </Animated.View>
       </View>
@@ -206,7 +240,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRightWidth: 1,
     borderColor: theme.Colors.outlineVariant,
     maxHeight: '85%',
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     shadowColor: 'black',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
@@ -267,12 +300,34 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: 2,
     textTransform: 'capitalize',
   },
-  themeToggle: {
-    padding: 10,
-    borderRadius: 20,
-    backgroundColor: theme.Colors.surfaceContainerHigh,
+  themeRow: {
+    marginTop: theme.Spacing.md,
+  },
+  logoutRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: withAlpha(theme.Colors.error, 0.21),
+    backgroundColor: withAlpha(theme.Colors.error, 0.07),
+  },
+  logoutIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: withAlpha(theme.Colors.error, 0.15),
+  },
+  logoutTitle: {
+    fontSize: theme.Typography.bodyLg.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.error,
   },
   gridContainer: {
     padding: 20,

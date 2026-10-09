@@ -45,7 +45,8 @@ export function ActionButton({
 
   const isInteractionDisabled = disabled || loading;
   const iconSize = size === 'sm' ? 16 : size === 'lg' ? 22 : 18;
-  const iconColor = variant === 'primary' || variant === 'danger' ? '#ffffff' : theme.Colors.primary;
+  const iconColor =
+    variant === 'primary' ? theme.Colors.onPrimary : variant === 'danger' ? theme.Colors.onError : theme.Colors.primary;
 
   const renderIcon = () => {
     if (loading) {
@@ -207,7 +208,7 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md' | 'lg', ful
       fontSize,
       fontWeight: '600',
       letterSpacing: 0.3,
-      color: '#ffffff',
+      color: theme.Colors.onPrimary,
       textAlign: 'center',
     },
     textSecondary: {
@@ -220,10 +221,10 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md' | 'lg', ful
       color: theme.Colors.primary,
     },
     textDanger: {
-      color: '#ffffff',
+      color: theme.Colors.onError,
     },
     textDisabled: {
-      color: '#ffffff',
+      color: theme.Colors.onSurfaceVariant,
     },
     iconLeft: {
       marginRight: theme.Spacing.xs + 2,

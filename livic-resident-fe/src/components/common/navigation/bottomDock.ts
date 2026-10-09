@@ -1,4 +1,5 @@
 import { Platform, useWindowDimensions } from 'react-native';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 /**
  * Geometry shared by the floating bottom bar and Livi's bubble on mobile. They sit on one row: the pill,
@@ -24,16 +25,15 @@ export function dockBottom(insetBottom: number): number {
   return Platform.OS === 'web' ? WEB_DOCK_BOTTOM : Math.max(insetBottom, 12) + 4;
 }
 
-/** From this width the bar becomes a navigation rail on the left, with Livi at its foot. */
-export const RAIL_MIN_WIDTH = 600;
+/** On tablets (useResponsive().isTablet) the bar becomes a navigation rail on the left, with Livi at its foot. */
 export const RAIL_WIDTH = 80;
 
 /**
- * Distance from the right edge to Livi. Phones: the pill and Livi centred as one group. Tablets:
- * centred in the rail, where it is near the navigation and never covers the content.
+ * Distance from the right edge to Livi. Phones: the pill and Livi centred as one group. With the
+ * navigation rail (tablets): centred in the rail, near the navigation and never over the content.
  */
-export function assistantDockRight(windowWidth: number): number {
-  if (windowWidth >= RAIL_MIN_WIDTH) return windowWidth - (RAIL_WIDTH + ASSISTANT_SIZE) / 2;
+export function assistantDockRight(windowWidth: number, onRail = false): number {
+  if (onRail) return windowWidth - (RAIL_WIDTH + ASSISTANT_SIZE) / 2;
   const pillWidth = Math.min(PILL_MAX_WIDTH, windowWidth - DOCK_SIDE_PADDING * 2 - DOCK_GAP - ASSISTANT_SIZE);
   return Math.max(DOCK_SIDE_PADDING, (windowWidth - pillWidth - DOCK_GAP - ASSISTANT_SIZE) / 2);
 }
@@ -66,8 +66,9 @@ export function liviBelongsInTopBar(windowWidth: number, fontScale: number): boo
 }
 
 export function useLiviInTopBar(): boolean {
-  const { width, fontScale } = useWindowDimensions();
+  const { isMobile, width } = useResponsive();
+  const { fontScale } = useWindowDimensions();
   // Tablets keep Livi at the foot of the navigation rail
-  if (width >= RAIL_MIN_WIDTH) return false;
+  if (!isMobile) return false;
   return liviBelongsInTopBar(width, fontScale);
 }

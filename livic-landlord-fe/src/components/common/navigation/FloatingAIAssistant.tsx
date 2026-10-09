@@ -36,7 +36,7 @@ type Message = {
 };
 
 export default function FloatingAIAssistant() {
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { accessToken } = useAuth();
   const { theme, isDark } = useAppTheme();
@@ -197,7 +197,7 @@ export default function FloatingAIAssistant() {
   // Closed, Livi sits in the bottom bar's row, beside the pill
   const cardRight = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [assistantDockRight(windowWidth), (windowWidth * 0.08) / 2],
+    outputRange: [assistantDockRight(windowWidth, isTablet), (windowWidth * 0.08) / 2],
   });
 
   const cardBottom = keyboardHeight > 0

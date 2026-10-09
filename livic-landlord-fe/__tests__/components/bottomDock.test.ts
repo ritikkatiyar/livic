@@ -8,7 +8,6 @@ import {
   liviBelongsInTopBar,
   PILL_HEIGHT,
   PILL_MAX_WIDTH,
-  RAIL_MIN_WIDTH,
   RAIL_WIDTH,
 } from '../../src/components/common/navigation/bottomDock';
 
@@ -27,8 +26,8 @@ describe('bottom dock geometry', () => {
   });
 
   it('centres Livi in the navigation rail on tablets', () => {
-    for (const width of [RAIL_MIN_WIDTH, 800]) {
-      const left = width - assistantDockRight(width) - ASSISTANT_SIZE;
+    for (const width of [600, 800]) {
+      const left = width - assistantDockRight(width, true) - ASSISTANT_SIZE;
       // The space either side of Livi inside the rail is equal
       expect(left).toBe(RAIL_WIDTH - left - ASSISTANT_SIZE);
     }

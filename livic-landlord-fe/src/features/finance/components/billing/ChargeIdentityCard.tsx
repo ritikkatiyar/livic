@@ -38,7 +38,7 @@ export function ChargeIdentityCard({
         <TextInput 
           style={styles.input} 
           placeholder="e.g. Electricity, Sanitation Service" 
-          placeholderTextColor={theme.Colors.outlineVariant}
+          placeholderTextColor={theme.Colors.placeholder}
           value={expenseName}
           onChangeText={(val) => {
             setExpenseName(val);
@@ -61,7 +61,7 @@ export function ChargeIdentityCard({
             >
               {isActive ? (
                 <View style={[styles.segmentButtonActive, isDark ? styles.segmentButtonActiveDark : styles.segmentButtonActiveLight]}>
-                  <Text style={[styles.segmentTextActive, isDark && { color: theme.Colors.primary }]}>{freq}</Text>
+                  <Text style={styles.segmentTextActive}>{freq}</Text>
                 </View>
               ) : (
                 <View style={styles.segmentButtonInactive}>
@@ -145,13 +145,16 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // The same light-teal selection in both themes
   segmentButtonActiveDark: {
-    backgroundColor: withAlpha(theme.Colors.primary, 0.15),
+    backgroundColor: theme.Colors.primaryContainer,
     borderWidth: 1,
     borderColor: theme.Colors.primary,
   },
   segmentButtonActiveLight: {
-    backgroundColor: theme.Colors.primary,
+    backgroundColor: theme.Colors.primaryContainer,
+    borderWidth: 1,
+    borderColor: theme.Colors.primary,
   },
   segmentButtonInactive: {
     flex: 1,
@@ -159,7 +162,7 @@ const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create(
     alignItems: 'center',
   },
   segmentTextActive: {
-    color: theme.Colors.onPrimary,
+    color: theme.Colors.onPrimaryContainer,
     fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '600',
   },

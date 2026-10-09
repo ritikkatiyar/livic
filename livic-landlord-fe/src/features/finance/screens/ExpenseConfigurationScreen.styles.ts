@@ -38,7 +38,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.5,
   },
-  headerCreateTouch: { borderRadius: 22 },
+  headerCreateTouch: { borderRadius: 22, flexShrink: 0 },
   headerCreateInner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -56,8 +56,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.5,
   },
+  // PageShell already pads the sides on phones
   scrollContent: {
-    paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 40,
   },
@@ -70,7 +70,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
     letterSpacing: 0.2,
-    color: theme.Colors.primary,
+    color: theme.Colors.onSurfaceVariant,
     marginBottom: 4,
   },
   titleActionRow: {
@@ -80,6 +80,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 12,
   },
   screenTitle: {
+    flex: 1,
     fontSize: theme.Typography.headlineLg.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurface,

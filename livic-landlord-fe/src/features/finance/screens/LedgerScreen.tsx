@@ -137,8 +137,8 @@ export default function LedgerScreen({ token }: { token: string | null }) {
       <MaterialIcons name="search" size={20} color={theme.Colors.onSurfaceVariant} />
       <TextInput
         style={styles.searchInput}
-        placeholder="Search by Apt, Tenant name, or Description..."
-        placeholderTextColor={theme.Colors.onSurfaceVariant}
+        placeholder="Search unit, tenant or note..."
+        placeholderTextColor={theme.Colors.placeholder}
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
@@ -157,7 +157,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
         <TextInput
           style={styles.dateInput}
           placeholder="YYYY-MM-DD"
-          placeholderTextColor={theme.Colors.onSurfaceVariant}
+          placeholderTextColor={theme.Colors.placeholder}
           value={fromDateInput}
           onChangeText={setFromDateInput}
         />
@@ -167,7 +167,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
         <TextInput
           style={styles.dateInput}
           placeholder="YYYY-MM-DD"
-          placeholderTextColor={theme.Colors.onSurfaceVariant}
+          placeholderTextColor={theme.Colors.placeholder}
           value={toDateInput}
           onChangeText={setToDateInput}
         />
@@ -356,7 +356,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     borderRadius: 16,
     paddingHorizontal: theme.Spacing.md,
     paddingVertical: 12,
@@ -389,7 +389,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 22,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     color: theme.Colors.onSurface,
     paddingHorizontal: 10,
     fontSize: theme.Typography.labelSmall.fontSize,

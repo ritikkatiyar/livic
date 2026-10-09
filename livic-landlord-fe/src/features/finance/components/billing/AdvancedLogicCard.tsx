@@ -72,7 +72,7 @@ export function AdvancedLogicCard({
         <TextInput 
           style={styles.inputWithIcon} 
           placeholder="5" 
-          placeholderTextColor={theme.Colors.outlineVariant}
+          placeholderTextColor={theme.Colors.placeholder}
           keyboardType="numeric"
           value={lateFee}
           onChangeText={setLateFee}

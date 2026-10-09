@@ -34,7 +34,7 @@ export function TopUpCard({
           value={topUpAmount}
           onChangeText={setTopUpAmount}
           placeholder="500"
-          placeholderTextColor={theme.Colors.onSurfaceVariant}
+          placeholderTextColor={theme.Colors.placeholder}
         />
         <Text style={styles.creditsConversion}>
           = +{(parseFloat(topUpAmount || '0')).toLocaleString()} Credits

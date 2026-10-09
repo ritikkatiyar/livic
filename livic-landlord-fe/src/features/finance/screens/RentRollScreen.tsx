@@ -437,7 +437,7 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search by Unit, Tenant name, or Phone..."
-                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                placeholderTextColor={theme.Colors.placeholder}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />

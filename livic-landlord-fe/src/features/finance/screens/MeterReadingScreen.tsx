@@ -329,10 +329,40 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
     </View>
   );
 
+  const propertyName = properties?.find((p) => p.id === propertyId)?.name;
+
+  // PageShell already clears the app bar and pads the sides; the whole page scrolls as one
   const renderMobileShell = () => (
-    <View style={styles.gradient}>
+    <>
+        <View style={styles.mobileHeader}>
+          <View style={styles.mobileHeaderText}>
+            <Text style={styles.kicker}>{propertyName ? `BILLING · ${propertyName.toUpperCase()}` : 'BILLING'}</Text>
+            <Text style={styles.mobileTitle}>Meter Readings</Text>
+            <Text style={styles.mobileSubtitle}>{"Record this month's meter reading for each unit, then save."}</Text>
+          </View>
+          {worksheet.length > 0 ? (
+            <TouchableOpacity
+              style={[styles.mobileSaveBtn, isSaving && { opacity: 0.5 }]}
+              onPress={handleSave}
+              disabled={isSaving}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Save readings"
+            >
+              {isSaving ? (
+                <ActivityIndicator color={theme.Colors.surfaceContainerLowest} size="small" />
+              ) : (
+                <>
+                  <MaterialIcons name="check" size={15} color={theme.Colors.surfaceContainerLowest} />
+                  <Text style={styles.mobileSaveText}>SAVE</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
         {/* Filters */}
-        <View style={[styles.filterSection, { paddingTop: 64 }]}>
+        <View style={styles.mobileControls}>
           <GlassDropdown 
             options={configs.map(c => ({ label: c.chargeName, value: c.id }))}
             value={selectedConfigId}
@@ -352,12 +382,6 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
           </View>
         </View>
 
-        <Animated.ScrollView
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          contentContainerStyle={styles.listContent}
-          keyboardShouldPersistTaps="handled"
-        >
           {(!properties || properties.length === 0) ? (
             <View style={{ padding: 32, borderRadius: 16, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginTop: 40, width: '100%', backgroundColor: theme.Colors.surfaceContainerLowest, borderWidth: 1, borderColor: theme.Colors.outline }}>
               <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: theme.Colors.surfaceContainerHigh, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
@@ -432,34 +456,17 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
               })}
             </>
           )}
-          <View style={{ height: 120 }} />
-        </Animated.ScrollView>
-
-        {/* Floating Save Button */}
-        <View style={styles.floatingSaveBar}>
-          <TouchableOpacity
-            style={[styles.floatingSaveBtn, (isSaving || worksheet.length === 0) && { opacity: 0.5 }]}
-            onPress={handleSave}
-            disabled={isSaving || worksheet.length === 0}
-            activeOpacity={0.85}
-          >
-            <View style={styles.floatingSaveBtnInner}>
-              {isSaving ? (
-                <ActivityIndicator color={theme.Colors.surfaceContainerLowest} size="small" />
-              ) : (
-                <>
-                  <MaterialIcons name="check" size={20} color={theme.Colors.surfaceContainerLowest} />
-                  <Text style={styles.floatingSaveText}>SAVE READINGS</Text>
-                </>
-              )}
-            </View>
-          </TouchableOpacity>
-        </View>
-    </View>
+    </>
   );
 
   return (
-    <PageShell scrollable={false} keyboardAvoiding edges={isDesktop ? ['top'] : []}>
+    <PageShell
+      scrollable={!isDesktop}
+      onScroll={isDesktop ? undefined : handleScroll}
+      contentContainerStyle={isDesktop ? undefined : styles.mobileContent}
+      keyboardAvoiding
+      edges={isDesktop ? ['top'] : []}
+    >
       {isDesktop ? renderDesktopShell() : renderMobileShell()}
     </PageShell>
   );

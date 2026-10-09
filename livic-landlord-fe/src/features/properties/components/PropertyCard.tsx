@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import Building3DView from '@/src/features/properties/components/Building3DView';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
-import { ActionMenuSheet } from '@/src/components/common/inputs/ActionMenuSheet';
+import { PopoverMenu, anchorFromPress, type MenuAnchor } from '@/src/components/common/inputs/PopoverMenu';
 import { OccupancyStrip } from '@/src/features/properties/components/OccupancyStrip';
 import { usePortfolioOccupancy } from '@/src/features/properties/hooks/usePortfolioOccupancy';
 import type { PropertyResponse } from '@/src/types/property';
@@ -61,7 +61,7 @@ export function PropertyCard({
 
   const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
   const activeBlockId = selectedBlockId || (blocks.length > 0 ? blocks[0].id : null);
-  const [menuOpen, setMenuOpen] = React.useState(false);
+  const [menuAnchor, setMenuAnchor] = React.useState<MenuAnchor | null>(null);
   // Shared across all cards: one request for the whole portfolio
   const { data: occupancyByProperty, isLoading: isOccupancyLoading } = usePortfolioOccupancy();
 
@@ -127,7 +127,7 @@ export function PropertyCard({
                         <MaterialIcons
                           name="domain"
                           size={11}
-                          color={isSelected ? theme.Colors.onPrimary : theme.Colors.onSurfaceVariant}
+                          color={isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant}
                         />
                         <Text
                           style={[
@@ -272,7 +272,7 @@ export function PropertyCard({
                   onPress={() => setSelectedBlockId(block.id)}
                   activeOpacity={0.75}
                 >
-                  <MaterialIcons name="domain" size={11} color={isSelected ? theme.Colors.onPrimary : theme.Colors.onSurfaceVariant} />
+                  <MaterialIcons name="domain" size={11} color={isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant} />
                   <Text style={[styles.blockPillText, isSelected && styles.blockPillTextActive]} numberOfLines={1}>
                     {block.name}
                   </Text>
@@ -285,10 +285,10 @@ export function PropertyCard({
 
       <View style={styles.mobileHeaderRow}>
         <View style={styles.mobileHeaderText}>
-          <Text style={styles.propertyName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.propertyName}>{item.name}</Text>
           <View style={styles.addressContainer}>
             <MaterialIcons name="location-on" size={14} color={theme.Colors.onSurfaceVariant} />
-            <Text style={[styles.propertyAddress, { flexShrink: 1 }]} numberOfLines={1}>
+            <Text style={[styles.propertyAddress, { flexShrink: 1 }]}>
               {item.address}, {item.city}
             </Text>
           </View>
@@ -299,7 +299,7 @@ export function PropertyCard({
         </View>
         <TouchableOpacity
           style={styles.moreButton}
-          onPress={() => setMenuOpen(true)}
+          onPress={(e) => setMenuAnchor(anchorFromPress(e))}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel={`More actions for ${item.name}`}
@@ -324,10 +324,9 @@ export function PropertyCard({
         />
       </View>
 
-      <ActionMenuSheet
-        visible={menuOpen}
-        title={item.name}
-        onClose={() => setMenuOpen(false)}
+      <PopoverMenu
+        anchor={menuAnchor}
+        onClose={() => setMenuAnchor(null)}
         items={[
           { key: 'manage', label: 'Property settings', icon: 'settings', onPress: () => router.push(`/properties/${item.id}`) },
           { key: 'broadcast', label: 'Broadcast notice', icon: 'campaign', onPress: () => setSelectedPropertyForBroadcast(item) },
@@ -469,7 +468,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 14,
   },
   blockPillActive: {
-    backgroundColor: theme.Colors.primary,
+    backgroundColor: theme.Colors.primaryContainer,
     ...theme.Shadows.low,
   },
   blockPillText: {
@@ -478,7 +477,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurfaceVariant,
   },
   blockPillTextActive: {
-    color: theme.Colors.onPrimary,
+    color: theme.Colors.onPrimaryContainer,
     fontWeight: '700',
   },
   deleteButtonOverlay: {

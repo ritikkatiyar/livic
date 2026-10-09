@@ -131,7 +131,7 @@ export function DesktopRegistryRow({ item }: { item: InventoryItem }) {
       <View style={[styles.tableCell, { alignItems: 'flex-end' }]}>
         <Text style={styles.valueText}>{item.value}</Text>
       </View>
-      <TouchableOpacity style={styles.moreBtn}>
+      <TouchableOpacity style={styles.moreBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <MaterialIcons name="more-vert" size={20} color={theme.Colors.onSurfaceVariant} />
       </TouchableOpacity>
     </View>

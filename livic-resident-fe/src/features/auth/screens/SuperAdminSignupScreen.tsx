@@ -137,7 +137,7 @@ export default function SuperAdminSignupScreen({
                   <TextInput
                     style={[styles.input, { paddingRight: 44 }]}
                     placeholder="John Doe"
-                    placeholderTextColor={theme.Colors.outlineVariant}
+                    placeholderTextColor={theme.Colors.placeholder}
                     value={fullName}
                     onChangeText={setFullName}
                     onBlur={() => setFullNameTouched(true)}
@@ -165,7 +165,7 @@ export default function SuperAdminSignupScreen({
                     ref={emailInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
                     placeholder="user@example.com"
-                    placeholderTextColor={theme.Colors.outlineVariant}
+                    placeholderTextColor={theme.Colors.placeholder}
                     value={email}
                     onChangeText={setEmail}
                     onBlur={() => setEmailTouched(true)}
@@ -194,7 +194,7 @@ export default function SuperAdminSignupScreen({
                     ref={phoneInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
                     placeholder="+1 555-0199"
-                    placeholderTextColor={theme.Colors.outlineVariant}
+                    placeholderTextColor={theme.Colors.placeholder}
                     value={phoneNumber}
                     onChangeText={setPhoneNumber}
                     onBlur={() => setPhoneTouched(true)}
@@ -222,8 +222,8 @@ export default function SuperAdminSignupScreen({
                   <TextInput
                     ref={passwordInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="••••••••"
-                    placeholderTextColor={theme.Colors.outlineVariant}
+                    placeholder="Create a password"
+                    placeholderTextColor={theme.Colors.placeholder}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -327,7 +327,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingBottom: theme.Spacing.stackLg,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
-    shadowColor: '#000',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: isDark ? 0.2 : 0.05,
     shadowRadius: 8,
@@ -416,7 +416,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: '100%',
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     borderRadius: theme.Rounded.default,
     paddingLeft: 44,
     paddingRight: theme.Spacing.stackMd,

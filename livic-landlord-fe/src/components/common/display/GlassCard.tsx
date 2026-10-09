@@ -25,9 +25,18 @@ export function GlassCard({
   if (flattened?.alignItems) inheritedAlignment.alignItems = flattened.alignItems;
   if (flattened?.justifyContent) inheritedAlignment.justifyContent = flattened.justifyContent;
 
+  // Padding given on the card replaces the card's own instead of adding to it
+  const { padding, paddingHorizontal, paddingVertical, paddingTop, paddingBottom, paddingLeft, paddingRight, ...outerStyle } =
+    flattened ?? {};
+  const callerPadding = Object.fromEntries(
+    Object.entries({ padding, paddingHorizontal, paddingVertical, paddingTop, paddingBottom, paddingLeft, paddingRight })
+      .filter(([, value]) => value !== undefined)
+  ) as ViewStyle;
+  const hasCallerPadding = Object.keys(callerPadding).length > 0;
+
   return (
-    <View style={[styles.outerContainer, style]}>
-      <View style={[styles.content, inheritedAlignment, contentStyle]}>
+    <View style={[styles.outerContainer, outerStyle]}>
+      <View style={[styles.content, hasCallerPadding && { padding: 0, ...callerPadding }, inheritedAlignment, contentStyle]}>
         {children}
       </View>
     </View>

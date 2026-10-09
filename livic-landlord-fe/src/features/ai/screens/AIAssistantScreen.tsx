@@ -392,7 +392,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                 value={input}
                 onChangeText={setInput}
                 placeholder={attachedFiles.length > 0 ? "Add instructions for attached file(s)..." : "Ask AI to execute a task, create a property, or analyze worksheets..."}
-                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                placeholderTextColor={theme.Colors.placeholder}
                 multiline
                 maxLength={1000}
                 editable={!isSending}

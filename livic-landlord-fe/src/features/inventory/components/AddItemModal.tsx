@@ -201,7 +201,7 @@ export function AddItemModal({
               value={name}
               onChangeText={setName}
               placeholder="e.g. Samsung Bespoke Refrigerator"
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               style={styles.input}
             />
 
@@ -275,7 +275,7 @@ export function AddItemModal({
                   value={serialNumber}
                   onChangeText={setSerialNumber}
                   placeholder="e.g. SAM-8231-90X"
-                  placeholderTextColor={theme.Colors.onSurfaceVariant}
+                  placeholderTextColor={theme.Colors.placeholder}
                   style={styles.input}
                 />
               </View>
@@ -285,7 +285,7 @@ export function AddItemModal({
                   value={replacementValue}
                   onChangeText={setReplacementValue}
                   placeholder="e.g. 86000"
-                  placeholderTextColor={theme.Colors.onSurfaceVariant}
+                  placeholderTextColor={theme.Colors.placeholder}
                   keyboardType="numeric"
                   style={styles.input}
                 />
@@ -297,7 +297,7 @@ export function AddItemModal({
               value={notes}
               onChangeText={setNotes}
               placeholder="Warranty info, compressor details, etc."
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               multiline
               numberOfLines={3}
               style={[styles.input, { height: 70, textAlignVertical: 'top' }]}
@@ -369,7 +369,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   input: {
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -385,7 +385,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: theme.Spacing.sm,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     backgroundColor: theme.Colors.surfaceContainerLow,
   },
   chipSelected: { borderColor: theme.Colors.primary, backgroundColor: withAlpha(theme.Colors.primary, 0.08) },

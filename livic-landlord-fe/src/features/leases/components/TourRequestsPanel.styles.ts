@@ -69,7 +69,7 @@ export const createTourRequestStyles = (theme: AppTheme) => StyleSheet.create({
     borderRadius: theme.Rounded.sm,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     maxWidth: '100%',
   },
   contactText: {

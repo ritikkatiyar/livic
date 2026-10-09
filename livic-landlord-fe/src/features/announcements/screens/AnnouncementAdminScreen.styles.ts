@@ -17,7 +17,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     kicker: {
       fontSize: theme.Typography.labelSmall.fontSize,
       fontWeight: '600',
-      color: theme.Colors.primary,
+      color: theme.Colors.onSurfaceVariant,
       letterSpacing: 0.2,
       marginBottom: 4,
     },

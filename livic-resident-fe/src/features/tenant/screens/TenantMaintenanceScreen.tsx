@@ -8,6 +8,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { getMaintenanceTickets, getTicketHealthStats, createMaintenanceTicket, MaintenanceTicket, TicketHealthStats, type CreateTicketRequest } from '@/src/features/tenant/api/maintenance.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
@@ -18,6 +19,8 @@ interface TenantMaintenanceScreenProps {
 
 const CATEGORIES: CreateTicketRequest['category'][] = ['MAINTENANCE', 'BILLING', 'SAFETY', 'OTHER'];
 const PRIORITIES: NonNullable<CreateTicketRequest['priority']>[] = ['STANDARD', 'HIGH', 'URGENT'];
+// API values are upper case; people read sentence case ("IN_PROGRESS" -> "In progress")
+const toLabel = (value?: string) => (value ? value.charAt(0) + value.slice(1).toLowerCase().replace(/_/g, ' ') : '');
 
 export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaintenanceScreenProps) {
   const { theme, isDark } = useAppTheme();
@@ -108,8 +111,8 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
             <Text style={styles.label}>Issue Title *</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g., Water leakage under bathroom sink"
-              placeholderTextColor={theme.Colors.outline}
+              placeholder="e.g. Bathroom tap leaking"
+              placeholderTextColor={theme.Colors.placeholder}
               value={title}
               onChangeText={setTitle}
             />
@@ -120,10 +123,14 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
                 <TouchableOpacity 
                   key={cat} 
                   style={[styles.pickerChip, category === cat && styles.pickerChipActive]}
+                  hitSlop={{ top: 6, bottom: 6 }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: category === cat }}
                   onPress={() => setCategory(cat)}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.pickerChipText, category === cat && styles.pickerChipTextActive]}>{cat}</Text>
+                  {category === cat && <MaterialIcons name="check" size={16} color={theme.Colors.onPrimaryContainer} />}
+                  <Text style={[styles.pickerChipText, category === cat && styles.pickerChipTextActive]}>{toLabel(cat)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -133,11 +140,15 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
               {PRIORITIES.map((prio) => (
                 <TouchableOpacity 
                   key={prio} 
-                  style={[styles.pickerChip, priority === prio && styles.pickerChipActivePrio]}
+                  style={[styles.pickerChip, priority === prio && styles.pickerChipActive]}
+                  hitSlop={{ top: 6, bottom: 6 }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: priority === prio }}
                   onPress={() => setPriority(prio)}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.pickerChipText, priority === prio && styles.pickerChipTextActive]}>{prio}</Text>
+                  {priority === prio && <MaterialIcons name="check" size={16} color={theme.Colors.onPrimaryContainer} />}
+                  <Text style={[styles.pickerChipText, priority === prio && styles.pickerChipTextActive]}>{toLabel(prio)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -146,7 +157,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Describe the issue in detail, symptoms, when it started..."
-              placeholderTextColor={theme.Colors.outline}
+              placeholderTextColor={theme.Colors.placeholder}
               multiline
               numberOfLines={4}
               value={description}
@@ -167,10 +178,10 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
                 style={[styles.submitBtn, { backgroundColor: theme.Colors.primary }, (!title.trim() || !description.trim() || submitting) && styles.submitBtnDisabled]}
               >
                 {submitting ? (
-                  <ActivityIndicator color="#ffffff" />
+                  <ActivityIndicator color={theme.Colors.onPrimary} />
                 ) : (
                   <>
-                    <MaterialIcons name="send" size={18} color="#ffffff" />
+                    <MaterialIcons name="send" size={18} color={theme.Colors.onPrimary} />
                     <Text style={styles.submitBtnText}>Submit Service Request</Text>
                   </>
                 )}
@@ -180,7 +191,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
 
           {/* AI Desk Banner */}
           <View
-            style={[styles.promoCard, { backgroundColor: theme.Colors.primary }]}
+            style={styles.promoCard}
           >
             <View style={styles.promoBadge}><Text style={styles.promoBadgeText}>AI TROUBLESHOOTING DESK</Text></View>
             <Text style={styles.promoTitle}>Need immediate DIY fixes?</Text>
@@ -189,7 +200,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
               <MaterialIcons name="smart-toy" size={20} color={theme.Colors.primary} />
               <Text style={styles.promoBtnText}>Open AI Assistance</Text>
             </TouchableOpacity>
-            <MaterialIcons name="psychology" size={130} color="rgba(255,255,255,0.12)" style={styles.promoBgIcon} />
+            <MaterialIcons name="psychology" size={130} color={withAlpha(theme.Colors.primary, 0.1)} style={styles.promoBgIcon} />
           </View>
 
           {/* Service Health Metrics */}
@@ -234,7 +245,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
                       <Text style={styles.historyItemId}>#{t.ticketNumber}</Text>
                       <View style={{ flex: 1, marginLeft: 12 }}>
                         <Text style={styles.historyItemTitle}>{t.title}</Text>
-                        <Text style={styles.historyItemSub}>{t.category} • {t.priority}</Text>
+                        <Text style={styles.historyItemSub}>{toLabel(t.category)} • {toLabel(t.priority)}</Text>
                       </View>
                     </View>
                     <View style={styles.historyItemRight}>
@@ -335,7 +346,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: 22,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
-    shadowColor: '#000',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: isDark ? 0.2 : 0.05,
     shadowRadius: 8,
@@ -348,15 +359,15 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardSubtitle: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   
   label: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.2, marginBottom: 8, marginTop: 14 },
-  input: { backgroundColor: theme.Colors.surfaceContainerLow, borderWidth: 1, borderColor: theme.Colors.outlineVariant, borderRadius: 14, padding: 14, fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onBackground },
+  input: { backgroundColor: theme.Colors.surfaceContainerLow, borderWidth: 1, borderColor: theme.Colors.outlineStrong, borderRadius: 14, padding: 14, fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onBackground },
   textArea: { minHeight: 90, textAlignVertical: 'top' },
   
   pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pickerChip: { minHeight: 36, backgroundColor: theme.Colors.surfaceContainerLow, paddingHorizontal: 14, paddingVertical: 8, borderRadius: theme.Rounded.full, borderWidth: 1, borderColor: theme.Colors.outlineVariant, justifyContent: 'center', alignItems: 'center' },
-  pickerChipActive: { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary },
-  pickerChipActivePrio: { backgroundColor: theme.Colors.error, borderColor: theme.Colors.error },
+  pickerChip: { minHeight: 36, backgroundColor: theme.Colors.surfaceContainerLow, paddingHorizontal: 14, paddingVertical: 8, borderRadius: theme.Rounded.full, borderWidth: 1, borderColor: theme.Colors.outlineStrong, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 6 },
+  // Selected looks the same for every choice (tint, border, tick): priority is never shown in alarm red here
+  pickerChipActive: { backgroundColor: theme.Colors.primaryContainer, borderColor: theme.Colors.primary },
   pickerChipText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant },
-  pickerChipTextActive: { color: '#ffffff' },
+  pickerChipTextActive: { color: theme.Colors.onPrimaryContainer, fontWeight: '600' },
 
   uploadBox: { borderWidth: 1, borderColor: theme.Colors.outlineVariant, borderStyle: 'dashed', borderRadius: 16, padding: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.Colors.surfaceContainerLow, marginTop: 18, marginBottom: 18 },
   uploadText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', color: theme.Colors.primary, marginTop: 6 },
@@ -365,12 +376,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
 
-  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3 },
-  promoBadge: { backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginBottom: 12 },
-  promoBadgeText: { color: '#ffffff', fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600' },
-  promoTitle: { color: '#ffffff', fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', marginBottom: 6, zIndex: 1 },
-  promoDesc: { color: 'rgba(255,255,255,0.9)', fontSize: theme.Typography.bodyMedium.fontSize, lineHeight: 20, marginBottom: 16, width: '80%', zIndex: 1 },
-  promoBtn: { minHeight: 44, backgroundColor: theme.Colors.surfaceContainerLowest, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8, paddingHorizontal: 18, paddingVertical: 10, borderRadius: theme.Rounded.full, zIndex: 1 },
+  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', backgroundColor: theme.Colors.primaryContainer, borderWidth: 1, borderColor: theme.Colors.primaryTint, shadowColor: theme.Colors.shadowColor, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3 },
+  promoBadge: { backgroundColor: withAlpha(theme.Colors.primary, 0.12), alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginBottom: 12 },
+  promoBadgeText: { color: theme.Colors.onPrimaryContainer, fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600' },
+  promoTitle: { color: theme.Colors.onSurface, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', marginBottom: 6, zIndex: 1 },
+  promoDesc: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodyMedium.fontSize, lineHeight: 20, marginBottom: 16, width: '80%', zIndex: 1 },
+  promoBtn: { minHeight: 44, backgroundColor: theme.Colors.surfaceContainerLowest, borderWidth: 1, borderColor: theme.Colors.primary, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8, paddingHorizontal: 18, paddingVertical: 10, borderRadius: theme.Rounded.full, zIndex: 1 },
   promoBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
   promoBgIcon: { position: 'absolute', right: -25, bottom: -25 },
 
@@ -382,7 +393,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   healthLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant },
   healthValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600' },
 
-  historyCard: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: theme.Colors.outlineVariant, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: isDark ? 0.2 : 0.05, shadowRadius: 8, elevation: 2 },
+  historyCard: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: theme.Colors.outlineVariant, shadowColor: theme.Colors.shadowColor, shadowOffset: { width: 0, height: 2 }, shadowOpacity: isDark ? 0.2 : 0.05, shadowRadius: 8, elevation: 2 },
   historyHeader: { padding: 20, borderBottomWidth: 1, borderBottomColor: theme.Colors.outlineVariant },
   historyTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', color: theme.Colors.onBackground },
   historySub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },

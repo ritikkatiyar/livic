@@ -98,7 +98,7 @@ export function MealSlotsModal({ visible, slots, dishCountBySlot, isSaving, onCl
                     onChangeText={(name) => update(row.key, { name })}
                     maxLength={MAX_SLOT_NAME}
                     placeholder="Meal name, e.g. Lunch"
-                    placeholderTextColor={theme.Colors.onSurfaceVariant}
+                    placeholderTextColor={theme.Colors.placeholder}
                     accessibilityLabel={`Meal ${index + 1} name`}
                   />
                   <TouchableOpacity

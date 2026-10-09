@@ -171,7 +171,7 @@ export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
           >
             <Text style={styles.sectionTitle}>Menu</Text>
             {renderDrawerLink('dashboard', 'Overview', '/analytics')}
-            {renderDrawerLink('business', 'Portfolio', '/command-center')}
+            {renderDrawerLink('business', 'Home', '/command-center')}
             {renderDrawerLink('assessment', 'Reports', '/reports')}
             {renderDrawerLink('description', 'Leases', '/leases' as Href)}
             {renderDrawerLink('inventory', 'Inventory', '/inventory' as Href)}

@@ -25,7 +25,7 @@ export const createMessMenuStyles = (theme: AppTheme, isDark: boolean) => StyleS
   kicker: {
     fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
-    color: theme.Colors.primary,
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
   },
   title: {

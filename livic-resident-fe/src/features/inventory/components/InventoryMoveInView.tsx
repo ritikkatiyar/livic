@@ -1,4 +1,5 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -18,7 +19,7 @@ export function InventoryMoveInView({ isDesktop }: InventoryMoveInViewProps) {
 
   return (
     <View style={styles.sectionStack}>
-      <View style={[styles.moveBanner, { backgroundColor: theme.Colors.primary }]}>
+      <View style={styles.moveBanner}>
         <View style={styles.moveBannerContent}>
           <Text style={styles.moveBannerKicker}>NEW MOVE-IN ASSIGNMENT</Text>
           <Text style={styles.moveBannerTitle}>Jordan Mitchell</Text>
@@ -29,7 +30,7 @@ export function InventoryMoveInView({ isDesktop }: InventoryMoveInViewProps) {
           <Text style={styles.progressSublabel}>items done</Text>
           <View style={styles.progressTrack}>
             <View
-              style={[styles.progressFill, { width: `${progress * 100}%` as any, backgroundColor: theme.Colors.surfaceContainerLowest }]}
+              style={[styles.progressFill, { width: `${progress * 100}%` as any, backgroundColor: theme.Colors.primary }]}
             />
           </View>
         </View>
@@ -81,15 +82,15 @@ export function InventoryMoveInView({ isDesktop }: InventoryMoveInViewProps) {
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   sectionStack: { gap: theme.Spacing.md },
-  moveBanner: { borderRadius: 22, overflow: 'hidden', minHeight: 110, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 22, gap: theme.Spacing.md },
+  moveBanner: { borderRadius: 22, overflow: 'hidden', minHeight: 110, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 22, gap: theme.Spacing.md, backgroundColor: theme.Colors.primaryContainer, borderWidth: 1, borderColor: theme.Colors.primaryTint },
   moveBannerContent: { flex: 1 },
-  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: 'rgba(255,255,255,0.7)', letterSpacing: 0.6 },
-  moveBannerTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.surfaceContainerLowest, marginTop: theme.Spacing.xs },
-  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: 'rgba(255,255,255,0.8)', marginTop: theme.Spacing.xs },
+  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.6 },
+  moveBannerTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onPrimaryContainer, marginTop: theme.Spacing.xs },
+  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
   progressBox: { alignItems: 'flex-end', gap: theme.Spacing.xs, minWidth: 100 },
-  progressFraction: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '600', color: theme.Colors.surfaceContainerLowest },
-  progressSublabel: { fontSize: theme.Typography.labelSmall.fontSize, color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
-  progressTrack: { width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 99, overflow: 'hidden' },
+  progressFraction: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '600', color: theme.Colors.onPrimaryContainer },
+  progressSublabel: { fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '500' },
+  progressTrack: { width: '100%', height: 6, backgroundColor: withAlpha(theme.Colors.primary, 0.2), borderRadius: 99, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 99 },
   workflowGrid: { gap: 14 },
   workflowGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },

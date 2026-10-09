@@ -157,7 +157,7 @@ export default function OnboardingScreen() {
           <TextInput
             style={styles.inviteInput}
             placeholder="e.g. AB12CD"
-            placeholderTextColor={theme.Colors.onSurfaceVariant}
+            placeholderTextColor={theme.Colors.placeholder}
             value={inviteCode}
             onChangeText={(t) => setInviteCode(t.toUpperCase())}
             maxLength={10}
@@ -294,7 +294,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLow,
     color: theme.Colors.onSurface,
     borderWidth: 1,
-    borderColor: theme.Colors.outline,
+    borderColor: theme.Colors.outlineStrong,
   },
   inviteHint: {
     fontSize: theme.Typography.bodySmall.fontSize,

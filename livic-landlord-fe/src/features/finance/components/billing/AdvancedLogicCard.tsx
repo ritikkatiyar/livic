@@ -1,5 +1,5 @@
 import React from 'react';
-import * as Haptics from 'expo-haptics';
+import { haptic } from '@/src/theme/haptics';
 import { View, Text, StyleSheet, Switch, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -39,7 +39,7 @@ export function AdvancedLogicCard({
         <Switch 
           value={applySalesTax} 
           onValueChange={(val) => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            haptic('tap');
             setApplySalesTax(val);
           }}
           trackColor={{ false: isDark ? withAlpha(theme.Colors.onSurface, 0.16) : theme.Colors.surfaceContainerHigh, true: theme.Colors.primary }}
@@ -52,7 +52,7 @@ export function AdvancedLogicCard({
         <Switch 
           value={autoCarryForward} 
           onValueChange={(val) => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            haptic('tap');
             setAutoCarryForward(val);
           }}
           trackColor={{ false: isDark ? withAlpha(theme.Colors.onSurface, 0.16) : theme.Colors.surfaceContainerHigh, true: theme.Colors.primary }}
@@ -72,7 +72,7 @@ export function AdvancedLogicCard({
         <TextInput 
           style={styles.inputWithIcon} 
           placeholder="5" 
-          placeholderTextColor={theme.Colors.outlineVariant}
+          placeholderTextColor={theme.Colors.placeholder}
           keyboardType="numeric"
           value={lateFee}
           onChangeText={setLateFee}

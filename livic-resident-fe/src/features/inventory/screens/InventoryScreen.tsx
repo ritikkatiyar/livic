@@ -76,7 +76,7 @@ export default function InventoryScreen() {
               value={query} 
               onChangeText={setQuery}
               placeholder="Search inventory..."
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               style={styles.searchInput}
             />
             {query.length > 0 && (
@@ -129,7 +129,7 @@ export default function InventoryScreen() {
               value={query} 
               onChangeText={setQuery}
               placeholder="Search inventory..."
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               style={styles.searchInput}
             />
           </View>
@@ -180,7 +180,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.labelSmall.fontSize, 
     fontWeight: '600', 
     letterSpacing: 0.5, 
-    color: theme.Colors.primary 
+    color: theme.Colors.onSurfaceVariant 
   },
   title: { 
     fontSize: theme.Typography.headlineLg.fontSize, 
@@ -223,7 +223,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLowest, 
     borderRadius: theme.Rounded.md,
     borderWidth: 1, 
-    borderColor: theme.Colors.outline, 
+    borderColor: theme.Colors.outlineStrong, 
     paddingHorizontal: 12, 
     gap: theme.Spacing.sm,
   },

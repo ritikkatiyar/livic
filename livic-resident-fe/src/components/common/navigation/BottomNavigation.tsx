@@ -1,169 +1,171 @@
 import React from 'react';
-import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-  Text,
-} from 'react-native';
+import { View, StyleSheet, Animated, Keyboard, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter, usePathname } from 'expo-router';
+import { Href, useRouter, usePathname } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useScrollNav } from './ScrollContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { useOpenRequestCount } from '@/src/features/tenant/hooks/useOpenRequestCount';
+import { haptic } from '@/src/theme/haptics';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
+import { ASSISTANT_SIZE, DOCK_GAP, DOCK_SIDE_PADDING, PILL_HEIGHT, dockBottom, useLiviInTopBar } from './bottomDock';
+import { TabPill, type TabPillItem } from './TabPill';
+import { RAIL_WIDTH, TabRail } from './TabRail';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 interface BottomNavigationProps {
   onMorePress: () => void;
   onQRPress?: () => void;
 }
 
+const NAV_ITEMS: { label: string; icon: keyof typeof MaterialIcons.glyphMap; route: string }[] = [
+  { label: 'Home', icon: 'home', route: '/tenant-home' },
+  { label: 'Payments', icon: 'payments', route: '/tenant-payments' },
+  { label: 'Requests', icon: 'build', route: '/tenant-maintenance' },
+];
+
 export default function BottomNavigation({ onMorePress }: BottomNavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { theme, isDark } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const insets = useSafeAreaInsets();
+  const bottomOffset = dockBottom(insets.bottom);
+  const styles = React.useMemo(() => createStyles(bottomOffset), [bottomOffset]);
+  const { navTranslateY, requestScrollToTop } = useScrollNav();
+  const liviInTopBar = useLiviInTopBar();
+  // The bar would otherwise ride up on the keyboard and cover the field being typed in
+  const [keyboardOpen, setKeyboardOpen] = React.useState(false);
+  React.useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardOpen(true));
+    const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardOpen(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  const { theme } = useAppTheme();
+  const { accessToken } = useAuth();
+  const openRequests = useOpenRequestCount(accessToken || null);
+  const { isTablet } = useResponsive();
 
   if (pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') {
     return null;
   }
 
-  const navItems = [
-    { label: 'Home', icon: 'home' as const, route: '/tenant-home' },
-    { label: 'Payments', icon: 'payments' as const, route: '/tenant-payments' },
-    { label: 'Requests', icon: 'build' as const, route: '/tenant-maintenance' },
+  const isOn = (route: string) => pathname === route || pathname.startsWith(`${route}/`);
+  // Screens reached from the More sheet (property, items, mess menu, settings) light up "More"
+  const isMoreActive = !NAV_ITEMS.some((item) => isOn(item.route));
+
+  const tabItems: TabPillItem[] = [
+    ...NAV_ITEMS.map((item) => {
+      const active = isOn(item.route);
+      return {
+        key: item.route,
+        label: item.label,
+        icon: item.icon,
+        active,
+        // Tabs replace each other rather than stacking, so Back leaves the app section instead of replaying tab switches
+        onPress: () => {
+          // Already here: scroll back to the top, as both platforms do on re-tap
+          if (active) {
+            requestScrollToTop();
+            return;
+          }
+          haptic('tap');
+          router.replace(item.route as Href);
+        },
+        badgeCount: item.route === '/tenant-maintenance' ? openRequests : undefined,
+        badgeMeaning: 'open',
+        // Waiting on the landlord, not on the resident: no red alarm they can't clear
+        badgeTone: 'neutral' as const,
+      };
+    }),
+    {
+      key: 'more',
+      label: 'More',
+      icon: 'grid-view',
+      active: isMoreActive,
+      onPress: () => {
+        haptic('tap');
+        onMorePress();
+      },
+      accessibilityLabel: 'More options',
+    },
   ];
 
-  return (
-    <>
-      {Platform.OS === 'web' && (
-        <style dangerouslySetInnerHTML={{ __html: `
-          .mobile-bottom-nav-container {
-            position: fixed !important;
-            bottom: 16px !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 9999 !important;
-          }
-          @media (min-width: 900px) {
-            .mobile-bottom-nav-container {
-              display: none !important;
-            }
-          }
-        `}} />
-      )}
-      <View
-        // @ts-ignore
-        dataSet={{ bottomNav: 'true', responsiveLayout: 'mobile' }}
-        className="mobile-bottom-nav-container"
-        style={styles.outerContainer}
-        pointerEvents="box-none"
-      >
-        <View style={styles.pillContainer}>
-          {navItems.map((item) => {
-            const isActive = pathname === item.route;
-            return (
-              <TouchableOpacity
-                key={item.route}
-                style={styles.navItem}
-                onPress={() => {
-                  if (!isActive) router.push(item.route as any);
-                }}
-                activeOpacity={0.75}
-                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                accessibilityRole="button"
-                accessibilityLabel={item.label}
-              >
-                <View style={[styles.iconCircle, isActive && { backgroundColor: `${theme.Colors.primary}18` }]}>
-                  <MaterialIcons
-                    name={item.icon}
-                    size={20}
-                    color={isActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.navText,
-                    { color: isActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant },
-                    isActive && styles.navTextActive,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-
-          {/* More Sheet Trigger */}
-          <TouchableOpacity
-            style={styles.navItem}
-            onPress={onMorePress}
-            activeOpacity={0.75}
-            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            accessibilityRole="button"
-            accessibilityLabel="More options"
-          >
-            <View style={styles.iconCircle}>
-              <MaterialIcons name="grid-view" size={20} color={theme.Colors.onSurfaceVariant} />
-            </View>
-            <Text style={[styles.navText, { color: theme.Colors.onSurfaceVariant }]} numberOfLines={1}>
-              More
-            </Text>
-          </TouchableOpacity>
-        </View>
+  // Tablets: the same tabs as a rail down the left edge, below the top bar and beside the content
+  if (isTablet) {
+    return (
+      <View pointerEvents="box-none" style={[styles.railContainer, { top: 56 + (insets.top > 0 ? insets.top : 12) }]}>
+        <TabRail items={tabItems} />
       </View>
-    </>
+    );
+  }
+
+  return (
+    <Animated.View
+      // @ts-ignore react-native-web forwards dataSet to data-* attributes; app/+html.tsx pins and hides the bar by them
+      dataSet={{ bottomNav: 'true', responsiveLayout: 'mobile' }}
+      style={[
+        styles.outerContainer,
+        keyboardOpen && styles.hidden,
+        {
+          transform: [{ translateY: navTranslateY }],
+          opacity: navTranslateY.interpolate({ inputRange: [0, 120], outputRange: [1, 0], extrapolate: 'clamp' }),
+        },
+      ]}
+      pointerEvents="box-none"
+    >
+      {/* Fades the page out behind the floating bar, so content never peeks out underneath it */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={[withAlpha(theme.Colors.background, 0), theme.Colors.background, theme.Colors.background]}
+        locations={[0, 0.5, 1]}
+        style={[styles.fade, { bottom: -bottomOffset, height: PILL_HEIGHT + bottomOffset + FADE_EXTRA }]}
+      />
+      <TabPill items={tabItems} />
+      {/* Livi's bubble is drawn by FloatingAIAssistant; this keeps its place in the row, unless Livi
+          has moved to the top bar to give the tabs the whole width */}
+      {!liviInTopBar && <View style={styles.assistantSlot} pointerEvents="none" />}
+    </Animated.View>
   );
 }
 
-const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
+// How far above the bar the fade begins
+const FADE_EXTRA = 24;
+
+const createStyles = (bottomOffset: number) => StyleSheet.create({
   outerContainer: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 24 : 16,
+    bottom: bottomOffset,
     left: 0,
     right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-    paddingHorizontal: 12,
-  },
-  pillContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    borderRadius: 32,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    backgroundColor: theme.Colors.surfaceContainerLowest,
-    borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
-    shadowColor: theme.Colors.shadowColor || '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 8,
-    maxWidth: 420,
-    width: '100%',
-  },
-  navItem: {
-    alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingVertical: 2,
-    gap: 2,
-    minHeight: 44,
+    gap: DOCK_GAP,
+    zIndex: 1000,
+    paddingHorizontal: DOCK_SIDE_PADDING,
   },
-  iconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+  railContainer: {
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+    width: RAIL_WIDTH,
+    zIndex: 1000,
   },
-  navText: {
-    fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '500',
-    letterSpacing: 0.1,
+  hidden: {
+    display: 'none',
   },
-  navTextActive: {
-    fontWeight: '600',
+  fade: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: -1,
+  },
+  assistantSlot: {
+    width: ASSISTANT_SIZE,
+    height: ASSISTANT_SIZE,
   },
 });

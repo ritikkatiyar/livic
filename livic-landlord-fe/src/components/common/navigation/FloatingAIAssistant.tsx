@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useReducedMotion } from '@/src/theme/motion';
 import {
   View,
   Text,
@@ -11,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  BackHandler,
   Pressable,
   useWindowDimensions,
 } from 'react-native';
@@ -21,10 +23,11 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { runAICommand } from '@/src/features/ai/api/ai.api';
 import { createStyles } from './FloatingAIAssistant.styles';
-import { useScrollNav } from './ScrollContext';
-import { useAppChrome } from '@/src/components/common/layout/AppChrome';
+import { NAV_SCROLL_IGNORE, useScrollNav } from './ScrollContext';
 import { useAIScreenContext } from '@/src/features/ai/hooks/useAIScreenContext';
 import { AssistantMascot, MascotMood } from './AssistantMascot';
+import { ASSISTANT_SIZE, assistantDockBottom, assistantDockRight, useLiviInTopBar } from './bottomDock';
+import { onOpenAssistantRequest } from './assistantEvents';
 
 type Message = {
   id: string;
@@ -32,21 +35,22 @@ type Message = {
   text: string;
 };
 
-const CLOSED_BUBBLE_SIZE = 54;
-
 export default function FloatingAIAssistant() {
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { accessToken } = useAuth();
   const { theme, isDark } = useAppTheme();
-  const { subscribeNavHidden } = useScrollNav();
-  const { setSlotHeight } = useAppChrome();
+  const { subscribeNavHidden, setOverlayOpen } = useScrollNav();
   const insets = useSafeAreaInsets();
   const { context: screenContext, suggestions, label: contextLabel } = useAIScreenContext();
   const brandGradient = [theme.Colors.primary, theme.Colors.primary] as const;
 
   const [isOpen, setIsOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  // On narrow screens and with large text, Livi lives in the top bar and only the chat card shows here
+  const liviInTopBar = useLiviInTopBar();
+  const openRequestRef = useRef<() => void>(() => {});
+  useEffect(() => onOpenAssistantRequest(() => openRequestRef.current()), []);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -60,39 +64,31 @@ export default function FloatingAIAssistant() {
   const scrollRef = useRef<ScrollView>(null);
   
   // Animations
+  const reduceMotion = useReducedMotion();
   const animValue = useRef(new Animated.Value(0)).current; // 0: closed, 1: open
   const bubbleScale = useRef(new Animated.Value(1)).current; // For bounce effect
-  const dockAnim = useRef(new Animated.Value(0)).current; // 0: above nav, 1: docked in corner
-  const [isDocked, setIsDocked] = useState(false);
+  const [isNavHidden, setIsNavHidden] = useState(false);
   const [isGreeting, setIsGreeting] = useState(false);
-  const mascotMood: MascotMood = isGreeting ? 'happy' : isDocked ? 'watching' : 'idle';
+  const mascotMood: MascotMood = isGreeting ? 'happy' : isNavHidden ? 'watching' : 'idle';
 
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  // Spring the bubble into the corner when the bottom nav hides, and back when it returns.
-  // Driven by its own spring (not the nav's timing curve) so it settles with a small bounce.
-  useEffect(
-    () =>
-      subscribeNavHidden((shouldDock) => {
-        setIsDocked(shouldDock);
-        Animated.spring(dockAnim, {
-          toValue: shouldDock ? 1 : 0,
-          friction: 6,
-          tension: 70,
-          useNativeDriver: false,
-        }).start();
-      }),
-    [subscribeNavHidden, dockAnim]
-  );
+  // Livi stays in the corner beside the bar; while the bar hides on scroll it looks down at the page
+  useEffect(() => subscribeNavHidden(setIsNavHidden), [subscribeNavHidden]);
 
   useEffect(() => {
+    // With reduced motion the chat card appears in place rather than growing out of the bubble
+    if (reduceMotion) {
+      animValue.setValue(isOpen ? 1 : 0);
+      return;
+    }
     Animated.spring(animValue, {
       toValue: isOpen ? 1 : 0,
       tension: 50,
       friction: 8,
       useNativeDriver: false,
     }).start();
-  }, [isOpen]);
+  }, [isOpen, reduceMotion]);
 
   // Keyboard height listener for mobile keyboard compensation
   useEffect(() => {
@@ -113,10 +109,20 @@ export default function FloatingAIAssistant() {
     };
   }, []);
 
-  // Bubble sits above the bar; report the strip it covers so screens can pad for it
+  // While the chat is open the tab bar steps aside, so it never shows under or beside the card
   useEffect(() => {
-    setSlotHeight('assistant', isOpen ? 0 : CLOSED_BUBBLE_SIZE);
-  }, [isOpen, setSlotHeight]);
+    setOverlayOpen(isOpen);
+  }, [isOpen, setOverlayOpen]);
+
+  // Android back closes the chat instead of navigating the screen behind it
+  useEffect(() => {
+    if (!isOpen) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setIsOpen(false);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [isOpen]);
 
   // Rendered by the app shell only, so there is no route to check: it is simply absent
   // on full-screen routes such as the AI desk and the auth screens.
@@ -134,6 +140,8 @@ export default function FloatingAIAssistant() {
     setTimeout(() => setIsOpen(true), 220);
     setTimeout(() => setIsGreeting(false), 700);
   };
+
+  openRequestRef.current = handleOpen;
 
   const handleClose = () => {
     setIsOpen(false);
@@ -169,37 +177,34 @@ export default function FloatingAIAssistant() {
   // Interpolations for open sheet layout
   const cardWidth = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [56, windowWidth * 0.92],
+    outputRange: [ASSISTANT_SIZE, windowWidth * 0.92],
   });
 
-  const cardMaxHeight = keyboardHeight > 0 
-    ? Math.min(360, windowHeight * 0.42) 
+  const cardMaxHeight = keyboardHeight > 0
+    ? Math.min(360, windowHeight * 0.42)
     : Math.min(520, windowHeight * 0.65);
 
   const cardHeight = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [56, cardMaxHeight],
+    outputRange: [ASSISTANT_SIZE, cardMaxHeight],
   });
 
   const cardBorderRadius = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [28, 24],
+    outputRange: [ASSISTANT_SIZE / 2, 24],
   });
 
+  // Closed, Livi sits in the bottom bar's row, beside the pill
   const cardRight = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [20, (windowWidth * 0.08) / 2],
+    outputRange: [assistantDockRight(windowWidth, isTablet), (windowWidth * 0.08) / 2],
   });
 
-  // Calculate bottom offset to float AI trigger cleanly above bottom navigation bar
-  const defaultClosedBottom = Platform.OS === 'ios' ? 112 : 92;
-  // Distance to slide down so the bubble rests just above the gesture bar when the nav is hidden
-  const dockedShift = Math.max(0, defaultClosedBottom - (Math.max(insets.bottom, 8) + 16));
-  const cardBottom = keyboardHeight > 0 
-    ? keyboardHeight + 10 
+  const cardBottom = keyboardHeight > 0
+    ? keyboardHeight + 10
     : animValue.interpolate({
         inputRange: [0, 1],
-        outputRange: [defaultClosedBottom, 20],
+        outputRange: [assistantDockBottom(insets.bottom), 20],
       });
 
   const contentOpacity = animValue.interpolate({
@@ -223,21 +228,21 @@ export default function FloatingAIAssistant() {
       )}
 
       <Animated.View
+        // @ts-ignore react-native-web forwards dataSet to data-* attributes
+        dataSet={{ navScroll: NAV_SCROLL_IGNORE }}
         style={[
           styles.container,
+          // Closed, Livi is an outlined button so the selected tab stays the only solid teal in the bar
+          !isOpen && styles.bubbleRing,
+          // While typing elsewhere, Livi's bubble gets out of the keyboard's way
+          !isOpen && keyboardHeight > 0 && styles.hiddenForKeyboard,
+          !isOpen && liviInTopBar && styles.hiddenForKeyboard,
           {
             width: cardWidth,
             height: cardHeight,
             borderRadius: cardBorderRadius,
             right: cardRight,
             bottom: cardBottom,
-          },
-          // While the bottom nav is hidden on scroll, dock the closed bubble into the corner it vacated
-          !isOpen && keyboardHeight === 0 && {
-            transform: [
-              { translateY: dockAnim.interpolate({ inputRange: [0, 1], outputRange: [0, dockedShift] }) },
-              { scale: dockAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.88] }) },
-            ],
           },
         ]}
       >
@@ -253,10 +258,15 @@ export default function FloatingAIAssistant() {
             onPress={handleOpen}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="Open AI Assistant"
+            accessibilityLabel="Ask Livi, AI assistant"
           >
             <Animated.View style={{ transform: [{ scale: bubbleScale }] }}>
-              <AssistantMascot size={54} color={theme.Colors.primary} mood={mascotMood} />
+              <AssistantMascot
+                size={ASSISTANT_SIZE - 4}
+                color={theme.Colors.surfaceContainerHigh}
+                featureColor={theme.Colors.primary}
+                mood={mascotMood}
+              />
             </Animated.View>
           </TouchableOpacity>
         </Animated.View>
@@ -376,7 +386,7 @@ export default function FloatingAIAssistant() {
               <TextInput
                 style={[styles.input, { borderColor: `${theme.Colors.primary}33`, color: theme.Colors.onSurface }]}
                 placeholder="Ask Livi…"
-                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                placeholderTextColor={theme.Colors.placeholder}
                 value={input}
                 onChangeText={setInput}
                 multiline

@@ -139,7 +139,7 @@ export function EditMemberDetailsModal({
               value={editMemberTitle}
               onChangeText={setEditMemberTitle}
               placeholder="e.g. Property Manager, Caretaker"
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
             />
 
             <Text style={[styles.inputLabel, { marginTop: 16 }]}>ACCESS LEVEL</Text>
@@ -239,7 +239,7 @@ export function GenerateInviteCodeModal({
               value={inviteTitle}
               onChangeText={setInviteTitle}
               placeholder="e.g. Manager, Caretaker, Supervisor"
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
             />
 
             <Text style={[styles.inputLabel, { marginTop: 16 }]}>ACCESS LEVEL</Text>
@@ -278,7 +278,7 @@ export function GenerateInviteCodeModal({
               value={inviteMaxUses}
               onChangeText={setInviteMaxUses}
               placeholder="1"
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
             />
 
             <TouchableOpacity

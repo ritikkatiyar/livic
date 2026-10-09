@@ -33,7 +33,7 @@ export const createMessMenuStyles = (theme: AppTheme) => StyleSheet.create({
     fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
     letterSpacing: 0.2,
-    color: theme.Colors.primary,
+    color: theme.Colors.onSurfaceVariant,
   },
   title: {
     ...theme.Typography.headlineMd,
@@ -164,7 +164,7 @@ export const createMessMenuStyles = (theme: AppTheme) => StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     borderRadius: theme.Rounded.md,
     backgroundColor: theme.Colors.surfaceContainerLowest,
     paddingHorizontal: theme.Spacing.md,
@@ -282,7 +282,7 @@ export const createMessMenuStyles = (theme: AppTheme) => StyleSheet.create({
     paddingVertical: theme.Spacing.xs,
     borderRadius: theme.Rounded.full,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   dietChipText: {

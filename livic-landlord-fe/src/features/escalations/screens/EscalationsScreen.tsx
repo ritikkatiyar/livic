@@ -20,11 +20,14 @@ import IssueDetailModal from '@/src/features/issues/components/IssueDetailModal'
 import Pagination from '@/src/components/common/navigation/Pagination';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { createStyles } from './EscalationsScreen.styles';
+import { IssueFiltersSheet } from '../components/IssueFiltersSheet';
+import { ISSUE_PRIORITY_OPTIONS, ISSUE_STATUS_OPTIONS, issueFilterLabel } from '../utils/issueFilters';
 
 export default function EscalationsScreen() {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { isDesktop } = useResponsive();
+  const countColor = (count: number, color: string) => (count > 0 ? color : theme.Colors.onSurfaceVariant);
   // Let the filter chip rows run to the right screen edge on mobile so they clearly scroll
   const chipRowBleed = { flex: 1, marginRight: -theme.Spacing.containerPadding };
   const chipRowBleedContent = { paddingRight: theme.Spacing.containerPadding };
@@ -56,6 +59,11 @@ export default function EscalationsScreen() {
   } = useIssues(accessToken);
 
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const activeFilters = [
+    statusFilter !== 'ALL' && { key: 'status', label: issueFilterLabel(ISSUE_STATUS_OPTIONS, statusFilter), clear: () => setStatusFilter('ALL') },
+    priorityFilter !== 'ALL' && { key: 'priority', label: issueFilterLabel(ISSUE_PRIORITY_OPTIONS, priorityFilter), clear: () => setPriorityFilter('ALL') },
+  ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
 
   // Set default property selection if none active
   useEffect(() => {
@@ -100,16 +108,15 @@ export default function EscalationsScreen() {
     >
       <View style={isDesktop ? styles.desktopInner : null}>
         {/* Header Titles */}
-        {isDesktop && (
-          <View style={styles.titleContainer}>
-            <Text style={styles.titleLineDesktop}>Escalations & Issues</Text>
-            <Text style={styles.subtitle}>
-              Track resident maintenance reports, safety alerts, and SLA violations.
-            </Text>
-          </View>
-        )}
+        <View style={[styles.titleContainer, !isDesktop && styles.titleContainerMobile]}>
+          <Text style={styles.kicker}>MAINTENANCE & SAFETY</Text>
+          <Text style={isDesktop ? styles.titleLineDesktop : styles.titleLineMobile}>Escalations & Issues</Text>
+          <Text style={styles.subtitle}>
+            Track resident maintenance reports, safety alerts, and SLA violations.
+          </Text>
+        </View>
 
-        {/* Metrics Dashboard Row */}
+        {/* Metrics Dashboard Row: status colours only when there is something to act on, never for a zero */}
         <View style={styles.metricsRow}>
           <StatCard
             label="Total Tickets"
@@ -117,7 +124,7 @@ export default function EscalationsScreen() {
             loading={isLoading}
             iconName="confirmation-number"
             iconColor={theme.Colors.primary}
-            valueColor={theme.Colors.primary}
+            valueColor={theme.Colors.onSurface}
             style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
           />
           <StatCard
@@ -134,8 +141,8 @@ export default function EscalationsScreen() {
               value={metrics.inProgress}
               loading={isLoading}
               iconName="pending-actions"
-              iconColor={theme.Colors.tertiary}
-              valueColor={theme.Colors.tertiary}
+              iconColor={countColor(metrics.inProgress, theme.Colors.tertiary)}
+              valueColor={countColor(metrics.inProgress, theme.Colors.tertiary)}
               style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
             />
             <StatCard
@@ -143,8 +150,8 @@ export default function EscalationsScreen() {
               value={metrics.escalated}
               loading={isLoading}
               iconName="warning"
-              iconColor={theme.Colors.error}
-              valueColor={theme.Colors.error}
+              iconColor={countColor(metrics.escalated, theme.Colors.error)}
+              valueColor={countColor(metrics.escalated, theme.Colors.error)}
               style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
             />
           </View>
@@ -162,7 +169,7 @@ export default function EscalationsScreen() {
             <TextInput
               style={styles.searchInput}
               placeholder="Search by ticket #, title, or description..."
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -173,7 +180,40 @@ export default function EscalationsScreen() {
             )}
           </View>
 
-          {/* Filter Badges Row: Status */}
+          {/* Phones: one Filters button, with what is applied shown beside it as removable chips */}
+          {!isDesktop && (
+            <View style={styles.mobileFilterRow}>
+              <TouchableOpacity
+                style={[styles.filtersButton, activeFilters.length > 0 && styles.filtersButtonActive]}
+                onPress={() => setFiltersOpen(true)}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel={activeFilters.length ? `Filters, ${activeFilters.length} applied` : 'Filters'}
+              >
+                <MaterialIcons name="tune" size={18} color={activeFilters.length ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant} />
+                <Text style={[styles.filtersButtonText, activeFilters.length > 0 && styles.filtersButtonTextActive]}>
+                  {activeFilters.length ? `Filters · ${activeFilters.length}` : 'Filters'}
+                </Text>
+              </TouchableOpacity>
+              {activeFilters.map((filter) => (
+                <TouchableOpacity
+                  key={filter.key}
+                  style={styles.appliedChip}
+                  onPress={filter.clear}
+                  activeOpacity={0.75}
+                  hitSlop={{ top: 6, bottom: 6 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove filter ${filter.label}`}
+                >
+                  <Text style={styles.appliedChipText}>{filter.label}</Text>
+                  <MaterialIcons name="close" size={16} color={theme.Colors.onPrimaryContainer} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Desktop: Status and Priority as rows of chips */}
+          {isDesktop && (
           <View style={styles.filtersContainer}>
             <View style={styles.filterGroup}>
               <Text style={styles.filterLabelText}>Status:</Text>
@@ -183,12 +223,12 @@ export default function EscalationsScreen() {
                 style={!isDesktop && chipRowBleed}
                 contentContainerStyle={[{ gap: 8 }, !isDesktop && chipRowBleedContent]}
               >
-                {['ALL', 'OPEN', 'IN_PROGRESS', 'ESCALATED', 'RESOLVED'].map((st) => (
+                {ISSUE_STATUS_OPTIONS.map((option) => (
                   <FilterPill
-                    key={st}
-                    label={st.replace('_', ' ')}
-                    active={statusFilter === st}
-                    onPress={() => setStatusFilter(st)}
+                    key={option.value}
+                    label={option.label}
+                    active={statusFilter === option.value}
+                    onPress={() => setStatusFilter(option.value)}
                     size="sm"
                   />
                 ))}
@@ -196,7 +236,8 @@ export default function EscalationsScreen() {
             </View>
           </View>
 
-          {/* Filter Badges Row: Priority */}
+          )}
+          {isDesktop && (
           <View style={styles.filtersContainer}>
             <View style={styles.filterGroup}>
               <Text style={styles.filterLabelText}>Priority:</Text>
@@ -206,18 +247,28 @@ export default function EscalationsScreen() {
                 style={!isDesktop && chipRowBleed}
                 contentContainerStyle={[{ gap: 8 }, !isDesktop && chipRowBleedContent]}
               >
-                {['ALL', 'LOW', 'STANDARD', 'HIGH', 'URGENT'].map((pr) => (
+                {ISSUE_PRIORITY_OPTIONS.map((option) => (
                   <FilterPill
-                    key={pr}
-                    label={pr}
-                    active={priorityFilter === pr}
-                    onPress={() => setPriorityFilter(pr)}
+                    key={option.value}
+                    label={option.label}
+                    active={priorityFilter === option.value}
+                    onPress={() => setPriorityFilter(option.value)}
                     size="sm"
                   />
                 ))}
               </ScrollView>
             </View>
           </View>
+          )}
+
+          <IssueFiltersSheet
+            visible={filtersOpen}
+            status={statusFilter}
+            priority={priorityFilter}
+            onChangeStatus={setStatusFilter}
+            onChangePriority={setPriorityFilter}
+            onClose={() => setFiltersOpen(false)}
+          />
 
           {/* Content List */}
           {isLoading ? (
@@ -234,10 +285,24 @@ export default function EscalationsScreen() {
           ) : issues.length === 0 ? (
             <View style={styles.emptyCard}>
               <MaterialIcons name="report-off" size={48} color={theme.Colors.onSurfaceVariant} />
-              <Text style={styles.emptyTitle}>No issues logged</Text>
+              {/* With filters on, say so and offer the way out rather than implying there are no issues */}
+              <Text style={styles.emptyTitle}>{activeFilters.length ? 'No issues match these filters' : 'No issues logged'}</Text>
               <Text style={styles.emptySubtitle}>
-                No matching reported issues or maintenance requests found for this property.
+                {activeFilters.length
+                  ? 'Try removing a filter to see more.'
+                  : 'No reported issues or maintenance requests for this property yet.'}
               </Text>
+              {activeFilters.length > 0 && (
+                <TouchableOpacity
+                  style={styles.filterButton}
+                  onPress={() => {
+                    setStatusFilter('ALL');
+                    setPriorityFilter('ALL');
+                  }}
+                >
+                  <Text style={styles.filterButtonText}>Clear filters</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             <View style={styles.listContainer}>

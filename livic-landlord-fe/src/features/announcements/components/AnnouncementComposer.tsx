@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Activi
 import { MaterialIcons } from '@expo/vector-icons';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
+import { toSentenceCase } from '@/src/utils/labels';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import type { PropertyResponse } from '@/src/types/property';
 import { withAlpha } from '@/src/theme/colorUtils';
@@ -61,7 +62,7 @@ export function AnnouncementComposer({
       <TextInput
         style={styles.composerInput}
         placeholder="e.g. Water supply maintenance shutdown"
-        placeholderTextColor={theme.Colors.onSurfaceVariant}
+        placeholderTextColor={theme.Colors.placeholder}
         value={broadcastTitle}
         onChangeText={setBroadcastTitle}
         maxLength={255}
@@ -72,7 +73,7 @@ export function AnnouncementComposer({
       <TextInput
         style={[styles.composerInput, styles.composerTextarea]}
         placeholder="Write detail notice instructions..."
-        placeholderTextColor={theme.Colors.onSurfaceVariant}
+        placeholderTextColor={theme.Colors.placeholder}
         value={broadcastContent}
         onChangeText={setBroadcastContent}
         multiline
@@ -82,17 +83,18 @@ export function AnnouncementComposer({
 
       {/* Category Row */}
       <Text style={styles.composerLabel}>CATEGORY</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row', marginVertical: 8 }} contentContainerStyle={{ gap: 8 }}>
+      {/* Wraps rather than scrolls: five short options, and a scrolled-off chip is easy to miss */}
+      <View style={styles.wrapChips}>
         {(['GENERAL', 'MAINTENANCE', 'EMERGENCY', 'BILLING', 'EVENT'] as const).map(cat => (
           <FilterPill
             key={cat}
-            label={cat}
+            label={toSentenceCase(cat)}
             active={broadcastCategory === cat}
             onPress={() => setBroadcastCategory(cat)}
             size="sm"
           />
         ))}
-      </ScrollView>
+      </View>
 
       {/* Severity Row */}
       <Text style={styles.composerLabel}>SEVERITY LEVEL</Text>
@@ -100,7 +102,7 @@ export function AnnouncementComposer({
         {(['INFO', 'WARNING', 'CRITICAL'] as const).map((val) => (
           <FilterPill
             key={val}
-            label={val}
+            label={toSentenceCase(val)}
             active={broadcastSeverity === val}
             onPress={() => setBroadcastSeverity(val)}
             size="sm"
@@ -114,7 +116,7 @@ export function AnnouncementComposer({
         {(['PROPERTY', 'FLOOR', 'UNIT'] as const).map(t => (
           <FilterPill
             key={t}
-            label={t}
+            label={toSentenceCase(t)}
             active={broadcastTargetType === t}
             onPress={() => setBroadcastTargetType(t)}
             size="sm"
@@ -130,7 +132,7 @@ export function AnnouncementComposer({
           <TextInput
             style={styles.composerInput}
             placeholder={broadcastTargetType === 'FLOOR' ? 'e.g. 3' : 'e.g. uuid of unit'}
-            placeholderTextColor={theme.Colors.onSurfaceVariant}
+            placeholderTextColor={theme.Colors.placeholder}
             value={broadcastTargetValue}
             onChangeText={setBroadcastTargetValue}
             keyboardType={broadcastTargetType === 'FLOOR' ? 'numeric' : 'default'}
@@ -182,7 +184,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 12,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     paddingHorizontal: theme.Spacing.md,
     fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
@@ -195,6 +197,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     marginBottom: theme.Spacing.xs,
   },
+  wrapChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginVertical: 8,
+  },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: theme.Spacing.sm,
@@ -205,7 +213,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginRight: theme.Spacing.sm,
   },
   chipActive: {
-    backgroundColor: theme.Colors.primary,
+    backgroundColor: theme.Colors.primaryContainer,
     borderColor: theme.Colors.primary,
   },
   chipText: {
@@ -214,7 +222,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurfaceVariant,
   },
   chipTextActive: {
-    color: theme.Colors.surfaceContainerLowest,
+    color: theme.Colors.onPrimaryContainer,
   },
   composerSendBtn: {
     borderRadius: 20,

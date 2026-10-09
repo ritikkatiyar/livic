@@ -74,7 +74,7 @@ export function RateCalculationCard({
             <TextInput 
               style={styles.inputWithIcon} 
               placeholder="0.00" 
-              placeholderTextColor={theme.Colors.outlineVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               keyboardType="numeric"
               value={baseRate}
               onChangeText={setBaseRate}
@@ -90,7 +90,7 @@ export function RateCalculationCard({
               <TextInput 
                 style={styles.inputWithIcon} 
                 placeholder="0.00" 
-                placeholderTextColor={theme.Colors.outlineVariant}
+                placeholderTextColor={theme.Colors.placeholder}
                 keyboardType="numeric"
                 value={baseRate}
                 onChangeText={setBaseRate}

@@ -1,5 +1,5 @@
 import React from 'react';
-import * as Haptics from 'expo-haptics';
+import { haptic } from '@/src/theme/haptics';
 import {
   ActivityIndicator,
   Alert,
@@ -239,7 +239,7 @@ export function SettingsTabContent({
                     <Switch
                       value={item.isActive}
                       onValueChange={(val) => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        haptic('tap');
                         handleToggleMemberActive(item, val);
                       }}
                       disabled={!canEdit}

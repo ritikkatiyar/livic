@@ -9,7 +9,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   desktopHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: theme.Spacing.md, marginBottom: theme.Spacing.xs },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 0.2, color: theme.Colors.primary },
+  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 0.2, color: theme.Colors.onSurfaceVariant },
   propertyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -645,7 +645,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.glassFill,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: theme.Colors.outlineStrong,
   },
   panel: {
     borderRadius: 28,

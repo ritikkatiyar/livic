@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, ActivityIndicator, View, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { StyleSheet, Text, ActivityIndicator, View, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { PressableScale } from '@/src/components/common/motion/PressableScale';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
@@ -44,7 +45,8 @@ export function ActionButton({
 
   const isInteractionDisabled = disabled || loading;
   const iconSize = size === 'sm' ? 16 : size === 'lg' ? 22 : 18;
-  const iconColor = variant === 'primary' || variant === 'danger' ? '#ffffff' : theme.Colors.primary;
+  const iconColor =
+    variant === 'primary' ? theme.Colors.onPrimary : variant === 'danger' ? theme.Colors.onError : theme.Colors.primary;
 
   const renderIcon = () => {
     if (loading) {
@@ -103,7 +105,7 @@ export function ActionButton({
 
   if (variant === 'primary') {
     return (
-      <TouchableOpacity
+      <PressableScale
         onPress={onPress}
         disabled={isInteractionDisabled}
         activeOpacity={0.85}
@@ -117,7 +119,7 @@ export function ActionButton({
         ]}
       >
         {renderContent()}
-      </TouchableOpacity>
+      </PressableScale>
     );
   }
 
@@ -138,7 +140,7 @@ export function ActionButton({
   };
 
   return (
-    <TouchableOpacity
+    <PressableScale
       onPress={onPress}
       disabled={isInteractionDisabled}
       activeOpacity={0.75}
@@ -146,7 +148,7 @@ export function ActionButton({
       style={[styles.button, getVariantStyle(), sanitizedStyle]}
     >
       {renderContent()}
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -206,7 +208,7 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md' | 'lg', ful
       fontSize,
       fontWeight: '600',
       letterSpacing: 0.3,
-      color: '#ffffff',
+      color: theme.Colors.onPrimary,
       textAlign: 'center',
     },
     textSecondary: {
@@ -219,10 +221,10 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md' | 'lg', ful
       color: theme.Colors.primary,
     },
     textDanger: {
-      color: '#ffffff',
+      color: theme.Colors.onError,
     },
     textDisabled: {
-      color: '#ffffff',
+      color: theme.Colors.onSurfaceVariant,
     },
     iconLeft: {
       marginRight: theme.Spacing.xs + 2,

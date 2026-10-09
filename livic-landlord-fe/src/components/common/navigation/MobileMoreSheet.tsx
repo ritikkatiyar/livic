@@ -9,14 +9,17 @@ import {
   Animated,
   PanResponder,
   Platform,
+  Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ThemeModeControl } from '@/src/components/common/inputs/ThemeModeControl';
+import type { ThemeMode } from '@/src/theme/ThemeContext';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { usePermissions } from '@/src/features/auth/hooks/usePermissions';
 import { Theme } from '@/src/theme/Theme';
-import { withAlpha } from '@/src/theme/colorUtils';
 
 interface MobileMoreSheetProps {
   visible: boolean;
@@ -36,20 +39,20 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { canRoute } = usePermissions();
-  const { theme, isDark, toggleTheme } = useAppTheme();
+  const { theme, isDark, setMode } = useAppTheme();
+  // The sheet runs under the gesture bar (edge to edge); its last row must clear it
+  const insets = useSafeAreaInsets();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
+  // Only sections the tab bar doesn't already show, most used first. The bar drops tabs a member
+  // can't open, so the sheet never needs to repeat Portfolio, Leases, Finance or Issues.
   const MENU_ITEMS: MenuItem[] = React.useMemo(() => ([
-    { title: 'Portfolio', subtitle: 'Properties & Units', route: '/command-center', icon: 'apartment', color: theme.Colors.primary },
-    { title: 'Leases', subtitle: 'Tenant Contracts', route: '/leases', icon: 'receipt-long', color: theme.Colors.secondary },
-    { title: 'Finance', subtitle: 'Expenses & Income', route: '/expenses', icon: 'payments', color: theme.Colors.tertiary },
-    { title: 'Analytics', subtitle: 'Revenue & Occupancy', route: '/analytics', icon: 'insights', color: theme.Colors.primary },
-    { title: 'Reports', subtitle: 'Statements & Logs', route: '/reports', icon: 'assessment', color: theme.Colors.secondary },
-    { title: 'Inventory', subtitle: 'Assets & Stock', route: '/inventory', icon: 'inventory-2', color: theme.Colors.tertiary },
-    { title: 'Announcements', subtitle: 'Broadcast Messages', route: '/announcements', icon: 'campaign', color: theme.Colors.primary },
     { title: 'Mess Menu', subtitle: 'Weekly Meals', route: '/mess', icon: 'restaurant-menu', color: theme.Colors.tertiary },
-    { title: 'Escalations', subtitle: 'Issues & Repairs', route: '/escalations', icon: 'report-problem', color: theme.Colors.error },
-    { title: 'Settings', subtitle: 'Profile & App Config', route: '/settings', icon: 'settings', color: theme.Colors.onSurfaceVariant },
+    { title: 'Announcements', subtitle: 'Broadcast Messages', route: '/announcements', icon: 'campaign', color: theme.Colors.primary },
+    { title: 'Inventory', subtitle: 'Assets & Stock', route: '/inventory', icon: 'inventory-2', color: theme.Colors.tertiary },
+    { title: 'Reports', subtitle: 'Statements & Logs', route: '/reports', icon: 'assessment', color: theme.Colors.secondary },
+    { title: 'Analytics', subtitle: 'Revenue & Occupancy', route: '/analytics', icon: 'insights', color: theme.Colors.primary },
+    { title: 'Settings', subtitle: 'Team, Profile & App Config', route: '/settings', icon: 'settings', color: theme.Colors.onSurfaceVariant },
   ] satisfies MenuItem[]).filter((item) => canRoute(item.route)), [theme, canRoute]);
   
   const translateY = useRef(new Animated.Value(300)).current;
@@ -109,11 +112,24 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
     }, 150);
   };
 
-  const handleThemeToggle = () => {
+  // The theme change plays a full-screen transition, so the sheet gets out of its way first
+  const handleThemeSelect = (mode: ThemeMode) => {
     closeSheet();
     setTimeout(() => {
-      toggleTheme();
+      setMode(mode);
     }, 180);
+  };
+
+  const confirmLogout = () => {
+    const message = 'You will need to sign in again to use Livic Landlord.';
+    if (Platform.OS === 'web') {
+      if (window.confirm(message)) handleLogout();
+      return;
+    }
+    Alert.alert('Log out?', message, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log out', style: 'destructive', onPress: handleLogout },
+    ]);
   };
 
   const handleLogout = async () => {
@@ -125,7 +141,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
   if (!visible) return null;
 
   return (
-    <Modal animationType="none" transparent visible={visible} onRequestClose={closeSheet}>
+    <Modal animationType="none" transparent visible={visible} onRequestClose={closeSheet} statusBarTranslucent>
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={closeSheet} />
 
@@ -134,6 +150,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
             styles.sheetContainer,
             {
               transform: [{ translateY }],
+              paddingBottom: insets.bottom + 16,
             },
           ]}
         >
@@ -154,32 +171,11 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
                 <Text style={styles.profileName}>{user?.fullName || 'Landlord'}</Text>
                 <Text style={styles.profileRole}>{user?.email || 'Admin User'}</Text>
               </View>
-              <TouchableOpacity style={styles.themeToggle} onPress={handleThemeToggle} activeOpacity={0.7}>
-                <MaterialIcons name={isDark ? 'light-mode' : 'dark-mode'} size={24} color={theme.Colors.primary} />
-              </TouchableOpacity>
+            </View>
+            <View style={styles.themeRow}>
+              <ThemeModeControl onSelect={handleThemeSelect} />
             </View>
 
-            {/* Subscription Upgrade Plan Banner */}
-            {canRoute('/billing') && (
-            <TouchableOpacity
-              style={styles.upgradeBannerWrapper} 
-              activeOpacity={0.85}
-              onPress={() => handleNavigate('/billing')}
-            >
-              <View
-                style={[styles.upgradeBannerGradient, { backgroundColor: theme.Colors.primary }]}
-              >
-                <View style={styles.upgradeBannerContent}>
-                  <MaterialIcons name="workspace-premium" size={22} color={theme.Colors.surfaceContainerLowest} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.upgradeBannerTitle}>UPGRADE SUBSCRIPTION</Text>
-                    <Text style={styles.upgradeBannerSub}>Manage plans, memberships & limits</Text>
-                  </View>
-                  <MaterialIcons name="chevron-right" size={20} color={theme.Colors.surfaceContainerLowest} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            )}
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.gridContainer}>
@@ -203,6 +199,26 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
               );
             })}
 
+            {/* Subscription Upgrade Plan Banner: below the sections, so daily tools come first */}
+            {canRoute('/billing') && (
+            <TouchableOpacity
+              style={styles.upgradeBannerWrapper} 
+              activeOpacity={0.85}
+              onPress={() => handleNavigate('/billing')}
+            >
+              <View style={styles.upgradeBannerGradient}>
+                <View style={styles.upgradeBannerContent}>
+                  <MaterialIcons name="workspace-premium" size={22} color={theme.Colors.onPrimaryContainer} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.upgradeBannerTitle}>UPGRADE SUBSCRIPTION</Text>
+                    <Text style={styles.upgradeBannerSub}>Manage plans, memberships & limits</Text>
+                  </View>
+                  <MaterialIcons name="chevron-right" size={20} color={theme.Colors.onPrimaryContainer} />
+                </View>
+              </View>
+            </TouchableOpacity>
+            )}
+
             {/* Explicit Logout Card for Mobile Sheet */}
             <TouchableOpacity
               style={[
@@ -218,7 +234,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
                   marginTop: 4,
                 },
               ]}
-              onPress={handleLogout}
+              onPress={confirmLogout}
               activeOpacity={0.75}
             >
               <View style={[styles.iconBox, { backgroundColor: theme.Colors.error + '25' }]}>
@@ -255,7 +271,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRightWidth: 1,
     borderColor: theme.Colors.outlineVariant,
     maxHeight: '85%',
-    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
@@ -316,12 +331,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: 2,
     textTransform: 'capitalize',
   },
-  themeToggle: {
-    padding: 10,
-    borderRadius: 20,
-    backgroundColor: theme.Colors.surfaceContainerHigh,
-    borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+  themeRow: {
+    marginTop: theme.Spacing.md,
   },
   gridContainer: {
     padding: 20,
@@ -366,13 +377,18 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurfaceVariant,
   },
   upgradeBannerWrapper: {
-    marginTop: 14,
+    width: '100%',
+    marginTop: 4,
     borderRadius: 16,
     overflow: 'hidden',
   },
   upgradeBannerGradient: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.Colors.primaryTint,
+    backgroundColor: theme.Colors.primaryContainer,
   },
   upgradeBannerContent: {
     flexDirection: 'row',
@@ -382,12 +398,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   upgradeBannerTitle: {
     fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
-    color: theme.Colors.surfaceContainerLowest,
+    color: theme.Colors.onPrimaryContainer,
     letterSpacing: 1,
   },
   upgradeBannerSub: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    color: withAlpha(theme.Colors.onPrimary, 0.85),
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: 1,
   },

@@ -50,7 +50,7 @@ export function DayMenuEditor({ day, draftDay, slots, error, readOnly, onChange 
             maxLength={MAX_NOTE}
             multiline
             placeholder="e.g. Special: veg biryani, or Mess closed for Diwali"
-            placeholderTextColor={theme.Colors.onSurfaceVariant}
+            placeholderTextColor={theme.Colors.placeholder}
             accessibilityLabel={`Note for ${label}`}
           />
         </View>

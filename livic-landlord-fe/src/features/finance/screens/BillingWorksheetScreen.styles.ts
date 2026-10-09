@@ -56,14 +56,40 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.5,
   },
-  filterSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    backgroundColor: 'transparent',
+  mobileContent: {
+    gap: theme.Spacing.md,
+  },
+  mobileHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: theme.Spacing.md,
+  },
+  mobileHeaderText: {
+    flex: 1,
+    gap: theme.Spacing.xs,
+  },
+  kicker: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    color: theme.Colors.onSurfaceVariant,
+  },
+  mobileTitle: {
+    ...theme.Typography.headlineMd,
+    color: theme.Colors.onSurface,
+  },
+  mobileSubtitle: {
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+  },
+  // The dropdown's open menu has to sit above the month row below it
+  mobileControls: {
+    gap: theme.Spacing.sm,
+    zIndex: 1000,
   },
   mobileDropdownWrapper: {
     zIndex: 1000,
-    marginBottom: theme.Spacing.sm,
   },
   monthSelectorRow: {
     flexDirection: 'row',

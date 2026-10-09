@@ -239,7 +239,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outline,
+    borderColor: theme.Colors.outlineStrong,
     borderRadius: theme.Rounded.md,
     paddingHorizontal: 12,
     paddingVertical: 10,

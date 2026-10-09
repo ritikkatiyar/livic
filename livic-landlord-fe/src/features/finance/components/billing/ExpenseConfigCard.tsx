@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
+import { PopoverMenu, anchorFromPress, type MenuAnchor } from '@/src/components/common/inputs/PopoverMenu';
 import type { ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
 import { withAlpha } from '@/src/theme/colorUtils';
 
@@ -30,6 +31,8 @@ export function ExpenseConfigCard({
   const { theme } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDesktop), [theme, isDesktop]);
   const router = useRouter();
+  const [menuAnchor, setMenuAnchor] = React.useState<MenuAnchor | null>(null);
+  const openEditor = () => router.push(`/create-expense?propertyId=${propertyId}&chargeId=${charge.id}`);
 
   const getIconData = (name: string) => {
     const n = name.toLowerCase();
@@ -69,9 +72,7 @@ export function ExpenseConfigCard({
       <GlassCard style={[styles.glassCardInner, isDesktop && styles.glassCardDesktop]}>
         <TouchableOpacity 
           activeOpacity={0.7}
-          onPress={() => {
-            router.push(`/create-expense?propertyId=${propertyId}&chargeId=${charge.id}`);
-          }}
+          onPress={openEditor}
         >
           <View style={styles.cardHeader}>
             <View style={[styles.iconWrapper, { backgroundColor: iconObj.bg }]}>
@@ -125,6 +126,18 @@ export function ExpenseConfigCard({
           </View>
 
           <View style={styles.footerRightContainer}>
+            {/* Phones tuck the actions into a menu, as property cards do; a red pill per card is too loud */}
+            {!isDesktop ? (
+              <TouchableOpacity
+                style={styles.moreButton}
+                onPress={(e) => setMenuAnchor(anchorFromPress(e))}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={`More actions for ${charge.chargeName}`}
+              >
+                <MaterialIcons name="more-vert" size={22} color={theme.Colors.onSurfaceVariant} />
+              </TouchableOpacity>
+            ) : (
             <View style={{ flexDirection: 'row', gap: theme.Spacing.sm, alignItems: 'center' }}>
                 {charge.isActive ? (
                   <ActionButton
@@ -153,9 +166,24 @@ export function ExpenseConfigCard({
                   </>
                 )}
             </View>
+            )}
           </View>
         </View>
       </GlassCard>
+
+      <PopoverMenu
+        anchor={menuAnchor}
+        onClose={() => setMenuAnchor(null)}
+        items={[
+          { key: 'edit', label: 'Edit charge', icon: 'edit', onPress: openEditor },
+          ...(charge.isActive
+            ? [{ key: 'deactivate', label: 'Deactivate charge', icon: 'remove-circle-outline' as const, destructive: true, onPress: () => onDeactivate(charge.id) }]
+            : [
+                { key: 'reactivate', label: 'Reactivate charge', icon: 'restore' as const, onPress: () => onReactivate(charge.id) },
+                { key: 'delete', label: 'Delete charge', icon: 'delete-outline' as const, destructive: true, onPress: () => onDelete(charge.id) },
+              ]),
+        ]}
+      />
     </View>
   );
 }
@@ -231,10 +259,13 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
     marginLeft: 2,
     fontWeight: '600',
   },
+  // Wraps on narrow cards so the action drops below the badges instead of leaving the card
   cardFooter: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: theme.Spacing.sm,
     marginTop: theme.Spacing.md,
     borderTopWidth: 1,
     borderTopColor: withAlpha(theme.Colors.onSurface, 0.05),
@@ -243,11 +274,19 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
   },
   footerRightContainer: {
     minHeight: 32,
+    marginLeft: 'auto',
     justifyContent: 'center',
     alignItems: 'flex-end',
   },
+  moreButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // GlassCard pads its own content
   glassCardInner: {
-    padding: 20,
     flex: 1,
     justifyContent: 'space-between',
   },
@@ -256,8 +295,10 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
   },
   footerLeft: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: theme.Spacing.sm,
+    flexShrink: 1,
   },
   taxBadge: {
     flexDirection: 'row',

@@ -269,16 +269,16 @@ export function ThemeContextProvider({ children }: { children: React.ReactNode }
     await saveStoredThemeMode(newMode);
   }, []);
 
-  const toggleTheme = useCallback(async () => {
-    const nextMode = mode === 'dark' ? 'light' : 'dark';
-    await setMode(nextMode);
-  }, [mode, setMode]);
-
   const isDark = useMemo(() => {
     if (mode === 'dark') return true;
     if (mode === 'light') return false;
     return systemColorScheme === 'dark';
   }, [mode, systemColorScheme]);
+
+  // Flip what's on screen: in 'system' mode on a dark phone, the first tap must go to light
+  const toggleTheme = useCallback(async () => {
+    await setMode(isDark ? 'light' : 'dark');
+  }, [isDark, setMode]);
 
   const theme = useMemo(() => {
     return getTheme(isDark);

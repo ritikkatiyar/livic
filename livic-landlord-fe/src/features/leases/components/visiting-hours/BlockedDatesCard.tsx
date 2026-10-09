@@ -117,7 +117,7 @@ export function BlockedDatesCard({ blackouts, onAdd, isAdding, onDelete, deletin
           onChangeText={setReason}
           maxLength={200}
           placeholder="Reason (optional, only you see this)"
-          placeholderTextColor={theme.Colors.onSurfaceVariant}
+          placeholderTextColor={theme.Colors.placeholder}
           style={styles.reasonInput}
           accessibilityLabel="Reason for blocking"
         />

@@ -10,7 +10,6 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
 import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
@@ -40,7 +39,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   const { handleScroll } = useScrollNav();
   const { propertyId: paramPropertyId, chargeId } = useLocalSearchParams<{ propertyId?: string, chargeId?: string }>();
   const { isDesktop } = useResponsive();
-  const insets = useSafeAreaInsets();
   const { properties } = useProperties();
   const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
   const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
@@ -282,7 +280,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         scrollEventThrottle={16}
             contentContainerStyle={[
               styles.scrollContent,
-              !isDesktop && { paddingTop: 60 + insets.top }
+              !isDesktop && styles.scrollContentMobile
             ]}
             showsVerticalScrollIndicator={false}
           >
@@ -344,6 +342,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 60,
+  },
+  // PageShell already clears the app bar and pads the sides on phones
+  scrollContentMobile: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
   },
   titleContainer: {
     marginTop: 10,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Platform, View } from 'react-native';
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs } from 'expo-router';
 import BottomNavigation from '@/src/components/common/navigation/BottomNavigation';
 import MobileHeader from '@/src/components/common/navigation/MobileHeader';
 import MobileMoreSheet from '@/src/components/common/navigation/MobileMoreSheet';
@@ -25,7 +25,6 @@ export const unstable_settings = { initialRouteName: '(home)' };
  */
 function AppShell() {
   const { isDesktop } = useResponsive();
-  const router = useRouter();
   const { setSlotHeight } = useAppChrome();
   const [moreSheetVisible, setMoreSheetVisible] = useState(false);
 
@@ -65,7 +64,6 @@ function AppShell() {
       {/* The header floats over content (absolute on native, fixed on web), so it reports
           its own measured height and screens pad for it via useAppChromeInsets(). */}
       <MobileHeader
-        onNotificationPress={() => router.push('/escalations')}
         onLayout={(e) => setSlotHeight('header', e.nativeEvent.layout.height)}
       />
 

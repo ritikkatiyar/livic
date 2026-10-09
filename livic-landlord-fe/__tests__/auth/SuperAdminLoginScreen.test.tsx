@@ -2,10 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import SuperAdminLoginScreen from '../../src/features/auth/screens/SuperAdminLoginScreen';
 
-jest.mock('expo-haptics', () => ({
-  impactAsync: jest.fn(),
-  ImpactFeedbackStyle: { Light: 'light' },
-}));
+jest.mock('@/src/theme/haptics', () => ({ haptic: jest.fn() }));
 
 jest.mock('expo-blur', () => {
   const { View } = require('react-native');
@@ -25,8 +22,8 @@ describe('SuperAdminLoginScreen Interaction', () => {
       <SuperAdminLoginScreen onLogin={handleLogin} />
     );
 
-    const emailInput = getByPlaceholderText('landlord@livic.app');
-    const passwordInput = getByPlaceholderText('••••••••');
+    const emailInput = getByPlaceholderText('Enter your email');
+    const passwordInput = getByPlaceholderText('Enter your password');
     const submitBtn = getByTestId('login-button');
 
     await act(async () => {

@@ -20,6 +20,13 @@ export const createStyles = (theme: any, isDark: boolean) =>
       elevation: 8,
       zIndex: 99999,
     },
+    hiddenForKeyboard: {
+      display: 'none',
+    },
+    bubbleRing: {
+      borderColor: theme.Colors.primary,
+      borderWidth: 1.5,
+    },
     bubbleTrigger: {
       width: '100%',
       height: '100%',
@@ -85,7 +92,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       alignItems: 'center',
       backgroundColor: theme.Colors.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: theme.Colors.outlineVariant,
+      borderColor: theme.Colors.outlineStrong,
       borderRadius: 14,
       paddingVertical: theme.Spacing.sm,
       paddingHorizontal: 12,
@@ -154,7 +161,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       flex: 1,
       backgroundColor: theme.Colors.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: theme.Colors.outlineVariant,
+      borderColor: theme.Colors.outlineStrong,
       borderRadius: 20,
       paddingHorizontal: 14,
       paddingVertical: theme.Spacing.sm,

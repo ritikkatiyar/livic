@@ -102,6 +102,35 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
 
   filterSection: { paddingHorizontal: theme.Spacing.lg, marginBottom: 20 },
+  mobileContent: { gap: theme.Spacing.md },
+  mobileHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: theme.Spacing.md,
+  },
+  mobileHeaderText: { flex: 1, gap: theme.Spacing.xs },
+  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600', letterSpacing: 0.2, color: theme.Colors.onSurfaceVariant },
+  mobileTitle: { ...theme.Typography.headlineMd, color: theme.Colors.onSurface },
+  mobileSubtitle: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant },
+  mobileSaveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 16,
+    gap: theme.Spacing.xs,
+    backgroundColor: theme.Colors.primary,
+    borderRadius: 22,
+  },
+  mobileSaveText: {
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  // The dropdown's open menu has to sit above the month row below it
+  mobileControls: { zIndex: 1000 },
   
   desktopMonthSelector: {
     flexDirection: 'row',
@@ -458,8 +487,6 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   listControlsRowMobile: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.Spacing.md,
-    paddingHorizontal: theme.Spacing.lg,
     gap: 12,
   },
   controlLink: {

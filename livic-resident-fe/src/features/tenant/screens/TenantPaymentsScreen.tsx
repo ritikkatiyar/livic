@@ -7,6 +7,9 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { getTenantRentCycles, markRentCyclePaid, RentCycle, fetchStatementHtml } from '@/src/features/tenant/api/payments.api';
 import { getActiveLease, LeaseResponse } from '@/src/features/tenant/api/lease.api';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
+import { getBillStatus } from '@/src/features/tenant/utils/billStatus';
+import { formatDisplayDate } from '@/src/utils/dates';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
@@ -122,7 +125,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
             <Text style={styles.amountText}>₹{displayAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
             <Text style={styles.dueText}>
               {activeCycle?.dueDate 
-                ? `Due Date: ${new Date(activeCycle.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` 
+                ? `Due Date: ${formatDisplayDate(activeCycle.dueDate)}` 
                 : (isPaidOrNoDue ? 'No pending rent due' : 'Due on 5th of current month')}
             </Text>
             
@@ -136,7 +139,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                 <View
                   style={[styles.payBtn, { backgroundColor: theme.Colors.primary }, (activeCycle?.status === 'PAID' || paySuccess) && styles.payBtnDisabled]}
                 >
-                  <MaterialIcons name="bolt" size={20} color="#ffffff" />
+                  <MaterialIcons name="bolt" size={20} color={theme.Colors.onPrimary} />
                   <Text style={styles.payBtnText}>
                     {activeCycle?.status === 'PAID' || paySuccess ? 'Rent Settled ✓' : 'Pay Rent Now'}
                   </Text>
@@ -161,8 +164,8 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                 <MaterialIcons name="verified-user" size={20} color={theme.Colors.primary} />
               </View>
               <View style={{ marginLeft: 10, flex: 1 }}>
-                <Text style={styles.statLabel} numberOfLines={1}>Lease Account</Text>
-                <Text style={[styles.statValue, { color: theme.Colors.primary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>Active & Good Standing</Text>
+                <Text style={styles.statLabel}>Lease Account</Text>
+                <Text style={styles.statValue}>Active & Good Standing</Text>
               </View>
             </View>
 
@@ -171,8 +174,8 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                 <MaterialIcons name="history" size={20} color={theme.Colors.secondary} />
               </View>
               <View style={{ marginLeft: 10, flex: 1 }}>
-                <Text style={styles.statLabel} numberOfLines={1}>On-Time Rating</Text>
-                <Text style={[styles.statValue, { color: theme.Colors.secondary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>100% On Time</Text>
+                <Text style={styles.statLabel}>On-Time Rating</Text>
+                <Text style={styles.statValue}>100% On Time</Text>
               </View>
             </View>
           </View>
@@ -204,9 +207,9 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                     <View style={styles.historyRight}>
                        <Text style={styles.historyAmount}>₹{cycle.totalAmount?.toLocaleString() || '0'}</Text>
                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                         <View style={[styles.statusSuccess, cycle.status === 'PAID' ? { backgroundColor: theme.Colors.primaryContainer, marginRight: 8 } : { backgroundColor: theme.Colors.secondaryContainer, marginRight: 8 }]}>
-                           <Text style={[styles.statusSuccessText, cycle.status === 'PAID' ? { color: theme.Colors.onPrimaryContainer } : { color: theme.Colors.onSecondaryContainer }]}>
-                             {cycle.status}
+                         <View style={[styles.statusSuccess, { backgroundColor: withAlpha(getBillStatus(cycle.status, theme).color, 0.12), marginRight: 8 }]}>
+                           <Text style={[styles.statusSuccessText, { color: getBillStatus(cycle.status, theme).color }]}>
+                             {getBillStatus(cycle.status, theme).label}
                            </Text>
                          </View>
                          <TouchableOpacity onPress={() => handleDownloadStatement(cycle.id)}>
@@ -247,14 +250,14 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
 
           {/* Autopay Card */}
           <View
-            style={[styles.promoCard, { backgroundColor: theme.Colors.primary }]}
+            style={styles.promoCard}
           >
             <Text style={styles.promoTitle}>Autopay Recurring Billing</Text>
             <Text style={styles.promoDesc}>
               {autopayEnabled ? 'Autopay is ACTIVE. Your rent will be auto-deducted on the 1st of every month.' : 'Never miss a rent due date. Enable Autopay and receive instant payment receipts.'}
             </Text>
             <TouchableOpacity 
-              style={[styles.promoBtn, autopayEnabled && { backgroundColor: theme.Colors.primaryContainer }]}
+              style={styles.promoBtn}
               onPress={() => setAutopayEnabled(!autopayEnabled)}
               activeOpacity={0.85}
             >
@@ -262,7 +265,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                 {autopayEnabled ? 'Autopay Enabled ✓' : 'Enable Autopay'}
               </Text>
             </TouchableOpacity>
-            <MaterialIcons name="payments" size={130} color="rgba(255,255,255,0.18)" style={styles.promoIcon} />
+            <MaterialIcons name="payments" size={130} color={withAlpha(theme.Colors.primary, 0.1)} style={styles.promoIcon} />
           </View>
 
           {/* Security Guarantee Banner */}
@@ -316,7 +319,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                         <View
                           style={[styles.modalPayBtn, { backgroundColor: theme.Colors.primary }]}
                         >
-                          <MaterialIcons name="lock" size={20} color="#ffffff" />
+                          <MaterialIcons name="lock" size={20} color={theme.Colors.onPrimary} />
                           <Text style={styles.modalPayBtnText}>Confirm & Pay ₹{activeCycle?.totalAmount?.toLocaleString() || '10,000.00'}</Text>
                         </View>
                       </TouchableOpacity>
@@ -354,7 +357,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
-    shadowColor: '#000',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: isDark ? 0.2 : 0.05,
     shadowRadius: 8,
@@ -384,9 +387,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   statBox: { flex: 1, minWidth: '47%', backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: theme.Colors.outlineVariant, overflow: 'hidden' },
   statIconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: theme.Colors.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
   statLabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '500', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.3, marginBottom: 2 },
-  statValue: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600' },
+  // Wraps onto a second line rather than truncating or shrinking
+  statValue: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
 
-  historyCard: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: theme.Colors.outlineVariant, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: isDark ? 0.2 : 0.05, shadowRadius: 8, elevation: 2 },
+  historyCard: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: theme.Colors.outlineVariant, shadowColor: theme.Colors.shadowColor, shadowOffset: { width: 0, height: 2 }, shadowOpacity: isDark ? 0.2 : 0.05, shadowRadius: 8, elevation: 2 },
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: theme.Colors.outlineVariant },
   historyTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '600', color: theme.Colors.onSurface },
   historySub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
@@ -405,10 +409,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   historyFooter: { padding: 14, backgroundColor: theme.Colors.surfaceContainerLow, alignItems: 'center' },
   historyFooterText: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '500' },
 
-  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3 },
-  promoTitle: { color: '#ffffff', fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', marginBottom: 8, zIndex: 1 },
-  promoDesc: { color: 'rgba(255, 255, 255, 0.9)', fontSize: theme.Typography.bodyMedium.fontSize, lineHeight: 20, marginBottom: 18, width: '82%', zIndex: 1 },
-  promoBtn: { backgroundColor: theme.Colors.surfaceContainerLowest, alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
+  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', backgroundColor: theme.Colors.primaryContainer, borderWidth: 1, borderColor: theme.Colors.primaryTint, shadowColor: theme.Colors.shadowColor, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 3 },
+  promoTitle: { color: theme.Colors.onSurface, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', marginBottom: 8, zIndex: 1 },
+  promoDesc: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodyMedium.fontSize, lineHeight: 20, marginBottom: 18, width: '82%', zIndex: 1 },
+  promoBtn: { backgroundColor: theme.Colors.surfaceContainerLowest, borderWidth: 1, borderColor: theme.Colors.primary, alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
   promoBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
   promoIcon: { position: 'absolute', right: -25, bottom: -25 },
 

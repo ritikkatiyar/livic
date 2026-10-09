@@ -10,7 +10,6 @@ import {
   ScrollView,
   Platform
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -42,7 +41,6 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
   const { selectedPropertyId, setSelectedPropertyId, selectedBlockId, setSelectedBlockId } = useGlobalPropertySelection();
   const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
-  const insets = useSafeAreaInsets();
   const { properties } = useProperties();
   const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
   const propertyId = selectedPropertyId || validParamId || null;
@@ -279,37 +277,26 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
     </View>
   );
 
+  const propertyName = properties?.find((p) => p.id === propertyId)?.name;
+  const hasCharges = Boolean(propertyId) && charges.length > 0;
+
+  // PageShell already clears the app bar and pads the sides; the whole page scrolls as one
   const renderMobileShell = () => (
-    <View style={[styles.gradient, { flex: 1 }]}>
-      <View style={[styles.filterSection, { paddingTop: 68 + insets.top }]}>
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '600', color: theme.Colors.onSurface, letterSpacing: -0.3 }}>
-            Billing Worksheets
-          </Text>
+    <>
+      <View style={styles.mobileHeader}>
+        <View style={styles.mobileHeaderText}>
+          <Text style={styles.kicker}>{propertyName ? `BILLING · ${propertyName.toUpperCase()}` : 'BILLING'}</Text>
+          <Text style={styles.mobileTitle}>Billing Worksheets</Text>
+          <Text style={styles.mobileSubtitle}>{"Enter each unit's charge for the month, then save."}</Text>
         </View>
-
-        {/* Multi-Block Filter Pills */}
-        <BlockFilterPills
-          propertyId={propertyId}
-          selectedBlockId={selectedBlockId}
-          onSelectBlockId={setSelectedBlockId}
-        />
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={[styles.mobileDropdownWrapper, { flex: 1, marginBottom: 0 }]}>
-            <GlassDropdown 
-              options={charges.map(c => ({ label: c.chargeName, value: c.id }))}
-              value={selectedChargeId}
-              onChange={setSelectedChargeId}
-              placeholder="Select Charge"
-              icon="receipt-long"
-            />
-          </View>
-          <TouchableOpacity 
+        {hasCharges ? (
+          <TouchableOpacity
             style={[styles.headerGradientInner, (isSaving || entries.length === 0) && { opacity: 0.5 }]}
             onPress={handleSave}
             disabled={isSaving || entries.length === 0}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Save worksheet"
           >
             {isSaving ? (
               <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
@@ -320,39 +307,53 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
               </>
             )}
           </TouchableOpacity>
-        </View>
-        
-        <View style={styles.monthSelectorRow}>
-          <TouchableOpacity onPress={handlePrevMonth} style={styles.monthAdjustButton}>
-            <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
-          </TouchableOpacity>
-          
-          <View style={styles.monthBadge}>
-            <MaterialIcons name="calendar-today" size={16} color={theme.Colors.primary} />
-            <Text style={styles.monthBadgeText}>{billingMonth}</Text>
-          </View>
-          
-          <TouchableOpacity onPress={handleNextMonth} style={styles.monthAdjustButton}>
-            <MaterialIcons name="chevron-right" size={24} color={theme.Colors.primary} />
-          </TouchableOpacity>
-        </View>
+        ) : null}
       </View>
 
-      <ScrollView 
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {renderContent()}
-        <View style={{ height: 80 }} />
-      </ScrollView>
-    </View>
+      {hasCharges ? (
+        <View style={styles.mobileControls}>
+          <BlockFilterPills
+            propertyId={propertyId}
+            selectedBlockId={selectedBlockId}
+            onSelectBlockId={setSelectedBlockId}
+          />
+
+          <View style={styles.mobileDropdownWrapper}>
+            <GlassDropdown
+              options={charges.map(c => ({ label: c.chargeName, value: c.id }))}
+              value={selectedChargeId}
+              onChange={setSelectedChargeId}
+              placeholder="Select Charge"
+              icon="receipt-long"
+            />
+          </View>
+
+          <View style={styles.monthSelectorRow}>
+            <TouchableOpacity onPress={handlePrevMonth} style={styles.monthAdjustButton} accessibilityLabel="Previous month">
+              <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
+            </TouchableOpacity>
+
+            <View style={styles.monthBadge}>
+              <MaterialIcons name="calendar-today" size={16} color={theme.Colors.primary} />
+              <Text style={styles.monthBadgeText}>{billingMonth}</Text>
+            </View>
+
+            <TouchableOpacity onPress={handleNextMonth} style={styles.monthAdjustButton} accessibilityLabel="Next month">
+              <MaterialIcons name="chevron-right" size={24} color={theme.Colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : null}
+
+      {renderContent()}
+    </>
   );
 
   return (
-    <PageShell 
-      scrollable={false}
+    <PageShell
+      scrollable={!isDesktop}
+      onScroll={isDesktop ? undefined : handleScroll}
+      contentContainerStyle={isDesktop ? undefined : styles.mobileContent}
       keyboardAvoiding={true}
       edges={isDesktop ? ['top'] : []}
     >

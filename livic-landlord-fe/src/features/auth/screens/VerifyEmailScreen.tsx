@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useMutation } from '@tanstack/react-query';
-import * as Haptics from 'expo-haptics';
+import { haptic } from '@/src/theme/haptics';
 
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
+import { useShake } from '@/src/components/common/motion/useShake';
 import { resendVerification, verifyEmail } from '@/src/features/auth/api/auth.api';
 import { useAppTheme, type AppTheme } from '@/src/theme/ThemeContext';
 import type { TokenBundle } from '@/src/types/auth';
@@ -28,6 +29,7 @@ export default function VerifyEmailScreen({ email, codeAlreadySent, onVerified, 
   const [code, setCode] = useState('');
   const [focused, setFocused] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const { shakeStyle, shake } = useShake({ haptic: true });
   const [infoMsg, setInfoMsg] = useState('');
   const [secondsLeft, setSecondsLeft] = useState(codeAlreadySent ? RESEND_COOLDOWN_SECONDS : 0);
 
@@ -40,12 +42,13 @@ export default function VerifyEmailScreen({ email, codeAlreadySent, onVerified, 
   const verifyMutation = useMutation({
     mutationFn: (value: string) => verifyEmail({ email, code: value }),
     onSuccess: async (data) => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      haptic('success');
       await onVerified(data);
     },
     onError: (error: Error) => {
       setCode('');
       setErrorMsg(error.message || 'Could not verify the code. Please try again.');
+      shake();
     },
   });
 
@@ -93,30 +96,33 @@ export default function VerifyEmailScreen({ email, codeAlreadySent, onVerified, 
         ) : null}
         {infoMsg ? <Text style={styles.infoText}>{infoMsg}</Text> : null}
 
-        <Pressable style={styles.codeRow} onPress={() => inputRef.current?.focus()} accessibilityLabel="Verification code">
-          {Array.from({ length: CODE_LENGTH }).map((_, index) => {
-            const isActive = focused && index === Math.min(code.length, CODE_LENGTH - 1);
-            return (
-              <View key={index} style={[styles.codeBox, isActive && styles.codeBoxActive]}>
-                <Text style={styles.codeDigit}>{code[index] ?? ''}</Text>
-              </View>
-            );
-          })}
-          <TextInput
-            ref={inputRef}
-            testID="verification-code-input"
-            value={code}
-            onChangeText={handleChange}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            maxLength={CODE_LENGTH}
-            keyboardType="number-pad"
-            textContentType="oneTimeCode"
-            autoComplete="one-time-code"
-            autoFocus
-            style={styles.hiddenInput}
-          />
-        </Pressable>
+        {/* A wrong code shakes the boxes it was typed into */}
+        <Animated.View style={shakeStyle}>
+          <Pressable style={styles.codeRow} onPress={() => inputRef.current?.focus()} accessibilityLabel="Verification code">
+            {Array.from({ length: CODE_LENGTH }).map((_, index) => {
+              const isActive = focused && index === Math.min(code.length, CODE_LENGTH - 1);
+              return (
+                <View key={index} style={[styles.codeBox, isActive && styles.codeBoxActive]}>
+                  <Text style={styles.codeDigit}>{code[index] ?? ''}</Text>
+                </View>
+              );
+            })}
+            <TextInput
+              ref={inputRef}
+              testID="verification-code-input"
+              value={code}
+              onChangeText={handleChange}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              maxLength={CODE_LENGTH}
+              keyboardType="number-pad"
+              textContentType="oneTimeCode"
+              autoComplete="one-time-code"
+              autoFocus
+              style={styles.hiddenInput}
+            />
+          </Pressable>
+        </Animated.View>
 
         <ActionButton
           title="VERIFY"

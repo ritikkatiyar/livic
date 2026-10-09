@@ -17,7 +17,7 @@ import { EmptyState } from '@/src/components/common/display/EmptyState';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { formatCurrency, formatCompactCurrency, formatDate } from '@/src/utils/formatters';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
-import { ActionMenuSheet } from '@/src/components/common/inputs/ActionMenuSheet';
+import { PopoverMenu, anchorFromPress, type MenuAnchor } from '@/src/components/common/inputs/PopoverMenu';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
 import { BlockFilterPills } from '@/src/components/common/inputs/BlockFilterPills';
@@ -195,7 +195,7 @@ export default function OwnerLeasesScreen() {
             <TextInput
               placeholder="Search tenant, unit or phone"
               numberOfLines={1}
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               value={searchQuery} onChangeText={setSearchQuery}
               style={styles.searchInput}
             />
@@ -309,6 +309,11 @@ function LeasesTab({
   onServeNotice,
 }: any) {
   const [menuLease, setMenuLease] = React.useState<LeaseResponse | null>(null);
+  const [menuAnchor, setMenuAnchor] = React.useState<MenuAnchor | null>(null);
+  const closeLeaseMenu = () => {
+    setMenuAnchor(null);
+    setMenuLease(null);
+  };
 
   if (filteredLeases.length === 0) {
     return (
@@ -337,12 +342,15 @@ function LeasesTab({
                 </View>
                 <View style={styles.compactIdentity}>
                   <Text style={styles.tenantName} numberOfLines={1}>{l.tenantName || 'Active Tenant'}</Text>
-                  <Text style={styles.compactMuted} numberOfLines={1}>{location}</Text>
+                  <Text style={styles.compactMuted}>{location}</Text>
                 </View>
                 <StatusPill status={hasNotice ? 'ENDING_SOON' : l.status || 'ACTIVE'} />
                 <TouchableOpacity
                   style={styles.compactMoreButton}
-                  onPress={() => setMenuLease(l)}
+                  onPress={(e) => {
+                    setMenuAnchor(anchorFromPress(e));
+                    setMenuLease(l);
+                  }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   accessibilityRole="button"
                   accessibilityLabel={`More actions for ${l.tenantName || 'tenant'}`}
@@ -473,10 +481,9 @@ function LeasesTab({
         );
       })}
 
-      <ActionMenuSheet
-        visible={menuLease !== null}
-        title={menuLease?.tenantName || 'Lease'}
-        onClose={() => setMenuLease(null)}
+      <PopoverMenu
+        anchor={menuLease ? menuAnchor : null}
+        onClose={closeLeaseMenu}
         items={menuLease ? [
           ...(menuLease.tenantPhone
             ? [{ key: 'call', label: `Call ${menuLease.tenantPhone}`, icon: 'call' as const, onPress: () => Linking.openURL(`tel:${menuLease.tenantPhone}`) }]

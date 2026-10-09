@@ -256,7 +256,7 @@ export default function ReportsScreen() {
             <TextInput
               style={styles.searchInput}
               placeholder="Search by tenant name or unit..."
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              placeholderTextColor={theme.Colors.placeholder}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />

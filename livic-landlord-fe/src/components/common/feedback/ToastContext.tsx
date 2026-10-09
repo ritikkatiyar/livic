@@ -1,9 +1,13 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { useResponsive } from '@/src/hooks/useResponsive';
+import { PILL_HEIGHT, dockBottom } from '@/src/components/common/navigation/bottomDock';
 import { View, Text, StyleSheet, Animated, Platform, Alert, TouchableOpacity, Modal } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { haptic } from '@/src/theme/haptics';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { SuccessCheck } from '@/src/components/common/motion/SuccessCheck';
+import { useShake } from '@/src/components/common/motion/useShake';
 import { withAlpha } from '@/src/theme/colorUtils';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -69,15 +73,24 @@ function ToastItem({
   const { theme, isDark } = useAppTheme();
   const config = getToastConfig(theme)[toast.type];
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  // The toast already buzzes for errors, so the icon's shake stays silent
+  const { shakeStyle, shake } = useShake();
+
+  useEffect(() => {
+    if (toast.type === 'error') shake();
+  }, [toast.id, toast.type, shake]);
 
   const isWeb = Platform.OS === 'web';
+  const { isDesktop, isTablet } = useResponsive();
 
   return (
     <Animated.View
       style={[
         styles.toastWrapper,
         {
-          bottom: Math.max(insets.bottom + 16, 32),
+          // On phones, sit 8dp above the floating tab bar rather than over it
+          // 16dp above the floating bar on phones; tablets and desktop have no bar at the bottom
+          bottom: isDesktop || isTablet ? Math.max(insets.bottom + 16, 32) : dockBottom(insets.bottom) + PILL_HEIGHT + 16,
           opacity: fadeAnim,
           transform: [{ translateY: slideAnim }],
         },
@@ -88,9 +101,13 @@ function ToastItem({
 
       <View style={styles.toastBlur}>
         <View style={[styles.accentStripe, { backgroundColor: config.accentColor }]} />
-        <View style={[styles.iconCircle, { backgroundColor: `${config.accentColor}18` }]}>
-          <MaterialIcons name={config.icon as any} size={22} color={config.accentColor} />
-        </View>
+        <Animated.View style={[styles.iconCircle, { backgroundColor: `${config.accentColor}18` }, toast.type === 'error' && shakeStyle]}>
+          {toast.type === 'success' ? (
+            <SuccessCheck color={config.accentColor} size={22} playKey={toast.id} />
+          ) : (
+            <MaterialIcons name={config.icon as any} size={22} color={config.accentColor} />
+          )}
+        </Animated.View>
         <View style={styles.textBlock}>
           {toast.title && (
             <Text style={[styles.toastTitle, { color: config.accentColor }]} numberOfLines={1}>
@@ -141,17 +158,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const showToast = useCallback((message: string, type: ToastType = 'info', title?: string) => {
     if (timerRef.current) clearTimeout(timerRef.current);
 
-    if (Platform.OS !== 'web') {
-      if (type === 'success') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      } else if (type === 'error') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
-      } else if (type === 'warning') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-      } else {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-      }
-    }
+    haptic(type === 'info' ? 'tap' : type);
 
     // Auto-derive title if not provided
     const autoTitle = title ?? (
@@ -183,9 +190,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       const isConfirmation = buttons && buttons.length > 1;
 
       if (isConfirmation) {
-        if (Platform.OS !== 'web') {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-        }
+        haptic('press');
         setConfirmDialog({
           title: titleStr,
           message: msg,

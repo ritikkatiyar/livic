@@ -1,7 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle, StyleProp } from 'react-native';
+import { StyleSheet, Text, View, ViewStyle, StyleProp } from 'react-native';
+import { PressableScale } from '@/src/components/common/motion/PressableScale';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { withAlpha } from '@/src/theme/colorUtils';
 
 export interface FilterPillProps {
   label: string;
@@ -25,14 +27,20 @@ export function FilterPill({
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark, size), [theme, isDark, size]);
   const iconSize = size === 'sm' ? 14 : 16;
+  // The visible pill stays compact; the touch area reaches the 48dp minimum
+  const touchPad = (48 - (size === 'sm' ? 32 : 38)) / 2;
+  const hitSlop = { top: touchPad, bottom: touchPad };
+  const a11yLabel = count !== undefined ? `${label}, ${count}` : label;
 
+  // Selected is a tint with a tick (not a solid teal fill), so it never reads as a button or the tab bar
+  const leadingIcon = icon ?? (active ? 'check' : undefined);
   const renderContent = () => (
     <View style={styles.contentRow}>
-      {icon && (
+      {leadingIcon && (
         <MaterialIcons
-          name={icon}
+          name={leadingIcon}
           size={iconSize}
-          color={active ? theme.Colors.surfaceContainerLowest : theme.Colors.onSurfaceVariant}
+          color={active ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant}
           style={{ marginRight: 6 }}
         />
       )}
@@ -51,16 +59,16 @@ export function FilterPill({
 
   if (active) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.pill, styles.activePill, styles.activeShadow, style]}>
+      <PressableScale onPress={onPress} hitSlop={hitSlop} accessibilityState={{ selected: true }} accessibilityLabel={a11yLabel} activeOpacity={0.85} style={[styles.pill, styles.activePill, styles.activeShadow, style]}>
         {renderContent()}
-      </TouchableOpacity>
+      </PressableScale>
     );
   }
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.75} style={[styles.pill, styles.inactivePill, style]}>
+    <PressableScale onPress={onPress} hitSlop={hitSlop} accessibilityState={{ selected: false }} accessibilityLabel={a11yLabel} activeOpacity={0.75} style={[styles.pill, styles.inactivePill, style]}>
       {renderContent()}
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -78,7 +86,9 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md') => {
       alignItems: 'center',
     },
     activePill: {
-      backgroundColor: theme.Colors.primary,
+      backgroundColor: theme.Colors.primaryContainer,
+      borderWidth: 1,
+      borderColor: theme.Colors.primary,
       paddingHorizontal,
     },
     activeShadow: {
@@ -91,7 +101,7 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md') => {
     inactivePill: {
       backgroundColor: theme.Colors.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: theme.Colors.outline,
+      borderColor: theme.Colors.outlineStrong,
       paddingHorizontal,
     },
     contentRow: {
@@ -105,7 +115,8 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md') => {
       letterSpacing: 0.2,
     },
     textActive: {
-      color: theme.Colors.surfaceContainerLowest,
+      color: theme.Colors.onPrimaryContainer,
+      fontWeight: '600',
     },
     textInactive: {
       color: theme.Colors.onSurfaceVariant,
@@ -120,7 +131,7 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md') => {
       justifyContent: 'center',
     },
     badgeActive: {
-      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+      backgroundColor: withAlpha(theme.Colors.primary, 0.16),
     },
     badgeInactive: {
       backgroundColor: theme.Colors.surfaceContainerLow,
@@ -130,7 +141,7 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md') => {
       fontWeight: '600',
     },
     badgeTextActive: {
-      color: theme.Colors.surfaceContainerLowest,
+      color: theme.Colors.onPrimaryContainer,
     },
     badgeTextInactive: {
       color: theme.Colors.onSurfaceVariant,

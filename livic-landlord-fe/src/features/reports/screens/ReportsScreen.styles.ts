@@ -23,7 +23,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       fontSize: theme.Typography.labelSmall.fontSize,
       fontWeight: '600',
       letterSpacing: 0.2,
-      color: theme.Colors.primary,
+      color: theme.Colors.onSurfaceVariant,
       marginBottom: 4,
     },
     pageTitle: {
@@ -102,7 +102,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       fontSize: theme.Typography.labelSmall.fontSize,
       fontWeight: '600',
       letterSpacing: 0.2,
-      color: theme.Colors.primary,
+      color: theme.Colors.onSurfaceVariant,
       marginBottom: 3,
     },
     sectionTitle: {
@@ -203,7 +203,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       backgroundColor: isDark ? theme.Colors.surfaceContainerLowest : theme.Colors.surfaceContainerLowest,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: theme.Colors.glassStroke,
+      borderColor: theme.Colors.outlineStrong,
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: 12,
@@ -236,7 +236,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       borderColor: theme.Colors.outlineVariant,
     },
     statusChipActive: {
-      backgroundColor: theme.Colors.primary,
+      backgroundColor: theme.Colors.primaryContainer,
       borderColor: theme.Colors.primary,
     },
     statusChipText: {
@@ -245,7 +245,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       color: theme.Colors.onSurfaceVariant,
     },
     statusChipTextActive: {
-      color: theme.Colors.surfaceContainerLowest,
+      color: theme.Colors.onPrimaryContainer,
     },
     listCard: {
       padding: 20,

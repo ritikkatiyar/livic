@@ -55,7 +55,7 @@ export function MealSlotCard({ slot, items, readOnly, onChange }: MealSlotCardPr
                 onChangeText={(name) => updateItem(item.key, { name })}
                 maxLength={MAX_ITEM_NAME}
                 placeholder="Dish name"
-                placeholderTextColor={theme.Colors.onSurfaceVariant}
+                placeholderTextColor={theme.Colors.placeholder}
                 accessibilityLabel={`${slot.name} dish name`}
               />
               <TouchableOpacity
@@ -81,7 +81,7 @@ export function MealSlotCard({ slot, items, readOnly, onChange }: MealSlotCardPr
             onSubmitEditing={addDish}
             maxLength={MAX_ITEM_NAME}
             placeholder={`Add a dish to ${slot.name}`}
-            placeholderTextColor={theme.Colors.onSurfaceVariant}
+            placeholderTextColor={theme.Colors.placeholder}
             returnKeyType="done"
             blurOnSubmit={false}
             accessibilityLabel={`New dish for ${slot.name}`}

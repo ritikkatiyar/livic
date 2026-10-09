@@ -102,8 +102,8 @@ export default function SuperAdminLoginScreen({ onLogin, onUnverified, onNavigat
                   <MaterialIcons name="mail-outline" size={20} color={theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="resident@livic.app"
-                    placeholderTextColor={theme.Colors.outlineVariant}
+                    placeholder="Enter your email"
+                    placeholderTextColor={theme.Colors.placeholder}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -131,8 +131,8 @@ export default function SuperAdminLoginScreen({ onLogin, onUnverified, onNavigat
                   <TextInput
                     ref={passwordInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="••••••••"
-                    placeholderTextColor={theme.Colors.outlineVariant}
+                    placeholder="Enter your password"
+                    placeholderTextColor={theme.Colors.placeholder}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -228,7 +228,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingBottom: theme.Spacing.stackLg,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
-    shadowColor: '#000',
+    shadowColor: theme.Colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: isDark ? 0.2 : 0.05,
     shadowRadius: 8,
@@ -299,7 +299,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: '100%',
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     borderRadius: theme.Rounded.default,
     paddingLeft: 44,
     paddingRight: theme.Spacing.stackMd,

@@ -22,8 +22,8 @@ describe('SuperAdminLoginScreen Interaction', () => {
       <SuperAdminLoginScreen onLogin={handleLogin} />
     );
 
-    const emailInput = getByPlaceholderText('resident@livic.app');
-    const passwordInput = getByPlaceholderText('••••••••');
+    const emailInput = getByPlaceholderText('Enter your email');
+    const passwordInput = getByPlaceholderText('Enter your password');
     const submitBtn = getByTestId('login-button');
 
     await act(async () => {

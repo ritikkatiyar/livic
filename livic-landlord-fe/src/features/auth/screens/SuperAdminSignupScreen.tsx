@@ -114,7 +114,7 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                   <TextInput
                     style={[styles.input, { paddingRight: 44 }]}
                     placeholder="Alex Morgan"
-                    placeholderTextColor={theme.Colors.outlineVariant}
+                    placeholderTextColor={theme.Colors.placeholder}
                     value={fullName}
                     onChangeText={setFullName}
                     autoCapitalize="words"
@@ -141,8 +141,8 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                   <TextInput
                     ref={emailInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="landlord@livic.app"
-                    placeholderTextColor={theme.Colors.outlineVariant}
+                    placeholder="Enter your email"
+                    placeholderTextColor={theme.Colors.placeholder}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -171,7 +171,7 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                     ref={phoneInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
                     placeholder="1234567890"
-                    placeholderTextColor={theme.Colors.outlineVariant}
+                    placeholderTextColor={theme.Colors.placeholder}
                     value={phoneNumber}
                     onChangeText={(text) => setPhoneNumber(text.replace(/[^0-9]/g, ''))}
                     keyboardType="number-pad"
@@ -199,8 +199,8 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                   <TextInput
                     ref={passwordInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="••••••••"
-                    placeholderTextColor={theme.Colors.outlineVariant}
+                    placeholder="Create a password"
+                    placeholderTextColor={theme.Colors.placeholder}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -392,7 +392,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: '100%',
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineStrong,
     borderRadius: theme.Rounded.default,
     paddingLeft: 44,
     paddingRight: theme.Spacing.stackMd,
